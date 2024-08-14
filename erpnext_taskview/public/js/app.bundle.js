@@ -1,152 +1,73 @@
 frappe.provide("frappe.views");
 
+let old_this;
+
+// if (frappe.views.ListViewSelect.doctype === "Task") {
+//     frappe.views.ListViewSelect.add_view_to_menu(
+//         "Tasks",
+//         () => {
+//             this.set_route("tasks");
+//         }
+//     );
+// }
+
 frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListViewSelect {
     setup_views() {
         // Start by calling the original setup_views to get the initial views object
         super.setup_views();
-
-        let views = {
-            Task: {
-                condition: this.doctype === "Task",
-                // action: () => this.set_route("task"),
-                action: () => {
-                    console.log("Task view selected");
-                    console.log(this);
-                    // setting the route makes the page reload and list_view_select errors out and things break, so let's render the view without changing the route
-                    // Instantiate the custom TaskView
-                    this.task_view = new frappe.views.TaskView({
-                        doctype: this.doctype,
-                        parent: this.page.main,
-                        page: this.page,
-                        // the data already loaded with the default List view
-                        data: this.list_view.data,
-                    });
-
-                    // Render the TaskView
-                    this.task_view.render_list();
-                },
-            },
-            List: {
-				condition: true,
-				action: () => this.set_route("list"),
-			},
-			Report: {
-				condition: true,
-				action: () => this.set_route("report"),
-				current_view_handler: () => {
-					const reports = this.get_reports();
-					let default_action = {};
-					// Only add action if current route is not report builder
-					if (frappe.get_route().length > 3) {
-						default_action = {
-							label: __("Report Builder"),
-							action: () => this.set_route("report"),
-						};
-					}
-					this.setup_dropdown_in_sidebar("Report", reports, default_action);
-				},
-			},
-			Dashboard: {
-				condition: true,
-				action: () => this.set_route("dashboard"),
-			},
-			Calendar: {
-				condition: frappe.views.calendar[this.doctype],
-				action: () => this.set_route("calendar", "default"),
-				current_view_handler: () => {
-					this.get_calendars().then((calendars) => {
-						this.setup_dropdown_in_sidebar("Calendar", calendars);
-					});
-				},
-			},
-			Gantt: {
-				condition: frappe.views.calendar[this.doctype],
-				action: () => this.set_route("gantt"),
-			},
-			Inbox: {
-				condition: this.doctype === "Communication" && frappe.boot.email_accounts.length,
-				action: () => this.set_route("inbox"),
-				current_view_handler: () => {
-					const accounts = this.get_email_accounts();
-					let default_action;
-					if (has_common(frappe.user_roles, ["System Manager", "Administrator"])) {
-						default_action = {
-							label: __("New Email Account"),
-							action: () => frappe.new_doc("Email Account"),
-						};
-					}
-					this.setup_dropdown_in_sidebar("Inbox", accounts, default_action);
-				},
-			},
-			Image: {
-				condition: this.list_view.meta.image_field,
-				action: () => this.set_route("image"),
-			},
-			Tree: {
-				condition:
-					frappe.treeview_settings[this.doctype] ||
-					frappe.get_meta(this.doctype).is_tree,
-				action: () => this.set_route("tree"),
-			},
-			Kanban: {
-				condition: this.doctype != "File",
-				action: () => this.setup_kanban_boards(),
-				current_view_handler: () => {
-					frappe.views.KanbanView.get_kanbans(this.doctype).then((kanbans) =>
-						this.setup_kanban_switcher(kanbans)
-					);
-				},
-			},
-			Map: {
-				condition:
-					this.list_view.settings.get_coords_method ||
-					(this.list_view.meta.fields.find((i) => i.fieldname === "latitude") &&
-						this.list_view.meta.fields.find((i) => i.fieldname === "longitude")) ||
-					this.list_view.meta.fields.find(
-						(i) => i.fieldname === "location" && i.fieldtype == "Geolocation"
-					),
-				action: () => this.set_route("map"),
-			},
-		};
-
-        let ammended_views = frappe.views.view_modes;
-        // put the TaskView at the start of the list
-        ammended_views.unshift("Task");
-
-        ammended_views.forEach((view) => {
-			if (views[view] && this.current_view !== view && views[view].condition) {
-				this.add_view_to_menu(view, views[view].action);
-			}
-
-			if (views[view] && this.current_view == view) {
-				views[view].current_view_handler && views[view].current_view_handler();
-			}
-		});
-
-        // WHAT DOES THIS DO?
-        // this.task_view_select = new frappe.views.TaskViewSelect({
-        //     doctype: this.doctype,
-        //     parent: this.page.main,
-        //     page: this
-        // });
-
+		
+		if (this.doctype === "Task") {
+			// Add the Task view to the views object
+			this.add_view_to_menu(
+				"Tasks",
+				() => {
+                    // console.log('this.page');
+                    // console.log(this.page);
+                    // console.log(this.list_view.data);
+                    this.set_route("tasks");
+					// Instantiate the custom TaskView
+					// this.task_view = new frappe.views.TasksView({
+					// 	doctype: this.doctype,
+					// 	parent: this.parent,
+					// 	page: this.page,
+					// 	// the data already loaded with the default List view
+					// 	data: this.list_view.data,
+					// });
+                    // current view handler
+                    // () => {
+                    //     // const accounts = this.get_email_accounts();
+                    //     // let default_action;
+                    //     // if (has_common(frappe.user_roles, ["System Manager", "Administrator"])) {
+                    //     //     default_action = {
+                    //     //         label: __("New Email Account"),
+                    //     //         action: () => frappe.new_doc("Email Account"),
+                    //     //     };
+                    //     // }
+                    //     // this.setup_dropdown_in_sidebar("Inbox", accounts, default_action);
+                        
+                    // }
+				}
+            );
+		}
     }
-
-
-
-    // setup_views() {
-    //     super.setup_views();
-    //     this.task_view_select = new frappe.views.TaskViewSelect({
-    //         doctype: this.doctype,
-    //         parent: this.page.main,
-    //         page: this
-    //     });
-    // }
 };
 
 
-// frappe.router.list_views.push("task-view");
-// frappe.router.list_views_route["task-view"] = "TaskView";
+
+//     // setup_views() {
+//     //     super.setup_views();
+//     //     this.task_view_select = new frappe.views.TaskViewSelect({
+//     //         doctype: this.doctype,
+//     //         parent: this.page.main,
+//     //         page: this
+//     //     });
+//     // }
+// };
+
+
+frappe.router.list_views.push("tasks");
+frappe.router.list_views_route["tasks"] = "Tasks";
+// frappe.views.view_modes.push("Tasks");
 
 // console.log(frappe.router);
 
@@ -159,31 +80,111 @@ frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListView
 //     view.render();
 // });
 
-
-frappe.views.TaskView = class TaskView extends frappe.views.ListView {
+frappe.views.TasksView = class TasksView extends frappe.views.ListView {
+    // constructor(opts) {
+    //     console.log('TasksView');
+    //     console.log(opts);
+    //     super(opts);
+    // }
     setup_defaults() {
+        old_this = this;
+        console.log('old_this1');
+        console.log(old_this);
         super.setup_defaults();
+        // console.log('setup_defaults');
+        // console.log(this);
         this.page_title = __("Task View");
         this.page_name = "task-view";
         this.show_hide_filters = false;
+        this.list_view_settings = {
+            fields: null,
+        };
+        this.old_this = old_this;
+        console.log('this.old_this2');
+        console.log(this.old_this);
     }
+
+    refresh() {
+		let args = this.get_call_args();
+		if (this.no_change(args)) {
+			// console.log('throttled');
+			return Promise.resolve();
+		}
+		this.freeze(true);
+		// fetch data from server
+		return frappe.call(args).then((r) => {
+			// render
+			this.prepare_data(r);
+			this.toggle_result_area();
+			this.before_render();
+			this.render();
+			this.after_render();
+			this.freeze(false);
+			this.reset_defaults();
+			if (this.settings.refresh) {
+				this.settings.refresh(this);
+			}
+		});
+	}
 
     setup_page() {
+
+        console.log('this.old_this3');
+        console.log(this.old_this);
+        
+        // console.log('setup_page1');
+        // console.log(this);
+        // console.log(this.page);
+        // console.log(this.parent);
+        // console.log(this.data);
+        
+        // this.page = this.parent.page || {};
+        
         super.setup_page();
-        console.log(this);
-        this.page.set_primary_action(__("New Task"), () => {
-            frappe.new_doc("Task");
-        });
+        // this.refresh();
+
+        console.log('this.old_this4');
+        console.log(old_this);
+
+        this.data = this.old_this.data;
+        console.log('data from old_this5');
+        console.log(old_this.data);
+        console.log(this.data);
+        
+        frappe
+            .call("frappe.desk.listview.get_list_settings", {
+                doctype: this.doctype,
+            })
+            .then((doc) => {
+                this.list_view_settings = doc.message || {};
+    
+                // Safely handle undefined fields
+                if (this.list_view_settings.fields === undefined) {
+                    this.list_view_settings.fields = null;
+                }
+    
+                // Primary action setup
+                this.page.set_primary_action(__("New Task"), () => {
+                    frappe.new_doc("Task");
+                });
+    
+                // Other dependent code can go here
+                // console.log('setup_page2');
+                // console.log(this);
+            })
+            .catch((error) => {
+                console.error("Failed to get list settings:", error);
+            });
     }
-
+    
+    // WE DON'T NEED SKELETONS.
     show_skeleton() {}
-
     hide_skeleton() {}
     
     render_list() {
 		// clear rows
 		// this.$result.find(".list-row-container").remove();
-
+        console.log('render_list');
         console.log(this)
 
 		// if (this.data.length > 0) {
