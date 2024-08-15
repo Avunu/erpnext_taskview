@@ -1,15 +1,9 @@
 frappe.provide("frappe.views");
+import { createApp, watchEffect, h } from "vue";
+// import { createPinia } from "pinia";
+// import { useStore } from "./store";
+import TaskView from "./TaskView.vue";
 
-let old_this;
-
-// if (frappe.views.ListViewSelect.doctype === "Task") {
-//     frappe.views.ListViewSelect.add_view_to_menu(
-//         "Tasks",
-//         () => {
-//             this.set_route("tasks");
-//         }
-//     );
-// }
 
 frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListViewSelect {
     setup_views() {
@@ -21,93 +15,34 @@ frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListView
 			this.add_view_to_menu(
 				"Tasks",
 				() => {
-                    // console.log('this.page');
-                    // console.log(this.page);
-                    // console.log(this.list_view.data);
                     this.set_route("tasks");
-					// Instantiate the custom TaskView
-					// this.task_view = new frappe.views.TasksView({
-					// 	doctype: this.doctype,
-					// 	parent: this.parent,
-					// 	page: this.page,
-					// 	// the data already loaded with the default List view
-					// 	data: this.list_view.data,
-					// });
-                    // current view handler
-                    // () => {
-                    //     // const accounts = this.get_email_accounts();
-                    //     // let default_action;
-                    //     // if (has_common(frappe.user_roles, ["System Manager", "Administrator"])) {
-                    //     //     default_action = {
-                    //     //         label: __("New Email Account"),
-                    //     //         action: () => frappe.new_doc("Email Account"),
-                    //     //     };
-                    //     // }
-                    //     // this.setup_dropdown_in_sidebar("Inbox", accounts, default_action);
-                        
-                    // }
 				}
             );
 		}
     }
 };
 
-
-
-//     // setup_views() {
-//     //     super.setup_views();
-//     //     this.task_view_select = new frappe.views.TaskViewSelect({
-//     //         doctype: this.doctype,
-//     //         parent: this.page.main,
-//     //         page: this
-//     //     });
-//     // }
-// };
-
-
 frappe.router.list_views.push("tasks");
 frappe.router.list_views_route["tasks"] = "Tasks";
-// frappe.views.view_modes.push("Tasks");
-
-// console.log(frappe.router);
-
-
-// frappe.router.add_route("task-view", () => {
-//     let view = new frappe.views.TaskView({
-//         doctype: "Task", // or this.doctype
-//         parent: frappe.container.page,
-//     });
-//     view.render();
-// });
 
 frappe.views.TasksView = class TasksView extends frappe.views.ListView {
-    // constructor(opts) {
-    //     console.log('TasksView');
-    //     console.log(opts);
-    //     super(opts);
-    // }
     setup_defaults() {
-        old_this = this;
-        console.log('old_this1');
-        console.log(old_this);
         super.setup_defaults();
-        // console.log('setup_defaults');
-        // console.log(this);
         this.page_title = __("Task View");
         this.page_name = "task-view";
         this.show_hide_filters = false;
         this.list_view_settings = {
             fields: null,
         };
-        this.old_this = old_this;
-        console.log('this.old_this2');
-        console.log(this.old_this);
+        // set Task View as the current view
+        // this.current_view = "Tasks";
+        // add List to the list of views
+        
     }
 
     refresh() {
 		let args = this.get_call_args();
 		if (this.no_change(args)) {
-			// console.log('throttled');
 			return Promise.resolve();
 		}
 		this.freeze(true);
@@ -128,29 +63,7 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 	}
 
     setup_page() {
-
-        console.log('this.old_this3');
-        console.log(this.old_this);
-        
-        // console.log('setup_page1');
-        // console.log(this);
-        // console.log(this.page);
-        // console.log(this.parent);
-        // console.log(this.data);
-        
-        // this.page = this.parent.page || {};
-        
-        super.setup_page();
-        // this.refresh();
-
-        console.log('this.old_this4');
-        console.log(old_this);
-
-        this.data = this.old_this.data;
-        console.log('data from old_this5');
-        console.log(old_this.data);
-        console.log(this.data);
-        
+        super.setup_page();        
         frappe
             .call("frappe.desk.listview.get_list_settings", {
                 doctype: this.doctype,
@@ -167,10 +80,6 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
                 this.page.set_primary_action(__("New Task"), () => {
                     frappe.new_doc("Task");
                 });
-    
-                // Other dependent code can go here
-                // console.log('setup_page2');
-                // console.log(this);
             })
             .catch((error) => {
                 console.error("Failed to get list settings:", error);
@@ -180,19 +89,36 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     // WE DON'T NEED SKELETONS.
     show_skeleton() {}
     hide_skeleton() {}
+
+    render_header(refresh_header = false) {
+		// if (refresh_header) {
+		// 	this.$result.find(".list-row-head").remove();
+		// }
+		// if (this.$result.find(".list-row-head").length === 0) {
+		// 	// append header once
+		// 	this.$result.prepend(this.get_header_html());
+		// }
+        this.$result.find(".list-row-head").remove();
+	}
     
     render_list() {
-		// clear rows
-		// this.$result.find(".list-row-container").remove();
         console.log('render_list');
-        console.log(this)
-
-		// if (this.data.length > 0) {
-		// 	// append rows
-		// 	console.log(this.data);
-		// }
-	}
-
+        console.log(this);
+    
+        // Clear everything out of the result area
+        this.$result.empty();
+    
+        if (this.data.length > 0) {
+            // Make a new Vue container to hold the header and rows
+            const container = document.createElement('div');
+            this.$result.append(container);
+    
+            // Pass the entire data array to TaskView as docs
+            createApp({
+                render: () => h(TaskView, { docs: this.data })
+            }).mount(container);
+        }
+    }    
     // render() {
     //     super.render();
     //     this.render_list();
