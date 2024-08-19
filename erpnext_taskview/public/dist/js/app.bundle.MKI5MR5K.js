@@ -175,6 +175,40 @@
   function includeBooleanAttr(value) {
     return !!value || value === "";
   }
+  var isRef = (val) => {
+    return !!(val && val.__v_isRef === true);
+  };
+  var toDisplayString = (val) => {
+    return isString(val) ? val : val == null ? "" : isArray(val) || isObject(val) && (val.toString === objectToString || !isFunction(val.toString)) ? isRef(val) ? toDisplayString(val.value) : JSON.stringify(val, replacer, 2) : String(val);
+  };
+  var replacer = (_key, val) => {
+    if (isRef(val)) {
+      return replacer(_key, val.value);
+    } else if (isMap(val)) {
+      return {
+        [`Map(${val.size})`]: [...val.entries()].reduce(
+          (entries, [key, val2], i) => {
+            entries[stringifySymbol(key, i) + " =>"] = val2;
+            return entries;
+          },
+          {}
+        )
+      };
+    } else if (isSet(val)) {
+      return {
+        [`Set(${val.size})`]: [...val.values()].map((v) => stringifySymbol(v))
+      };
+    } else if (isSymbol(val)) {
+      return stringifySymbol(val);
+    } else if (isObject(val) && !isArray(val) && !isPlainObject(val)) {
+      return String(val);
+    }
+    return val;
+  };
+  var stringifySymbol = (v, i = "") => {
+    var _a;
+    return isSymbol(v) ? `Symbol(${(_a = v.description) != null ? _a : i})` : v;
+  };
 
   // ../erpnext_taskview/node_modules/@vue/reactivity/dist/reactivity.esm-bundler.js
   function warn(msg, ...args) {
@@ -576,7 +610,7 @@
       if (isShallow2) {
         return res;
       }
-      if (isRef(res)) {
+      if (isRef2(res)) {
         return targetIsArray && isIntegerKey(key) ? res : res.value;
       }
       if (isObject(res)) {
@@ -597,7 +631,7 @@
           oldValue = toRaw(oldValue);
           value = toRaw(value);
         }
-        if (!isArray(target) && isRef(oldValue) && !isRef(value)) {
+        if (!isArray(target) && isRef2(oldValue) && !isRef2(value)) {
           if (isOldValueReadonly) {
             return false;
           } else {
@@ -1172,17 +1206,49 @@ getter: `, this.getter);
       );
     }
   }
-  function isRef(r) {
+  function isRef2(r) {
     return !!(r && r.__v_isRef === true);
   }
+  function ref(value) {
+    return createRef(value, false);
+  }
+  function createRef(rawValue, shallow) {
+    if (isRef2(rawValue)) {
+      return rawValue;
+    }
+    return new RefImpl(rawValue, shallow);
+  }
+  var RefImpl = class {
+    constructor(value, __v_isShallow) {
+      this.__v_isShallow = __v_isShallow;
+      this.dep = void 0;
+      this.__v_isRef = true;
+      this._rawValue = __v_isShallow ? value : toRaw(value);
+      this._value = __v_isShallow ? value : toReactive(value);
+    }
+    get value() {
+      trackRefValue(this);
+      return this._value;
+    }
+    set value(newVal) {
+      const useDirectValue = this.__v_isShallow || isShallow(newVal) || isReadonly(newVal);
+      newVal = useDirectValue ? newVal : toRaw(newVal);
+      if (hasChanged(newVal, this._rawValue)) {
+        const oldVal = this._rawValue;
+        this._rawValue = newVal;
+        this._value = useDirectValue ? newVal : toReactive(newVal);
+        triggerRefValue(this, 4, newVal, oldVal);
+      }
+    }
+  };
   function unref(ref2) {
-    return isRef(ref2) ? ref2.value : ref2;
+    return isRef2(ref2) ? ref2.value : ref2;
   }
   var shallowUnwrapHandlers = {
     get: (target, key, receiver) => unref(Reflect.get(target, key, receiver)),
     set: (target, key, value, receiver) => {
       const oldValue = target[key];
-      if (isRef(oldValue) && !isRef(value)) {
+      if (isRef2(oldValue) && !isRef2(value)) {
         oldValue.value = value;
         return true;
       } else {
@@ -1296,7 +1362,7 @@ getter: `, this.getter);
       return raw ? value : [`${key}=${value}`];
     } else if (typeof value === "number" || typeof value === "boolean" || value == null) {
       return raw ? value : [`${key}=${value}`];
-    } else if (isRef(value)) {
+    } else if (isRef2(value)) {
       value = formatProp(key, toRaw(value.value), true);
       return raw ? value : [`${key}=Ref<`, value, `>`];
     } else if (isFunction(value)) {
@@ -1663,9 +1729,9 @@ getter: `, this.getter);
       return;
     newComp = normalizeClassComponent(newComp);
     updateComponentDef(record.initialDef, newComp);
-    const instances = [...record.instances];
-    for (let i = 0; i < instances.length; i++) {
-      const instance = instances[i];
+    const instances2 = [...record.instances];
+    for (let i = 0; i < instances2.length; i++) {
+      const instance = instances2[i];
       const oldComp = normalizeClassComponent(instance.type);
       let dirtyInstances = hmrDirtyComponents.get(oldComp);
       if (!dirtyInstances) {
@@ -1818,8 +1884,8 @@ getter: `, this.getter);
     currentScopeId = instance && instance.type.__scopeId || null;
     return prev;
   }
-  function withCtx(fn, ctx = currentRenderingInstance, isNonScopedSlot) {
-    if (!ctx)
+  function withCtx(fn, ctx2 = currentRenderingInstance, isNonScopedSlot) {
+    if (!ctx2)
       return fn;
     if (fn._n) {
       return fn;
@@ -1828,7 +1894,7 @@ getter: `, this.getter);
       if (renderFnWithContext._d) {
         setBlockTracking(-1);
       }
-      const prevInstance = setCurrentRenderingInstance(ctx);
+      const prevInstance = setCurrentRenderingInstance(ctx2);
       let res;
       try {
         res = fn(...args);
@@ -1839,7 +1905,7 @@ getter: `, this.getter);
         }
       }
       if (true) {
-        devtoolsComponentUpdated(ctx);
+        devtoolsComponentUpdated(ctx2);
       }
       return res;
     };
@@ -2213,6 +2279,9 @@ getter: `, this.getter);
     }
     return ret;
   }
+  function defineComponent(options, extraOptions) {
+    return isFunction(options) ? /* @__PURE__ */ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
+  }
   var isAsyncWrapper = (i) => !!i.type.__asyncLoader;
   var isKeepAlive = (vnode) => vnode.type.__isKeepAlive;
   function onActivated(hook, target) {
@@ -2336,6 +2405,89 @@ If this is a native custom element, make sure to exclude it from component resol
   function resolve(registry, name) {
     return registry && (registry[name] || registry[camelize(name)] || registry[capitalize(camelize(name))]);
   }
+  function renderList(source, renderItem, cache, index) {
+    let ret;
+    const cached = cache && cache[index];
+    if (isArray(source) || isString(source)) {
+      ret = new Array(source.length);
+      for (let i = 0, l = source.length; i < l; i++) {
+        ret[i] = renderItem(source[i], i, void 0, cached && cached[i]);
+      }
+    } else if (typeof source === "number") {
+      if (!Number.isInteger(source)) {
+        warn$1(`The v-for range expect an integer value but got ${source}.`);
+      }
+      ret = new Array(source);
+      for (let i = 0; i < source; i++) {
+        ret[i] = renderItem(i + 1, i, void 0, cached && cached[i]);
+      }
+    } else if (isObject(source)) {
+      if (source[Symbol.iterator]) {
+        ret = Array.from(
+          source,
+          (item, i) => renderItem(item, i, void 0, cached && cached[i])
+        );
+      } else {
+        const keys = Object.keys(source);
+        ret = new Array(keys.length);
+        for (let i = 0, l = keys.length; i < l; i++) {
+          const key = keys[i];
+          ret[i] = renderItem(source[key], key, i, cached && cached[i]);
+        }
+      }
+    } else {
+      ret = [];
+    }
+    if (cache) {
+      cache[index] = ret;
+    }
+    return ret;
+  }
+  function renderSlot(slots, name, props = {}, fallback, noSlotted) {
+    if (currentRenderingInstance.isCE || currentRenderingInstance.parent && isAsyncWrapper(currentRenderingInstance.parent) && currentRenderingInstance.parent.isCE) {
+      if (name !== "default")
+        props.name = name;
+      return createVNode("slot", props, fallback && fallback());
+    }
+    let slot = slots[name];
+    if (slot && slot.length > 1) {
+      warn$1(
+        `SSR-optimized slot function detected in a non-SSR-optimized render function. You need to mark this component with $dynamic-slots in the parent template.`
+      );
+      slot = () => [];
+    }
+    if (slot && slot._c) {
+      slot._d = false;
+    }
+    openBlock();
+    const validSlotContent = slot && ensureValidVNode(slot(props));
+    const rendered = createBlock(
+      Fragment,
+      {
+        key: (props.key || validSlotContent && validSlotContent.key || `_${name}`) + (!validSlotContent && fallback ? "_fb" : "")
+      },
+      validSlotContent || (fallback ? fallback() : []),
+      validSlotContent && slots._ === 1 ? 64 : -2
+    );
+    if (!noSlotted && rendered.scopeId) {
+      rendered.slotScopeIds = [rendered.scopeId + "-s"];
+    }
+    if (slot && slot._c) {
+      slot._d = true;
+    }
+    return rendered;
+  }
+  function ensureValidVNode(vnodes) {
+    return vnodes.some((child) => {
+      if (!isVNode(child))
+        return true;
+      if (child.type === Comment)
+        return false;
+      if (child.type === Fragment && !ensureValidVNode(child.children))
+        return false;
+      return true;
+    }) ? vnodes : null;
+  }
   var getPublicInstance = (i) => {
     if (!i)
       return null;
@@ -2369,7 +2521,7 @@ If this is a native custom element, make sure to exclude it from component resol
       if (key === "__v_skip") {
         return true;
       }
-      const { ctx, setupState, data, props, accessCache, type, appContext } = instance;
+      const { ctx: ctx2, setupState, data, props, accessCache, type, appContext } = instance;
       if (key === "__isVue") {
         return true;
       }
@@ -2383,7 +2535,7 @@ If this is a native custom element, make sure to exclude it from component resol
             case 2:
               return data[key];
             case 4:
-              return ctx[key];
+              return ctx2[key];
             case 3:
               return props[key];
           }
@@ -2396,9 +2548,9 @@ If this is a native custom element, make sure to exclude it from component resol
         } else if ((normalizedProps = instance.propsOptions[0]) && hasOwn(normalizedProps, key)) {
           accessCache[key] = 3;
           return props[key];
-        } else if (ctx !== EMPTY_OBJ && hasOwn(ctx, key)) {
+        } else if (ctx2 !== EMPTY_OBJ && hasOwn(ctx2, key)) {
           accessCache[key] = 4;
-          return ctx[key];
+          return ctx2[key];
         } else if (shouldCacheAccess) {
           accessCache[key] = 0;
         }
@@ -2415,9 +2567,9 @@ If this is a native custom element, make sure to exclude it from component resol
         return publicGetter(instance);
       } else if ((cssModule = type.__cssModules) && (cssModule = cssModule[key])) {
         return cssModule;
-      } else if (ctx !== EMPTY_OBJ && hasOwn(ctx, key)) {
+      } else if (ctx2 !== EMPTY_OBJ && hasOwn(ctx2, key)) {
         accessCache[key] = 4;
-        return ctx[key];
+        return ctx2[key];
       } else if (globalProperties = appContext.config.globalProperties, hasOwn(globalProperties, key)) {
         {
           return globalProperties[key];
@@ -2437,7 +2589,7 @@ If this is a native custom element, make sure to exclude it from component resol
       }
     },
     set({ _: instance }, key, value) {
-      const { data, setupState, ctx } = instance;
+      const { data, setupState, ctx: ctx2 } = instance;
       if (hasSetupBinding(setupState, key)) {
         setupState[key] = value;
         return true;
@@ -2458,22 +2610,22 @@ If this is a native custom element, make sure to exclude it from component resol
         return false;
       } else {
         if (key in instance.appContext.config.globalProperties) {
-          Object.defineProperty(ctx, key, {
+          Object.defineProperty(ctx2, key, {
             enumerable: true,
             configurable: true,
             value
           });
         } else {
-          ctx[key] = value;
+          ctx2[key] = value;
         }
       }
       return true;
     },
     has({
-      _: { data, setupState, accessCache, ctx, appContext, propsOptions }
+      _: { data, setupState, accessCache, ctx: ctx2, appContext, propsOptions }
     }, key) {
       let normalizedProps;
-      return !!accessCache[key] || data !== EMPTY_OBJ && hasOwn(data, key) || hasSetupBinding(setupState, key) || (normalizedProps = propsOptions[0]) && hasOwn(normalizedProps, key) || hasOwn(ctx, key) || hasOwn(publicPropertiesMap, key) || hasOwn(appContext.config.globalProperties, key);
+      return !!accessCache[key] || data !== EMPTY_OBJ && hasOwn(data, key) || hasSetupBinding(setupState, key) || (normalizedProps = propsOptions[0]) && hasOwn(normalizedProps, key) || hasOwn(ctx2, key) || hasOwn(publicPropertiesMap, key) || hasOwn(appContext.config.globalProperties, key);
     },
     defineProperty(target, key, descriptor) {
       if (descriptor.get != null) {
@@ -2511,12 +2663,12 @@ If this is a native custom element, make sure to exclude it from component resol
   }
   function exposePropsOnRenderContext(instance) {
     const {
-      ctx,
+      ctx: ctx2,
       propsOptions: [propsOptions]
     } = instance;
     if (propsOptions) {
       Object.keys(propsOptions).forEach((key) => {
-        Object.defineProperty(ctx, key, {
+        Object.defineProperty(ctx2, key, {
           enumerable: true,
           configurable: true,
           get: () => instance.props[key],
@@ -2526,7 +2678,7 @@ If this is a native custom element, make sure to exclude it from component resol
     }
   }
   function exposeSetupStateOnRenderContext(instance) {
-    const { ctx, setupState } = instance;
+    const { ctx: ctx2, setupState } = instance;
     Object.keys(toRaw(setupState)).forEach((key) => {
       if (!setupState.__isScriptSetup) {
         if (isReservedPrefix(key[0])) {
@@ -2537,7 +2689,7 @@ If this is a native custom element, make sure to exclude it from component resol
           );
           return;
         }
-        Object.defineProperty(ctx, key, {
+        Object.defineProperty(ctx2, key, {
           enumerable: true,
           configurable: true,
           get: () => setupState[key],
@@ -2566,7 +2718,7 @@ If this is a native custom element, make sure to exclude it from component resol
   function applyOptions(instance) {
     const options = resolveMergedOptions(instance);
     const publicThis = instance.proxy;
-    const ctx = instance.ctx;
+    const ctx2 = instance.ctx;
     shouldCacheAccess = false;
     if (options.beforeCreate) {
       callHook(options.beforeCreate, instance, "bc");
@@ -2589,7 +2741,7 @@ If this is a native custom element, make sure to exclude it from component resol
       beforeUnmount,
       destroyed,
       unmounted,
-      render: render3,
+      render: render2,
       renderTracked,
       renderTriggered,
       errorCaptured,
@@ -2610,21 +2762,21 @@ If this is a native custom element, make sure to exclude it from component resol
       }
     }
     if (injectOptions) {
-      resolveInjections(injectOptions, ctx, checkDuplicateProperties);
+      resolveInjections(injectOptions, ctx2, checkDuplicateProperties);
     }
     if (methods) {
       for (const key in methods) {
         const methodHandler = methods[key];
         if (isFunction(methodHandler)) {
           if (true) {
-            Object.defineProperty(ctx, key, {
+            Object.defineProperty(ctx2, key, {
               value: methodHandler.bind(publicThis),
               configurable: true,
               enumerable: true,
               writable: true
             });
           } else {
-            ctx[key] = methodHandler.bind(publicThis);
+            ctx2[key] = methodHandler.bind(publicThis);
           }
           if (true) {
             checkDuplicateProperties("Methods", key);
@@ -2656,7 +2808,7 @@ If this is a native custom element, make sure to exclude it from component resol
           for (const key in data) {
             checkDuplicateProperties("Data", key);
             if (!isReservedPrefix(key[0])) {
-              Object.defineProperty(ctx, key, {
+              Object.defineProperty(ctx2, key, {
                 configurable: true,
                 enumerable: true,
                 get: () => data[key],
@@ -2684,7 +2836,7 @@ If this is a native custom element, make sure to exclude it from component resol
           get: get2,
           set: set2
         });
-        Object.defineProperty(ctx, key, {
+        Object.defineProperty(ctx2, key, {
           enumerable: true,
           configurable: true,
           get: () => c.value,
@@ -2697,7 +2849,7 @@ If this is a native custom element, make sure to exclude it from component resol
     }
     if (watchOptions) {
       for (const key in watchOptions) {
-        createWatcher(watchOptions[key], ctx, publicThis, key);
+        createWatcher(watchOptions[key], ctx2, publicThis, key);
       }
     }
     if (provideOptions) {
@@ -2741,8 +2893,8 @@ If this is a native custom element, make sure to exclude it from component resol
         instance.exposed = {};
       }
     }
-    if (render3 && instance.render === NOOP) {
-      instance.render = render3;
+    if (render2 && instance.render === NOOP) {
+      instance.render = render2;
     }
     if (inheritAttrs != null) {
       instance.inheritAttrs = inheritAttrs;
@@ -2752,7 +2904,7 @@ If this is a native custom element, make sure to exclude it from component resol
     if (directives)
       instance.directives = directives;
   }
-  function resolveInjections(injectOptions, ctx, checkDuplicateProperties = NOOP) {
+  function resolveInjections(injectOptions, ctx2, checkDuplicateProperties = NOOP) {
     if (isArray(injectOptions)) {
       injectOptions = normalizeInject(injectOptions);
     }
@@ -2772,15 +2924,15 @@ If this is a native custom element, make sure to exclude it from component resol
       } else {
         injected = inject(opt);
       }
-      if (isRef(injected)) {
-        Object.defineProperty(ctx, key, {
+      if (isRef2(injected)) {
+        Object.defineProperty(ctx2, key, {
           enumerable: true,
           configurable: true,
           get: () => injected.value,
           set: (v) => injected.value = v
         });
       } else {
-        ctx[key] = injected;
+        ctx2[key] = injected;
       }
       if (true) {
         checkDuplicateProperties("Inject", key);
@@ -2794,10 +2946,10 @@ If this is a native custom element, make sure to exclude it from component resol
       type
     );
   }
-  function createWatcher(raw, ctx, publicThis, key) {
+  function createWatcher(raw, ctx2, publicThis, key) {
     const getter = key.includes(".") ? createPathGetter(publicThis, key) : () => publicThis[key];
     if (isString(raw)) {
-      const handler = ctx[raw];
+      const handler = ctx2[raw];
       if (isFunction(handler)) {
         watch(getter, handler);
       } else if (true) {
@@ -2807,9 +2959,9 @@ If this is a native custom element, make sure to exclude it from component resol
       watch(getter, raw.bind(publicThis));
     } else if (isObject(raw)) {
       if (isArray(raw)) {
-        raw.forEach((r) => createWatcher(r, ctx, publicThis, key));
+        raw.forEach((r) => createWatcher(r, ctx2, publicThis, key));
       } else {
-        const handler = isFunction(raw.handler) ? raw.handler.bind(publicThis) : ctx[raw.handler];
+        const handler = isFunction(raw.handler) ? raw.handler.bind(publicThis) : ctx2[raw.handler];
         if (isFunction(handler)) {
           watch(getter, handler, raw);
         } else if (true) {
@@ -2978,7 +3130,7 @@ If this is a native custom element, make sure to exclude it from component resol
     };
   }
   var uid$1 = 0;
-  function createAppAPI(render3, hydrate) {
+  function createAppAPI(render2, hydrate) {
     return function createApp2(rootComponent, rootProps = null) {
       if (!isFunction(rootComponent)) {
         rootComponent = extend({}, rootComponent);
@@ -2987,19 +3139,19 @@ If this is a native custom element, make sure to exclude it from component resol
         warn$1(`root props passed to app.mount() must be an object.`);
         rootProps = null;
       }
-      const context = createAppContext();
+      const context2 = createAppContext();
       const installedPlugins = /* @__PURE__ */ new WeakSet();
       let isMounted = false;
-      const app = context.app = {
+      const app = context2.app = {
         _uid: uid$1++,
         _component: rootComponent,
         _props: rootProps,
         _container: null,
-        _context: context,
+        _context: context2,
         _instance: null,
         version,
         get config() {
-          return context.config;
+          return context2.config;
         },
         set config(v) {
           if (true) {
@@ -3026,8 +3178,8 @@ If this is a native custom element, make sure to exclude it from component resol
         },
         mixin(mixin) {
           if (true) {
-            if (!context.mixins.includes(mixin)) {
-              context.mixins.push(mixin);
+            if (!context2.mixins.includes(mixin)) {
+              context2.mixins.push(mixin);
             } else if (true) {
               warn$1(
                 "Mixin has already been applied to target app" + (mixin.name ? `: ${mixin.name}` : "")
@@ -3040,15 +3192,15 @@ If this is a native custom element, make sure to exclude it from component resol
         },
         component(name, component) {
           if (true) {
-            validateComponentName(name, context.config);
+            validateComponentName(name, context2.config);
           }
           if (!component) {
-            return context.components[name];
+            return context2.components[name];
           }
-          if (context.components[name]) {
+          if (context2.components[name]) {
             warn$1(`Component "${name}" has already been registered in target app.`);
           }
-          context.components[name] = component;
+          context2.components[name] = component;
           return app;
         },
         directive(name, directive) {
@@ -3056,12 +3208,12 @@ If this is a native custom element, make sure to exclude it from component resol
             validateDirectiveName(name);
           }
           if (!directive) {
-            return context.directives[name];
+            return context2.directives[name];
           }
-          if (context.directives[name]) {
+          if (context2.directives[name]) {
             warn$1(`Directive "${name}" has already been registered in target app.`);
           }
-          context.directives[name] = directive;
+          context2.directives[name] = directive;
           return app;
         },
         mount(rootContainer, isHydrate, namespace) {
@@ -3073,15 +3225,15 @@ If this is a native custom element, make sure to exclude it from component resol
               );
             }
             const vnode = createVNode(rootComponent, rootProps);
-            vnode.appContext = context;
+            vnode.appContext = context2;
             if (namespace === true) {
               namespace = "svg";
             } else if (namespace === false) {
               namespace = void 0;
             }
             if (true) {
-              context.reload = () => {
-                render3(
+              context2.reload = () => {
+                render2(
                   cloneVNode(vnode),
                   rootContainer,
                   namespace
@@ -3091,7 +3243,7 @@ If this is a native custom element, make sure to exclude it from component resol
             if (isHydrate && hydrate) {
               hydrate(vnode, rootContainer);
             } else {
-              render3(vnode, rootContainer, namespace);
+              render2(vnode, rootContainer, namespace);
             }
             isMounted = true;
             app._container = rootContainer;
@@ -3110,7 +3262,7 @@ If you want to remount the same app, move your app creation logic into a factory
         },
         unmount() {
           if (isMounted) {
-            render3(null, app._container);
+            render2(null, app._container);
             if (true) {
               app._instance = null;
               devtoolsUnmountApp(app);
@@ -3121,12 +3273,12 @@ If you want to remount the same app, move your app creation logic into a factory
           }
         },
         provide(key, value) {
-          if (key in context.provides) {
+          if (key in context2.provides) {
             warn$1(
               `App already provides property with key "${String(key)}". It will be overwritten with the new value.`
             );
           }
-          context.provides[key] = value;
+          context2.provides[key] = value;
           return app;
         },
         runWithContext(fn) {
@@ -3572,29 +3724,29 @@ If you want to remount the same app, move your app creation logic into a factory
   }
   var isInternalKey = (key) => key[0] === "_" || key === "$stable";
   var normalizeSlotValue = (value) => isArray(value) ? value.map(normalizeVNode) : [normalizeVNode(value)];
-  var normalizeSlot = (key, rawSlot, ctx) => {
+  var normalizeSlot = (key, rawSlot, ctx2) => {
     if (rawSlot._n) {
       return rawSlot;
     }
     const normalized = withCtx((...args) => {
-      if (currentInstance && (!ctx || ctx.root === currentInstance.root)) {
+      if (currentInstance && (!ctx2 || ctx2.root === currentInstance.root)) {
         warn$1(
           `Slot "${key}" invoked outside of the render function: this will not track dependencies used in the slot. Invoke the slot function inside the render function instead.`
         );
       }
       return normalizeSlotValue(rawSlot(...args));
-    }, ctx);
+    }, ctx2);
     normalized._c = false;
     return normalized;
   };
   var normalizeObjectSlots = (rawSlots, slots, instance) => {
-    const ctx = rawSlots._ctx;
+    const ctx2 = rawSlots._ctx;
     for (const key in rawSlots) {
       if (isInternalKey(key))
         continue;
       const value = rawSlots[key];
       if (isFunction(value)) {
-        slots[key] = normalizeSlot(key, value, ctx);
+        slots[key] = normalizeSlot(key, value, ctx2);
       } else if (value != null) {
         if (true) {
           warn$1(
@@ -3704,7 +3856,7 @@ If you want to remount the same app, move your app creation logic into a factory
         if (hasOwn(setupState, oldRef)) {
           setupState[oldRef] = null;
         }
-      } else if (isRef(oldRef)) {
+      } else if (isRef2(oldRef)) {
         oldRef.value = null;
       }
     }
@@ -3712,7 +3864,7 @@ If you want to remount the same app, move your app creation logic into a factory
       callWithErrorHandling(ref2, owner, 12, [value, refs]);
     } else {
       const _isString = isString(ref2);
-      const _isRef = isRef(ref2);
+      const _isRef = isRef2(ref2);
       if (_isString || _isRef) {
         const doSet = () => {
           if (rawRef.f) {
@@ -5146,7 +5298,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       return teleportEnd ? hostNextSibling(teleportEnd) : el;
     };
     let isFlushing2 = false;
-    const render3 = (vnode, container, namespace) => {
+    const render2 = (vnode, container, namespace) => {
       if (vnode == null) {
         if (container._vnode) {
           unmount(container._vnode, null, null, true);
@@ -5190,9 +5342,9 @@ For more details, see https://link.vuejs.org/feature-flags.`
       );
     }
     return {
-      render: render3,
+      render: render2,
       hydrate,
-      createApp: createAppAPI(render3, hydrate)
+      createApp: createAppAPI(render2, hydrate)
     };
   }
   function resolveChildrenNamespace({ type, props }, currentNamespace) {
@@ -5287,13 +5439,13 @@ For more details, see https://link.vuejs.org/feature-flags.`
   var ssrContextKey = Symbol.for("v-scx");
   var useSSRContext = () => {
     {
-      const ctx = inject(ssrContextKey);
-      if (!ctx) {
+      const ctx2 = inject(ssrContextKey);
+      if (!ctx2) {
         warn$1(
           `Server rendering context not provided. Make sure to only call useSSRContext() conditionally in the server build.`
         );
       }
-      return ctx;
+      return ctx2;
     }
   };
   var INITIAL_WATCHER_VALUE = {};
@@ -5354,7 +5506,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
     let getter;
     let forceTrigger = false;
     let isMultiSource = false;
-    if (isRef(source)) {
+    if (isRef2(source)) {
       getter = () => source.value;
       forceTrigger = isShallow(source);
     } else if (isReactive(source)) {
@@ -5364,7 +5516,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       isMultiSource = true;
       forceTrigger = source.some((s) => isReactive(s) || isShallow(s));
       getter = () => source.map((s) => {
-        if (isRef(s)) {
+        if (isRef2(s)) {
           return s.value;
         } else if (isReactive(s)) {
           return reactiveGetter(s);
@@ -5418,8 +5570,8 @@ For more details, see https://link.vuejs.org/feature-flags.`
         ]);
       }
       if (flush === "sync") {
-        const ctx = useSSRContext();
-        ssrCleanup = ctx.__watcherHandles || (ctx.__watcherHandles = []);
+        const ctx2 = useSSRContext();
+        ssrCleanup = ctx2.__watcherHandles || (ctx2.__watcherHandles = []);
       } else {
         return NOOP;
       }
@@ -5503,10 +5655,10 @@ For more details, see https://link.vuejs.org/feature-flags.`
     reset();
     return res;
   }
-  function createPathGetter(ctx, path) {
+  function createPathGetter(ctx2, path) {
     const segments = path.split(".");
     return () => {
-      let cur = ctx;
+      let cur = ctx2;
       for (let i = 0; i < segments.length && cur; i++) {
         cur = cur[segments[i]];
       }
@@ -5523,7 +5675,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
     }
     seen.add(value);
     depth--;
-    if (isRef(value)) {
+    if (isRef2(value)) {
       traverse(value.value, depth, seen);
     } else if (isArray(value)) {
       for (let i = 0; i < value.length; i++) {
@@ -5697,12 +5849,12 @@ For more details, see https://link.vuejs.org/feature-flags.`
       slots,
       attrs,
       emit: emit2,
-      render: render3,
+      render: render2,
       renderCache,
       props,
       data,
       setupState,
-      ctx,
+      ctx: ctx2,
       inheritAttrs
     } = instance;
     const prev = setCurrentRenderingInstance(instance);
@@ -5725,14 +5877,14 @@ For more details, see https://link.vuejs.org/feature-flags.`
           }
         }) : proxyToUse;
         result = normalizeVNode(
-          render3.call(
+          render2.call(
             thisProxy,
             proxyToUse,
             renderCache,
             true ? shallowReadonly(props) : props,
             setupState,
             data,
-            ctx
+            ctx2
           )
         );
         fallthroughAttrs = attrs;
@@ -6066,7 +6218,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
     if (typeof ref2 === "number") {
       ref2 = "" + ref2;
     }
-    return ref2 != null ? isString(ref2) || isRef(ref2) || isFunction(ref2) ? { i: currentRenderingInstance, r: ref2, k: ref_key, f: !!ref_for } : ref2 : null;
+    return ref2 != null ? isString(ref2) || isRef2(ref2) || isFunction(ref2) ? { i: currentRenderingInstance, r: ref2, k: ref_key, f: !!ref_for } : ref2 : null;
   };
   function createBaseVNode(type, props = null, children = null, patchFlag = 0, dynamicProps = null, shapeFlag = type === Fragment ? 0 : 1, isBlockNode = false, needFullChildrenNormalization = false) {
     const vnode = {
@@ -6660,7 +6812,7 @@ Component that was made reactive: `,
           if (exposedType === "object") {
             if (isArray(exposed)) {
               exposedType = "array";
-            } else if (isRef(exposed)) {
+            } else if (isRef2(exposed)) {
               exposedType = "ref";
             }
           }
@@ -6791,7 +6943,7 @@ Component that was made reactive: `,
         }
         if (obj.__isVue) {
           return ["div", vueStyle, `VueInstance`];
-        } else if (isRef(obj)) {
+        } else if (isRef2(obj)) {
           return [
             "div",
             {},
@@ -7884,33 +8036,3006 @@ Expected function or array of functions, received type ${typeof value}.`
     initDev();
   }
 
-  // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=script
-  var Task_default = {
-    name: "Task",
-    props: {
-      docs: {
-        type: Array,
-        required: true,
-        default: []
+  // ../erpnext_taskview/node_modules/vue-demi/lib/index.mjs
+  var isVue2 = false;
+  var isVue3 = true;
+
+  // ../erpnext_taskview/node_modules/@babel/runtime/helpers/esm/typeof.js
+  function _typeof(o) {
+    "@babel/helpers - typeof";
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o2) {
+      return typeof o2;
+    } : function(o2) {
+      return o2 && "function" == typeof Symbol && o2.constructor === Symbol && o2 !== Symbol.prototype ? "symbol" : typeof o2;
+    }, _typeof(o);
+  }
+
+  // ../erpnext_taskview/node_modules/@babel/runtime/helpers/esm/toPrimitive.js
+  function toPrimitive(t, r) {
+    if ("object" != _typeof(t) || !t)
+      return t;
+    var e = t[Symbol.toPrimitive];
+    if (void 0 !== e) {
+      var i = e.call(t, r || "default");
+      if ("object" != _typeof(i))
+        return i;
+      throw new TypeError("@@toPrimitive must return a primitive value.");
+    }
+    return ("string" === r ? String : Number)(t);
+  }
+
+  // ../erpnext_taskview/node_modules/@babel/runtime/helpers/esm/toPropertyKey.js
+  function toPropertyKey(t) {
+    var i = toPrimitive(t, "string");
+    return "symbol" == _typeof(i) ? i : i + "";
+  }
+
+  // ../erpnext_taskview/node_modules/@babel/runtime/helpers/esm/defineProperty.js
+  function _defineProperty(e, r, t) {
+    return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+      value: t,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    }) : e[r] = t, e;
+  }
+
+  // ../erpnext_taskview/node_modules/helper-js/dist/index.esm.js
+  function isArray2(v) {
+    return Object.prototype.toString.call(v) === "[object Array]";
+  }
+  function isObject2(v) {
+    return Object.prototype.toString.call(v) === "[object Object]";
+  }
+  function isFunction2(v) {
+    return typeof v === "function";
+  }
+  function notGreaterThan(n, max) {
+    return n < max ? n : max;
+  }
+  function arrayRemove(arr, v) {
+    let index;
+    let count = 0;
+    while ((index = arr.indexOf(v)) > -1) {
+      arr.splice(index, 1);
+      count++;
+    }
+    return count;
+  }
+  function arrayLast(arr) {
+    return arr[arr.length - 1];
+  }
+  function toArrayIfNot(arrOrNot) {
+    return isArray2(arrOrNot) ? arrOrNot : [arrOrNot];
+  }
+  function objectOnly(obj, keys) {
+    let keysSet = new Set(keys);
+    const r = {};
+    keysSet.forEach((key) => {
+      r[key] = obj[key];
+    });
+    return r;
+  }
+  function* iterateAll(val) {
+    let opt = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+    if (!opt.reverse) {
+      if (val.length != null) {
+        for (let i = 0; i < val.length; i++) {
+          const info = {
+            value: val[i],
+            index: i
+          };
+          if (!opt.exclude || !opt.exclude(info)) {
+            yield info;
+          }
+        }
+      } else if (isObject2(val)) {
+        for (const key of Object.keys(val)) {
+          const info = {
+            value: val[key],
+            key
+          };
+          if (!opt.exclude || !opt.exclude(info)) {
+            yield info;
+          }
+        }
+      } else {
+        throw "Unsupported type";
       }
+    } else {
+      if (val.length != null) {
+        for (let i = val.length - 1; i >= 0; i--) {
+          const info = {
+            value: val[i],
+            index: i
+          };
+          if (!opt.exclude || !opt.exclude(info)) {
+            yield info;
+          }
+        }
+      } else if (isObject2(val)) {
+        const keys = Object.keys(val);
+        keys.reverse();
+        for (const key of keys) {
+          const info = {
+            value: val[key],
+            key
+          };
+          if (!opt.exclude || !opt.exclude(info)) {
+            yield info;
+          }
+        }
+      } else {
+        throw "Unsupported type";
+      }
+    }
+  }
+  function assignIfNoKey(obj, key, val) {
+    if (!obj.hasOwnProperty(key)) {
+      obj[key] = val;
+    }
+  }
+  function objectAssignIfNoKey(obj1, obj2) {
+    Object.keys(obj2).forEach((key) => {
+      assignIfNoKey(obj1, key, obj2[key]);
+    });
+    return obj1;
+  }
+  function withoutUndefined(obj) {
+    const r = {};
+    Object.keys(obj).forEach((key) => {
+      if (obj[key] !== void 0) {
+        r[key] = obj[key];
+      }
+    });
+    return r;
+  }
+  function walkTreeData(obj, handler) {
+    let opt = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : {};
+    opt = objectAssignIfNoKey(__spreadValues({}, opt), {
+      childrenKey: "children"
+    });
+    const {
+      childrenKey
+    } = opt;
+    const rootChildren = isArray2(obj) ? obj : [obj];
+    class StopException {
+    }
+    const func = (children, parent, parentPath) => {
+      if (opt.reverse) {
+        children = children.slice();
+        children.reverse();
+      }
+      const len = children.length;
+      for (let i = 0; i < len; i++) {
+        const item = children[i];
+        const index = opt.reverse ? len - i - 1 : i;
+        const path = parentPath ? [...parentPath, index] : [];
+        if (opt.childFirst) {
+          if (item[childrenKey] != null) {
+            func(item[childrenKey], item, path);
+          }
+        }
+        const r = handler(item, index, parent, path);
+        if (r === false) {
+          throw new StopException();
+        } else if (r === "skip children") {
+          continue;
+        } else if (r === "skip siblings") {
+          break;
+        }
+        if (!opt.childFirst) {
+          if (item[childrenKey] != null) {
+            func(item[childrenKey], item, path);
+          }
+        }
+      }
+    };
+    try {
+      func(rootChildren, null, isArray2(obj) ? [] : null);
+    } catch (e) {
+      if (e instanceof StopException)
+        ;
+      else {
+        throw e;
+      }
+    }
+  }
+  function findInfoInTreeData(obj, handler) {
+    let opt = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : {};
+    let r;
+    walkTreeData(obj, function() {
+      if (handler(...arguments)) {
+        r = {
+          node: arguments.length <= 0 ? void 0 : arguments[0],
+          index: arguments.length <= 1 ? void 0 : arguments[1],
+          parent: arguments.length <= 2 ? void 0 : arguments[2],
+          path: arguments.length <= 3 ? void 0 : arguments[3]
+        };
+        return false;
+      }
+    }, opt);
+    return r;
+  }
+  function findTreeData(obj, handler) {
+    let opt = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : {};
+    const r = findInfoInTreeData(obj, handler, opt);
+    return r === null || r === void 0 ? void 0 : r.node;
+  }
+  function cloneTreeData(root, options) {
+    const opt = {
+      childrenKey: "children"
+    };
+    if (options) {
+      Object.assign(opt, options);
+    }
+    const {
+      childrenKey,
+      nodeHandler
+    } = opt;
+    const td = new TreeData();
+    td.childrenKey = childrenKey;
+    walkTreeData(root, (node, index, parent, path) => {
+      let newNode = Object.assign({}, node);
+      if (newNode[childrenKey]) {
+        newNode[childrenKey] = [];
+      }
+      if (nodeHandler) {
+        newNode = nodeHandler(newNode, {
+          oldNode: node,
+          index,
+          parent,
+          path
+        });
+      }
+      td.set(path, newNode);
+    }, {
+      childrenKey
+    });
+    return td.data;
+  }
+  var TreeData = class {
+    constructor() {
+      let data = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : [];
+      _defineProperty(this, "data", void 0);
+      _defineProperty(this, "childrenKey", "children");
+      this.data = data;
+    }
+    get rootChildren() {
+      const {
+        childrenKey
+      } = this;
+      const {
+        data
+      } = this;
+      return isArray2(data) ? data : data[childrenKey];
+    }
+    *iteratePath(path) {
+      let opt = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+      const {
+        childrenKey,
+        rootChildren
+      } = this;
+      if (!opt.reverse) {
+        let prevPath = [];
+        let prevChildren = rootChildren;
+        for (const index of path) {
+          const currentPath = [...prevPath, index];
+          const currentNode = prevChildren[index];
+          yield {
+            path: currentPath,
+            node: currentNode
+          };
+          prevPath = currentPath;
+          prevChildren = currentNode[childrenKey];
+        }
+      } else {
+        const list = [...this.iteratePath(path, __spreadProps(__spreadValues({}, opt), {
+          reverse: false
+        }))];
+        list.reverse();
+        for (const {
+          path: path0,
+          node
+        } of list) {
+          const path2 = path0;
+          yield {
+            path: path2,
+            node
+          };
+        }
+      }
+    }
+    getFamily(path) {
+      const all = [];
+      for (const {
+        node
+      } of this.iteratePath(path)) {
+        all.push(node);
+      }
+      return all;
+    }
+    get(path) {
+      return arrayLast(this.getFamily(path));
+    }
+    getParentAndIndex(path) {
+      const parentPath = path.slice();
+      const index = parentPath.pop();
+      return {
+        parent: this.get(parentPath),
+        index,
+        parentPath
+      };
+    }
+    getParent(path) {
+      return this.getParentAndIndex(path).parent;
+    }
+    set(path, node) {
+      if (path == null || path.length === 0) {
+        this.data = node;
+      } else {
+        const {
+          childrenKey
+        } = this;
+        let {
+          rootChildren
+        } = this;
+        const {
+          parent,
+          index
+        } = this.getParentAndIndex(path);
+        let parentChildren;
+        if (path.length === 1) {
+          if (!rootChildren) {
+            if (this.data) {
+              this.data[childrenKey] = [];
+            } else {
+              this.data = [];
+            }
+          }
+          parentChildren = rootChildren;
+        } else {
+          if (!parent[childrenKey]) {
+            parent[childrenKey] = [];
+          }
+          parentChildren = parent[childrenKey];
+        }
+        parentChildren[index] = node;
+      }
+    }
+    delete(path) {
+      const {
+        childrenKey,
+        rootChildren
+      } = this;
+      const {
+        parent,
+        index
+      } = this.getParentAndIndex(path);
+      const parentChildren = path.length === 1 ? rootChildren : parent[childrenKey];
+      const node = parentChildren[index];
+      parentChildren.splice(index, 1);
+      return node;
+    }
+    walk(handler, opt) {
+      const {
+        childrenKey,
+        data
+      } = this;
+      return walkTreeData(data, handler, childrenKey, opt);
+    }
+    clone() {
+      let opt = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : {};
+      return cloneTreeData(this.data), withoutUndefined({
+        childrenKey: this.childrenKey,
+        nodeHandler: opt.nodeHandler || void 0
+      });
+    }
+  };
+  function resolveValueOrGettter(valueOrGetter) {
+    let args = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : [];
+    if (isFunction2(valueOrGetter)) {
+      return valueOrGetter(...args);
+    } else {
+      return valueOrGetter;
+    }
+  }
+  function applyFinally(func, finallyFunc) {
+    const wrapped = function() {
+      let r, e;
+      try {
+        r = func(...arguments);
+      } catch (error) {
+        e = error;
+      } finally {
+        finallyFunc();
+      }
+      if (!e) {
+        return r;
+      } else {
+        throw e;
+      }
+    };
+    return wrapped;
+  }
+  function cacheFunction(func) {
+    let options = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+    const cachedArgsArr = [];
+    let map2;
+    const defaultValue = {};
+    let noArgsCache = defaultValue;
+    const wrapped = function() {
+      for (var _len6 = arguments.length, args = new Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+        args[_key6] = arguments[_key6];
+      }
+      if (args.length === 0) {
+        if (noArgsCache === defaultValue) {
+          noArgsCache = func();
+        }
+        return noArgsCache;
+      }
+      if (!map2) {
+        map2 = new ArrayKeyMap();
+      }
+      if (!map2.has(args)) {
+        map2.set(args, func(...args));
+        if (options.capacity != null) {
+          cachedArgsArr.push(args);
+          const removed = cachedArgsArr.splice(0, cachedArgsArr.length - options.capacity);
+          for (const args2 of removed) {
+            map2.delete(args2);
+          }
+        }
+      }
+      return map2.get(args);
+    };
+    const clearCache = () => {
+      map2 = null;
+      cachedArgsArr.splice(0, cachedArgsArr.length);
+    };
+    return {
+      action: wrapped,
+      clearCache
+    };
+  }
+  function promisePin() {
+    let resolve2, reject;
+    const promise = new Promise((resolve22, reject2) => {
+      resolve2 = resolve22;
+      reject = reject2;
+    });
+    return {
+      promise,
+      resolve: resolve2,
+      reject
+    };
+  }
+  function isDescendantOf(el, parent) {
+    while (true) {
+      if (el.parentNode == null) {
+        return false;
+      } else if (el.parentNode === parent) {
+        return true;
+      } else {
+        el = el.parentNode;
+      }
+    }
+  }
+  function getBoundingClientRect(el) {
+    let xy = el.getBoundingClientRect();
+    if (document.documentElement.clientTop > 0) {
+      const top = xy.top - document.documentElement.clientTop, bottom = xy.bottom, left = xy.left - document.documentElement.clientLeft, right = xy.right, width = xy.width || right - left, height = xy.height || bottom - top;
+      const x = left;
+      const y = top;
+      const json = {
+        top,
+        right,
+        bottom,
+        left,
+        width,
+        height,
+        x,
+        y
+      };
+      xy = __spreadProps(__spreadValues({}, json), {
+        toJSON: () => json
+      });
+    }
+    return xy;
+  }
+  function findParent(el, callback) {
+    let opt = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : {};
+    let cur = opt && opt.withSelf ? el : el.parentElement;
+    while (cur) {
+      const shouldBreak = opt.until && cur === opt.until;
+      if (shouldBreak && !opt.withUntil) {
+        return;
+      }
+      const r = callback(cur);
+      if (r === "break") {
+        return;
+      } else if (r) {
+        return cur;
+      } else if (shouldBreak) {
+        return;
+      } else {
+        cur = cur.parentElement;
+      }
+    }
+  }
+  function hasClass(el, className) {
+    if (el.classList) {
+      return el.classList.contains(className);
+    } else {
+      return new RegExp("(^| )" + className + "( |$)", "gi").test(el.className);
+    }
+  }
+  function hasClassIn(el, classNames) {
+    for (const className of classNames) {
+      if (hasClass(el, className)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function on(el, name, handler, options) {
+    if (el.addEventListener) {
+      el.addEventListener(name, handler, options);
+    } else if (el.attachEvent) {
+      el.attachEvent("on".concat(name), handler, options);
+    }
+  }
+  function off(el, name, handler, options) {
+    if (el.removeEventListener) {
+      el.removeEventListener(name, handler, options);
+    } else if (el.detachEvent) {
+      el.detachEvent("on".concat(name), handler, options);
+    }
+  }
+  function extendedListen(info) {
+    let destroyFuncs = [];
+    const listenAll = () => {
+      if (r.listening) {
+        return;
+      }
+      for (const item of info) {
+        on.apply(this, item);
+        const destroy = () => off.apply(this, item);
+        destroyFuncs.push(destroy);
+      }
+      r.listening = true;
+    };
+    const destroyAll = () => {
+      if (!r.listening) {
+        return;
+      }
+      for (const destroy of destroyFuncs) {
+        destroy();
+      }
+      destroyFuncs = [];
+      r.listening = false;
+    };
+    const r = {
+      listening: false,
+      stop: destroyAll,
+      resume: listenAll,
+      start: listenAll
+    };
+    r.start();
+    return r;
+  }
+  function css(el, name) {
+    const stl = getComputedStyle(el);
+    return stl[name];
+  }
+  function binarySearch(arr, callback) {
+    let opt = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : {};
+    opt = __spreadValues({
+      start: 0,
+      end: arr.length - 1,
+      maxTimes: 1e3
+    }, opt);
+    let {
+      start,
+      end
+    } = opt;
+    const {
+      returnNearestIfNoHit,
+      maxTimes
+    } = opt;
+    let midNum;
+    let mid;
+    if (start == null) {
+      start = 0;
+      end = arr.length - 1;
+    }
+    let i = 0;
+    let r;
+    while (start >= 0 && start <= end) {
+      if (i >= maxTimes) {
+        throw Error("binarySearch: loop times is over ".concat(maxTimes, ", you can increase the limit."));
+      }
+      midNum = Math.floor((end - start) / 2 + start);
+      mid = arr[midNum];
+      const count = i + 1;
+      r = callback(mid, midNum, count);
+      if (r > 0) {
+        end = midNum - 1;
+      } else if (r < 0) {
+        start = midNum + 1;
+      } else {
+        return {
+          index: midNum,
+          value: mid,
+          count,
+          hit: true
+        };
+      }
+      i++;
+    }
+    return returnNearestIfNoHit ? {
+      index: midNum,
+      value: mid,
+      count: i + 1,
+      hit: false,
+      greater: r > 0
+    } : null;
+  }
+  function makeStorageHelper(storage) {
+    return {
+      storage,
+      set(name, value, minutes) {
+        if (value == null) {
+          this.storage.removeItem(name);
+        } else {
+          this.storage.setItem(name, JSON.stringify({
+            value,
+            expired_at: minutes ? new Date().getTime() + minutes * 60 * 1e3 : null
+          }));
+        }
+      },
+      get(name) {
+        let t = this.storage.getItem(name);
+        if (t) {
+          t = JSON.parse(t);
+          if (!t.expired_at || t.expired_at > new Date().getTime()) {
+            return t.value;
+          } else {
+            this.storage.removeItem(name);
+          }
+        }
+        return null;
+      },
+      clear() {
+        this.storage.clear();
+      }
+    };
+  }
+  var extendedLocalStorage = cacheFunction(function() {
+    return makeStorageHelper(localStorage);
+  });
+  var extendedSessionStorage = cacheFunction(function() {
+    return makeStorageHelper(sessionStorage);
+  });
+  var ArrayKeyMap = class {
+    constructor() {
+      _defineProperty(this, "_map", /* @__PURE__ */ new Map());
+      _defineProperty(this, "_values", {});
+      _defineProperty(this, "_objCount", 0);
+    }
+    _keysToString(keys) {
+      const {
+        _map
+      } = this;
+      let t = [];
+      for (const key of keys) {
+        if (!_map.has(key)) {
+          return null;
+        }
+        t.push(_map.get(key)[0]);
+      }
+      return t.toString();
+    }
+    has(keys) {
+      if (this._keysToString(keys) == null) {
+        return false;
+      }
+      return true;
+    }
+    get(keys) {
+      const {
+        _values
+      } = this;
+      const key2 = this._keysToString(keys);
+      if (key2 == null) {
+        throw "Value not found by specified keys";
+      }
+      return _values[key2][1];
+    }
+    set(keys, value) {
+      const {
+        _map,
+        _values
+      } = this;
+      let t = [];
+      for (const key of keys) {
+        let str;
+        let count = 1;
+        if (_map.has(key)) {
+          [str, count] = _map.get(key);
+          count++;
+        } else {
+          this._objCount++;
+          str = this._objCount.toString();
+        }
+        _map.set(key, [str, count]);
+        t.push(str);
+      }
+      _values[t.toString()] = [keys.slice(), value];
+    }
+    delete(keys) {
+      const {
+        _values,
+        _map
+      } = this;
+      const key2 = this._keysToString(keys);
+      if (key2 == null) {
+        throw "Value not found by specified keys";
+      }
+      delete _values[key2];
+      for (const key of keys) {
+        let [str, count] = _map.get(key);
+        count--;
+        if (count === 0) {
+          _map.delete(key);
+        } else {
+          _map.set(key, [str, count]);
+        }
+      }
+    }
+    clear() {
+      this._map.clear();
+      this._values = {};
+    }
+    *entries() {
+      const {
+        _values
+      } = this;
+      for (const key in _values) {
+        const [keys, value] = _values[key];
+        yield [keys, value];
+      }
+    }
+    count() {
+      return [...this.entries()].length;
     }
   };
 
-  // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=template
-  function render(_ctx, _cache, $props, $setup, $data, $options) {
-    return openBlock(), createElementBlock("div");
+  // ../erpnext_taskview/node_modules/@virtual-list/vue/dist/v3/index.es.js
+  var _export_sfc = (sfc, props) => {
+    const target = sfc.__vccOpts || sfc;
+    for (const [key, val] of props) {
+      target[key] = val;
+    }
+    return target;
+  };
+  var _sfc_main$1 = defineComponent({
+    props: {
+      table: Boolean
+    }
+  });
+  var _hoisted_1 = { key: 0 };
+  var _hoisted_2 = { key: 1 };
+  function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
+    return _ctx.table ? (openBlock(), createElementBlock("table", _hoisted_1, [
+      renderSlot(_ctx.$slots, "prepend"),
+      createBaseVNode("tbody", null, [
+        renderSlot(_ctx.$slots, "default")
+      ]),
+      renderSlot(_ctx.$slots, "append")
+    ])) : (openBlock(), createElementBlock("div", _hoisted_2, [
+      renderSlot(_ctx.$slots, "prepend"),
+      renderSlot(_ctx.$slots, "default"),
+      renderSlot(_ctx.$slots, "append")
+    ]));
+  }
+  var VirtualListTable = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render$1]]);
+  var cpt = defineComponent({
+    components: { VirtualListTable },
+    props: {
+      items: Array,
+      disabled: Boolean,
+      horizontal: Boolean,
+      firstRender: { type: Number, default: 10 },
+      buffer: { type: Number, default: 100 },
+      itemKey: {
+        type: [String, Function]
+      },
+      itemSize: {
+        type: Function
+      },
+      table: Boolean
+    },
+    setup(props) {
+      const start = ref(0);
+      const end = ref(props.firstRender - 1);
+      const end2 = computed2(() => {
+        var _a;
+        return notGreaterThan(end.value, (((_a = props.items) == null ? void 0 : _a.length) || 1) - 1);
+      });
+      const avgSize = ref(0);
+      const startSize = computed2(() => positions.value[start.value] ? getPosition(start.value) : 0);
+      const totalSize = computed2(() => positions.value.length > 0 ? getPosition(positions.value.length - 1) + arrayLast(sizes.value) : 0);
+      const endSize = computed2(() => positions.value[end2.value] ? totalSize.value - getPosition(end2.value) - sizes.value[end2.value] : 0);
+      const listStyle = computed2(() => !props.disabled ? { overflow: "auto" } : {});
+      const listInnerStyle = computed2(() => {
+        const r = {
+          display: "flex"
+        };
+        if (!props.disabled) {
+          if (!props.horizontal) {
+            Object.assign(r, {
+              "margin-top": startSize.value + "px",
+              "margin-bottom": endSize.value + "px"
+            });
+          } else {
+            Object.assign(r, {
+              "margin-left": startSize.value + "px",
+              "margin-right": endSize.value + "px",
+              width: totalSize.value - endSize.value - startSize.value + "px"
+            });
+          }
+        }
+        r["flex-direction"] = !props.horizontal ? "column" : "row";
+        if (props.table) {
+          delete r.display;
+          delete r["flex-direction"];
+        }
+        return r;
+      });
+      const runtimeSizes = computed2(() => reactive((props.items || []).map(() => null)));
+      const sizes = computed2(() => (props.items || []).map((item, index) => {
+        var _a;
+        if (runtimeSizes[index] != null) {
+          return runtimeSizes[index];
+        }
+        let r = (_a = props.itemSize) == null ? void 0 : _a.call(props, item, index);
+        if (r == null) {
+          r = avgSize.value;
+        }
+        return r;
+      }));
+      const positions = computed2(() => {
+        const p2 = [];
+        sizes.value.reduce((a, b) => {
+          p2.push(a);
+          return a + b;
+        }, 0);
+        return p2;
+      });
+      watch(() => props.items, update);
+      const visibleItemsInfo = computed2(() => {
+        if (!props.items || props.disabled) {
+          return;
+        }
+        const r = [];
+        for (let index = start.value; index <= end2.value; index++) {
+          const item = props.items[index];
+          if (!item) {
+            break;
+          }
+          r.push({ item, index });
+        }
+        return r;
+      });
+      const listElRef = ref();
+      const listInnerRef = ref();
+      onMounted(async () => {
+        update();
+        try {
+          createResizeObserver();
+        } catch (error) {
+          await nextTick();
+          update();
+        }
+      });
+      let prevScroll;
+      function onscroll() {
+        const listEl = listElRef.value;
+        if (!listEl) {
+          return;
+        }
+        const currentScroll = getScroll(listEl);
+        if (prevScroll != null && props.buffer - Math.abs(currentScroll - prevScroll) >= 10) {
+          return;
+        }
+        prevScroll = currentScroll;
+        update();
+      }
+      let executing = false;
+      let waiting = false;
+      async function update() {
+        var _a;
+        if (executing) {
+          waiting = true;
+          return;
+        }
+        if (!props.items || props.disabled) {
+          return;
+        }
+        executing = true;
+        const listEl = listElRef.value;
+        const listInner = (_a = listInnerRef.value) == null ? void 0 : _a.$el;
+        if (!listEl || !listInner) {
+          return;
+        }
+        if (!avgSize.value) {
+          avgSize.value = getAvgSize();
+        }
+        start.value = getStart();
+        end.value = getEnd();
+        await nextTick();
+        let updated;
+        let vi0 = 0;
+        const runtimeSizesTemp = {};
+        const children = !props.table ? listInner.children : listInner.querySelector("tbody").children;
+        for (let i = 0; i < children.length; i++) {
+          const el = children[i];
+          const cssPosition = css(el, "position");
+          if (cssPosition && ["absolute", "fixed"].includes(cssPosition)) {
+            continue;
+          }
+          const size2 = css(el, "display") !== "none" ? getOuterSize(el) : 0;
+          const vi = el.getAttribute("vt-index");
+          const index = vi ? parseInt(vi) : start.value + vi0;
+          runtimeSizesTemp[index] = (runtimeSizesTemp[index] || 0) + size2;
+          vi0++;
+        }
+        for (const indexS of Object.keys(runtimeSizesTemp)) {
+          const index = parseInt(indexS);
+          if (runtimeSizes.value[index] !== runtimeSizesTemp[index]) {
+            runtimeSizes.value[index] = runtimeSizesTemp[index];
+            updated = true;
+          }
+        }
+        if (updated) {
+          await nextTick();
+        }
+        executing = false;
+        if (waiting) {
+          waiting = false;
+          update();
+        }
+        function getStart() {
+          const startPosition = getScroll(listEl) - getPaddingStart(listEl) - props.buffer;
+          const r = binarySearch(positions.value, (mid) => mid - startPosition, { returnNearestIfNoHit: true });
+          return r.index;
+        }
+        function getEnd() {
+          const endPosition = getScroll(listEl) - getPaddingStart(listEl) + getClientSize(listEl) + props.buffer;
+          const r = binarySearch(positions.value, (mid) => mid - endPosition, { returnNearestIfNoHit: true });
+          return r.index;
+        }
+        function getAvgSize() {
+          const maxSampleCount = 10;
+          const sizeArr = [];
+          const children2 = !props.table ? listInner.children : listInner.querySelector("tbody").children;
+          for (let index = 0; index < children2.length; index++) {
+            const el = children2[index];
+            const style = getComputedStyle(el);
+            if (["absolute", "fixed"].includes(style.position)) {
+              continue;
+            }
+            const outerSize = getOuterSize(el);
+            sizeArr.push(outerSize);
+            if (sizeArr.length >= maxSampleCount) {
+              break;
+            }
+          }
+          if (sizeArr.length === 0) {
+            return 0;
+          }
+          return sizeArr.reduce((a, b) => a + b, 0) / sizeArr.length;
+        }
+      }
+      function getClientSize(el) {
+        const style = getComputedStyle(el);
+        let r = parseFloat(!props.horizontal ? style.height : style.width);
+        if (style.boxSizing === "border-box") {
+          if (!props.horizontal) {
+            r = r - parseFloat(style.borderTopWidth) - parseFloat(style.borderBottomWidth);
+          } else {
+            r = r - parseFloat(style.borderLeftWidth) - parseFloat(style.borderRightWidth);
+          }
+        }
+        return r;
+      }
+      function getOuterSize(el) {
+        let r = getClientSize(el);
+        const style = getComputedStyle(el);
+        if (!props.horizontal) {
+          r += parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth) + parseFloat(style.marginTop) + parseFloat(style.marginBottom);
+        } else {
+          r += parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth) + parseFloat(style.marginLeft) + parseFloat(style.marginRight);
+        }
+        r = Number.isNaN(r) ? 0 : r;
+        return r;
+      }
+      function getScroll(el) {
+        return !props.horizontal ? el.scrollTop : el.scrollLeft;
+      }
+      function getPaddingStart(el) {
+        const style = getComputedStyle(el);
+        return !props.horizontal ? parseFloat(style.paddingTop) : parseFloat(style.paddingLeft);
+      }
+      function getPosition(index) {
+        return positions.value[index];
+      }
+      function createResizeObserver() {
+        const listEl = listElRef.value;
+        const resizeObserver = new ResizeObserver((entries) => {
+          for (let entry of entries) {
+            if (hasClass(entry.target, "vtlist")) {
+              update();
+              break;
+            }
+          }
+        });
+        resizeObserver.observe(listEl);
+      }
+      function getItemKey(item, index) {
+        if (props.itemKey) {
+          if (typeof props.itemKey === "string" && props.itemKey === "index") {
+            return index;
+          } else if (typeof props.itemKey === "function") {
+            return props.itemKey(item, index);
+          }
+        }
+      }
+      return {
+        listElRef,
+        listInnerRef,
+        onscroll,
+        listStyle,
+        listInnerStyle,
+        visibleItemsInfo,
+        getItemKey,
+        update,
+        sizes,
+        positions,
+        runtimeSizes
+      };
+    }
+  });
+  var _sfc_main = cpt;
+  function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_VirtualListTable = resolveComponent("VirtualListTable");
+    return openBlock(), createElementBlock("div", {
+      class: "vtlist",
+      ref: "listElRef",
+      style: normalizeStyle(_ctx.listStyle),
+      onScrollPassive: _cache[0] || (_cache[0] = (...args) => _ctx.onscroll && _ctx.onscroll(...args))
+    }, [
+      createVNode(_component_VirtualListTable, {
+        class: "vtlist-inner",
+        ref: "listInnerRef",
+        style: normalizeStyle(_ctx.listInnerStyle),
+        table: _ctx.table
+      }, {
+        prepend: withCtx(() => [
+          renderSlot(_ctx.$slots, "prepend")
+        ]),
+        append: withCtx(() => [
+          renderSlot(_ctx.$slots, "append")
+        ]),
+        default: withCtx(() => [
+          _ctx.disabled ? (openBlock(true), createElementBlock(Fragment, { key: 0 }, renderList(_ctx.items, (item, index) => {
+            return renderSlot(_ctx.$slots, "default", {
+              key: _ctx.getItemKey(item, index),
+              item,
+              index
+            });
+          }), 128)) : (openBlock(true), createElementBlock(Fragment, { key: 1 }, renderList(_ctx.visibleItemsInfo, ({ item, index }) => {
+            return renderSlot(_ctx.$slots, "default", {
+              key: _ctx.getItemKey(item, index),
+              item,
+              index
+            });
+          }), 128))
+        ]),
+        _: 3
+      }, 8, ["style", "table"])
+    ], 36);
+  }
+  var VirtualList = /* @__PURE__ */ _export_sfc(_sfc_main, [["render", _sfc_render]]);
+
+  // ../erpnext_taskview/node_modules/@he-tree/tree-utils/dist/index.esm.js
+  var CHILDREN = "children";
+  function makeTreeProcessor(data) {
+    let opt = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+    const opt2 = opt;
+    const utilsBase = __spreadProps(__spreadValues(__spreadValues({}, defaultOptions), opt2), {
+      data,
+      stats: null,
+      statsFlat: null,
+      _statsMap: null,
+      initialized: false,
+      init() {
+        const {
+          data: data2,
+          childrenKey
+        } = this;
+        const td = new TreeData([]);
+        this._statsMap = /* @__PURE__ */ new Map();
+        walkTreeData(data2, (nodeData, index, parent, path) => {
+          const stat = this.statHandler(__spreadProps(__spreadValues({}, statDefault()), {
+            data: nodeData,
+            open: Boolean(this.defaultOpen),
+            parent: td.getParent(path),
+            children: [],
+            level: path.length
+          }));
+          this._statsMap.set(nodeData, stat);
+          td.set(path, stat);
+        }, {
+          childrenKey
+        });
+        const statsFlat = [];
+        td.walk((stat) => {
+          statsFlat.push(stat);
+        });
+        this.stats = this.statsHandler(td.rootChildren);
+        this.statsFlat = this.statsFlatHandler(statsFlat);
+        this.initialized = true;
+      },
+      getStat(nodeData) {
+        let r = this._statsMap.get(nodeData);
+        if (!r) {
+          throw new StatNotFoundError("Stat not found");
+        }
+        return r;
+      },
+      has(nodeData) {
+        if (nodeData["isStat"]) {
+          return this.statsFlat.indexOf(nodeData) > -1;
+        } else {
+          try {
+            let r = this.getStat(nodeData);
+            return Boolean(r);
+          } catch (error) {
+            if (error instanceof StatNotFoundError) {
+              return false;
+            }
+            throw error;
+          }
+        }
+      },
+      _getPathByStat(stat) {
+        if (stat == null) {
+          return [];
+        }
+        const siblings = this.getSiblings(stat);
+        const index = siblings.indexOf(stat);
+        return [...stat.parent ? this._getPathByStat(stat.parent) : [], index];
+      },
+      afterOneCheckChanged(stat) {
+        const {
+          checked
+        } = stat;
+        if (stat._ignoreCheckedOnce) {
+          delete stat._ignoreCheckedOnce;
+          return false;
+        }
+        const checkParent = (stat2) => {
+          const {
+            parent
+          } = stat2;
+          if (parent) {
+            let hasChecked;
+            let hasUnchecked;
+            for (const child of parent.children) {
+              if (child.checked || child.checked === 0) {
+                hasChecked = true;
+              } else {
+                hasUnchecked = true;
+                if (hasChecked && hasUnchecked) {
+                  break;
+                }
+              }
+            }
+            const parentChecked = !hasUnchecked ? true : hasChecked ? 0 : false;
+            if (parent.checked !== parentChecked) {
+              this._ignoreCheckedOnce(parent);
+              parent.checked = parentChecked;
+            }
+            checkParent(parent);
+          }
+        };
+        checkParent(stat);
+        walkTreeData(stat.children, (child) => {
+          if (child.checked !== checked) {
+            this._ignoreCheckedOnce(child);
+            child.checked = checked;
+          }
+        }, {
+          childrenKey: CHILDREN
+        });
+        return true;
+      },
+      _ignoreCheckedOnce(stat) {
+        stat._ignoreCheckedOnce = true;
+        setTimeout(() => {
+          if (stat._ignoreCheckedOnce) {
+            stat._ignoreCheckedOnce = false;
+          }
+        }, 100);
+      },
+      isVisible(statOrNodeData) {
+        const stat = statOrNodeData["isStat"] ? statOrNodeData : this.getStat(statOrNodeData);
+        const walk = (stat2) => {
+          return !stat2 || !stat2.hidden && stat2.open && walk(stat2.parent);
+        };
+        return Boolean(!stat.hidden && walk(stat.parent));
+      },
+      updateCheck() {
+        walkTreeData(this.stats, (stat) => {
+          if (stat.children && stat.children.length > 0) {
+            const checked = stat.children.every((v) => v.checked);
+            if (stat.checked !== checked) {
+              this._ignoreCheckedOnce(stat);
+              stat.checked = checked;
+            }
+          }
+        }, {
+          childFirst: true,
+          childrenKey: CHILDREN
+        });
+      },
+      getChecked() {
+        let withDemi = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
+        return this.statsFlat.filter((v) => {
+          return v.checked || withDemi && v.checked === 0;
+        });
+      },
+      getUnchecked() {
+        let withDemi = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : true;
+        return this.statsFlat.filter((v) => {
+          return withDemi ? !v.checked : v.checked === false;
+        });
+      },
+      openAll() {
+        for (const stat of this.statsFlat) {
+          stat.open = true;
+        }
+      },
+      closeAll() {
+        for (const stat of this.statsFlat) {
+          stat.open = false;
+        }
+      },
+      openNodeAndParents(nodeOrStat) {
+        const stat = nodeOrStat["isStat"] ? nodeOrStat : this.getStat(nodeOrStat);
+        for (const parentStat of this.iterateParent(stat, {
+          withSelf: true
+        })) {
+          parentStat.open = true;
+        }
+      },
+      _calcFlatIndex(parent, index) {
+        let flatIndex = parent ? this.statsFlat.indexOf(parent) + 1 : 0;
+        const siblings = parent ? parent.children : this.stats;
+        for (let i = 0; i < index; i++) {
+          flatIndex += this._count(siblings[i]);
+        }
+        return flatIndex;
+      },
+      add(nodeData, parent, index) {
+        if (this.has(nodeData)) {
+          throw "Can't add because data exists in tree";
+        }
+        const siblings = parent ? parent.children : this.stats;
+        if (index == null) {
+          index = siblings.length;
+        }
+        const stat = this.statHandler(__spreadProps(__spreadValues({}, statDefault()), {
+          open: Boolean(this.defaultOpen),
+          data: nodeData,
+          parent: parent || null,
+          children: [],
+          level: parent ? parent.level + 1 : 1
+        }));
+        this._setPosition(stat, parent || null, index);
+        const children = nodeData[this.childrenKey];
+        if (children) {
+          const childrenSnap = children.slice();
+          for (const child of childrenSnap) {
+            this.add(child, stat);
+          }
+        }
+      },
+      remove(stat) {
+        const siblings = this.getSiblings(stat);
+        if (siblings.includes(stat)) {
+          arrayRemove(siblings, stat);
+          const stats = this._flat(stat);
+          this.statsFlat.splice(this.statsFlat.indexOf(stat), stats.length);
+          for (const stat2 of stats) {
+            this._statsMap.delete(stat2.data);
+          }
+          this.afterRemoveStat(stat);
+          return true;
+        }
+        return false;
+      },
+      getSiblings(stat) {
+        const {
+          parent
+        } = stat;
+        return parent ? parent.children : this.stats;
+      },
+      _setPosition(stat, parent, index) {
+        const siblings = parent ? parent.children : this.stats;
+        siblings.splice(index, 0, stat);
+        stat.parent = parent;
+        stat.level = parent ? parent.level + 1 : 1;
+        const flatIndex = this._calcFlatIndex(parent, index);
+        const stats = this._flat(stat);
+        this.statsFlat.splice(flatIndex, 0, ...stats);
+        for (const stat2 of stats) {
+          if (!this._statsMap.has(stat2.data)) {
+            this._statsMap.set(stat2.data, stat2);
+          }
+        }
+        walkTreeData(stat, (node, index2, parent2) => {
+          if (parent2) {
+            node.level = parent2.level + 1;
+          }
+        }, {
+          childrenKey: CHILDREN
+        });
+        this.afterSetStat(stat, parent, index);
+      },
+      *iterateParent(stat, opt3) {
+        let t = opt3 !== null && opt3 !== void 0 && opt3.withSelf ? stat : stat.parent;
+        while (t) {
+          yield t;
+          t = t.parent;
+        }
+      },
+      move(stat, parent, index) {
+        if (this.has(stat)) {
+          if (stat.parent === parent && this.getSiblings(stat).indexOf(stat) === index) {
+            return false;
+          }
+          if (stat === parent) {
+            throw new Error("Can't move node to it self");
+          }
+          if (parent && stat.level < parent.level) {
+            let t;
+            for (const item of this.iterateParent(parent)) {
+              if (item.level === stat.level) {
+                t = item;
+                break;
+              }
+            }
+            if (stat === t) {
+              throw new Error("Can't move node to its descendant");
+            }
+          }
+          this.remove(stat);
+        }
+        this._setPosition(stat, parent, index);
+        return true;
+      },
+      _flat(stat) {
+        const r = [];
+        walkTreeData(stat, (child) => {
+          r.push(child);
+        }, {
+          childrenKey: CHILDREN
+        });
+        return r;
+      },
+      _count(stat) {
+        return this._flat(stat).length;
+      },
+      getData(filter2, root) {
+        const {
+          childrenKey
+        } = this;
+        const td = new TreeData([]);
+        td.childrenKey = childrenKey;
+        walkTreeData(root || this.stats, (stat, index, parent, path) => {
+          let newData = __spreadProps(__spreadValues({}, stat.data), {
+            [childrenKey]: []
+          });
+          if (filter2) {
+            newData = filter2(newData);
+          }
+          td.set(path, newData);
+        }, {
+          childrenKey: CHILDREN
+        });
+        return td.data;
+      }
+    });
+    const utils = utilsBase;
+    if (!utilsBase.noInitialization) {
+      utils.init();
+    }
+    return utils;
+  }
+  var defaultOptions = {
+    childrenKey: "children",
+    defaultOpen: false,
+    statsHandler(stats) {
+      return stats;
+    },
+    statsFlatHandler(statsFlat) {
+      return statsFlat;
+    },
+    afterSetStat(stat, parent, index) {
+    },
+    afterRemoveStat(stat) {
+    },
+    statHandler(stat) {
+      return stat;
+    }
+  };
+  function statDefault() {
+    return {
+      isStat: true,
+      hidden: false,
+      checked: false,
+      style: null,
+      class: null,
+      draggable: null,
+      droppable: null
+    };
+  }
+  var StatNotFoundError = class extends Error {
+    constructor(message) {
+      super(message);
+      this.name = "StatNotFoundError";
+    }
+  };
+
+  // ../erpnext_taskview/node_modules/drag-event-service/dist/index.esm.js
+  var events = {
+    start: ["mousedown", "touchstart"],
+    move: ["mousemove", "touchmove"],
+    end: ["mouseup", "touchend"]
+  };
+  var DragEventService = {
+    isTouch(e) {
+      return e.type && e.type.startsWith("touch");
+    },
+    _getStore(el) {
+      if (!el._wrapperStore) {
+        el._wrapperStore = [];
+      }
+      return el._wrapperStore;
+    },
+    on(el, name, handler, options) {
+      const {
+        args,
+        mouseArgs,
+        touchArgs
+      } = resolveOptions(options);
+      const store = this._getStore(el);
+      const ts = this;
+      const wrapper = function(e) {
+        let mouse;
+        const isTouch = ts.isTouch(e);
+        if (isTouch) {
+          mouse = {
+            x: e.changedTouches[0].pageX,
+            y: e.changedTouches[0].pageY,
+            pageX: e.changedTouches[0].pageX,
+            pageY: e.changedTouches[0].pageY,
+            clientX: e.changedTouches[0].clientX,
+            clientY: e.changedTouches[0].clientY,
+            screenX: e.changedTouches[0].screenX,
+            screenY: e.changedTouches[0].screenY
+          };
+        } else {
+          mouse = {
+            x: e.pageX,
+            y: e.pageY,
+            pageX: e.pageX,
+            pageY: e.pageY,
+            clientX: e.clientX,
+            clientY: e.clientY,
+            screenX: e.screenX,
+            screenY: e.screenY
+          };
+          if (name === "start" && e.which !== 1) {
+            return;
+          }
+        }
+        return handler.call(this, e, mouse);
+      };
+      store.push({
+        handler,
+        wrapper
+      });
+      on.call(null, el, events[name][0], wrapper, ...[...args, ...mouseArgs]);
+      on.call(null, el, events[name][1], wrapper, ...[...args, ...touchArgs]);
+    },
+    off(el, name, handler, options) {
+      const {
+        args,
+        mouseArgs,
+        touchArgs
+      } = resolveOptions(options);
+      const store = this._getStore(el);
+      for (let i = store.length - 1; i >= 0; i--) {
+        const {
+          handler: handler2,
+          wrapper
+        } = store[i];
+        if (handler === handler2) {
+          off.call(null, el, events[name][0], wrapper, ...[...args, ...mouseArgs]);
+          off.call(null, el, events[name][1], wrapper, ...[...args, ...mouseArgs]);
+          store.splice(i, 1);
+        }
+      }
+    }
+  };
+  function resolveOptions(options) {
+    if (!options) {
+      options = {};
+    }
+    const args = options.args || [];
+    const mouseArgs = options.mouseArgs || [];
+    const touchArgs = options.touchArgs || [];
+    return {
+      args,
+      mouseArgs,
+      touchArgs
+    };
   }
 
-  // ../erpnext_taskview/erpnext_taskview/public/js/components/Task.vue
-  Task_default.render = render;
-  Task_default.__file = "../erpnext_taskview/erpnext_taskview/public/js/components/Task.vue";
-  var Task_default2 = Task_default;
+  // ../erpnext_taskview/node_modules/@he-tree/dnd-utils/dist/index.esm.js
+  var instances = /* @__PURE__ */ new Map();
+  var context = {
+    triggerElement: null,
+    dragElement: null,
+    internal: false,
+    dropEffect: "none",
+    preventDefault: false
+  };
+  var ctx = context;
+  function syncDropEffect(e) {
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = ctx.dropEffect;
+    }
+  }
+  function extendedDND(root) {
+    let options = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+    if (instances.has(root)) {
+      throw "Already registered on specified element";
+    }
+    const opt = __spreadValues({}, options);
+    const ins = opt;
+    objectAssignIfNoKey(opt, defaultOptions2);
+    DragEventService.on(root, "start", beforeDragStart, {
+      touchArgs: [{
+        passive: true
+      }]
+    });
+    DragEventService.on(root, "end", onClickEnd);
+    function beforeDragStart(e) {
+      var _opt$beforeDragStart;
+      const node = e.target;
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        ctx.triggerElement = node;
+      }
+      const el = node;
+      if (opt.ingoreHTMLTags && el.tagName) {
+        if (opt.ingoreHTMLTags.find((tag) => tag.toUpperCase() === el.tagName)) {
+          return;
+        }
+      }
+      const dragElement = (_opt$beforeDragStart = opt.beforeDragStart) === null || _opt$beforeDragStart === void 0 ? void 0 : _opt$beforeDragStart.call(opt, e);
+      if (dragElement) {
+        dragElement.setAttribute("draggable", "true");
+        ctx.dragElement = dragElement;
+      }
+    }
+    function onClickEnd(e) {
+      if (ctx.dragElement) {
+        ctx.dragElement.removeAttribute("draggable");
+      }
+    }
+    function onDragStart(e) {
+      var _opt$onDragStart;
+      ctx.internal = true;
+      (_opt$onDragStart = opt.onDragStart) === null || _opt$onDragStart === void 0 ? void 0 : _opt$onDragStart.call(opt, e);
+      syncDropEffect(e);
+    }
+    function onDrag(e) {
+      var _opt$onDrag;
+      (_opt$onDrag = opt.onDrag) === null || _opt$onDrag === void 0 ? void 0 : _opt$onDrag.call(opt, e);
+      syncDropEffect(e);
+    }
+    function onDragEnd(e) {
+      var _opt$onDragEnd;
+      (_opt$onDragEnd = opt.onDragEnd) === null || _opt$onDragEnd === void 0 ? void 0 : _opt$onDragEnd.call(opt, e);
+      ctx.internal = false;
+      if (ctx.dragElement) {
+        ctx.dragElement.removeAttribute("draggable");
+      }
+      ctx.triggerElement = null;
+      ctx.dragElement = null;
+      ctx.dropEffect = "none";
+    }
+    const destroyDropZoneListeners = extendedDropZone(root, {
+      onDragLeave(e) {
+        var _opt$onDragLeave;
+        (_opt$onDragLeave = opt.onDragLeave) === null || _opt$onDragLeave === void 0 ? void 0 : _opt$onDragLeave.call(opt, e);
+        syncDropEffect(e);
+      },
+      onDragEnter(e) {
+        var _opt$onDragEnter;
+        ins.ifPreventDefault(e) && e.preventDefault();
+        (_opt$onDragEnter = opt.onDragEnter) === null || _opt$onDragEnter === void 0 ? void 0 : _opt$onDragEnter.call(opt, e);
+        syncDropEffect(e);
+      },
+      onDragOver(e) {
+        var _opt$onDragOver;
+        ins.ifPreventDefault(e) && e.preventDefault();
+        (_opt$onDragOver = opt.onDragOver) === null || _opt$onDragOver === void 0 ? void 0 : _opt$onDragOver.call(opt, e);
+        syncDropEffect(e);
+      },
+      onDrop(e) {
+        var _opt$onDrop;
+        ins.ifPreventDefault(e) && e.preventDefault();
+        (_opt$onDrop = opt.onDrop) === null || _opt$onDrop === void 0 ? void 0 : _opt$onDrop.call(opt, e);
+      },
+      onEnter(e) {
+        var _opt$onEnter;
+        (_opt$onEnter = opt.onEnter) === null || _opt$onEnter === void 0 ? void 0 : _opt$onEnter.call(opt, e);
+      },
+      onLeave(e) {
+        var _opt$onLeave;
+        (_opt$onLeave = opt.onLeave) === null || _opt$onLeave === void 0 ? void 0 : _opt$onLeave.call(opt, e);
+      }
+    });
+    on(root, "dragstart", onDragStart);
+    on(root, "drag", onDrag);
+    on(root, "dragend", onDragEnd);
+    const destroy = () => {
+      DragEventService.off(root, "start", beforeDragStart, {
+        touchArgs: [{
+          passive: true
+        }]
+      });
+      off(root, "dragstart", onDragStart);
+      off(root, "drag", onDrag);
+      off(root, "dragend", onDragEnd);
+      destroyDropZoneListeners();
+      instances.delete(root);
+    };
+    Object.assign(opt, {
+      root,
+      destroy
+    });
+    instances.set(root, ins);
+    return ins;
+  }
+  var defaultOptions2 = {
+    ingoreHTMLTags: ["INPUT", "TEXTAREA", "SELECT", "OPTGROUP", "OPTION"],
+    ifPreventDefault(event) {
+      if (context.dragElement) {
+        return true;
+      }
+      return ctx.preventDefault;
+    },
+    beforeDragStart(event) {
+    },
+    onDragStart(event) {
+    },
+    onDrag(event) {
+    },
+    onDragEnter(event) {
+    },
+    onDragLeave(event) {
+    },
+    onDragOver(event) {
+    },
+    onDragEnd(event) {
+    },
+    onDrop(event) {
+    }
+  };
+  var justEnteredTarget = null;
+  var setJustEnteredTarget = (el) => {
+    justEnteredTarget = el;
+    setTimeout(() => {
+      justEnteredTarget = null;
+    }, 20);
+  };
+  function extendedDropZone(el) {
+    let opt = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+    const dropZone = el;
+    let entered = false;
+    const onEnter = (e) => {
+      var _opt$onEnter2;
+      entered = true;
+      (_opt$onEnter2 = opt.onEnter) === null || _opt$onEnter2 === void 0 ? void 0 : _opt$onEnter2.call(opt, e);
+      endListeners.resume();
+    };
+    const onDragEnter = (e) => {
+      var _opt$onDragEnter2;
+      setJustEnteredTarget(e.target);
+      (_opt$onDragEnter2 = opt.onDragEnter) === null || _opt$onDragEnter2 === void 0 ? void 0 : _opt$onDragEnter2.call(opt, e);
+      if (!entered) {
+        onEnter(e);
+      }
+    };
+    const onDragOver = (e) => {
+      var _opt$onDragOver2;
+      if (!entered) {
+        onEnter(e);
+      }
+      (_opt$onDragOver2 = opt.onDragOver) === null || _opt$onDragOver2 === void 0 ? void 0 : _opt$onDragOver2.call(opt, e);
+    };
+    const onDragLeave = (e) => {
+      var _opt$onDragLeave2;
+      (_opt$onDragLeave2 = opt.onDragLeave) === null || _opt$onDragLeave2 === void 0 ? void 0 : _opt$onDragLeave2.call(opt, e);
+      const doLeave = function() {
+        var _opt$onLeave2;
+        let event = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : e;
+        entered = false;
+        (_opt$onLeave2 = opt.onLeave) === null || _opt$onLeave2 === void 0 ? void 0 : _opt$onLeave2.call(opt, event);
+        endListeners.stop();
+      };
+      const justEnter = justEnteredTarget;
+      justEnteredTarget = null;
+      if (justEnter && isDescendantOf(justEnter, dropZone))
+        ;
+      else {
+        doLeave();
+      }
+    };
+    const onDrop = (e) => {
+      var _opt$onDrop2;
+      (_opt$onDrop2 = opt.onDrop) === null || _opt$onDrop2 === void 0 ? void 0 : _opt$onDrop2.call(opt, e);
+    };
+    const onEndBeforeLeave = (e) => {
+      var _opt$onEndBeforeLeave;
+      if (e instanceof KeyboardEvent) {
+        if (e.key !== "Escape") {
+          return;
+        }
+      }
+      entered = false;
+      endListeners.stop();
+      (_opt$onEndBeforeLeave = opt.onEndBeforeLeave) === null || _opt$onEndBeforeLeave === void 0 ? void 0 : _opt$onEndBeforeLeave.call(opt, e);
+    };
+    const endListeners = extendedListen([[el, "drop", onEndBeforeLeave], [window, "mouseup", onEndBeforeLeave], [window, "touchend", onEndBeforeLeave], [window, "keydown", onEndBeforeLeave]]);
+    endListeners.stop();
+    const resume = () => {
+      on(el, "dragenter", onDragEnter);
+      on(el, "dragover", onDragOver);
+      on(el, "dragleave", onDragLeave);
+      on(el, "drop", onDrop);
+    };
+    const destroy = () => {
+      off(el, "dragenter", onDragEnter);
+      off(el, "dragover", onDragOver);
+      off(el, "dragleave", onDragLeave);
+      off(el, "drop", onDrop);
+      endListeners.stop();
+    };
+    resume();
+    return destroy;
+  }
+
+  // ../erpnext_taskview/node_modules/@he-tree/vue/dist/v3/index.es.js
+  var __defProp2 = Object.defineProperty;
+  var __defProps2 = Object.defineProperties;
+  var __getOwnPropDescs2 = Object.getOwnPropertyDescriptors;
+  var __getOwnPropSymbols2 = Object.getOwnPropertySymbols;
+  var __hasOwnProp2 = Object.prototype.hasOwnProperty;
+  var __propIsEnum2 = Object.prototype.propertyIsEnumerable;
+  var __defNormalProp2 = (obj, key, value) => key in obj ? __defProp2(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __spreadValues2 = (a, b) => {
+    for (var prop in b || (b = {}))
+      if (__hasOwnProp2.call(b, prop))
+        __defNormalProp2(a, prop, b[prop]);
+    if (__getOwnPropSymbols2)
+      for (var prop of __getOwnPropSymbols2(b)) {
+        if (__propIsEnum2.call(b, prop))
+          __defNormalProp2(a, prop, b[prop]);
+      }
+    return a;
+  };
+  var __spreadProps2 = (a, b) => __defProps2(a, __getOwnPropDescs2(b));
+  var _export_sfc2 = (sfc, props) => {
+    const target = sfc.__vccOpts || sfc;
+    for (const [key, val] of props) {
+      target[key] = val;
+    }
+    return target;
+  };
+  var justToggleOpen = false;
+  var afterToggleOpen = () => {
+    justToggleOpen = true;
+    setTimeout(() => {
+      justToggleOpen = false;
+    }, 100);
+  };
+  var cpt$2 = defineComponent({
+    props: ["stat", "rtl", "btt", "indent", "table", "treeLine", "treeLineOffset", "processor"],
+    emits: ["open", "close", "check"],
+    setup(props, { emit: emit2 }) {
+      const indentStyle = computed2(() => {
+        return {
+          [!props.rtl ? "paddingLeft" : "paddingRight"]: props.indent * (props.stat.level - 1) + "px"
+        };
+      });
+      watch(() => props.stat.checked, (checked) => {
+        if (justToggleOpen) {
+          return;
+        }
+        if (props.processor.afterOneCheckChanged(props.stat)) {
+          emit2("check", props.stat);
+        }
+      });
+      watch(() => props.stat.open, (open) => {
+        if (justToggleOpen) {
+          return;
+        }
+        if (open) {
+          emit2("open", props.stat);
+        } else {
+          emit2("close", props.stat);
+        }
+        afterToggleOpen();
+      });
+      const vLines = computed2(() => {
+        const lines = [];
+        const hasNextVisibleNode = (stat) => {
+          var _a;
+          if (stat.parent) {
+            let i = (_a = stat.parent) == null ? void 0 : _a.children.indexOf(stat);
+            do {
+              i++;
+              let next = stat.parent.children[i];
+              if (next) {
+                if (!next.hidden) {
+                  return true;
+                }
+              } else {
+                break;
+              }
+            } while (true);
+          }
+          return false;
+        };
+        const leftOrRight = props.rtl ? "right" : "left";
+        const bottomOrTop = props.btt ? "top" : "bottom";
+        let current = props.stat;
+        while (current) {
+          let left = (current.level - 2) * props.indent + props.treeLineOffset;
+          const hasNext = hasNextVisibleNode(current);
+          const addLine = () => {
+            lines.push({
+              style: {
+                [leftOrRight]: left + "px",
+                [bottomOrTop]: hasNext ? 0 : "50%"
+              }
+            });
+          };
+          if (current === props.stat) {
+            if (current.level > 1) {
+              addLine();
+            }
+          } else if (hasNext) {
+            addLine();
+          }
+          current = current.parent;
+        }
+        return lines;
+      });
+      const hLineStyle = computed2(() => {
+        let left = (props.stat.level - 2) * props.indent + props.treeLineOffset;
+        const leftOrRight = props.rtl ? "right" : "left";
+        return {
+          [leftOrRight]: left + "px"
+        };
+      });
+      return { indentStyle, vLines, hLineStyle };
+    }
+  });
+  var _sfc_main$2 = cpt$2;
+  var _hoisted_1$2 = { class: "tree-node-inner" };
+  var _hoisted_2$2 = {
+    key: 1,
+    class: "tree-node",
+    ref: "el"
+  };
+  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
+    return !_ctx.table ? (openBlock(), createElementBlock("div", {
+      key: 0,
+      class: normalizeClass(["tree-node", { "tree-node--with-tree-line": _ctx.treeLine }]),
+      style: normalizeStyle(_ctx.indentStyle),
+      ref: "el"
+    }, [
+      _ctx.treeLine ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
+        (openBlock(true), createElementBlock(Fragment, null, renderList(_ctx.vLines, (line) => {
+          return openBlock(), createElementBlock("div", {
+            class: "tree-line tree-vline",
+            style: normalizeStyle(line.style)
+          }, null, 4);
+        }), 256)),
+        _ctx.stat.level > 1 ? (openBlock(), createElementBlock("div", {
+          key: 0,
+          class: "tree-line tree-hline",
+          style: normalizeStyle(_ctx.hLineStyle)
+        }, null, 4)) : createCommentVNode("", true)
+      ], 64)) : createCommentVNode("", true),
+      createBaseVNode("div", _hoisted_1$2, [
+        renderSlot(_ctx.$slots, "default", { indentStyle: _ctx.indentStyle })
+      ])
+    ], 6)) : (openBlock(), createElementBlock("tr", _hoisted_2$2, [
+      renderSlot(_ctx.$slots, "default", { indentStyle: _ctx.indentStyle })
+    ], 512));
+  }
+  var TreeNode = /* @__PURE__ */ _export_sfc2(_sfc_main$2, [["render", _sfc_render$2]]);
+  function vueMakeTreeProcessor(data, options = {}) {
+    const opt = __spreadProps2(__spreadValues2({}, options), {
+      statHandler(input) {
+        if (this["_statHandler2"]) {
+          input = this["_statHandler2"](input);
+        }
+        return filter(options.statHandler, reactive(input));
+      },
+      statsHandler(input) {
+        return filter(options.statsHandler, reactive(input));
+      },
+      statsFlatHandler(input) {
+        return filter(options.statsFlatHandler, reactive(input));
+      }
+    });
+    return makeTreeProcessor(data, opt);
+  }
+  function filter(func, input) {
+    return func ? func(input) : input;
+  }
+  var cpt$1 = defineComponent({
+    components: { VirtualList, TreeNode },
+    props: {
+      value: { required: isVue2, type: Array },
+      modelValue: { required: isVue3, type: Array },
+      updateBehavior: {
+        type: String,
+        default: "modify"
+      },
+      processor: {
+        type: Object,
+        default: () => vueMakeTreeProcessor([], {
+          noInitialization: true
+        })
+      },
+      childrenKey: { type: String, default: "children" },
+      textKey: { type: String, default: "text" },
+      indent: { type: Number, default: 20 },
+      virtualization: { type: Boolean, default: false },
+      virtualizationPrerenderCount: { type: Number, default: 20 },
+      defaultOpen: { type: Boolean, default: true },
+      statHandler: { type: Function },
+      rtl: { type: Boolean, default: false },
+      btt: { type: Boolean, default: false },
+      table: { type: Boolean, default: false },
+      watermark: { type: Boolean, default: false },
+      nodeKey: {
+        type: [String, Function],
+        default: "index"
+      },
+      treeLine: { type: Boolean, default: false },
+      treeLineOffset: { type: Number, default: 8 }
+    },
+    emits: [
+      "update:modelValue",
+      "click:node",
+      "open:node",
+      "close:node",
+      "check:node",
+      "beforeDragStart",
+      "before-drag-start",
+      "after-drop",
+      "change",
+      "enter",
+      "leave"
+    ],
+    data() {
+      return {
+        stats: [],
+        statsFlat: [],
+        dragNode: null,
+        dragOvering: false,
+        placeholderData: {},
+        placeholderColspan: 1,
+        batchUpdateWaiting: false,
+        self: this,
+        _ignoreValueChangeOnce: false
+      };
+    },
+    computed: {
+      valueComputed() {
+        return (isVue2 ? this.value : this.modelValue) || [];
+      },
+      visibleStats() {
+        const { statsFlat, isVisible } = this;
+        let items = statsFlat;
+        if (this.btt) {
+          items = items.slice();
+          items.reverse();
+        }
+        return items.filter((stat) => isVisible(stat));
+      },
+      rootChildren() {
+        return this.stats;
+      }
+    },
+    methods: {
+      _emitValue(value) {
+        this.$emit(isVue2 ? "input" : "update:modelValue", value);
+      },
+      _updateValue(value) {
+        if (this.updateBehavior === "disabled") {
+          return false;
+        }
+        if (value !== this.valueComputed) {
+          this._ignoreValueChangeOnce = true;
+        }
+        this._emitValue(value);
+        return true;
+      },
+      getStat: reactiveFirstArg(processorMethodProxy("getStat")),
+      has: reactiveFirstArg(processorMethodProxy("has")),
+      updateCheck: processorMethodProxy("updateCheck"),
+      getChecked: processorMethodProxy("getChecked"),
+      getUnchecked: processorMethodProxy("getUnchecked"),
+      openAll: processorMethodProxy("openAll"),
+      closeAll: processorMethodProxy("closeAll"),
+      openNodeAndParents: processorMethodProxy("openNodeAndParents"),
+      isVisible: processorMethodProxy("isVisible"),
+      move: processorMethodProxyWithBatchUpdate("move"),
+      add: reactiveFirstArg(processorMethodProxyWithBatchUpdate("add")),
+      addMulti(dataArr, parent, startIndex) {
+        this.batchUpdate(() => {
+          let index = startIndex;
+          for (const data of dataArr) {
+            this.add(data, parent, index);
+            if (index != null) {
+              index++;
+            }
+          }
+        });
+      },
+      remove: processorMethodProxy("remove"),
+      removeMulti(dataArr) {
+        let cloned = [...dataArr];
+        this.batchUpdate(() => {
+          for (const data of cloned) {
+            this.remove(data);
+          }
+        });
+      },
+      iterateParent: processorMethodProxy("iterateParent"),
+      getSiblings: processorMethodProxy("getSiblings"),
+      getData: processorMethodProxy("getData"),
+      getRootEl() {
+        return this.$refs.vtlist.listElRef;
+      },
+      batchUpdate(task) {
+        const r = this.ignoreUpdate(task);
+        if (!this.batchUpdateWaiting) {
+          this._updateValue(this.updateBehavior === "new" ? this.getData() : this.valueComputed);
+        }
+        return r;
+      },
+      ignoreUpdate(task) {
+        const old = this.batchUpdateWaiting;
+        this.batchUpdateWaiting = true;
+        const r = task();
+        this.batchUpdateWaiting = old;
+        return r;
+      }
+    },
+    watch: {
+      processor: {
+        immediate: true,
+        handler(processor) {
+          if (processor) {
+            const getNodeDataChildren = (nodeData) => {
+              if (!nodeData) {
+                return this.valueComputed;
+              } else {
+                const { childrenKey } = this;
+                if (!nodeData[childrenKey]) {
+                  nodeData[childrenKey] = [];
+                }
+                return nodeData[childrenKey];
+              }
+            };
+            processor["_statHandler2"] = this.statHandler ? (stat) => {
+              if (stat.data === this.placeholderData) {
+                return stat;
+              }
+              return this.statHandler(stat);
+            } : null;
+            processor.afterSetStat = (stat, parent, index) => {
+              const { childrenKey, updateBehavior } = this;
+              let value = this.valueComputed;
+              if (updateBehavior === "new") {
+                if (this.batchUpdateWaiting) {
+                  return;
+                }
+                value = this.getData();
+              } else if (updateBehavior === "modify") {
+                const siblings = getNodeDataChildren(parent == null ? void 0 : parent.data);
+                if (siblings.includes(stat.data))
+                  ;
+                else {
+                  siblings.splice(index, 0, stat.data);
+                }
+              } else
+                ;
+              if (this.batchUpdateWaiting) {
+                return;
+              }
+              this._updateValue(value);
+            };
+            processor.afterRemoveStat = (stat) => {
+              var _a;
+              const { childrenKey, updateBehavior } = this;
+              let value = this.valueComputed;
+              if (updateBehavior === "new") {
+                if (this.batchUpdateWaiting) {
+                  return;
+                }
+                value = this.getData();
+              } else if (updateBehavior === "modify") {
+                const siblings = getNodeDataChildren((_a = stat.parent) == null ? void 0 : _a.data);
+                arrayRemove(siblings, stat.data);
+              } else
+                ;
+              if (this.batchUpdateWaiting) {
+                return;
+              }
+              this._updateValue(value);
+            };
+          }
+          if (!processor.initialized) {
+            processor.data = this.valueComputed;
+            Object.assign(processor, objectOnly(this, ["childrenKey", "defaultOpen"]));
+            processor.init();
+            processor.updateCheck();
+          }
+          this.stats = processor.stats;
+          this.statsFlat = processor.statsFlat;
+          if (processor.data !== this.valueComputed) {
+            this._updateValue(processor.data);
+          }
+        }
+      },
+      valueComputed: {
+        handler(value) {
+          const isDragging = this.dragOvering || this.dragNode;
+          if (isDragging || this._ignoreValueChangeOnce) {
+            this._ignoreValueChangeOnce = false;
+          } else {
+            const { processor } = this;
+            processor.data = value;
+            processor.init();
+            this.stats = processor.stats;
+            this.statsFlat = processor.statsFlat;
+          }
+        }
+      }
+    },
+    created() {
+    },
+    mounted() {
+      if (this.watermark === false) {
+        window._heTreeWatermarkDisabled = true;
+      }
+      if (this.watermark && !window._heTreeWatermarkDisabled) {
+        if (!window._heTreeWatermark) {
+          window._heTreeWatermark = true;
+          console.log(`%c[he-tree] Vue tree component:  https://hetree.phphe.com`, "color:#0075ff; font-size:14px;");
+        }
+      }
+    }
+  });
+  var _sfc_main$12 = cpt$1;
+  function processorMethodProxy(name) {
+    return function(...args) {
+      return this.processor[name](...args);
+    };
+  }
+  function processorMethodProxyWithBatchUpdate(name) {
+    return function(...args) {
+      return this.batchUpdate(() => {
+        return this.processor[name](...args);
+      });
+    };
+  }
+  function reactiveFirstArg(func) {
+    return function(arg1, ...args) {
+      if (arg1) {
+        arg1 = reactive(arg1);
+      }
+      return func.call(this, arg1, ...args);
+    };
+  }
+  var _hoisted_1$1 = {
+    key: 0,
+    class: "drag-placeholder he-tree-drag-placeholder"
+  };
+  var _hoisted_2$1 = ["colspan"];
+  var _hoisted_3 = { class: "drag-placeholder he-tree-drag-placeholder" };
+  function _sfc_render$12(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_TreeNode = resolveComponent("TreeNode");
+    const _component_VirtualList = resolveComponent("VirtualList");
+    return openBlock(), createBlock(_component_VirtualList, {
+      class: normalizeClass(["he-tree", {
+        "he-tree--rtl rtl": _ctx.rtl,
+        "he-tree--drag-overing drag-overing": _ctx.dragOvering
+      }]),
+      ref: "vtlist",
+      items: _ctx.visibleStats,
+      disabled: !_ctx.virtualization,
+      table: _ctx.table,
+      itemKey: _ctx.nodeKey
+    }, {
+      prepend: withCtx(() => [
+        renderSlot(_ctx.$slots, "prepend", { tree: _ctx.self })
+      ]),
+      default: withCtx(({ item: stat, index }) => [
+        createVNode(_component_TreeNode, {
+          "vt-index": index,
+          class: normalizeClass([
+            stat.class,
+            {
+              "drag-placeholder-wrapper": stat.data === _ctx.placeholderData,
+              "dragging-node": stat === _ctx.dragNode
+            }
+          ]),
+          style: normalizeStyle(stat.style),
+          stat,
+          rtl: _ctx.rtl,
+          btt: _ctx.btt,
+          indent: _ctx.indent,
+          table: _ctx.table,
+          treeLine: _ctx.treeLine,
+          treeLineOffset: _ctx.treeLineOffset,
+          processor: _ctx.processor,
+          onClick: ($event) => _ctx.$emit("click:node", stat),
+          onOpen: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("open:node", $event)),
+          onClose: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("close:node", $event)),
+          onCheck: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("check:node", $event))
+        }, {
+          default: withCtx(({ indentStyle }) => [
+            stat.data === _ctx.placeholderData ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
+              !_ctx.table ? (openBlock(), createElementBlock("div", _hoisted_1$1, [
+                renderSlot(_ctx.$slots, "placeholder", { tree: _ctx.self })
+              ])) : (openBlock(), createElementBlock("td", {
+                key: 1,
+                style: normalizeStyle(indentStyle),
+                colspan: _ctx.placeholderColspan
+              }, [
+                createBaseVNode("div", _hoisted_3, [
+                  renderSlot(_ctx.$slots, "placeholder", { tree: _ctx.self })
+                ])
+              ], 12, _hoisted_2$1))
+            ], 64)) : renderSlot(_ctx.$slots, "default", {
+              key: 1,
+              node: stat.data,
+              stat,
+              indentStyle,
+              tree: _ctx.self
+            }, () => [
+              createTextVNode(toDisplayString(stat.data[_ctx.textKey]), 1)
+            ])
+          ]),
+          _: 2
+        }, 1032, ["vt-index", "class", "style", "stat", "rtl", "btt", "indent", "table", "treeLine", "treeLineOffset", "processor", "onClick"])
+      ]),
+      append: withCtx(() => [
+        renderSlot(_ctx.$slots, "append", { tree: _ctx.self })
+      ]),
+      _: 3
+    }, 8, ["class", "items", "disabled", "table", "itemKey"]);
+  }
+  var BaseTree = /* @__PURE__ */ _export_sfc2(_sfc_main$12, [["render", _sfc_render$12]]);
+  var startTree = null;
+  var targetTree = null;
+  var startInfo;
+  var targetInfo;
+  var dragOpenLastNode;
+  var startMovePoint;
+  var startMouse;
+  var dragNode;
+  var cpt2 = defineComponent({
+    extends: BaseTree,
+    props: {
+      triggerClass: { type: [String, Array] },
+      disableDrag: Boolean,
+      disableDrop: Boolean,
+      eachDraggable: {
+        type: Function
+      },
+      eachDroppable: {
+        type: Function
+      },
+      rootDroppable: {
+        type: [Boolean, Function],
+        default: true
+      },
+      dragOpen: { type: Boolean, default: true },
+      dragOpenDelay: { type: Number, default: 0 },
+      beforeDragOpen: { type: Function },
+      resolveStartMovePoint: {
+        type: [String, Function]
+      },
+      keepPlaceholder: { type: Boolean },
+      maxLevel: { type: Number },
+      dragCopy: { type: Boolean },
+      dragCopyDataHandler: {
+        type: Function
+      },
+      onExternalDragOver: {
+        type: Function
+      },
+      externalDataHandler: {
+        type: Function
+      },
+      ondragstart: {
+        type: Function
+      }
+    },
+    data() {
+      return {
+        treeDraggableInstance: null
+      };
+    },
+    computed: {},
+    methods: {
+      getNodeByElement(el) {
+        const i = el.getAttribute("vt-index");
+        return i == null ? null : this.visibleStats[i];
+      },
+      isDraggable(node) {
+        if (this.disableDrag) {
+          return false;
+        }
+        if (node.draggable != null) {
+          return node.draggable;
+        }
+        if (this.eachDraggable) {
+          const t = this.eachDraggable(node);
+          if (t != null) {
+            return t;
+          }
+        }
+        const { parent } = node;
+        if (!parent) {
+          return true;
+        } else {
+          return this.isDraggable(parent);
+        }
+      },
+      isDroppable(node) {
+        if (this.disableDrop) {
+          return false;
+        }
+        if (!node) {
+          return resolveValueOrGettter(this.rootDroppable, [this, startTree]);
+        }
+        if (node.droppable != null) {
+          return node.droppable;
+        }
+        if (this.eachDroppable) {
+          const t = this.eachDroppable(node);
+          if (t != null) {
+            return t;
+          }
+        }
+        const { parent } = node;
+        if (!parent) {
+          return true;
+        } else {
+          return this.isDroppable(parent);
+        }
+      },
+      _eachDroppable() {
+        var _a;
+        return resolveValueOrGettter((_a = this["_isDragCopy"]) == null ? void 0 : _a.call(this), [this]);
+      }
+    },
+    mounted() {
+      const isMoved = (mouse, lastMouse2) => {
+        let r = true;
+        if (startTree && startTree !== this) {
+          r = r && this["_isMoved"];
+        }
+        if (this.table && !this["_isDragCopy"]) {
+          r = r && this["_isDragCopy"];
+        }
+        return r && (mouse.x !== lastMouse2.x || mouse.y !== lastMouse2.y);
+      };
+      const movePlaceholder = (parent, index) => {
+        targetTree.ignoreUpdate(() => {
+          if (!targetTree.has(targetTree.placeholderData)) {
+            if (targetTree.table) {
+              let colspan = 0;
+              const tr = targetTree.getRootEl().querySelector("tr");
+              if (tr) {
+                for (const {
+                  value: childEl
+                } of iterateAll(tr.children)) {
+                  if (css(childEl, "display") !== "none") {
+                    colspan += childEl.colSpan || 1;
+                  }
+                }
+              }
+              if (colspan < 1) {
+                colspan = 1;
+              }
+              targetTree.placeholderColspan = colspan;
+            }
+            targetTree.add(targetTree.placeholderData);
+          }
+          const placeholder = targetTree.getStat(targetTree.placeholderData);
+          targetTree.move(placeholder, parent, index);
+        });
+      };
+      const removePlaceholder = () => {
+        const tree = this;
+        if (tree.has(tree.placeholderData)) {
+          tree.remove(tree.getStat(tree.placeholderData));
+          return true;
+        }
+      };
+      const setCursor = (droppable) => {
+        if (!droppable) {
+          context.dropEffect = "none";
+        } else {
+          context.dropEffect = (startTree == null ? void 0 : startTree.dragCopy) ? "copy" : "move";
+        }
+      };
+      const setDroppable = (droppable) => {
+        const tree = this;
+        if (!droppable) {
+          if (!tree.keepPlaceholder) {
+            removePlaceholder();
+            setCursor(false);
+          } else if (!tree.has(tree.placeholderData)) {
+            setCursor(false);
+          }
+        } else {
+          setCursor(true);
+        }
+      };
+      let lastMouse = { x: 0, y: 0 };
+      const rootEl = this.getRootEl();
+      let dragElement = null;
+      const removePlaceholderWhenEnd = () => {
+        if (targetTree == null ? void 0 : targetTree.has(targetTree.placeholderData)) {
+          targetTree.ignoreUpdate(() => {
+            targetTree.remove(targetTree.getStat(targetTree.placeholderData));
+            if (startTree) {
+              startTree.dragNode.hidden = false;
+              startTree.dragOvering = false;
+            }
+          });
+        }
+      };
+      this.treeDraggableInstance = extendedDND(rootEl, {
+        beforeDragStart: (event) => {
+          if (!context.triggerElement) {
+            return;
+          }
+          let triggerClass = this.triggerClass;
+          if (!triggerClass || triggerClass.length === 0) {
+            triggerClass = "tree-node";
+          }
+          let triggerClasses = toArrayIfNot(triggerClass);
+          let triggerDragElement = findParent(context.triggerElement, (el) => {
+            if (hasClassIn(el, triggerClasses)) {
+              return true;
+            } else if (hasClass(el, "tree-node")) {
+              return "break";
+            }
+          }, { withSelf: true, until: rootEl });
+          dragElement = findParent(triggerDragElement, (el) => {
+            if (hasClass(el, "tree-node")) {
+              return true;
+            }
+          }, { withSelf: true, until: rootEl });
+          if (!dragElement) {
+            return;
+          }
+          dragNode = this.getNodeByElement(dragElement);
+          if (!dragNode) {
+            throw `Can't find drag node`;
+          }
+          if (!this.isDraggable(dragNode)) {
+            return;
+          }
+          this.$emit("before-drag-start", dragNode);
+          this.$emit("beforeDragStart", dragNode);
+          return rootEl;
+        },
+        onDragStart: (event) => {
+          var _a, _b, _c;
+          if (!dragElement || !dragNode) {
+            return;
+          }
+          {
+            const { x, y } = dragElement.getBoundingClientRect();
+            const { clientX, clientY } = event;
+            (_a = event.dataTransfer) == null ? void 0 : _a.setDragImage(dragElement, clientX - x, clientY - y);
+          }
+          const mouse = { x: event.clientX, y: event.clientY };
+          startMouse = mouse;
+          startTree = this;
+          startTree.dragNode = dragNode;
+          startMovePoint = (() => {
+            if (this.resolveStartMovePoint === "mouse") {
+              return { x: event.clientX, y: event.clientY };
+            } else if (typeof this.resolveStartMovePoint === "function") {
+              return this.resolveStartMovePoint(dragElement);
+            } else {
+              let point;
+              let height = 0;
+              if (!this.table) {
+                if (!this.rtl) {
+                  point = dragElement.children[0].getBoundingClientRect().toJSON();
+                  height = point.height;
+                } else {
+                  const rect = dragElement.children[0].getBoundingClientRect();
+                  point = {
+                    x: rect.right,
+                    y: rect.y
+                  };
+                  height = rect.height;
+                }
+              } else {
+                let rect = dragElement.getBoundingClientRect();
+                point = { x: rect.x, y: rect.y };
+                if (this.rtl) {
+                  point.x = rect.right;
+                }
+                height = rect.height;
+              }
+              if (this.btt) {
+                point.y += height;
+              }
+              return point;
+            }
+          })();
+          this.dragOvering = true;
+          const siblings = startTree.getSiblings(startTree.dragNode);
+          const indexBeforeDrop = siblings.indexOf(dragNode);
+          startInfo = {
+            tree: startTree,
+            dragNode,
+            parent: dragNode.parent,
+            siblings,
+            indexBeforeDrop
+          };
+          targetTree = this;
+          (_b = event.dataTransfer) == null ? void 0 : _b.setData("text", `he-tree drag start at ${new Date().toISOString()}`);
+          if (!startTree._eachDroppable()) {
+            setTimeout(() => {
+              dragNode.hidden = true;
+              movePlaceholder(dragNode.parent, indexBeforeDrop + 1);
+            }, 0);
+          }
+          (_c = this.ondragstart) == null ? void 0 : _c.call(this, event);
+        },
+        onEnter: (event) => {
+          this.$emit("enter", event);
+        },
+        onLeave: (event) => {
+          dragOpenLastNode = null;
+          this.dragOvering = false;
+          context.preventDefault = false;
+          removePlaceholder();
+          this.$emit("leave", event);
+        },
+        onDragOver: applyFinally((event) => {
+          if (!startTree) {
+            if (!this.onExternalDragOver || this.onExternalDragOver(event) === false) {
+              return;
+            } else {
+              context.preventDefault = true;
+            }
+          }
+          const mouse = { x: event.clientX, y: event.clientY };
+          const isMoved2 = isMoved(mouse, lastMouse);
+          lastMouse = mouse;
+          if (!isMoved2) {
+            return;
+          }
+          this.dragOvering = true;
+          targetTree = this;
+          const movePoint = startMovePoint ? {
+            x: startMovePoint.x + (mouse.x - startMouse.x),
+            y: startMovePoint.y + (mouse.y - startMouse.y)
+          } : __spreadValues2({}, mouse);
+          const { btt, rtl } = targetTree;
+          if (targetTree.disableDrop) {
+            context.dropEffect = "none";
+            return;
+          }
+          let prevNode;
+          let nextNode;
+          const nodeList = targetTree.getRootEl().querySelectorAll(`.tree-node`);
+          const nodeEls = [];
+          nodeList.forEach((el) => {
+            if (!hasClassIn(el, [
+              "drag-placeholder-wrapper",
+              "dragging-node"
+            ]) && css(el, "display") !== "none") {
+              nodeEls.push(el);
+            }
+          });
+          const t = binarySearch(nodeEls, (node) => getBoundingClientRect(node)[!btt ? "top" : "bottom"] - movePoint.y, { returnNearestIfNoHit: true });
+          let prevIndex = null;
+          let prevNodeEl;
+          let nextNodeEl;
+          if (t.hit)
+            ;
+          else {
+            if (t.greater) {
+              if (!btt) {
+                prevIndex = t.index - 1;
+                if (!nodeEls[prevIndex]) {
+                  prevIndex++;
+                }
+              }
+            } else {
+              if (!btt)
+                ;
+              else {
+                prevIndex = t.index + 1;
+                if (!nodeEls[prevIndex]) {
+                  prevIndex--;
+                }
+              }
+            }
+          }
+          if (prevIndex == null) {
+            prevIndex = t.index;
+          }
+          prevNodeEl = nodeEls[prevIndex];
+          nextNodeEl = !btt ? nodeEls[prevIndex + 1] : nodeEls[prevIndex - 1];
+          prevNode = prevNodeEl && targetTree.getNodeByElement(prevNodeEl);
+          nextNode = nextNodeEl && targetTree.getNodeByElement(nextNodeEl);
+          const { indent } = targetTree;
+          const prevBCR = cacheFunction(() => {
+            if (!targetTree.table) {
+              return getBoundingClientRect(prevNodeEl.firstElementChild);
+            } else {
+              let r = getBoundingClientRect(prevNodeEl).toJSON();
+              const indentSize = indent * (prevNode.level - 1);
+              if (!rtl) {
+                r.x += indentSize;
+              } else {
+                r.width -= indentSize;
+                r.right -= indentSize;
+              }
+              return r;
+            }
+          }).action;
+          const onPrevMiddle = cacheFunction(() => {
+            if (!btt) {
+              return movePoint.y < prevBCR().y + prevBCR().height / 2;
+            } else {
+              return movePoint.y > prevBCR().y + prevBCR().height / 2;
+            }
+          }).action;
+          const atTop = cacheFunction(() => {
+            if (!btt) {
+              return !prevNodeEl || prevIndex === 0 && onPrevMiddle();
+            } else {
+              return !prevNodeEl || prevIndex === nodeEls.length - 1 && onPrevMiddle();
+            }
+          }).action;
+          const prevX_minusMovePointX = cacheFunction(() => !rtl ? prevBCR().x - movePoint.x : movePoint.x - (prevBCR().x + prevBCR().width)).action;
+          const atPrevIndentRight = cacheFunction(() => !rtl ? movePoint.x > prevBCR().x + indent : movePoint.x < prevBCR().x + prevBCR().width - indent).action;
+          let targetLevel;
+          if (atTop()) {
+            targetLevel = 1;
+            prevNode = null;
+          } else if (!prevNode) {
+            return;
+          } else if (prevX_minusMovePointX() > 0) {
+            targetLevel = prevNode.level - Math.ceil(prevX_minusMovePointX() / indent);
+          } else if (atPrevIndentRight()) {
+            targetLevel = prevNode.level + 1;
+          } else {
+            targetLevel = prevNode.level;
+          }
+          if (nextNode && targetLevel < nextNode.level) {
+            targetLevel = nextNode.level;
+          }
+          const findDroppablePosition = async () => {
+            let parent, prevSibling;
+            let cancelled = false;
+            let _dragOpenLastNode = null;
+            const isOpen = async (stat) => {
+              if (stat.open) {
+                return true;
+              } else if (targetTree.dragOpen) {
+                if (!targetTree.dragOpenDelay) {
+                  stat.open = true;
+                  return true;
+                } else {
+                  _dragOpenLastNode = stat;
+                  if (dragOpenLastNode === stat) {
+                    cancelled = true;
+                  } else {
+                    let wait = promisePin();
+                    dragOpenLastNode = stat;
+                    const localNode = stat;
+                    setTimeout(async () => {
+                      if (localNode !== dragOpenLastNode) {
+                        cancelled = true;
+                        wait.resolve(true);
+                      } else {
+                        if (targetTree.beforeDragOpen) {
+                          await targetTree.beforeDragOpen(stat);
+                        }
+                        if (localNode !== dragOpenLastNode) {
+                          cancelled = true;
+                          wait.resolve(true);
+                        } else {
+                          stat.open = true;
+                          _dragOpenLastNode = null;
+                          wait.resolve(true);
+                        }
+                      }
+                    }, targetTree.dragOpenDelay);
+                    return await wait.promise;
+                  }
+                }
+              } else {
+                return false;
+              }
+            };
+            const tryPrepend = async () => {
+              if (targetTree.isDroppable(prevNode) && await isOpen(prevNode)) {
+                if (cancelled) {
+                  return;
+                }
+                parent = prevNode;
+                prevSibling = null;
+              } else {
+                return false;
+              }
+            };
+            const tryAfter = (minLevel = targetLevel) => {
+              let t2 = prevNode;
+              let t3 = [];
+              while (t2 && t2.level >= minLevel) {
+                t2 = t2.parent || null;
+                t3.unshift(t2);
+              }
+              let i = 0;
+              for (const node of t3) {
+                if (targetTree.isDroppable(node)) {
+                  parent = node;
+                  prevSibling = t3[i + 1] || prevNode;
+                  return true;
+                }
+                i++;
+              }
+              return false;
+            };
+            if (!prevNode) {
+              if (targetTree.isDroppable(null)) {
+                parent = null;
+              }
+            } else if (targetLevel > prevNode.level) {
+              if (await tryPrepend() === false) {
+                tryAfter(prevNode.level);
+              }
+            } else {
+              if (tryAfter() === false) {
+                await tryPrepend();
+              }
+            }
+            dragOpenLastNode = _dragOpenLastNode;
+            const success = Boolean(!cancelled && (parent || parent === null));
+            const getIndex = () => prevSibling ? (parent ? parent.children : targetTree.stats).filter((v) => v.data !== targetTree.placeholderData).indexOf(prevSibling) + 1 : 0;
+            return {
+              cancelled,
+              success,
+              parent,
+              index: success ? getIndex() : -1
+            };
+          };
+          findDroppablePosition().then((dp) => {
+            if (dp.cancelled) {
+              return;
+            }
+            if (!dp.success) {
+              setDroppable(false);
+              return;
+            }
+            if (targetTree.maxLevel != null && targetTree.maxLevel > 0) {
+              let dragNodeWithChildLevel = 1;
+              if (startTree) {
+                const dragNode2 = startTree.dragNode;
+                let childMaxLevel = 0;
+                walkTreeData(dragNode2, (node) => {
+                  if (node.level > childMaxLevel) {
+                    childMaxLevel = node.level;
+                  }
+                }, {
+                  childrenKey: CHILDREN
+                });
+                dragNodeWithChildLevel = childMaxLevel - dragNode2.level + 1;
+              }
+              const willLevel = dragNodeWithChildLevel + (dp.parent ? dp.parent.level : 0);
+              if (willLevel > targetTree.maxLevel) {
+                setDroppable(false);
+                return;
+              }
+            }
+            setDroppable(true);
+            movePlaceholder(dp.parent, dp.index);
+          });
+        }, () => {
+        }),
+        onDrop: (event) => {
+          targetTree = this;
+          const external = !startTree;
+          if (!targetTree) {
+            return;
+          }
+          const dragNode2 = startTree == null ? void 0 : startTree.dragNode;
+          let externalData;
+          let dragChanged = (() => {
+            var _a;
+            let changed = true;
+            if (!targetTree.has(targetTree.placeholderData)) {
+              changed = false;
+            } else if (external) {
+              externalData = (_a = this.externalDataHandler) == null ? void 0 : _a.call(this, event);
+              changed = externalData != null;
+            } else if (!startTree.dragCopy) {
+              const placeholder = targetTree.getStat(targetTree.placeholderData);
+              if (startTree === targetTree && placeholder.parent === dragNode2.parent) {
+                if (findTreeData(dragNode2, (node) => node === placeholder), { childrenKey: CHILDREN })
+                  ;
+                else {
+                  const siblings = this.processor.getSiblings(placeholder);
+                  const placeholderIndex = siblings.indexOf(placeholder);
+                  const prev = siblings[placeholderIndex - 1];
+                  const next = siblings[placeholderIndex + 1];
+                  if (prev === dragNode2 || next === dragNode2) {
+                    changed = false;
+                  }
+                }
+              }
+            }
+            return changed;
+          })();
+          if (dragChanged) {
+            const placeholder = targetTree.getStat(targetTree.placeholderData);
+            const siblings = targetTree.getSiblings(placeholder);
+            targetInfo = {
+              tree: targetTree,
+              dragNode: dragNode2,
+              parent: placeholder.parent,
+              siblings,
+              indexBeforeDrop: siblings.indexOf(placeholder)
+            };
+          }
+          (() => {
+            removePlaceholderWhenEnd();
+            if (dragChanged) {
+              let targetIndex = targetInfo.indexBeforeDrop;
+              if (startTree && !startTree.dragCopy && startTree === targetTree && startInfo.parent == targetInfo.parent && startInfo.indexBeforeDrop < targetIndex) {
+                targetIndex--;
+              }
+              if (startTree && startTree !== targetTree && !startTree._eachDroppable()) {
+                startTree.batchUpdate(() => {
+                  startTree.remove(dragNode2);
+                  startTree.updateCheck();
+                });
+              }
+              targetTree.batchUpdate(() => {
+                let newDragNode = startTree == null ? void 0 : startTree.dragNode;
+                let newData;
+                if (externalData) {
+                  newData = externalData;
+                } else if (startTree._eachDroppable()) {
+                  newData = cloneTreeData(startTree.dragNode.data, {
+                    childrenKey: startTree.childrenKey
+                  });
+                  if (startTree.dragCopyDataHandler) {
+                    newData = startTree.dragCopyDataHandler(newData);
+                  }
+                }
+                if (newData) {
+                  targetTree.add(newData);
+                  newDragNode = targetTree.getStat(newData);
+                }
+                targetTree.move(newDragNode, targetInfo.parent, targetIndex);
+                targetTree.updateCheck();
+              });
+            }
+            targetTree.$emit("after-drop");
+            if (dragChanged) {
+              if (startTree) {
+                if (!startTree.dragCopy) {
+                  startTree.$emit("change");
+                }
+              }
+              if (targetTree !== startTree) {
+                targetTree.$emit("change");
+              }
+            }
+          })();
+        },
+        onDragEnd: (event) => {
+          removePlaceholderWhenEnd();
+          if (startTree) {
+            startTree.dragNode && (startTree.dragNode.hidden = false);
+            startTree.dragNode = null;
+            startTree.dragOvering = false;
+            startTree = null;
+          }
+          targetTree = null;
+          dragOpenLastNode = null;
+          dragNode = null;
+        }
+      });
+    },
+    unmounted() {
+      var _a;
+      (_a = this.treeDraggableInstance) == null ? void 0 : _a.destroy();
+    }
+  });
+  var _sfc_main2 = defineComponent({
+    props: {
+      open: { type: Boolean }
+    }
+  });
+  var _hoisted_12 = /* @__PURE__ */ createBaseVNode("svg", {
+    xmlns: "http://www.w3.org/2000/svg",
+    viewBox: "0 0 24 24"
+  }, [
+    /* @__PURE__ */ createBaseVNode("title", null, "chevron-right"),
+    /* @__PURE__ */ createBaseVNode("path", { d: "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" })
+  ], -1);
+  var _hoisted_22 = [
+    _hoisted_12
+  ];
+  function _sfc_render2(_ctx, _cache, $props, $setup, $data, $options) {
+    return openBlock(), createElementBlock("a", {
+      class: normalizeClass(["he-tree__open-icon", { open: _ctx.open }])
+    }, _hoisted_22, 2);
+  }
+  var OpenIcon = /* @__PURE__ */ _export_sfc2(_sfc_main2, [["render", _sfc_render2]]);
 
   // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=script
-  var TaskView_default = {
+  var TaskView_default = defineComponent({
     name: "TaskView",
     components: {
-      Task: Task_default2
+      Draggable: cpt2,
+      OpenIcon
     },
     props: {
       docs: {
@@ -7919,32 +11044,50 @@ Expected function or array of functions, received type ${typeof value}.`
         default: () => []
       }
     },
-    computed: {
-      transposedDocs() {
-        return this.docs.map((doc2) => {
-          return __spreadProps(__spreadValues({}, doc2), {
-            transposedProperty: null
-          });
-        });
+    setup(props) {
+      const treeData = ref(formatTreeData(props.docs));
+      function formatTreeData(docs) {
+        return docs.map((doc2) => ({
+          text: doc2.name,
+          children: []
+        }));
       }
+      console.log("TreeData:", treeData);
+      return {
+        treeData
+      };
     }
-  };
+  });
 
   // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=template
-  function render2(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_Task = resolveComponent("Task");
-    return openBlock(), createElementBlock("div", null, [
-      createCommentVNode(" Rows "),
-      createCommentVNode(' <div v-for="doc in transposedDocs" :key="doc._idx">\n            <Task :doc="doc" />\n        </div> '),
-      createCommentVNode(" pass the entire transposedDocs array "),
-      createBaseVNode("div", null, [
-        createVNode(_component_Task, { docs: $options.transposedDocs }, null, 8, ["docs"])
-      ])
+  var _hoisted_13 = { class: "tree-container" };
+  var _hoisted_23 = { class: "mtl-ml" };
+  function render(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_OpenIcon = resolveComponent("OpenIcon");
+    const _component_Draggable = resolveComponent("Draggable");
+    return openBlock(), createElementBlock("div", _hoisted_13, [
+      createVNode(_component_Draggable, {
+        class: "mtl-tree",
+        modelValue: _ctx.treeData,
+        "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.treeData = $event),
+        treeLine: ""
+      }, {
+        default: withCtx(({ node, stat }) => [
+          stat.children.length ? (openBlock(), createBlock(_component_OpenIcon, {
+            key: 0,
+            open: stat.open,
+            class: "mtl-mr",
+            onClick: ($event) => stat.open = !stat.open
+          }, null, 8, ["open", "onClick"])) : createCommentVNode("v-if", true),
+          createBaseVNode("span", _hoisted_23, toDisplayString(node.text), 1)
+        ]),
+        _: 1
+      }, 8, ["modelValue"])
     ]);
   }
 
   // ../erpnext_taskview/erpnext_taskview/public/js/TaskView.vue
-  TaskView_default.render = render2;
+  TaskView_default.render = render;
   TaskView_default.__file = "../erpnext_taskview/erpnext_taskview/public/js/TaskView.vue";
   var TaskView_default2 = TaskView_default;
 
@@ -8013,6 +11156,42 @@ Expected function or array of functions, received type ${typeof value}.`
   };
   frappe.views.ListViewSelect = frappe.views.TaskViewSelect;
 })();
+/*!
+ * @he-tree/dnd-utils v0.1.0-alpha.4
+ * Author: phphe <phphe@outlook.com> (https://github.com/phphe)
+ * Homepage: null
+ * Released under the MIT License.
+ */
+/*!
+ * @he-tree/tree-utils v0.1.0-alpha.4
+ * Author: phphe <phphe@outlook.com> (https://github.com/phphe)
+ * Homepage: null
+ * Released under the MIT License.
+ */
+/*!
+ * @he-tree/vue v2.8.2
+ * Author: phphe <phphe@outlook.com> (https://github.com/phphe)
+ * Homepage: https://hetree.phphe.com/
+ * Released under the MIT License.
+ */
+/*!
+ * @virtual-list/vue
+ * Author: phphe <phphe@outlook.com> (https://github.com/phphe)
+ * Homepage: https://virtual-list.phphe.com
+ * Released under the MIT License.
+ */
+/*!
+ * drag-event-service v2.0.0
+ * Author: phphe <phphe@outlook.com> (https://github.com/phphe)
+ * Homepage: null
+ * Released under the MIT License.
+ */
+/*!
+ * helper-js v3.1.5
+ * Author: phphe <phphe@outlook.com> (https://github.com/phphe)
+ * Homepage: null
+ * Released under the MIT License.
+ */
 /*! #__NO_SIDE_EFFECTS__ */
 /**
 * @vue/reactivity v3.4.38
@@ -8039,4 +11218,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.OTTLYB7C.js.map
+//# sourceMappingURL=app.bundle.MKI5MR5K.js.map
