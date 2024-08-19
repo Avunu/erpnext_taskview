@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "frappe-ui": "^0.1.65"
+    "@he-tree/vue": "^2",
+    "frappe-ui": "^0.1",
+    "vue": "^3"
   }
 }

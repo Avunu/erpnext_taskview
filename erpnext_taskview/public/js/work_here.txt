@@ -1,0 +1,7 @@
+main component - app shell that receives the data from the list view
+
+that pushes it into the tree view (it has to transpose the data into a nested format) - nesting will be implicit from frappe, it needs to be explicit for vue
+
+input is another component, where we actually define our row with the stuff we want
+
+separate timer component - timer data needs to live in backend so it can reload :)

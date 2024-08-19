@@ -1,7 +1,5 @@
 frappe.provide("frappe.views");
-import { createApp, watchEffect, h } from "vue";
-// import { createPinia } from "pinia";
-// import { useStore } from "./store";
+import { createApp, h } from "vue";
 import TaskView from "./TaskView.vue";
 
 
@@ -22,6 +20,7 @@ frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListView
     }
 };
 
+// add Task view to the router
 frappe.router.list_views.push("tasks");
 frappe.router.list_views_route["tasks"] = "Tasks";
 
@@ -34,33 +33,10 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         this.list_view_settings = {
             fields: null,
         };
-        // set Task View as the current view
-        // this.current_view = "Tasks";
-        // add List to the list of views
+
+        // TODO: set Task View as the current view in the dropdown and add list view to the list of views
         
     }
-
-    refresh() {
-		let args = this.get_call_args();
-		if (this.no_change(args)) {
-			return Promise.resolve();
-		}
-		this.freeze(true);
-		// fetch data from server
-		return frappe.call(args).then((r) => {
-			// render
-			this.prepare_data(r);
-			this.toggle_result_area();
-			this.before_render();
-			this.render();
-			this.after_render();
-			this.freeze(false);
-			this.reset_defaults();
-			if (this.settings.refresh) {
-				this.settings.refresh(this);
-			}
-		});
-	}
 
     setup_page() {
         super.setup_page();        
@@ -91,13 +67,6 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     hide_skeleton() {}
 
     render_header(refresh_header = false) {
-		// if (refresh_header) {
-		// 	this.$result.find(".list-row-head").remove();
-		// }
-		// if (this.$result.find(".list-row-head").length === 0) {
-		// 	// append header once
-		// 	this.$result.prepend(this.get_header_html());
-		// }
         this.$result.find(".list-row-head").remove();
 	}
     
@@ -118,11 +87,7 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
                 render: () => h(TaskView, { docs: this.data })
             }).mount(container);
         }
-    }    
-    // render() {
-    //     super.render();
-    //     this.render_list();
-    // }
+    }
 };
 
 // Override the global ListViewSelect with TaskViewSelect
