@@ -1,3 +1,4 @@
+frappe.dom.set_style("/* ../erpnext_taskview/node_modules/@he-tree/vue/style/default.css */\n.tree-node--with-tree-line {\n  position: relative;\n}\n.tree-line {\n  position: absolute;\n  background-color: #bbb;\n}\n.tree-vline {\n  width: 1px;\n  top: 0;\n  bottom: 0;\n}\n.tree-hline {\n  height: 1px;\n  top: 50%;\n  width: 10px;\n}\n.he-tree--rtl {\n  direction: rtl;\n}\n.he-tree-drag-placeholder {\n  background: #ddf2f9;\n  border: 1px dashed #00d9ff;\n  height: 22px;\n  width: 100%;\n}\n.he-tree__open-icon {\n  cursor: pointer;\n  user-select: none;\n  display: inline-block;\n}\n.he-tree__open-icon.open {\n  transform: rotate(90deg);\n}\n.he-tree__open-icon svg {\n  width: 1em;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/material-design.css */\n.mtl-tree .tree-node-inner {\n  display: flex;\n  align-items: center;\n  font-size: 14px;\n}\n.mtl-tree .tree-node {\n  padding: 1px 0;\n}\n.mtl-tree .tree-node:hover {\n  background-color: #ededed;\n}\n.mtl-checkbox {\n  width: 14px;\n  height: 14px;\n}\n.mtl-ml {\n  margin-left: 4px;\n}\n.mtl-mr {\n  margin-right: 4px;\n}\n.mtl-tree table {\n  width: 100%;\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n.mtl-tree td,\n.mtl-tree th {\n  border-bottom: 1px solid rgba(224, 224, 224, 1);\n  line-height: 1.5;\n}\n.mtl-tree tr:last-child td,\n.mtl-tree tr:last-child tr {\n  border-bottom: 0px;\n}\n.mtl-text-left {\n  text-align: left;\n}\n.mtl-text-center {\n  text-align: center;\n}\n.mtl-text-right {\n  text-align: right;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=style&index=0 */\n.tree-container {\n  font-size: 14px;\n}\n.small-icon {\n  font-size: 1.5em;\n}\n.mtl-tree .tree-node:hover {\n  background-color: var(--task-hover-bg-color);\n}\n.he-tree__open-icon svg path {\n  fill: var(--icon-color);\n}\n/*# sourceMappingURL=app.bundle.PRJHE73C.css.map */\n");
 (() => {
   var __defProp = Object.defineProperty;
   var __defProps = Object.defineProperties;
@@ -11046,24 +11047,71 @@ Expected function or array of functions, received type ${typeof value}.`
     },
     setup(props) {
       const treeData = ref(formatTreeData(props.docs));
-      function formatTreeData(docs) {
-        return docs.map((doc2) => ({
-          text: doc2.name,
-          children: []
-        }));
+      const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
+      if (currentTheme.value === "automatic") {
+        currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       }
-      console.log("TreeData:", treeData);
-      return {
-        treeData
-      };
+      onMounted(() => {
+        document.documentElement.style.setProperty(
+          "--task-hover-bg-color",
+          currentTheme.value === "dark" ? "#686868" : "#ededed"
+        );
+        document.documentElement.style.setProperty(
+          "--icon-color",
+          currentTheme.value === "dark" ? "#d3d3d3" : "#000000"
+        );
+      });
+      function formatTreeData(docs) {
+        const taskMap = {};
+        docs.forEach((doc2) => {
+          taskMap[doc2.name] = {
+            text: doc2.subject,
+            children: []
+          };
+        });
+        docs.forEach((doc2) => {
+          const task = taskMap[doc2.name];
+          const childNames = doc2.depends_on_tasks ? doc2.depends_on_tasks.split(",").map((depName) => depName.trim()) : [];
+          childNames.forEach((childName) => {
+            const childTask = taskMap[childName];
+            if (childTask) {
+              task.children.push(childTask);
+            }
+          });
+        });
+        const treeData2 = [];
+        docs.forEach((doc2) => {
+          const isChild = docs.some((parentDoc) => {
+            const childNames = parentDoc.depends_on_tasks ? parentDoc.depends_on_tasks.split(",").map((depName) => depName.trim()) : [];
+            return childNames.includes(doc2.name);
+          });
+          if (!isChild) {
+            treeData2.push(taskMap[doc2.name]);
+          }
+        });
+        return treeData2;
+      }
+      return { treeData };
     }
   });
 
   // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=template
   var _hoisted_13 = { class: "tree-container" };
-  var _hoisted_23 = { class: "mtl-ml" };
+  var _hoisted_23 = ["onClick"];
+  var _hoisted_32 = /* @__PURE__ */ createBaseVNode("div", { class: "icon-container" }, [
+    /* @__PURE__ */ createBaseVNode("svg", {
+      xmlns: "http://www.w3.org/2000/svg",
+      viewBox: "0 0 24 24"
+    }, [
+      /* @__PURE__ */ createBaseVNode("title", null, "chevron-right"),
+      /* @__PURE__ */ createBaseVNode("path", { d: "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" })
+    ])
+  ], -1);
+  var _hoisted_4 = [
+    _hoisted_32
+  ];
+  var _hoisted_5 = { class: "mtl-ml" };
   function render(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_OpenIcon = resolveComponent("OpenIcon");
     const _component_Draggable = resolveComponent("Draggable");
     return openBlock(), createElementBlock("div", _hoisted_13, [
       createVNode(_component_Draggable, {
@@ -11073,13 +11121,15 @@ Expected function or array of functions, received type ${typeof value}.`
         treeLine: ""
       }, {
         default: withCtx(({ node, stat }) => [
-          stat.children.length ? (openBlock(), createBlock(_component_OpenIcon, {
-            key: 0,
-            open: stat.open,
-            class: "mtl-mr",
+          createCommentVNode(" Original Open/Close Icon "),
+          createCommentVNode(' <OpenIcon v-if="stat.children.length" :open="stat.open" class="mtl-mr small-icon"\n					@click.native="stat.open = !stat.open" /> '),
+          createCommentVNode(" Modded for dark mode Open/Close Icon "),
+          createBaseVNode("a", {
+            class: normalizeClass(["he-tree__open-icon mtl-mr small-icon", { "open": stat.open }]),
             onClick: ($event) => stat.open = !stat.open
-          }, null, 8, ["open", "onClick"])) : createCommentVNode("v-if", true),
-          createBaseVNode("span", _hoisted_23, toDisplayString(node.text), 1)
+          }, [..._hoisted_4], 10, _hoisted_23),
+          createCommentVNode(" Node Text "),
+          createBaseVNode("span", _hoisted_5, toDisplayString(node.text), 1)
         ]),
         _: 1
       }, 8, ["modelValue"])
@@ -11218,4 +11268,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.MKI5MR5K.js.map
+//# sourceMappingURL=app.bundle.TS4KU7RQ.js.map
