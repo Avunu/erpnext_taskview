@@ -2,24 +2,37 @@
 	<div class="tree-container">
 		<Draggable class="mtl-tree" v-model="treeData" treeLine>
 			<template #default="{ node, stat }">
-				<!-- Original Open/Close Icon -->
-				<!-- <OpenIcon v-if="stat.children.length" :open="stat.open" class="mtl-mr small-icon"
+				<div class="outer-task">
+
+					<!-- Original Open/Close Icon -->
+					<!-- <OpenIcon v-if="stat.children.length" :open="stat.open" class="mtl-mr small-icon"
 					@click.native="stat.open = !stat.open" /> -->
 
-				<!-- Modded for dark mode Open/Close Icon -->
-				<a class="he-tree__open-icon mtl-mr small-icon" @click.native="stat.open = !stat.open"
-					:class="{ 'open': stat.open }">
-					<div class="icon-container">
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-							<title>chevron-right</title>
-							<path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"></path>
-						</svg>
+					<!-- Modded for dark mode Open/Close Icon -->
+					<a class="he-tree__open-icon mtl-mr small-icon" @click.native="stat.open = !stat.open"
+						:class="{ 'open': stat.open }">
+						<div class="icon-container">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+								<title>chevron-right</title>
+								<path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"></path>
+							</svg>
+						</div>
+					</a>
+					<!-- Node Text -->
+					<!-- <span class="mtl-ml">
+						{{ node.text }}
+					</span> -->
+					<!-- <Task :doc="node" class="mtl-ml" /> -->
+					 
+					<!-- Conditionally render the Task component -->
+					<Task v-if="!node.isBlank" :doc="node" class="mtl-ml" />
+
+					<!-- Render the blank task with an input field if it's a blank task -->
+					<div v-if="node.isBlank" class="task-subject-container">
+						<input type="text" v-model="node.text" @blur="saveNewTask(node)"
+							@keyup.enter="saveNewTask(node)" class="task-subject-edit" placeholder="Enter task..." />
 					</div>
-				</a>
-				<!-- Node Text -->
-				<span class="mtl-ml">
-					{{ node.text }}
-				</span>
+				</div>
 			</template>
 		</Draggable>
 	</div>
@@ -28,6 +41,7 @@
 <script>
 import { defineComponent, ref, onMounted } from 'vue';
 import { Draggable, OpenIcon } from '@he-tree/vue';
+import Task from './components/Task.vue';
 import '@he-tree/vue/style/default.css';
 import '@he-tree/vue/style/material-design.css';
 
@@ -35,7 +49,8 @@ export default defineComponent({
 	name: 'TaskView',
 	components: {
 		Draggable,
-		OpenIcon
+		OpenIcon,
+		Task
 	},
 	props: {
 		docs: {
@@ -63,6 +78,7 @@ export default defineComponent({
 			);
 		});
 
+		// explicit nesting
 		function formatTreeData(docs) {
 			const taskMap = {};
 
@@ -70,7 +86,8 @@ export default defineComponent({
 			docs.forEach(doc => {
 				taskMap[doc.name] = {
 					text: doc.subject,
-					children: []
+					children: [],
+					isBlank: false,
 				};
 			});
 
@@ -85,6 +102,13 @@ export default defineComponent({
 						task.children.push(childTask);
 					}
 				});
+				if (task.children.length > 0) {
+					task.children.push({
+						text: '',
+						children: [],
+						isBlank: true,
+					});
+				}
 			});
 
 			// Step 3: Build the treeData array with top-level tasks (those without parents)
@@ -100,30 +124,44 @@ export default defineComponent({
 				}
 			});
 
+			// add a blank task at the end of the root level
+			treeData.push({
+				text: '',
+				children: [],
+				isBlank: true,
+			});
+
 			return treeData;
 		}
-
 		return { treeData };
 	}
 });
 </script>
 
 <style>
-	.tree-container {
-		/* Adjusts overall tree font size */
-		font-size: 14px;
-	}
+.tree-container {
+	/* Adjusts overall tree font size */
+	font-size: 14px;
+}
 
-	.small-icon {
-		/* Scales down the icon size */
-		font-size: 1.5em;
-	}
+.small-icon {
+	/* Scales down the icon size */
+	font-size: 1.5em;
+}
 
-	.mtl-tree .tree-node:hover {
-		background-color: var(--task-hover-bg-color);
-	}
+.outer-task {
+	/* align center */
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	width: 100%;
+}
 
-	.he-tree__open-icon svg path {
-		fill: var(--icon-color);
-	}
+.mtl-tree .tree-node:hover {
+	background-color: var(--task-hover-bg-color);
+}
+
+.he-tree__open-icon svg path {
+	fill: var(--icon-color);
+}
 </style>

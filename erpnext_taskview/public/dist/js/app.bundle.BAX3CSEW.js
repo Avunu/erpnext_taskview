@@ -1,4 +1,4 @@
-frappe.dom.set_style("/* ../erpnext_taskview/node_modules/@he-tree/vue/style/default.css */\n.tree-node--with-tree-line {\n  position: relative;\n}\n.tree-line {\n  position: absolute;\n  background-color: #bbb;\n}\n.tree-vline {\n  width: 1px;\n  top: 0;\n  bottom: 0;\n}\n.tree-hline {\n  height: 1px;\n  top: 50%;\n  width: 10px;\n}\n.he-tree--rtl {\n  direction: rtl;\n}\n.he-tree-drag-placeholder {\n  background: #ddf2f9;\n  border: 1px dashed #00d9ff;\n  height: 22px;\n  width: 100%;\n}\n.he-tree__open-icon {\n  cursor: pointer;\n  user-select: none;\n  display: inline-block;\n}\n.he-tree__open-icon.open {\n  transform: rotate(90deg);\n}\n.he-tree__open-icon svg {\n  width: 1em;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/material-design.css */\n.mtl-tree .tree-node-inner {\n  display: flex;\n  align-items: center;\n  font-size: 14px;\n}\n.mtl-tree .tree-node {\n  padding: 1px 0;\n}\n.mtl-tree .tree-node:hover {\n  background-color: #ededed;\n}\n.mtl-checkbox {\n  width: 14px;\n  height: 14px;\n}\n.mtl-ml {\n  margin-left: 4px;\n}\n.mtl-mr {\n  margin-right: 4px;\n}\n.mtl-tree table {\n  width: 100%;\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n.mtl-tree td,\n.mtl-tree th {\n  border-bottom: 1px solid rgba(224, 224, 224, 1);\n  line-height: 1.5;\n}\n.mtl-tree tr:last-child td,\n.mtl-tree tr:last-child tr {\n  border-bottom: 0px;\n}\n.mtl-text-left {\n  text-align: left;\n}\n.mtl-text-center {\n  text-align: center;\n}\n.mtl-text-right {\n  text-align: right;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=style&index=0 */\n.tree-container {\n  font-size: 14px;\n}\n.small-icon {\n  font-size: 1.5em;\n}\n.mtl-tree .tree-node:hover {\n  background-color: var(--task-hover-bg-color);\n}\n.he-tree__open-icon svg path {\n  fill: var(--icon-color);\n}\n/*# sourceMappingURL=app.bundle.PRJHE73C.css.map */\n");
+frappe.dom.set_style("/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=style&index=0 */\n.task[data-v-75df30b2] {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  justify-content: space-between;\n  width: 100%;\n}\n.task-subject-container[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n}\n.task-subject[data-v-75df30b2] {\n  padding: 0;\n  margin: 0;\n  cursor: text;\n}\n.task-subject-edit[data-v-75df30b2] {\n  padding: 5px;\n  border: 1px solid #ddd;\n  border-radius: 4px;\n  font-size: 14px;\n  width: 100%;\n}\n.task-controls[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n}\n.task-control[data-v-75df30b2] {\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n}\n.custom-checkbox[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n  position: relative;\n}\n.custom-checkbox label[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  margin: 0;\n}\n.custom-checkbox input[data-v-75df30b2] {\n  position: absolute;\n  opacity: 0;\n  cursor: pointer;\n}\n.custom-checkbox .checkmark[data-v-75df30b2] {\n  height: 20px;\n  width: 20px;\n  background-color: #eee;\n  border-radius: 4px;\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n.custom-checkbox input:checked ~ .checkmark[data-v-75df30b2] {\n  background-color: #2196F3;\n}\n.custom-checkbox .checkmark[data-v-75df30b2]:after {\n  content: \"\";\n  position: absolute;\n  display: none;\n}\n.custom-checkbox input:checked ~ .checkmark[data-v-75df30b2]:after {\n  display: block;\n  width: 5px;\n  height: 10px;\n  border: solid white;\n  border-width: 0 3px 3px 0;\n  transform: rotate(45deg);\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/default.css */\n.tree-node--with-tree-line {\n  position: relative;\n}\n.tree-line {\n  position: absolute;\n  background-color: #bbb;\n}\n.tree-vline {\n  width: 1px;\n  top: 0;\n  bottom: 0;\n}\n.tree-hline {\n  height: 1px;\n  top: 50%;\n  width: 10px;\n}\n.he-tree--rtl {\n  direction: rtl;\n}\n.he-tree-drag-placeholder {\n  background: #ddf2f9;\n  border: 1px dashed #00d9ff;\n  height: 22px;\n  width: 100%;\n}\n.he-tree__open-icon {\n  cursor: pointer;\n  user-select: none;\n  display: inline-block;\n}\n.he-tree__open-icon.open {\n  transform: rotate(90deg);\n}\n.he-tree__open-icon svg {\n  width: 1em;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/material-design.css */\n.mtl-tree .tree-node-inner {\n  display: flex;\n  align-items: center;\n  font-size: 14px;\n}\n.mtl-tree .tree-node {\n  padding: 1px 0;\n}\n.mtl-tree .tree-node:hover {\n  background-color: #ededed;\n}\n.mtl-checkbox {\n  width: 14px;\n  height: 14px;\n}\n.mtl-ml {\n  margin-left: 4px;\n}\n.mtl-mr {\n  margin-right: 4px;\n}\n.mtl-tree table {\n  width: 100%;\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n.mtl-tree td,\n.mtl-tree th {\n  border-bottom: 1px solid rgba(224, 224, 224, 1);\n  line-height: 1.5;\n}\n.mtl-tree tr:last-child td,\n.mtl-tree tr:last-child tr {\n  border-bottom: 0px;\n}\n.mtl-text-left {\n  text-align: left;\n}\n.mtl-text-center {\n  text-align: center;\n}\n.mtl-text-right {\n  text-align: right;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=style&index=0 */\n.tree-container {\n  font-size: 14px;\n}\n.small-icon {\n  font-size: 1.5em;\n}\n.outer-task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.mtl-tree .tree-node:hover {\n  background-color: var(--task-hover-bg-color);\n}\n.he-tree__open-icon svg path {\n  fill: var(--icon-color);\n}\n/*# sourceMappingURL=app.bundle.W2EXTGG5.css.map */\n");
 (() => {
   var __defProp = Object.defineProperty;
   var __defProps = Object.defineProperties;
@@ -44,6 +44,7 @@ frappe.dom.set_style("/* ../erpnext_taskview/node_modules/@he-tree/vue/style/def
   var isArray = Array.isArray;
   var isMap = (val) => toTypeString(val) === "[object Map]";
   var isSet = (val) => toTypeString(val) === "[object Set]";
+  var isDate = (val) => toTypeString(val) === "[object Date]";
   var isFunction = (val) => typeof val === "function";
   var isString = (val) => typeof val === "string";
   var isSymbol = (val) => typeof val === "symbol";
@@ -175,6 +176,57 @@ frappe.dom.set_style("/* ../erpnext_taskview/node_modules/@he-tree/vue/style/def
   );
   function includeBooleanAttr(value) {
     return !!value || value === "";
+  }
+  function looseCompareArrays(a, b) {
+    if (a.length !== b.length)
+      return false;
+    let equal = true;
+    for (let i = 0; equal && i < a.length; i++) {
+      equal = looseEqual(a[i], b[i]);
+    }
+    return equal;
+  }
+  function looseEqual(a, b) {
+    if (a === b)
+      return true;
+    let aValidType = isDate(a);
+    let bValidType = isDate(b);
+    if (aValidType || bValidType) {
+      return aValidType && bValidType ? a.getTime() === b.getTime() : false;
+    }
+    aValidType = isSymbol(a);
+    bValidType = isSymbol(b);
+    if (aValidType || bValidType) {
+      return a === b;
+    }
+    aValidType = isArray(a);
+    bValidType = isArray(b);
+    if (aValidType || bValidType) {
+      return aValidType && bValidType ? looseCompareArrays(a, b) : false;
+    }
+    aValidType = isObject(a);
+    bValidType = isObject(b);
+    if (aValidType || bValidType) {
+      if (!aValidType || !bValidType) {
+        return false;
+      }
+      const aKeysCount = Object.keys(a).length;
+      const bKeysCount = Object.keys(b).length;
+      if (aKeysCount !== bKeysCount) {
+        return false;
+      }
+      for (const key in a) {
+        const aHasKey = a.hasOwnProperty(key);
+        const bHasKey = b.hasOwnProperty(key);
+        if (aHasKey && !bHasKey || !aHasKey && bHasKey || !looseEqual(a[key], b[key])) {
+          return false;
+        }
+      }
+    }
+    return String(a) === String(b);
+  }
+  function looseIndexOf(arr, val) {
+    return arr.findIndex((item) => looseEqual(item, val));
   }
   var isRef = (val) => {
     return !!(val && val.__v_isRef === true);
@@ -1885,6 +1937,12 @@ getter: `, this.getter);
     currentScopeId = instance && instance.type.__scopeId || null;
     return prev;
   }
+  function pushScopeId(id) {
+    currentScopeId = id;
+  }
+  function popScopeId() {
+    currentScopeId = null;
+  }
   function withCtx(fn, ctx2 = currentRenderingInstance, isNonScopedSlot) {
     if (!ctx2)
       return fn;
@@ -1919,6 +1977,37 @@ getter: `, this.getter);
     if (isBuiltInDirective(name)) {
       warn$1("Do not use built-in directive ids as custom directive id: " + name);
     }
+  }
+  function withDirectives(vnode, directives) {
+    if (currentRenderingInstance === null) {
+      warn$1(`withDirectives can only be used inside render functions.`);
+      return vnode;
+    }
+    const instance = getComponentPublicInstance(currentRenderingInstance);
+    const bindings = vnode.dirs || (vnode.dirs = []);
+    for (let i = 0; i < directives.length; i++) {
+      let [dir, value, arg, modifiers = EMPTY_OBJ] = directives[i];
+      if (dir) {
+        if (isFunction(dir)) {
+          dir = {
+            mounted: dir,
+            updated: dir
+          };
+        }
+        if (dir.deep) {
+          traverse(value);
+        }
+        bindings.push({
+          dir,
+          instance,
+          value,
+          oldValue: void 0,
+          arg,
+          modifiers
+        });
+      }
+    }
+    return vnode;
   }
   function invokeDirectiveHook(vnode, prevVNode, instance, name) {
     const bindings = vnode.dirs;
@@ -2742,7 +2831,7 @@ If this is a native custom element, make sure to exclude it from component resol
       beforeUnmount,
       destroyed,
       unmounted,
-      render: render2,
+      render: render3,
       renderTracked,
       renderTriggered,
       errorCaptured,
@@ -2894,8 +2983,8 @@ If this is a native custom element, make sure to exclude it from component resol
         instance.exposed = {};
       }
     }
-    if (render2 && instance.render === NOOP) {
-      instance.render = render2;
+    if (render3 && instance.render === NOOP) {
+      instance.render = render3;
     }
     if (inheritAttrs != null) {
       instance.inheritAttrs = inheritAttrs;
@@ -3131,7 +3220,7 @@ If this is a native custom element, make sure to exclude it from component resol
     };
   }
   var uid$1 = 0;
-  function createAppAPI(render2, hydrate) {
+  function createAppAPI(render3, hydrate) {
     return function createApp2(rootComponent, rootProps = null) {
       if (!isFunction(rootComponent)) {
         rootComponent = extend({}, rootComponent);
@@ -3234,7 +3323,7 @@ If this is a native custom element, make sure to exclude it from component resol
             }
             if (true) {
               context2.reload = () => {
-                render2(
+                render3(
                   cloneVNode(vnode),
                   rootContainer,
                   namespace
@@ -3244,7 +3333,7 @@ If this is a native custom element, make sure to exclude it from component resol
             if (isHydrate && hydrate) {
               hydrate(vnode, rootContainer);
             } else {
-              render2(vnode, rootContainer, namespace);
+              render3(vnode, rootContainer, namespace);
             }
             isMounted = true;
             app._container = rootContainer;
@@ -3263,7 +3352,7 @@ If you want to remount the same app, move your app creation logic into a factory
         },
         unmount() {
           if (isMounted) {
-            render2(null, app._container);
+            render3(null, app._container);
             if (true) {
               app._instance = null;
               devtoolsUnmountApp(app);
@@ -5299,7 +5388,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       return teleportEnd ? hostNextSibling(teleportEnd) : el;
     };
     let isFlushing2 = false;
-    const render2 = (vnode, container, namespace) => {
+    const render3 = (vnode, container, namespace) => {
       if (vnode == null) {
         if (container._vnode) {
           unmount(container._vnode, null, null, true);
@@ -5343,9 +5432,9 @@ For more details, see https://link.vuejs.org/feature-flags.`
       );
     }
     return {
-      render: render2,
+      render: render3,
       hydrate,
-      createApp: createAppAPI(render2, hydrate)
+      createApp: createAppAPI(render3, hydrate)
     };
   }
   function resolveChildrenNamespace({ type, props }, currentNamespace) {
@@ -5850,7 +5939,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       slots,
       attrs,
       emit: emit2,
-      render: render2,
+      render: render3,
       renderCache,
       props,
       data,
@@ -5878,7 +5967,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
           }
         }) : proxyToUse;
         result = normalizeVNode(
-          render2.call(
+          render3.call(
             thisProxy,
             proxyToUse,
             renderCache,
@@ -7935,7 +8024,148 @@ Expected function or array of functions, received type ${typeof value}.`
     container.removeChild(clone);
     return hasTransform;
   }
+  var getModelAssigner = (vnode) => {
+    const fn = vnode.props["onUpdate:modelValue"] || false;
+    return isArray(fn) ? (value) => invokeArrayFns(fn, value) : fn;
+  };
+  function onCompositionStart(e) {
+    e.target.composing = true;
+  }
+  function onCompositionEnd(e) {
+    const target = e.target;
+    if (target.composing) {
+      target.composing = false;
+      target.dispatchEvent(new Event("input"));
+    }
+  }
   var assignKey = Symbol("_assign");
+  var vModelText = {
+    created(el, { modifiers: { lazy, trim, number } }, vnode) {
+      el[assignKey] = getModelAssigner(vnode);
+      const castToNumber = number || vnode.props && vnode.props.type === "number";
+      addEventListener(el, lazy ? "change" : "input", (e) => {
+        if (e.target.composing)
+          return;
+        let domValue = el.value;
+        if (trim) {
+          domValue = domValue.trim();
+        }
+        if (castToNumber) {
+          domValue = looseToNumber(domValue);
+        }
+        el[assignKey](domValue);
+      });
+      if (trim) {
+        addEventListener(el, "change", () => {
+          el.value = el.value.trim();
+        });
+      }
+      if (!lazy) {
+        addEventListener(el, "compositionstart", onCompositionStart);
+        addEventListener(el, "compositionend", onCompositionEnd);
+        addEventListener(el, "change", onCompositionEnd);
+      }
+    },
+    mounted(el, { value }) {
+      el.value = value == null ? "" : value;
+    },
+    beforeUpdate(el, { value, oldValue, modifiers: { lazy, trim, number } }, vnode) {
+      el[assignKey] = getModelAssigner(vnode);
+      if (el.composing)
+        return;
+      const elValue = (number || el.type === "number") && !/^0\d/.test(el.value) ? looseToNumber(el.value) : el.value;
+      const newValue = value == null ? "" : value;
+      if (elValue === newValue) {
+        return;
+      }
+      if (document.activeElement === el && el.type !== "range") {
+        if (lazy && value === oldValue) {
+          return;
+        }
+        if (trim && el.value.trim() === newValue) {
+          return;
+        }
+      }
+      el.value = newValue;
+    }
+  };
+  var vModelCheckbox = {
+    deep: true,
+    created(el, _, vnode) {
+      el[assignKey] = getModelAssigner(vnode);
+      addEventListener(el, "change", () => {
+        const modelValue = el._modelValue;
+        const elementValue = getValue(el);
+        const checked = el.checked;
+        const assign = el[assignKey];
+        if (isArray(modelValue)) {
+          const index = looseIndexOf(modelValue, elementValue);
+          const found = index !== -1;
+          if (checked && !found) {
+            assign(modelValue.concat(elementValue));
+          } else if (!checked && found) {
+            const filtered = [...modelValue];
+            filtered.splice(index, 1);
+            assign(filtered);
+          }
+        } else if (isSet(modelValue)) {
+          const cloned = new Set(modelValue);
+          if (checked) {
+            cloned.add(elementValue);
+          } else {
+            cloned.delete(elementValue);
+          }
+          assign(cloned);
+        } else {
+          assign(getCheckboxValue(el, checked));
+        }
+      });
+    },
+    mounted: setChecked,
+    beforeUpdate(el, binding, vnode) {
+      el[assignKey] = getModelAssigner(vnode);
+      setChecked(el, binding, vnode);
+    }
+  };
+  function setChecked(el, { value, oldValue }, vnode) {
+    el._modelValue = value;
+    if (isArray(value)) {
+      el.checked = looseIndexOf(value, vnode.props.value) > -1;
+    } else if (isSet(value)) {
+      el.checked = value.has(vnode.props.value);
+    } else if (value !== oldValue) {
+      el.checked = looseEqual(value, getCheckboxValue(el, true));
+    }
+  }
+  function getValue(el) {
+    return "_value" in el ? el._value : el.value;
+  }
+  function getCheckboxValue(el, checked) {
+    const key = checked ? "_trueValue" : "_falseValue";
+    return key in el ? el[key] : checked;
+  }
+  var keyNames = {
+    esc: "escape",
+    space: " ",
+    up: "arrow-up",
+    left: "arrow-left",
+    right: "arrow-right",
+    down: "arrow-down",
+    delete: "backspace"
+  };
+  var withKeys = (fn, modifiers) => {
+    const cache = fn._withKeys || (fn._withKeys = {});
+    const cacheKey = modifiers.join(".");
+    return cache[cacheKey] || (cache[cacheKey] = (event) => {
+      if (!("key" in event)) {
+        return;
+      }
+      const eventKey = hyphenate(event.key);
+      if (modifiers.some((k) => k === eventKey || keyNames[k] === eventKey)) {
+        return fn(event);
+      }
+    });
+  };
   var rendererOptions = /* @__PURE__ */ extend({ patchProp }, nodeOps);
   var renderer;
   function ensureRenderer() {
@@ -11031,12 +11261,126 @@ Expected function or array of functions, received type ${typeof value}.`
   }
   var OpenIcon = /* @__PURE__ */ _export_sfc2(_sfc_main2, [["render", _sfc_render2]]);
 
+  // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=script
+  var Task_default = defineComponent({
+    name: "Task",
+    props: {
+      doc: {
+        type: Object,
+        required: true,
+        default: () => {
+        }
+      }
+    },
+    setup(props) {
+      const isCompleted = ref(false);
+      const timerActive = ref(false);
+      const isEditing = ref(false);
+      const editedText = ref(props.doc.text);
+      const toggleComplete = () => {
+        isCompleted.value = !isCompleted.value;
+        console.log(`Task "${props.doc.text}" completed: ${isCompleted.value}`);
+      };
+      const startTimer = () => {
+        timerActive.value = true;
+        console.log(`Timer started for task "${props.doc.text}"`);
+      };
+      const editTask = () => {
+        isEditing.value = true;
+        editedText.value = props.doc.text;
+        nextTick(() => {
+          const inputElement = document.querySelector(".task-subject-edit");
+          if (inputElement) {
+            inputElement.focus();
+          }
+        });
+      };
+      const saveEdit = () => {
+        if (editedText.value.trim() !== "") {
+          props.doc.text = editedText.value;
+        }
+        isEditing.value = false;
+      };
+      return {
+        isCompleted,
+        timerActive,
+        isEditing,
+        editedText,
+        toggleComplete,
+        startTimer,
+        editTask,
+        saveEdit
+      };
+    }
+  });
+
+  // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=template
+  var _withScopeId = (n) => (pushScopeId("data-v-75df30b2"), n = n(), popScopeId(), n);
+  var _hoisted_13 = { class: "task" };
+  var _hoisted_23 = { class: "task-subject-container" };
+  var _hoisted_32 = { class: "task-controls" };
+  var _hoisted_4 = { class: "custom-checkbox task-control" };
+  var _hoisted_5 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("span", { class: "checkmark" }, null, -1));
+  var _hoisted_6 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("button", { class: "btn btn-secondary task-control" }, "Log Time", -1));
+  function render(_ctx, _cache, $props, $setup, $data, $options) {
+    return openBlock(), createElementBlock("div", _hoisted_13, [
+      createCommentVNode(" Task Subject "),
+      createBaseVNode("div", _hoisted_23, [
+        !_ctx.isEditing ? (openBlock(), createElementBlock("p", {
+          key: 0,
+          class: "task-subject",
+          onClick: _cache[0] || (_cache[0] = (...args) => _ctx.editTask && _ctx.editTask(...args))
+        }, toDisplayString(_ctx.doc.text), 1)) : createCommentVNode("v-if", true),
+        _ctx.isEditing ? withDirectives((openBlock(), createElementBlock("input", {
+          key: 1,
+          type: "text",
+          "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.editedText = $event),
+          onBlur: _cache[2] || (_cache[2] = (...args) => _ctx.saveEdit && _ctx.saveEdit(...args)),
+          onKeyup: _cache[3] || (_cache[3] = withKeys((...args) => _ctx.saveEdit && _ctx.saveEdit(...args), ["enter"])),
+          class: "task-subject-edit"
+        }, null, 544)), [
+          [vModelText, _ctx.editedText]
+        ]) : createCommentVNode("v-if", true)
+      ]),
+      createBaseVNode("div", _hoisted_32, [
+        createCommentVNode(" Spiced-up Checkbox "),
+        createBaseVNode("div", _hoisted_4, [
+          createBaseVNode("label", null, [
+            withDirectives(createBaseVNode("input", {
+              type: "checkbox",
+              "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => _ctx.isCompleted = $event),
+              onChange: _cache[5] || (_cache[5] = (...args) => _ctx.toggleComplete && _ctx.toggleComplete(...args))
+            }, null, 544), [
+              [vModelCheckbox, _ctx.isCompleted]
+            ]),
+            _hoisted_5,
+            createTextVNode(" Mark as Complete ")
+          ])
+        ]),
+        createCommentVNode(" Button to start timer "),
+        createBaseVNode("button", {
+          class: "btn btn-info task-control",
+          onClick: _cache[6] || (_cache[6] = (...args) => _ctx.startTimer && _ctx.startTimer(...args))
+        }, "Start Timer"),
+        createCommentVNode(" Button to log time "),
+        _hoisted_6
+      ])
+    ]);
+  }
+
+  // ../erpnext_taskview/erpnext_taskview/public/js/components/Task.vue
+  Task_default.render = render;
+  Task_default.__file = "../erpnext_taskview/erpnext_taskview/public/js/components/Task.vue";
+  Task_default.__scopeId = "data-v-75df30b2";
+  var Task_default2 = Task_default;
+
   // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=script
   var TaskView_default = defineComponent({
     name: "TaskView",
     components: {
       Draggable: cpt2,
-      OpenIcon
+      OpenIcon,
+      Task: Task_default2
     },
     props: {
       docs: {
@@ -11066,7 +11410,8 @@ Expected function or array of functions, received type ${typeof value}.`
         docs.forEach((doc2) => {
           taskMap[doc2.name] = {
             text: doc2.subject,
-            children: []
+            children: [],
+            isBlank: false
           };
         });
         docs.forEach((doc2) => {
@@ -11078,6 +11423,13 @@ Expected function or array of functions, received type ${typeof value}.`
               task.children.push(childTask);
             }
           });
+          if (task.children.length > 0) {
+            task.children.push({
+              text: "",
+              children: [],
+              isBlank: true
+            });
+          }
         });
         const treeData2 = [];
         docs.forEach((doc2) => {
@@ -11089,6 +11441,11 @@ Expected function or array of functions, received type ${typeof value}.`
             treeData2.push(taskMap[doc2.name]);
           }
         });
+        treeData2.push({
+          text: "",
+          children: [],
+          isBlank: true
+        });
         return treeData2;
       }
       return { treeData };
@@ -11096,9 +11453,10 @@ Expected function or array of functions, received type ${typeof value}.`
   });
 
   // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=template
-  var _hoisted_13 = { class: "tree-container" };
-  var _hoisted_23 = ["onClick"];
-  var _hoisted_32 = /* @__PURE__ */ createBaseVNode("div", { class: "icon-container" }, [
+  var _hoisted_14 = { class: "tree-container" };
+  var _hoisted_24 = { class: "outer-task" };
+  var _hoisted_33 = ["onClick"];
+  var _hoisted_42 = /* @__PURE__ */ createBaseVNode("div", { class: "icon-container" }, [
     /* @__PURE__ */ createBaseVNode("svg", {
       xmlns: "http://www.w3.org/2000/svg",
       viewBox: "0 0 24 24"
@@ -11107,13 +11465,18 @@ Expected function or array of functions, received type ${typeof value}.`
       /* @__PURE__ */ createBaseVNode("path", { d: "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" })
     ])
   ], -1);
-  var _hoisted_4 = [
-    _hoisted_32
+  var _hoisted_52 = [
+    _hoisted_42
   ];
-  var _hoisted_5 = { class: "mtl-ml" };
-  function render(_ctx, _cache, $props, $setup, $data, $options) {
+  var _hoisted_62 = {
+    key: 1,
+    class: "task-subject-container"
+  };
+  var _hoisted_7 = ["onUpdate:modelValue", "onBlur", "onKeyup"];
+  function render2(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_Task = resolveComponent("Task");
     const _component_Draggable = resolveComponent("Draggable");
-    return openBlock(), createElementBlock("div", _hoisted_13, [
+    return openBlock(), createElementBlock("div", _hoisted_14, [
       createVNode(_component_Draggable, {
         class: "mtl-tree",
         modelValue: _ctx.treeData,
@@ -11121,15 +11484,37 @@ Expected function or array of functions, received type ${typeof value}.`
         treeLine: ""
       }, {
         default: withCtx(({ node, stat }) => [
-          createCommentVNode(" Original Open/Close Icon "),
-          createCommentVNode(' <OpenIcon v-if="stat.children.length" :open="stat.open" class="mtl-mr small-icon"\n					@click.native="stat.open = !stat.open" /> '),
-          createCommentVNode(" Modded for dark mode Open/Close Icon "),
-          createBaseVNode("a", {
-            class: normalizeClass(["he-tree__open-icon mtl-mr small-icon", { "open": stat.open }]),
-            onClick: ($event) => stat.open = !stat.open
-          }, [..._hoisted_4], 10, _hoisted_23),
-          createCommentVNode(" Node Text "),
-          createBaseVNode("span", _hoisted_5, toDisplayString(node.text), 1)
+          createBaseVNode("div", _hoisted_24, [
+            createCommentVNode(" Original Open/Close Icon "),
+            createCommentVNode(' <OpenIcon v-if="stat.children.length" :open="stat.open" class="mtl-mr small-icon"\n					@click.native="stat.open = !stat.open" /> '),
+            createCommentVNode(" Modded for dark mode Open/Close Icon "),
+            createBaseVNode("a", {
+              class: normalizeClass(["he-tree__open-icon mtl-mr small-icon", { "open": stat.open }]),
+              onClick: ($event) => stat.open = !stat.open
+            }, [..._hoisted_52], 10, _hoisted_33),
+            createCommentVNode(" Node Text "),
+            createCommentVNode(' <span class="mtl-ml">\n						{{ node.text }}\n					</span> '),
+            createCommentVNode(' <Task :doc="node" class="mtl-ml" /> '),
+            createCommentVNode(" Conditionally render the Task component "),
+            !node.isBlank ? (openBlock(), createBlock(_component_Task, {
+              key: 0,
+              doc: node,
+              class: "mtl-ml"
+            }, null, 8, ["doc"])) : createCommentVNode("v-if", true),
+            createCommentVNode(" Render the blank task with an input field if it's a blank task "),
+            node.isBlank ? (openBlock(), createElementBlock("div", _hoisted_62, [
+              withDirectives(createBaseVNode("input", {
+                type: "text",
+                "onUpdate:modelValue": ($event) => node.text = $event,
+                onBlur: ($event) => _ctx.saveNewTask(node),
+                onKeyup: withKeys(($event) => _ctx.saveNewTask(node), ["enter"]),
+                class: "task-subject-edit",
+                placeholder: "Enter task..."
+              }, null, 40, _hoisted_7), [
+                [vModelText, node.text]
+              ])
+            ])) : createCommentVNode("v-if", true)
+          ])
         ]),
         _: 1
       }, 8, ["modelValue"])
@@ -11137,7 +11522,7 @@ Expected function or array of functions, received type ${typeof value}.`
   }
 
   // ../erpnext_taskview/erpnext_taskview/public/js/TaskView.vue
-  TaskView_default.render = render;
+  TaskView_default.render = render2;
   TaskView_default.__file = "../erpnext_taskview/erpnext_taskview/public/js/TaskView.vue";
   var TaskView_default2 = TaskView_default;
 
@@ -11268,4 +11653,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.TS4KU7RQ.js.map
+//# sourceMappingURL=app.bundle.BAX3CSEW.js.map
