@@ -1,31 +1,12 @@
-<!-- <template>
-	<div class="tree-container">
-		<Draggable class="mtl-tree" v-model="treeData" treeLine>
-			<template #default="{ node, stat }">
-				<div class="outer-task">
-					<a class="he-tree__open-icon mtl-mr small-icon" @click.native="stat.open = !stat.open"
-						:class="{ 'open': stat.open }">
-						<div class="icon-container">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-								<title>chevron-right</title>
-								<path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"></path>
-							</svg>
-						</div>
-					</a>
-					<Task :doc="node" class="mtl-ml" />
-				</div>
-			</template>
-		</Draggable>
-	</div>
-</template> -->
-
 <template>
 	<div class="tree-container">
 		<Draggable class="mtl-tree" v-model="treeData" treeLine>
 			<template #default="{ node, stat }">
 				<div class="outer-task" :class="{ 'highlighted-project': isHighlightedProject(node) }">
-					<a class="he-tree__open-icon mtl-mr small-icon" @click="toggleProject(node, stat)"
-						:class="{ 'open': stat.open }">
+					<a class="he-tree__open-icon mtl-mr small-icon" @click="toggleNode(node, stat)"
+						:class="{ 'open': evaluateNodeInLocals(node) }">
+						<!-- :class="{ 'open': stat.open && node.expanded && evaluateNodeInLocals(node) }"> -->
+						<!-- :class="{ 'open': stat.open }"> -->
 						<div class="icon-container">
 							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
 								<title>chevron-right</title>
@@ -33,7 +14,9 @@
 							</svg>
 						</div>
 					</a>
-					<Task :doc="node" class="mtl-ml" @task-interaction="handleTaskInteraction(node)" />
+					<!-- <Task :doc="node" class="mtl-ml" @task-interaction="handleTaskInteraction(node)" /> -->
+					<Task :doc="node" class="mtl-ml" @task-interaction="handleTaskInteraction(node)"
+						@add-sibling-task="addSiblingTask(node)" />
 				</div>
 			</template>
 		</Draggable>
@@ -76,6 +59,7 @@ export default defineComponent({
 			currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 		}
 		onMounted(() => {
+			// set the theme to match frappe
 			document.documentElement.style.setProperty(
 				'--task-hover-bg-color',
 				currentTheme.value === 'dark' ? '#686868' : '#ededed'
@@ -84,24 +68,32 @@ export default defineComponent({
 				'--icon-color',
 				currentTheme.value === 'dark' ? '#d3d3d3' : '#000000'
 			);
+			// initialize the highlighted project
+			updateHighlightedProject();
+			// Listen for keypress events to start editing the blank task
+			document.addEventListener('keydown', handleKeydown);
 		});
+
+		// Helper function to create a new node with the same fields
+		function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = '', autoFocus = false, expanded = true }) {
+			return {
+				text,
+				children,
+				isBlank,
+				isProject,
+				project,
+				docName,
+				autoFocus,
+				expanded
+			};
+		}
 
 		// explicit nesting
 		function formatTreeData(docs, projects) {
-			// Helper function to create a new node with the same fields
-			function createNode({ text, children = [], isBlank = false, isProject = false, project = null }) {
-				return {
-					text,
-					children,
-					isBlank,
-					isProject,
-					project,
-				};
-			}
 
 			// Helper function to add a blank task
-			function addBlankTask(tasks, text = 'Add task...') {
-				tasks.push(createNode({ text: text, isBlank: true }));
+			function addBlankTask(tasks, text = 'Add task...', project = null, isProject = false) {
+				tasks.push(createNode({ text: text, isBlank: true, project: project, isProject: isProject }));
 			}
 
 			// Step 1: Build a map of all tasks by their name
@@ -110,6 +102,7 @@ export default defineComponent({
 				taskMap[doc.name] = createNode({
 					text: doc.subject,
 					project: doc.project,
+					docName: doc.name,
 				});
 			});
 
@@ -118,6 +111,7 @@ export default defineComponent({
 				createNode({
 					text: `${project.name}: ${project.project_name}`,
 					isProject: true,
+					docName: project.name,
 				})
 			);
 
@@ -134,7 +128,7 @@ export default defineComponent({
 				});
 
 				if (task.children.length > 0) {
-					addBlankTask(task.children);
+					addBlankTask(task.children, 'Add task...', task.project);
 				}
 			});
 
@@ -156,9 +150,9 @@ export default defineComponent({
 
 			// Step 5: Add a blank task at the end of each project and root level
 			treeData.forEach(projectTask => {
-				addBlankTask(projectTask.children);
+				addBlankTask(projectTask.children, 'Add task...', projectTask.docName);
 			});
-			addBlankTask(treeData, 'Add project...');
+			addBlankTask(treeData, 'Add project...', null, true);
 
 			return treeData;
 		}
@@ -168,14 +162,99 @@ export default defineComponent({
 			return node.isProject && node === highlightedProject.value;
 		};
 
+		const evaluateNodeInLocals = (node) => {
+			if (locals.nodes?.[node.docName] === false) {
+				console.log(false)
+			}
+			return locals.nodes?.[node.docName] === true;
+		};
+
 		// Function to toggle project expansion and update highlighted project
-		const toggleProject = (node, stat) => {
+		// const toggleNode = (node, stat) => {
+		// 	// console.log(node);
+		// 	// console.log(stat);
+		// 	stat.open = !stat.open;
+		// 	if (stat.open) {
+		// 		// if node is not a project, highlight the parent project
+		// 		if (!node.isProject) {
+		// 			const parentProject = treeData.value.find(project =>
+		// 				project.children.some(child => child === node)
+		// 			);
+		// 			console.log(parentProject);
+		// 			highlightedProject.value = parentProject;
+		// 		} else {
+		// 			highlightedProject.value = node;
+		// 		}
+		// 		// highlightedProject.value = node;
+		// 	} else {
+		// 		updateHighlightedProject();
+		// 	}
+		// };
+		const toggleNode = (node, stat) => {
 			stat.open = !stat.open;
-			if (stat.open) {
+			locals.nodes[node.docName] = stat.open;
+
+			if (!node.isProject) {
+				console.log('node is not a project. this should find the parent project and highlight it every time.');
+				const parentProject = findParentProject(treeData.value, node);
+				console.log(parentProject);
+				if (parentProject) {
+					highlightedProject.value = parentProject;
+				}
+			} else if (node.isProject && stat.open) {
+				console.log('node is a project and is open. this should highlight this project.');
 				highlightedProject.value = node;
 			} else {
-				updateHighlightedProject();
+				console.log('node is a project and is closed. this should update the highlighted project to the next expanded project. if there are no expanded projects, this project should remain highlighted.');
+				console.log(treeData.value);
+				// When a project is collapsed, shift the focus to the next expanded project
+				const expandedProjects = treeData.value.filter(project => project.isProject && project.children.some(child => child.open));
+				if (expandedProjects.length > 0) {
+					highlightedProject.value = expandedProjects[0];
+				} else {
+					updateHighlightedProject(); // Fallback to update the highlighted project
+				}
 			}
+		};
+
+		// Recursive function to find the parent project of any node
+		const findParentProject = (nodes, targetNode) => {
+			for (let node of nodes) {
+				if (node.children && node.children.includes(targetNode)) {
+					return node.isProject ? node : findParentProject(nodes, node);
+				} else if (node.children && node.children.length > 0) {
+					const parent = findParentProject(node.children, targetNode);
+					if (parent) {
+						return parent;
+					}
+				}
+			}
+			return null;
+		};
+
+		// THIS NEEDS WORK SO THAT TASKS GO TO THE IMMEDIATE PARENT, NOT ALL THE WAY TO THE ROOT
+		const addSiblingTask = (node) => {
+			// Create a new task object
+			const newNode = createNode({ text: node.isProject ? 'Add project...' : 'Add task...', isBlank: true, project: node.isProject ? null : node.project, isProject: node.isProject });
+
+			// Find the parent project
+			const parentProject = treeData.value.find(project =>
+				project.children.some(child => child === node)
+			);
+
+			if (parentProject) {
+				// Create a new array to trigger reactivity
+				const updatedChildren = [...parentProject.children, newNode];
+				parentProject.children = updatedChildren;
+
+				// Create a new reference for treeData to trigger reactivity
+				treeData.value = [...treeData.value];
+			} else {
+				// Add the new node to the root level
+				treeData.value = [...treeData.value, newNode];
+
+			}
+			console.log(treeData);
 		};
 
 		// Function to handle task interactions
@@ -203,31 +282,46 @@ export default defineComponent({
 			}
 		};
 
-		// Initialize highlighted project
-		onMounted(() => {
-			updateHighlightedProject();
-		});
-
 		// Watch for changes in treeData
-		watch(treeData, () => {
-			updateHighlightedProject();
-		});
+		// watch(treeData, () => {
+		// 	updateHighlightedProject();
+		// });
+
+		// Function to find and edit the root-level blank task under the highlighted project
+		const editRootBlankTask = () => {
+			const project = highlightedProject.value;
+			if (project) {
+				const blankTask = project.children.find(task => task.isBlank);
+				if (blankTask) {
+					blankTask.autoFocus = true; // Set a flag to trigger auto-focus
+				}
+			}
+		};
+
+		const handleKeydown = (event) => {
+			// check if the key pressed is a character key (a-z, A-Z, 0-9, special characters)
+			// and no input is focused
+			const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;'",.<>?/`~\- ]$/;
+			if (document.activeElement.tagName !== 'INPUT' && allowedKeys.test(event.key)) {
+				// If no input is focused, start editing the root blank task
+				editRootBlankTask();
+			}
+		};
 
 		return {
 			treeData,
 			isHighlightedProject,
-			toggleProject,
-			handleTaskInteraction
+			evaluateNodeInLocals,
+			toggleNode,
+			handleTaskInteraction,
+			handleKeydown, // Add this to return so it can be used
+			addSiblingTask
 		};
 	}
 });
 </script>
 
 <style>
-.highlighted-project {
-	font-weight: bold;
-}
-
 .tree-container {
 	/* Adjusts overall tree font size */
 	font-size: 14px;

@@ -84,6 +84,12 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
             // Make a new Vue container to hold the header and rows
             const container = document.createElement('div');
             this.$result.append(container);
+
+            console.log('rendering TaskView');
+            console.log(this);
+            console.log(projects);
+
+            locals.nodes = {};
     
             // Pass the data to TaskView
             createApp({

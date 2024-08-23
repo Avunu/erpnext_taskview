@@ -28,8 +28,8 @@
                 <!-- Button to log time -->
                 <button class="btn btn-secondary task-control">Log Time</button>
             </div>
-            <!-- if it is a project, give it a checkbox to close the project -->
-            <div v-if="doc.isProject" class="task-controls">
+            <!-- if it is a project and is not blank, give it a checkbox to close the project -->
+            <div v-if="doc.isProject && !doc.isBlank" class="task-controls">
                 <div class="custom-checkbox task-control">
                     <label>
                         <input type="checkbox" v-model="isCompleted" @change="toggleComplete" />
@@ -42,7 +42,7 @@
     </div>
 </template>
 <script>
-import { defineComponent, ref, nextTick } from 'vue';
+import { defineComponent, ref, nextTick, onMounted, watch } from 'vue';
 
 export default defineComponent({
     name: 'Task',
@@ -58,6 +58,15 @@ export default defineComponent({
         const timerActive = ref(false);
         const isEditing = ref(false);
         const editedText = ref(''); // Initialize as empty
+
+        // Trigger editing mode if autoFocus is true
+        watch(() => props.doc.autoFocus, (newVal) => {
+            if (newVal) {
+                console.log('AutoFocus detected in watch');
+                editTask();
+                props.doc.autoFocus = false;
+            }
+        });
 
         const emitInteraction = () => {
             emit('task-interaction');
@@ -87,7 +96,29 @@ export default defineComponent({
 
         const saveEdit = () => {
             if (editedText.value.trim() !== '') {
-                props.doc.text = editedText.value; // Update prop or emit an event
+                if (editedText.value !== props.doc.text) {
+                    console.log(`Task "${props.doc.text}" edited to: ${editedText.value}`);
+                    console.log(`Emitting task interaction for task "${props.doc.docName}"`);
+                    // /workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/erpnext_taskview/__init__.py
+                    // def update_edit(doctype, docname, fieldname, value):
+                    // THIS IS WHERE WE UPDATE THE TASK OR PROJECT IN THE DATABASE
+                    // we need to make sure each node has accurate is_group and parent_task values as they render and move around
+                    props.doc.text = editedText.value; // Update prop or emit an event
+                    // frappe.call({
+                    //     method: 'erpnext_taskview.erpnext_taskview.update_edit',
+                    //     args: {
+                    //         node: props.doc
+                    //     }
+                    // });
+
+                    if (props.doc.isBlank) {
+                        console.log(props.doc);
+                        // Mark the current task as no longer blank
+                        props.doc.isBlank = false;
+                        // Emit an event to notify the parent component to add a new blank task
+                        emit('add-sibling-task', props.doc);
+                    }
+                }
             }
             isEditing.value = false;
         };
@@ -107,6 +138,11 @@ export default defineComponent({
 });
 </script>
 <style scoped>
+
+.highlighted-project div .task-subject-container {
+    font-weight: bold;
+}
+
 .task {
     display: flex;
     flex-direction: row;
