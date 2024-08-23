@@ -1,14 +1,8 @@
-<template>
+<!-- <template>
 	<div class="tree-container">
 		<Draggable class="mtl-tree" v-model="treeData" treeLine>
 			<template #default="{ node, stat }">
 				<div class="outer-task">
-
-					<!-- Original Open/Close Icon -->
-					<!-- <OpenIcon v-if="stat.children.length" :open="stat.open" class="mtl-mr small-icon"
-					@click.native="stat.open = !stat.open" /> -->
-
-					<!-- Modded for dark mode Open/Close Icon -->
 					<a class="he-tree__open-icon mtl-mr small-icon" @click.native="stat.open = !stat.open"
 						:class="{ 'open': stat.open }">
 						<div class="icon-container">
@@ -18,20 +12,28 @@
 							</svg>
 						</div>
 					</a>
-					<!-- Node Text -->
-					<!-- <span class="mtl-ml">
-						{{ node.text }}
-					</span> -->
-					<!-- <Task :doc="node" class="mtl-ml" /> -->
-					 
-					<!-- Conditionally render the Task component -->
-					<Task v-if="!node.isBlank" :doc="node" class="mtl-ml" />
+					<Task :doc="node" class="mtl-ml" />
+				</div>
+			</template>
+		</Draggable>
+	</div>
+</template> -->
 
-					<!-- Render the blank task with an input field if it's a blank task -->
-					<div v-if="node.isBlank" class="task-subject-container">
-						<input type="text" v-model="node.text" @blur="saveNewTask(node)"
-							@keyup.enter="saveNewTask(node)" class="task-subject-edit" placeholder="Enter task..." />
-					</div>
+<template>
+	<div class="tree-container">
+		<Draggable class="mtl-tree" v-model="treeData" treeLine>
+			<template #default="{ node, stat }">
+				<div class="outer-task" :class="{ 'highlighted-project': isHighlightedProject(node) }">
+					<a class="he-tree__open-icon mtl-mr small-icon" @click="toggleProject(node, stat)"
+						:class="{ 'open': stat.open }">
+						<div class="icon-container">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+								<title>chevron-right</title>
+								<path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"></path>
+							</svg>
+						</div>
+					</a>
+					<Task :doc="node" class="mtl-ml" @task-interaction="handleTaskInteraction(node)" />
 				</div>
 			</template>
 		</Draggable>
@@ -39,7 +41,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, ref, onMounted, watch } from 'vue';
 import { Draggable, OpenIcon } from '@he-tree/vue';
 import Task from './components/Task.vue';
 import '@he-tree/vue/style/default.css';
@@ -57,10 +59,16 @@ export default defineComponent({
 			type: Array,
 			required: true,
 			default: () => []
+		},
+		projects: {
+			type: Array,
+			required: true,
+			default: () => []
 		}
 	},
 	setup(props) {
-		const treeData = ref(formatTreeData(props.docs));
+		const treeData = ref(formatTreeData(props.docs, props.projects));
+		const highlightedProject = ref(null);
 
 		// Dark Mode
 		const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
@@ -79,19 +87,41 @@ export default defineComponent({
 		});
 
 		// explicit nesting
-		function formatTreeData(docs) {
-			const taskMap = {};
+		function formatTreeData(docs, projects) {
+			// Helper function to create a new node with the same fields
+			function createNode({ text, children = [], isBlank = false, isProject = false, project = null }) {
+				return {
+					text,
+					children,
+					isBlank,
+					isProject,
+					project,
+				};
+			}
+
+			// Helper function to add a blank task
+			function addBlankTask(tasks, text = 'Add task...') {
+				tasks.push(createNode({ text: text, isBlank: true }));
+			}
 
 			// Step 1: Build a map of all tasks by their name
+			const taskMap = {};
 			docs.forEach(doc => {
-				taskMap[doc.name] = {
+				taskMap[doc.name] = createNode({
 					text: doc.subject,
-					children: [],
-					isBlank: false,
-				};
+					project: doc.project,
+				});
 			});
 
-			// Step 2: Populate the children arrays
+			// Step 2: Build the treeData array with projects as the root level
+			const treeData = projects.map(project =>
+				createNode({
+					text: `${project.name}: ${project.project_name}`,
+					isProject: true,
+				})
+			);
+
+			// Step 3: Populate the children arrays for tasks
 			docs.forEach(doc => {
 				const task = taskMap[doc.name];
 				const childNames = doc.depends_on_tasks ? doc.depends_on_tasks.split(',').map(depName => depName.trim()) : [];
@@ -102,43 +132,102 @@ export default defineComponent({
 						task.children.push(childTask);
 					}
 				});
+
 				if (task.children.length > 0) {
-					task.children.push({
-						text: '',
-						children: [],
-						isBlank: true,
-					});
+					addBlankTask(task.children);
 				}
 			});
 
-			// Step 3: Build the treeData array with top-level tasks (those without parents)
-			const treeData = [];
+			// Step 4: Assign root-level tasks to their respective projects
 			docs.forEach(doc => {
+				const task = taskMap[doc.name];
 				const isChild = docs.some(parentDoc => {
 					const childNames = parentDoc.depends_on_tasks ? parentDoc.depends_on_tasks.split(',').map(depName => depName.trim()) : [];
 					return childNames.includes(doc.name);
 				});
 
 				if (!isChild) {
-					treeData.push(taskMap[doc.name]);
+					const project = treeData.find(p => p.text.startsWith(doc.project));
+					if (project) {
+						project.children.push(task);
+					}
 				}
 			});
 
-			// add a blank task at the end of the root level
-			treeData.push({
-				text: '',
-				children: [],
-				isBlank: true,
+			// Step 5: Add a blank task at the end of each project and root level
+			treeData.forEach(projectTask => {
+				addBlankTask(projectTask.children);
 			});
+			addBlankTask(treeData, 'Add project...');
 
 			return treeData;
 		}
-		return { treeData };
+
+		// Function to determine if a node is the highlighted project
+		const isHighlightedProject = (node) => {
+			return node.isProject && node === highlightedProject.value;
+		};
+
+		// Function to toggle project expansion and update highlighted project
+		const toggleProject = (node, stat) => {
+			stat.open = !stat.open;
+			if (stat.open) {
+				highlightedProject.value = node;
+			} else {
+				updateHighlightedProject();
+			}
+		};
+
+		// Function to handle task interactions
+		const handleTaskInteraction = (node) => {
+			if (node.isProject) {
+				highlightedProject.value = node;
+			} else {
+				// Find the parent project of this task
+				const parentProject = treeData.value.find(project =>
+					project.children.some(child => child === node)
+				);
+				if (parentProject) {
+					highlightedProject.value = parentProject;
+				}
+			}
+		};
+
+		// Function to update the highlighted project
+		const updateHighlightedProject = () => {
+			const expandedProjects = treeData.value.filter(node => node.isProject && node.children.length > 0);
+			if (expandedProjects.length > 0) {
+				highlightedProject.value = expandedProjects[0];
+			} else {
+				highlightedProject.value = treeData.value[treeData.value.length - 1];
+			}
+		};
+
+		// Initialize highlighted project
+		onMounted(() => {
+			updateHighlightedProject();
+		});
+
+		// Watch for changes in treeData
+		watch(treeData, () => {
+			updateHighlightedProject();
+		});
+
+		return {
+			treeData,
+			isHighlightedProject,
+			toggleProject,
+			handleTaskInteraction
+		};
 	}
 });
 </script>
 
 <style>
+.highlighted-project {
+	font-weight: bold;
+}
+
 .tree-container {
 	/* Adjusts overall tree font size */
 	font-size: 14px;

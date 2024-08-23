@@ -1,29 +1,43 @@
 <template>
-    <div class="task">
-        <!-- Task Subject -->
-        <div class="task-subject-container">
-            <p v-if="!isEditing" class="task-subject" @click="editTask">
-                {{ doc.text }}
-            </p>
-            <input v-if="isEditing" type="text" v-model="editedText" @blur="saveEdit" @keyup.enter="saveEdit"
-                class="task-subject-edit" />
-        </div>
-
-        <div class="task-controls">
-            <!-- Spiced-up Checkbox -->
-            <div class="custom-checkbox task-control">
-                <label>
-                    <input type="checkbox" v-model="isCompleted" @change="toggleComplete" />
-                    <span class="checkmark"></span>
-                    Mark as Complete
-                </label>
+    <div class="task" @click="emitInteraction">
+        <div class="task">
+            <!-- Task Subject -->
+            <div class="task-subject-container">
+                <p v-if="!isEditing" class="task-subject" @click="editTask">
+                    {{ doc.text }}
+                </p>
+                <input v-if="isEditing" type="text" v-model="editedText" @blur="saveEdit" @keyup.enter="saveEdit"
+                    class="task-subject-edit" />
             </div>
 
-            <!-- Button to start timer -->
-            <button class="btn btn-info task-control" @click="startTimer">Start Timer</button>
+            <!-- only render the controls if the doc is not a project and is not blank -->
+            <div v-if="!doc.isProject && !doc.isBlank" class="task-controls">
 
-            <!-- Button to log time -->
-            <button class="btn btn-secondary task-control">Log Time</button>
+                <!-- Spiced-up Checkbox -->
+                <div class="custom-checkbox task-control">
+                    <label>
+                        <input type="checkbox" v-model="isCompleted" @change="toggleComplete" />
+                        <span class="checkmark"></span>
+                        Mark as Complete
+                    </label>
+                </div>
+
+                <!-- Button to start timer -->
+                <button class="btn btn-info task-control" @click="startTimer">Start Timer</button>
+
+                <!-- Button to log time -->
+                <button class="btn btn-secondary task-control">Log Time</button>
+            </div>
+            <!-- if it is a project, give it a checkbox to close the project -->
+            <div v-if="doc.isProject" class="task-controls">
+                <div class="custom-checkbox task-control">
+                    <label>
+                        <input type="checkbox" v-model="isCompleted" @change="toggleComplete" />
+                        <span class="checkmark"></span>
+                        Close Project
+                    </label>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -36,14 +50,18 @@ export default defineComponent({
         doc: {
             type: Object,
             required: true,
-            default: () => { }
+            default: () => ({})
         }
     },
-    setup(props) {
+    setup(props, { emit }) {
         const isCompleted = ref(false);
         const timerActive = ref(false);
         const isEditing = ref(false);
-        const editedText = ref(props.doc.text);
+        const editedText = ref(''); // Initialize as empty
+
+        const emitInteraction = () => {
+            emit('task-interaction');
+        };
 
         const toggleComplete = () => {
             isCompleted.value = !isCompleted.value;
@@ -57,7 +75,8 @@ export default defineComponent({
 
         const editTask = () => {
             isEditing.value = true;
-            editedText.value = props.doc.text; // Initialize input value
+            // Set initial text based on whether the task is blank or not
+            editedText.value = props.doc.isBlank ? '' : props.doc.text;
             nextTick(() => {
                 const inputElement = document.querySelector('.task-subject-edit');
                 if (inputElement) {
@@ -81,7 +100,8 @@ export default defineComponent({
             toggleComplete,
             startTimer,
             editTask,
-            saveEdit
+            saveEdit,
+            emitInteraction
         };
     }
 });
@@ -91,20 +111,27 @@ export default defineComponent({
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
     width: 100%;
 }
 
 .task-subject-container {
-    display: flex;
-    align-items: center;
+    flex-grow: 1;
+    /* Allows the subject container to take up available space */
+    margin-right: 10px;
+    /* Add some space between the subject and controls */
+    border-bottom: 1px dashed darkgrey;
 }
 
 .task-subject {
     padding: 0;
     margin: 0;
     cursor: text;
-    /* Text cursor for editing */
+    width: 100%;
+    white-space: nowrap;
+    /* Prevents text from wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Adds ellipsis if the text overflows */
 }
 
 .task-subject-edit {
@@ -113,12 +140,18 @@ export default defineComponent({
     border-radius: 4px;
     font-size: 14px;
     width: 100%;
-    /* Ensure it stretches to full width */
+    white-space: nowrap;
+    /* Prevents text from wrapping in edit mode */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* Adds ellipsis if the text overflows */
 }
 
 .task-controls {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
+    /* Prevents controls from shrinking */
 }
 
 .task-control {
@@ -127,6 +160,7 @@ export default defineComponent({
     align-items: center;
 }
 
+/* custom checkbox styles */
 .custom-checkbox {
     display: flex;
     align-items: center;
@@ -149,7 +183,7 @@ export default defineComponent({
 .custom-checkbox .checkmark {
     height: 20px;
     width: 20px;
-    background-color: #eee;
+    background-color: #d8dfed;
     border-radius: 4px;
     margin-right: 10px;
     display: flex;

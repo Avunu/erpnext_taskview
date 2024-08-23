@@ -70,23 +70,28 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         this.$result.find(".list-row-head").remove();
 	}
     
-    render_list() {
-        console.log('render_list');
-        console.log(this);
-    
+    async render_list() {
         // Clear everything out of the result area
         this.$result.empty();
-    
-        if (this.data.length > 0) {
+
+        // we need to get the projects first and make them the root nodes, with all tasks being children of the projects
+        // /workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/erpnext_taskview/__init__.py
+        const projects = await frappe.call({
+            method: 'erpnext_taskview.erpnext_taskview.get_projects',
+            args: {}
+        });
+        if (this.data.length > 0 && projects.message) {
             // Make a new Vue container to hold the header and rows
             const container = document.createElement('div');
             this.$result.append(container);
     
-            // Pass the entire data array to TaskView as docs
+            // Pass the data to TaskView
             createApp({
-                render: () => h(TaskView, { docs: this.data })
+                render: () => h(TaskView, { docs: this.data, projects: projects.message })
             }).mount(container);
         }
+    
+    
     }
 };
 
