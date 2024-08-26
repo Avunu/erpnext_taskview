@@ -3229,19 +3229,19 @@ If this is a native custom element, make sure to exclude it from component resol
         warn$1(`root props passed to app.mount() must be an object.`);
         rootProps = null;
       }
-      const context2 = createAppContext();
+      const context3 = createAppContext();
       const installedPlugins = /* @__PURE__ */ new WeakSet();
       let isMounted = false;
-      const app = context2.app = {
+      const app = context3.app = {
         _uid: uid$1++,
         _component: rootComponent,
         _props: rootProps,
         _container: null,
-        _context: context2,
+        _context: context3,
         _instance: null,
         version,
         get config() {
-          return context2.config;
+          return context3.config;
         },
         set config(v) {
           if (true) {
@@ -3268,8 +3268,8 @@ If this is a native custom element, make sure to exclude it from component resol
         },
         mixin(mixin) {
           if (true) {
-            if (!context2.mixins.includes(mixin)) {
-              context2.mixins.push(mixin);
+            if (!context3.mixins.includes(mixin)) {
+              context3.mixins.push(mixin);
             } else if (true) {
               warn$1(
                 "Mixin has already been applied to target app" + (mixin.name ? `: ${mixin.name}` : "")
@@ -3282,15 +3282,15 @@ If this is a native custom element, make sure to exclude it from component resol
         },
         component(name, component) {
           if (true) {
-            validateComponentName(name, context2.config);
+            validateComponentName(name, context3.config);
           }
           if (!component) {
-            return context2.components[name];
+            return context3.components[name];
           }
-          if (context2.components[name]) {
+          if (context3.components[name]) {
             warn$1(`Component "${name}" has already been registered in target app.`);
           }
-          context2.components[name] = component;
+          context3.components[name] = component;
           return app;
         },
         directive(name, directive) {
@@ -3298,12 +3298,12 @@ If this is a native custom element, make sure to exclude it from component resol
             validateDirectiveName(name);
           }
           if (!directive) {
-            return context2.directives[name];
+            return context3.directives[name];
           }
-          if (context2.directives[name]) {
+          if (context3.directives[name]) {
             warn$1(`Directive "${name}" has already been registered in target app.`);
           }
-          context2.directives[name] = directive;
+          context3.directives[name] = directive;
           return app;
         },
         mount(rootContainer, isHydrate, namespace) {
@@ -3315,14 +3315,14 @@ If this is a native custom element, make sure to exclude it from component resol
               );
             }
             const vnode = createVNode(rootComponent, rootProps);
-            vnode.appContext = context2;
+            vnode.appContext = context3;
             if (namespace === true) {
               namespace = "svg";
             } else if (namespace === false) {
               namespace = void 0;
             }
             if (true) {
-              context2.reload = () => {
+              context3.reload = () => {
                 render3(
                   cloneVNode(vnode),
                   rootContainer,
@@ -3363,12 +3363,12 @@ If you want to remount the same app, move your app creation logic into a factory
           }
         },
         provide(key, value) {
-          if (key in context2.provides) {
+          if (key in context3.provides) {
             warn$1(
               `App already provides property with key "${String(key)}". It will be overwritten with the new value.`
             );
           }
-          context2.provides[key] = value;
+          context3.provides[key] = value;
           return app;
         },
         runWithContext(fn) {
@@ -10593,6 +10593,23 @@ Expected function or array of functions, received type ${typeof value}.`
   var startMovePoint;
   var startMouse;
   var dragNode;
+  var context2 = {
+    get startInfo() {
+      return startInfo;
+    },
+    get targetInfo() {
+      return targetInfo;
+    },
+    get dragNode() {
+      return dragNode;
+    },
+    get startTree() {
+      return startTree;
+    },
+    get targetTree() {
+      return targetTree;
+    }
+  };
   var cpt2 = defineComponent({
     extends: BaseTree,
     props: {
@@ -11278,7 +11295,6 @@ Expected function or array of functions, received type ${typeof value}.`
       const editedText = ref("");
       watch(() => props.doc.autoFocus, (newVal) => {
         if (newVal) {
-          console.log("AutoFocus detected in watch");
           editTask();
           props.doc.autoFocus = false;
         }
@@ -11305,6 +11321,7 @@ Expected function or array of functions, received type ${typeof value}.`
         });
       };
       const saveEdit = () => {
+        console.log("Save edit called");
         if (editedText.value.trim() !== "") {
           if (editedText.value !== props.doc.text) {
             console.log(`Task "${props.doc.text}" edited to: ${editedText.value}`);
@@ -11463,7 +11480,24 @@ Expected function or array of functions, received type ${typeof value}.`
         updateHighlightedProject();
         document.addEventListener("keydown", handleKeydown);
       });
-      function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = "", autoFocus = false, expanded = true }) {
+      const handleDragEnd = () => {
+        const draggedNode = context2.dragNode;
+        handleTaskInteraction(draggedNode.data);
+      };
+      function modifyNodeAndStat(node, stat) {
+        var _a;
+        if (((_a = locals.nodes) == null ? void 0 : _a[node.docName]) === false) {
+          stat.open = false;
+          node.expanded = false;
+          stat.children.forEach((child) => {
+            child.hidden = true;
+          });
+        }
+        ;
+        return { node, stat };
+      }
+      ;
+      function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = "", autoFocus = false, expanded = true, parent = null }) {
         return {
           text,
           children,
@@ -11472,12 +11506,13 @@ Expected function or array of functions, received type ${typeof value}.`
           project,
           docName,
           autoFocus,
-          expanded
+          expanded,
+          parent
         };
       }
       function formatTreeData(docs, projects) {
-        function addBlankTask(tasks, text = "Add task...", project = null, isProject = false) {
-          tasks.push(createNode({ text, isBlank: true, project, isProject }));
+        function addBlankTask(tasks, text = "Add task...", project = null, isProject = false, parent = null) {
+          tasks.push(createNode({ text, isBlank: true, project, isProject, parent }));
         }
         const taskMap = {};
         docs.forEach((doc2) => {
@@ -11500,11 +11535,12 @@ Expected function or array of functions, received type ${typeof value}.`
           childNames.forEach((childName) => {
             const childTask = taskMap[childName];
             if (childTask) {
+              childTask.parent = task.docName;
               task.children.push(childTask);
             }
           });
           if (task.children.length > 0) {
-            addBlankTask(task.children, "Add task...", task.project);
+            addBlankTask(task.children, "Add task...", task.project, false, task.docName);
           }
         });
         docs.forEach((doc2) => {
@@ -11516,103 +11552,103 @@ Expected function or array of functions, received type ${typeof value}.`
           if (!isChild) {
             const project = treeData2.find((p2) => p2.text.startsWith(doc2.project));
             if (project) {
+              task.parent = project.docName;
               project.children.push(task);
             }
           }
         });
-        treeData2.forEach((projectTask) => {
-          addBlankTask(projectTask.children, "Add task...", projectTask.docName);
+        treeData2.forEach((project) => {
+          addBlankTask(project.children, "Add task...", project.docName, false, project.docName);
         });
-        addBlankTask(treeData2, "Add project...", null, true);
+        addBlankTask(treeData2, "Add project...", null, true, null);
         return treeData2;
       }
       const isHighlightedProject = (node) => {
         return node.isProject && node === highlightedProject.value;
       };
-      const evaluateNodeInLocals = (node) => {
-        var _a, _b;
-        if (((_a = locals.nodes) == null ? void 0 : _a[node.docName]) === false) {
-          console.log(false);
-        }
-        return ((_b = locals.nodes) == null ? void 0 : _b[node.docName]) === true;
-      };
       const toggleNode = (node, stat) => {
         stat.open = !stat.open;
-        locals.nodes[node.docName] = stat.open;
+        locals.nodes[node.docName], node.expanded = stat.open;
+        if (stat.open) {
+          stat.children.forEach((child) => {
+            child.hidden = false;
+          });
+        }
         if (!node.isProject) {
-          console.log("node is not a project. this should find the parent project and highlight it every time.");
-          const parentProject = findParentProject(treeData.value, node);
-          console.log(parentProject);
+          const parentProject = findParentProject(node);
           if (parentProject) {
             highlightedProject.value = parentProject;
           }
         } else if (node.isProject && stat.open) {
-          console.log("node is a project and is open. this should highlight this project.");
           highlightedProject.value = node;
         } else {
-          console.log("node is a project and is closed. this should update the highlighted project to the next expanded project. if there are no expanded projects, this project should remain highlighted.");
-          console.log(treeData.value);
-          const expandedProjects = treeData.value.filter((project) => project.isProject && project.children.some((child) => child.open));
-          if (expandedProjects.length > 0) {
-            highlightedProject.value = expandedProjects[0];
+          const nextExpandedProject = treeData.value.find((project) => project.isProject && project.expanded && !project.isBlank);
+          if (nextExpandedProject) {
+            highlightedProject.value = nextExpandedProject;
           } else {
             updateHighlightedProject();
           }
         }
       };
-      const findParentProject = (nodes, targetNode) => {
-        for (let node of nodes) {
-          if (node.children && node.children.includes(targetNode)) {
-            return node.isProject ? node : findParentProject(nodes, node);
-          } else if (node.children && node.children.length > 0) {
-            const parent = findParentProject(node.children, targetNode);
-            if (parent) {
-              return parent;
+      function findParentProject(node) {
+        return treeData.value.find((project) => project.docName === node.project);
+      }
+      const addSiblingTask = (node) => {
+        console.log("Adding sibling task to:", node);
+        const newNode = createNode({ text: node.isProject ? "Add project..." : "Add task...", isBlank: true, project: node.isProject ? null : node.project, isProject: node.isProject });
+        const findParentNode = (nodes, parentDocName) => {
+          for (let node2 of nodes) {
+            if (node2.docName === parentDocName) {
+              return node2;
+            } else if (node2.children && node2.children.length > 0) {
+              const foundNode = findParentNode(node2.children, parentDocName);
+              if (foundNode) {
+                return foundNode;
+              }
             }
           }
-        }
-        return null;
-      };
-      const addSiblingTask = (node) => {
-        const newNode = createNode({ text: node.isProject ? "Add project..." : "Add task...", isBlank: true, project: node.isProject ? null : node.project, isProject: node.isProject });
-        const parentProject = treeData.value.find(
-          (project) => project.children.some((child) => child === node)
-        );
-        if (parentProject) {
-          const updatedChildren = [...parentProject.children, newNode];
-          parentProject.children = updatedChildren;
+          return null;
+        };
+        const parentNode = findParentNode(treeData.value, node.parent);
+        if (parentNode) {
+          const updatedChildren = [...parentNode.children, newNode];
+          parentNode.children = updatedChildren;
           treeData.value = [...treeData.value];
         } else {
           treeData.value = [...treeData.value, newNode];
         }
-        console.log(treeData);
       };
       const handleTaskInteraction = (node) => {
         if (node.isProject) {
           highlightedProject.value = node;
         } else {
-          const parentProject = treeData.value.find(
-            (project) => project.children.some((child) => child === node)
-          );
+          const parentProject = findParentProject(node);
           if (parentProject) {
             highlightedProject.value = parentProject;
           }
         }
       };
       const updateHighlightedProject = () => {
-        const expandedProjects = treeData.value.filter((node) => node.isProject && node.children.length > 0);
+        const expandedProjects = treeData.value.filter((node) => node.isProject && node.expanded && !node.isBlank);
         if (expandedProjects.length > 0) {
           highlightedProject.value = expandedProjects[0];
         } else {
-          highlightedProject.value = treeData.value[treeData.value.length - 1];
+          const blankProject = treeData.value.find((node) => node.isBlank);
+          if (blankProject) {
+            highlightedProject.value = blankProject;
+          }
         }
       };
       const editRootBlankTask = () => {
         const project = highlightedProject.value;
         if (project) {
-          const blankTask = project.children.find((task) => task.isBlank);
-          if (blankTask) {
-            blankTask.autoFocus = true;
+          if (project.isBlank) {
+            project.autoFocus = true;
+          } else {
+            const blankTask = project.children.find((task) => task.isBlank);
+            if (blankTask) {
+              blankTask.autoFocus = true;
+            }
           }
         }
       };
@@ -11625,10 +11661,11 @@ Expected function or array of functions, received type ${typeof value}.`
       return {
         treeData,
         isHighlightedProject,
-        evaluateNodeInLocals,
+        modifyNodeAndStat,
         toggleNode,
         handleTaskInteraction,
         handleKeydown,
+        handleDragEnd,
         addSiblingTask
       };
     }
@@ -11646,6 +11683,9 @@ Expected function or array of functions, received type ${typeof value}.`
       /* @__PURE__ */ createBaseVNode("path", { d: "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" })
     ])
   ], -1);
+  var _hoisted_42 = [
+    _hoisted_33
+  ];
   function render2(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_Task = resolveComponent("Task");
     const _component_Draggable = resolveComponent("Draggable");
@@ -11654,31 +11694,29 @@ Expected function or array of functions, received type ${typeof value}.`
         class: "mtl-tree",
         modelValue: _ctx.treeData,
         "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.treeData = $event),
-        treeLine: ""
+        treeLine: "",
+        onAfterDrop: _ctx.handleDragEnd
       }, {
         default: withCtx(({ node, stat }) => [
-          createBaseVNode("div", {
+          createCommentVNode(" modify node and stat to perpetuate collapse node states "),
+          _ctx.modifyNodeAndStat(node, stat) ? (openBlock(), createElementBlock("div", {
+            key: 0,
             class: normalizeClass(["outer-task", { "highlighted-project": _ctx.isHighlightedProject(node) }])
           }, [
             createBaseVNode("a", {
-              class: normalizeClass(["he-tree__open-icon mtl-mr small-icon", { "open": _ctx.evaluateNodeInLocals(node) }]),
+              class: normalizeClass(["he-tree__open-icon mtl-mr small-icon", { "open": stat.open }]),
               onClick: ($event) => _ctx.toggleNode(node, stat)
-            }, [
-              createCommentVNode(` :class="{ 'open': stat.open && node.expanded && evaluateNodeInLocals(node) }"> `),
-              createCommentVNode(` :class="{ 'open': stat.open }"> `),
-              _hoisted_33
-            ], 10, _hoisted_24),
-            createCommentVNode(' <Task :doc="node" class="mtl-ml" @task-interaction="handleTaskInteraction(node)" /> '),
+            }, [..._hoisted_42], 10, _hoisted_24),
             createVNode(_component_Task, {
               doc: node,
               class: "mtl-ml",
               onTaskInteraction: ($event) => _ctx.handleTaskInteraction(node),
               onAddSiblingTask: ($event) => _ctx.addSiblingTask(node)
             }, null, 8, ["doc", "onTaskInteraction", "onAddSiblingTask"])
-          ], 2)
+          ], 2)) : createCommentVNode("v-if", true)
         ]),
         _: 1
-      }, 8, ["modelValue"])
+      }, 8, ["modelValue", "onAfterDrop"])
     ]);
   }
 
@@ -11820,4 +11858,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.TYKYAF4Y.js.map
+//# sourceMappingURL=app.bundle.MYUHPJBU.js.map

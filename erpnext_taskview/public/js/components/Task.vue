@@ -42,7 +42,7 @@
     </div>
 </template>
 <script>
-import { defineComponent, ref, nextTick, onMounted, watch } from 'vue';
+import { defineComponent, ref, nextTick, watch } from 'vue';
 
 export default defineComponent({
     name: 'Task',
@@ -62,7 +62,6 @@ export default defineComponent({
         // Trigger editing mode if autoFocus is true
         watch(() => props.doc.autoFocus, (newVal) => {
             if (newVal) {
-                console.log('AutoFocus detected in watch');
                 editTask();
                 props.doc.autoFocus = false;
             }
@@ -94,7 +93,9 @@ export default defineComponent({
             });
         };
 
+        // THINGS GET REALLY WACKY IF YOU TRY EDITING AND SAVING THE BLANK PROJECT. NEEDS WORK
         const saveEdit = () => {
+            console.log('Save edit called');
             if (editedText.value.trim() !== '') {
                 if (editedText.value !== props.doc.text) {
                     console.log(`Task "${props.doc.text}" edited to: ${editedText.value}`);
