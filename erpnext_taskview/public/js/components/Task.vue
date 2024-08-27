@@ -100,17 +100,9 @@ export default defineComponent({
                 if (editedText.value !== props.doc.text) {
                     console.log(`Task "${props.doc.text}" edited to: ${editedText.value}`);
                     console.log(`Emitting task interaction for task "${props.doc.docName}"`);
-                    // /workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/erpnext_taskview/__init__.py
-                    // def update_edit(doctype, docname, fieldname, value):
                     // THIS IS WHERE WE UPDATE THE TASK OR PROJECT IN THE DATABASE
                     // we need to make sure each node has accurate is_group and parent_task values as they render and move around
-                    props.doc.text = editedText.value; // Update prop or emit an event
-                    // frappe.call({
-                    //     method: 'erpnext_taskview.erpnext_taskview.update_edit',
-                    //     args: {
-                    //         node: props.doc
-                    //     }
-                    // });
+                    props.doc.text = editedText.value;
 
                     if (props.doc.isBlank) {
                         console.log(props.doc);

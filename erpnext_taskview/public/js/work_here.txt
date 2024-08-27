@@ -5,3 +5,6 @@ that pushes it into the tree view (it has to transpose the data into a nested fo
 input is another component, where we actually define our row with the stuff we want
 
 separate timer component - timer data needs to live in backend so it can reload :)
+
+for using the bench:
+    bench use development.localhost

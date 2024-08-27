@@ -11464,6 +11464,7 @@ Expected function or array of functions, received type ${typeof value}.`
     setup(props) {
       const treeData = ref(formatTreeData(props.docs, props.projects));
       const highlightedProject = ref(null);
+      const highlightedTask = ref(null);
       const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
       if (currentTheme.value === "automatic") {
         currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -11482,6 +11483,42 @@ Expected function or array of functions, received type ${typeof value}.`
       });
       const handleDragEnd = () => {
         const draggedNode = context2.dragNode;
+        console.log("Drag end event:", draggedNode);
+        console.log("doc:", draggedNode.data.docName);
+        console.log("new parent:", draggedNode.parent.data.docName);
+        function childrenCheck(children) {
+          children = children.filter((child) => !child.isBlank);
+          return children.length;
+        }
+        if (!draggedNode.parent.data.isProject) {
+          if (childrenCheck(draggedNode.parent.data.children) === 1) {
+          }
+        }
+        let updateObject = {};
+        draggedNode.data.parent = draggedNode.parent.data.docName;
+        updateObject.parent_task = draggedNode.parent.data.isProject ? null : draggedNode.parent.data.docName;
+        if (draggedNode.data.project !== draggedNode.parent.data.project || draggedNode.data.project !== draggedNode.parent.data.docName) {
+          draggedNode.data.project = draggedNode.parent.data.isProject ? draggedNode.parent.data.docName : draggedNode.parent.data.project;
+          updateObject.project = draggedNode.data.project;
+          if (draggedNode.data.children) {
+            const updateChildren = (children) => {
+              children.forEach((child) => {
+                child.project = draggedNode.data.project;
+                if (child.children) {
+                  updateChildren(child.children);
+                }
+              });
+            };
+            updateChildren(draggedNode.data.children);
+          }
+        }
+        if (draggedNode.data.parent !== draggedNode.data.project) {
+          const oldParent = treeData.value.find((node) => node.docName === draggedNode.data.parent);
+          if (oldParent) {
+            if (childrenCheck(oldParent.children) === 0) {
+            }
+          }
+        }
         handleTaskInteraction(draggedNode.data);
       };
       function modifyNodeAndStat(node, stat) {
@@ -11494,6 +11531,12 @@ Expected function or array of functions, received type ${typeof value}.`
           });
         }
         ;
+        if (node.isBlank || node.isProject) {
+          stat.disableDrag = true;
+          stat.disableDrop = true;
+          stat.draggable = false;
+          stat.droppable = false;
+        }
         return { node, stat };
       }
       ;
@@ -11534,7 +11577,7 @@ Expected function or array of functions, received type ${typeof value}.`
           const childNames = doc2.depends_on_tasks ? doc2.depends_on_tasks.split(",").map((depName) => depName.trim()) : [];
           childNames.forEach((childName) => {
             const childTask = taskMap[childName];
-            if (childTask) {
+            if (childTask && childTask.project === task.project) {
               childTask.parent = task.docName;
               task.children.push(childTask);
             }
@@ -11561,6 +11604,7 @@ Expected function or array of functions, received type ${typeof value}.`
           addBlankTask(project.children, "Add task...", project.docName, false, project.docName);
         });
         addBlankTask(treeData2, "Add project...", null, true, null);
+        console.log("Tree data:", treeData2);
         return treeData2;
       }
       const isHighlightedProject = (node) => {
@@ -11858,4 +11902,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.MYUHPJBU.js.map
+//# sourceMappingURL=app.bundle.QT5X42UM.js.map

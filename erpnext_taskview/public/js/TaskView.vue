@@ -51,6 +51,8 @@ export default defineComponent({
 	setup(props) {
 		const treeData = ref(formatTreeData(props.docs, props.projects));
 		const highlightedProject = ref(null);
+		// TODO: SETUP CODE FOR HIGHLIGHTING TASKS
+		const highlightedTask = ref(null);
 
 		// Dark Mode
 		const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
@@ -74,17 +76,72 @@ export default defineComponent({
 		});
 
 		// Function to handle the end of a drag-and-drop operation
+		// THE FRAPPE CALLS ARE COMMENTED OUT TEMPORARILY
 		const handleDragEnd = () => {
+
+			// also figure out dragging tasks to the root project level... Turn them into projects? don't allow it?
+
+			// IMPORTANT FIX NEEDED: THIS NEEDS TO UPDATE THE DEPENDS_ON_TASKS FIELD IN THE DB AS WELL. RIGHT NOW THINGS GET MESSED UP WITH THE TASKS WHEN MOVING THEM BETWEEN PROJECTS.
+
 			// this gets the dragged node in its new position.
 			const draggedNode = dragContext.dragNode
 
-			// FIGURE OUT WHY, WHEN DRAGGING A TASK TO A NEW PROJECT, THE OLD PARENT PROJECT STAYS HIGHLIGHTED
+			console.log('Drag end event:', draggedNode);
+			console.log('doc:', draggedNode.data.docName);
+			console.log('new parent:', draggedNode.parent.data.docName);
 
-			// console.log('Drag end event:', draggedNode);
-			// console.log('doc:', draggedNode.data.docName);
-			// console.log('new parent:', draggedNode.parent.data.docName);
+			// if the new parent didn't have any children before, then it needs to be changed to a group task
+			function childrenCheck(children) {
+				children = children.filter(child => !child.isBlank);
+				return children.length
+			}
+			if (!draggedNode.parent.data.isProject) {
+				if (childrenCheck(draggedNode.parent.data.children) === 1) {
+					// update the parent task to be a group task so it can have children in a moment
+					// frappe.db.set_value('Task', draggedNode.parent.data.docName, { is_group: 1 });
+				}
+			}
 
-			// CODE GOES HERE TO UPDATE THE DATABASE (update the task, project, etc.)
+			let updateObject = {};
+
+			// update the parent on the node and the update object
+			draggedNode.data.parent = draggedNode.parent.data.docName;
+			updateObject.parent_task = draggedNode.parent.data.isProject ? null : draggedNode.parent.data.docName;
+
+			// update the node here (like parent and project, for this node and any children nodes)
+			if (draggedNode.data.project !== draggedNode.parent.data.project || draggedNode.data.project !== draggedNode.parent.data.docName) {
+				draggedNode.data.project = draggedNode.parent.data.isProject ? draggedNode.parent.data.docName : draggedNode.parent.data.project;
+				updateObject.project = draggedNode.data.project;
+				if (draggedNode.data.children) {
+					// recursively update the children nodes with the new project
+					const updateChildren = (children) => {
+						children.forEach(child => {
+							child.project = draggedNode.data.project;
+							// update the db
+							// frappe.db.set_value('Task', child.docName, { project: draggedNode.data.project });
+							if (child.children) {
+								updateChildren(child.children);
+							}
+						});
+					};
+					updateChildren(draggedNode.data.children);
+				}
+			}
+
+			// update the dragged node in the db
+			// frappe.db.set_value(draggedNode.data.isProject ? 'Project' : 'Task', draggedNode.data.docName, updateObject);
+
+			// remember to check the old parent. if it doesn't have any more children, unset the is_group value
+			// NOT SURE IF IT REALLY MATTERS TO KEEP is_group UP TO DATE
+			// don't do this until the children have actually been moved in the db
+			if (draggedNode.data.parent !== draggedNode.data.project) {
+				const oldParent = treeData.value.find(node => node.docName === draggedNode.data.parent);
+				if (oldParent) {
+					if (childrenCheck(oldParent.children) === 0) {
+						// frappe.db.set_value('Task', oldParent.docName, { is_group: 0 });
+					}
+				}
+			}
 
 			// trigger the task interaction
 			handleTaskInteraction(draggedNode.data);
@@ -100,6 +157,15 @@ export default defineComponent({
 				});
 
 			};
+			// Disable drag and drop for blank tasks and projects
+			if (node.isBlank || node.isProject) {
+				stat.disableDrag = true;
+				stat.disableDrop = true;
+				stat.draggable = false;
+				stat.droppable = false;
+			}
+			// I thought this would keep a placeholder for the task's previous location while being dragged, but I can't see that it does anything...
+			// stat.keepPlaceholder = true;
 			return { node, stat };
 		};
 
@@ -152,7 +218,8 @@ export default defineComponent({
 
 				childNames.forEach(childName => {
 					const childTask = taskMap[childName];
-					if (childTask) {
+					// this check if the child task is in the same project as the parent task is because the task update code on drag and drop isn't updating the depends on lists properly and so tasks got messed up and I'm having trouble deleting them.
+					if (childTask && childTask.project === task.project) {
 						childTask.parent = task.docName;
 						task.children.push(childTask);
 					}
@@ -185,6 +252,8 @@ export default defineComponent({
 				addBlankTask(project.children, 'Add task...', project.docName, false, project.docName);
 			});
 			addBlankTask(treeData, 'Add project...', null, true, null);
+
+			console.log('Tree data:', treeData);
 
 			return treeData;
 		}
