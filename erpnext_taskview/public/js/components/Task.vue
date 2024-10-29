@@ -101,10 +101,12 @@ export default defineComponent({
                     console.log(`Task "${props.doc.text}" edited to: ${editedText.value}`);
                     console.log(`Emitting task interaction for task "${props.doc.docName}"`);
                     // THIS IS WHERE WE UPDATE THE TASK OR PROJECT IN THE DATABASE
+                    console.log('this is where I make a new project in frappe?');
                     // we need to make sure each node has accurate is_group and parent_task values as they render and move around
                     props.doc.text = editedText.value;
 
                     if (props.doc.isBlank) {
+                        console.log('Blank task detected');
                         console.log(props.doc);
                         // Mark the current task as no longer blank
                         props.doc.isBlank = false;

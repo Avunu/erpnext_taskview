@@ -11326,8 +11326,10 @@ Expected function or array of functions, received type ${typeof value}.`
           if (editedText.value !== props.doc.text) {
             console.log(`Task "${props.doc.text}" edited to: ${editedText.value}`);
             console.log(`Emitting task interaction for task "${props.doc.docName}"`);
+            console.log("this is where I make a new project in frappe?");
             props.doc.text = editedText.value;
             if (props.doc.isBlank) {
+              console.log("Blank task detected");
               console.log(props.doc);
               props.doc.isBlank = false;
               emit2("add-sibling-task", props.doc);
@@ -11554,6 +11556,7 @@ Expected function or array of functions, received type ${typeof value}.`
         };
       }
       function formatTreeData(docs, projects) {
+        console.log("formatting tree data...");
         function addBlankTask(tasks, text = "Add task...", project = null, isProject = false, parent = null) {
           tasks.push(createNode({ text, isBlank: true, project, isProject, parent }));
         }
@@ -11782,6 +11785,12 @@ Expected function or array of functions, received type ${typeof value}.`
           }
         );
       }
+      this.add_view_to_menu(
+        "List",
+        () => {
+          this.set_route("List");
+        }
+      );
     }
   };
   frappe.router.list_views.push("tasks");
@@ -11902,4 +11911,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.QT5X42UM.js.map
+//# sourceMappingURL=app.bundle.CBCSVAP7.js.map

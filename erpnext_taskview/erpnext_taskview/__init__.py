@@ -9,8 +9,9 @@ def submit_task():
 # I'M STILL USING THIS BECAUSE I WANT PROJECTS WITH NO TASKS YET TO BE SHOWN
 @frappe.whitelist()
 def get_projects():
-    # DON'T USE THIS. USE SOMETHING LIKE THIS FROM THE FRONT END
+    # USE SOMETHING LIKE THIS FROM THE FRONT END?
     # projname = frappe.db.get_value("Project","PROJ-0005","project_name")
+    # ^^^^ the problem with this is that it doesn't get empty projects
     try:
         projects = frappe.get_all('Project', fields=['name', 'project_name', 'status'], filters={'status': 'Open'})
         return projects
@@ -18,6 +19,7 @@ def get_projects():
         frappe.log_error(frappe.get_traceback(), f'{e}')
         return None
 
+# nothing is using this right now
 @frappe.whitelist()
 def update_edit(node):
 

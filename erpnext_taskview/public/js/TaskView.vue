@@ -79,7 +79,7 @@ export default defineComponent({
 		// THE FRAPPE CALLS ARE COMMENTED OUT TEMPORARILY
 		const handleDragEnd = () => {
 
-			// also figure out dragging tasks to the root project level... Turn them into projects? don't allow it?
+			// also figure out dragging tasks to the root project level... Turn them into projects? don't allow it? I think don't allow it...
 
 			// IMPORTANT FIX NEEDED: THIS NEEDS TO UPDATE THE DEPENDS_ON_TASKS FIELD IN THE DB AS WELL. RIGHT NOW THINGS GET MESSED UP WITH THE TASKS WHEN MOVING THEM BETWEEN PROJECTS.
 
@@ -187,6 +187,8 @@ export default defineComponent({
 		// explicit nesting
 		function formatTreeData(docs, projects) {
 
+			console.log('formatting tree data...');
+
 			// Helper function to add a blank task
 			function addBlankTask(tasks, text = 'Add task...', project = null, isProject = false, parent = null) {
 				tasks.push(createNode({ text: text, isBlank: true, project: project, isProject: isProject, parent: parent }));
@@ -218,7 +220,7 @@ export default defineComponent({
 
 				childNames.forEach(childName => {
 					const childTask = taskMap[childName];
-					// this check if the child task is in the same project as the parent task is because the task update code on drag and drop isn't updating the depends on lists properly and so tasks got messed up and I'm having trouble deleting them.
+					// this checks if the child task is in the same project as the parent task because the task update code on drag and drop isn't updating the depends on lists properly and so tasks got messed up and I'm having trouble deleting them.
 					if (childTask && childTask.project === task.project) {
 						childTask.parent = task.docName;
 						task.children.push(childTask);
@@ -302,7 +304,7 @@ export default defineComponent({
 		}
 
 		// This adds a new blank task to the tree when a blank task is edited into a new task or project
-		// IF THE NEW NODE IS A PROJECT, WE NEED TO ADD A BLANK TASK TO THE NEW PROJECT AS WELL
+		// IF THE NEW NODE IS A PROJECT, WE NEED TO ADD A BLANK TASK TO THE NEW PROJECT AS WELL?
 		const addSiblingTask = (node) => {
 			console.log('Adding sibling task to:', node);
 			// Create a new task object

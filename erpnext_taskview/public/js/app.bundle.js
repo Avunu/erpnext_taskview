@@ -10,13 +10,26 @@ frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListView
 		
 		if (this.doctype === "Task") {
 			// Add the Task view to the views object
+            // TODO: change all tasks/Tasks references to Task/Task without breaking the app
 			this.add_view_to_menu(
 				"Tasks",
 				() => {
                     this.set_route("tasks");
+                    // WHY DOES THIS ONLY SHOW UP WHEN SWITCHING BACK TO LIST VIEW?
+                    // const labelElement = document.querySelector('.custom-btn-group-label');
+                    // if (labelElement) {
+                    //     labelElement.textContent = "Tasks View";
+                    // }
 				}
             );
 		}
+        // Add the "List" view to let the user switch back to the default list view
+        this.add_view_to_menu(
+            "List",
+            () => {
+                this.set_route("List");
+            }
+        );
     }
 };
 
@@ -35,6 +48,12 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         };
 
         // TODO: set Task View as the current view in the dropdown and add list view to the list of views
+        // find the dropdown element
+        // set the text to "Task View"
+        // const labelElement = document.querySelector('.custom-btn-group-label');
+        // if (labelElement) {
+        //     labelElement.textContent = "Task View";
+        // }
         
     }
 
