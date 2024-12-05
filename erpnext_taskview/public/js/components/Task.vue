@@ -22,11 +22,23 @@
                     </label>
                 </div>
 
-                <!-- Button to start timer -->
-                <button class="btn btn-info task-control" @click="startTimer">Start Timer</button>
+            <!-- Button to start/stop timer -->
+            <button 
+                class="btn task-control" 
+                :class="timerActive ? 'btn-danger' : 'btn-info'" 
+                @click="toggleTimer"
+            >
+                {{ timerActive ? 'Stop Timer' : 'Start Timer' }}
+            </button>
 
-                <!-- Button to log time -->
-                <button class="btn btn-secondary task-control">Log Time</button>
+            <!-- Button to log time -->
+            <button 
+                class="btn btn-secondary task-control" 
+                :disabled="timerActive" 
+                :class="{ 'btn-disabled': timerActive }"
+            >
+                Log Time
+            </button>            
             </div>
             <!-- if it is a project and is not blank, give it a checkbox to close the project -->
             <div v-if="doc.isProject && !doc.isBlank" class="task-controls">
@@ -42,7 +54,9 @@
     </div>
 </template>
 <script>
-import { defineComponent, ref, nextTick, watch } from 'vue';
+import { defineComponent, ref, reactive, nextTick, watch } from 'vue';
+
+let activeTimer = null; // Global reference for the currently active timer
 
 export default defineComponent({
     name: 'Task',
@@ -76,10 +90,32 @@ export default defineComponent({
             console.log(`Task "${props.doc.text}" completed: ${isCompleted.value}`);
         };
 
-        const startTimer = () => {
-            timerActive.value = true;
-            console.log(`Timer started for task "${props.doc.text}"`);
+        // TODO: Implement timer functionality 
+        const toggleTimer = () => {
+            timerActive.value = !timerActive.value;
+            console.log(
+                `${timerActive.value ? 'Timer started' : 'Timer stopped'} for task "${props.doc.text}"`
+            );
         };
+        // const toggleTimer = () => {
+        //     if (timerActive.value) {
+        //         // Stop the current timer
+        //         timerActive.value = false;
+        //         console.log(`Timer stopped for task "${props.doc.text}"`);
+        //         activeTimer = null;
+        //     } else {
+        //         // Pause any other active timer
+        //         if (activeTimer && activeTimer !== props.doc.docName) {
+        //             console.log(`Pausing timer for task "${activeTimer}"`);
+        //             emit('pause-timer', activeTimer); // Emit an event to pause other timers
+        //         }
+
+        //         // Start this timer
+        //         timerActive.value = true;
+        //         activeTimer = props.doc.docName; // Update the active timer reference
+        //         console.log(`Timer started for task "${props.doc.text}"`);
+        //     }
+        // };
 
         const editTask = () => {
             isEditing.value = true;
@@ -124,7 +160,7 @@ export default defineComponent({
             isEditing,
             editedText,
             toggleComplete,
-            startTimer,
+            toggleTimer,
             editTask,
             saveEdit,
             emitInteraction
@@ -239,5 +275,12 @@ export default defineComponent({
     border: solid white;
     border-width: 0 3px 3px 0;
     transform: rotate(45deg);
+}
+
+.btn-disabled {
+    /* background-color: #d8d8d8; */
+    color: #a1a1a1;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 </style>

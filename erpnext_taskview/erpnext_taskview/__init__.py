@@ -1,6 +1,42 @@
 # put modules like submit task here (available at erpnext_taskview.erpnext_taskview level)
 
-import frappe # type: ignore
+
+import frappe
+import json
+# import jsonpath_ng
+from frappe.desk.reportview import get_form_params
+from pathlib import Path
+# from jsonpath_ng import parse
+
+
+@frappe.whitelist()
+@frappe.read_only()
+def get():
+	# filters are the only useful arg
+	args = get_form_params()
+	query = (Path(__file__).parent / "get.sql").read_text()
+	# # example of how to inject the filters into the query
+	# query = query % {
+	#  "filters": args.filters if args.filters else ""
+	# }
+	data = frappe.db.sql(query)[0][0]
+	return data
+
+# def merge_tree(rows):
+#     # Initialize with a root array since we have multiple top-level projects
+#     root = []
+    
+#     for row in rows:
+#         data = json.loads(row["json_data"])
+#         path = parse(row["json_path"])
+        
+#         # Handle root level items
+#         if path.fields[0] == "$":  # Root level project
+#             root.append(data)
+#         else:
+#             path.update_or_create(root, data)
+            
+#     return root
 
 @frappe.whitelist()
 def submit_task():
