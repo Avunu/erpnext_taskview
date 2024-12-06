@@ -1,161 +1,175 @@
 [
     {
-        "text": "PROJ-0002: Test 2",
+        "docName": "PROJ-0001",
+        "text": "PROJ-0001: Test",
+        "parent": null,
+        "project": null,
+        "isProject": true,
+        "isBlank": 0,
+        "expanded": true,
+        "autoFocus": false,
         "children": [
             {
-                "text": "Test",
+                "docName": "TASK-2024-00002",
+                "text": "Test Parent",
+                "parent": null,
+                "project": "PROJ-0001",
+                "isProject": false,
+                "isBlank": 0,
+                "expanded": true,
+                "autoFocus": false,
                 "children": [
                     {
-                        "text": "Test Child Parent",
+                        "docName": "TASK-2024-00003",
+                        "text": "Test Child 1",
+                        "parent": "TASK-2024-00002",
+                        "project": "PROJ-0001",
+                        "isProject": false,
+                        "isBlank": 0,
+                        "expanded": true,
+                        "autoFocus": false,
                         "children": [
                             {
-                                "text": "Test Child 3",
-                                "children": [],
-                                "isBlank": false,
+                                "docName": "BlankTask_TASK-2024-00003",
+                                "text": "Add Task",
+                                "parent": "TASK-2024-00003",
+                                "project": "PROJ-0001",
                                 "isProject": false,
-                                "project": "PROJ-0002",
-                                "docName": "TASK-2024-00006",
-                                "autoFocus": false,
+                                "isBlank": 1,
                                 "expanded": true,
-                                "parent": "TASK-2024-00005"
-                            },
-                            {
-                                "text": "Add task...",
-                                "children": [],
-                                "isBlank": true,
-                                "isProject": false,
-                                "project": "PROJ-0002",
-                                "docName": "",
                                 "autoFocus": false,
-                                "expanded": true,
-                                "parent": "TASK-2024-00005"
+                                "children": []
                             }
-                        ],
-                        "isBlank": false,
-                        "isProject": false,
-                        "project": "PROJ-0002",
-                        "docName": "TASK-2024-00005",
-                        "autoFocus": false,
-                        "expanded": true,
-                        "parent": "TASK-2024-00001"
+                        ]
                     },
                     {
-                        "text": "Add task...",
-                        "children": [],
-                        "isBlank": true,
+                        "docName": "TASK-2024-00004",
+                        "text": "Test Child 2",
+                        "parent": "TASK-2024-00002",
+                        "project": "PROJ-0001",
                         "isProject": false,
-                        "project": "PROJ-0002",
-                        "docName": "",
-                        "autoFocus": false,
+                        "isBlank": 0,
                         "expanded": true,
-                        "parent": "TASK-2024-00001"
+                        "autoFocus": false,
+                        "children": [
+                            {
+                                "docName": "BlankTask_TASK-2024-00004",
+                                "text": "Add Task",
+                                "parent": "TASK-2024-00004",
+                                "project": "PROJ-0001",
+                                "isProject": false,
+                                "isBlank": 1,
+                                "expanded": true,
+                                "autoFocus": false,
+                                "children": []
+                            }
+                        ]
+                    },
+                    {
+                        "docName": "BlankTask_TASK-2024-00002",
+                        "text": "Add Task",
+                        "parent": "TASK-2024-00002",
+                        "project": "PROJ-0001",
+                        "isProject": false,
+                        "isBlank": 1,
+                        "expanded": true,
+                        "autoFocus": false,
+                        "children": []
                     }
-                ],
-                "isBlank": false,
-                "isProject": false,
-                "project": "PROJ-0002",
-                "docName": "TASK-2024-00001",
-                "autoFocus": false,
-                "expanded": true,
-                "parent": "PROJ-0002"
-            },
-            {
-                "text": "Add task...",
-                "children": [],
-                "isBlank": true,
-                "isProject": false,
-                "project": "PROJ-0002",
-                "docName": "",
-                "autoFocus": false,
-                "expanded": true,
-                "parent": "PROJ-0002"
+                ]
             }
-        ],
-        "isBlank": false,
-        "isProject": true,
-        "project": null,
-        "docName": "PROJ-0002",
-        "autoFocus": false,
-        "expanded": true,
-        "parent": null
+        ]
     },
     {
-        "text": "PROJ-0001: Test",
+        "docName": "PROJ-0002",
+        "text": "PROJ-0002: Test 2",
+        "parent": null,
+        "project": null,
+        "isProject": true,
+        "isBlank": 0,
+        "expanded": true,
+        "autoFocus": false,
         "children": [
             {
-                "text": "Test Parent",
+                "docName": "TASK-2024-00001",
+                "text": "Test",
+                "parent": null,
+                "project": "PROJ-0002",
+                "isProject": false,
+                "isBlank": 0,
+                "expanded": true,
+                "autoFocus": false,
                 "children": [
                     {
-                        "text": "Test Child 1",
-                        "children": [],
-                        "isBlank": false,
+                        "docName": "TASK-2024-00005",
+                        "text": "Test Child Parent",
+                        "parent": "TASK-2024-00001",
+                        "project": "PROJ-0002",
                         "isProject": false,
-                        "project": "PROJ-0001",
-                        "docName": "TASK-2024-00003",
-                        "autoFocus": false,
+                        "isBlank": 0,
                         "expanded": true,
-                        "parent": "TASK-2024-00002"
+                        "autoFocus": false,
+                        "children": [
+                            {
+                                "docName": "TASK-2024-00006",
+                                "text": "Test Child 3",
+                                "parent": "TASK-2024-00005",
+                                "project": "PROJ-0002",
+                                "isProject": false,
+                                "isBlank": 0,
+                                "expanded": true,
+                                "autoFocus": false,
+                                "children": [
+                                    {
+                                        "docName": "BlankTask_TASK-2024-00006",
+                                        "text": "Add Task",
+                                        "parent": "TASK-2024-00006",
+                                        "project": "PROJ-0002",
+                                        "isProject": false,
+                                        "isBlank": 1,
+                                        "expanded": true,
+                                        "autoFocus": false,
+                                        "children": []
+                                    }
+                                ]
+                            },
+                            {
+                                "docName": "BlankTask_TASK-2024-00005",
+                                "text": "Add Task",
+                                "parent": "TASK-2024-00005",
+                                "project": "PROJ-0002",
+                                "isProject": false,
+                                "isBlank": 1,
+                                "expanded": true,
+                                "autoFocus": false,
+                                "children": []
+                            }
+                        ]
                     },
                     {
-                        "text": "Test Child 2",
-                        "children": [],
-                        "isBlank": false,
+                        "docName": "BlankTask_TASK-2024-00001",
+                        "text": "Add Task",
+                        "parent": "TASK-2024-00001",
+                        "project": "PROJ-0002",
                         "isProject": false,
-                        "project": "PROJ-0001",
-                        "docName": "TASK-2024-00004",
-                        "autoFocus": false,
+                        "isBlank": 1,
                         "expanded": true,
-                        "parent": "TASK-2024-00002"
-                    },
-                    {
-                        "text": "Add task...",
-                        "children": [],
-                        "isBlank": true,
-                        "isProject": false,
-                        "project": "PROJ-0001",
-                        "docName": "",
                         "autoFocus": false,
-                        "expanded": true,
-                        "parent": "TASK-2024-00002"
+                        "children": []
                     }
-                ],
-                "isBlank": false,
-                "isProject": false,
-                "project": "PROJ-0001",
-                "docName": "TASK-2024-00002",
-                "autoFocus": false,
-                "expanded": true,
-                "parent": "PROJ-0001"
-            },
-            {
-                "text": "Add task...",
-                "children": [],
-                "isBlank": true,
-                "isProject": false,
-                "project": "PROJ-0001",
-                "docName": "",
-                "autoFocus": false,
-                "expanded": true,
-                "parent": "PROJ-0001"
+                ]
             }
-        ],
-        "isBlank": false,
-        "isProject": true,
-        "project": null,
-        "docName": "PROJ-0001",
-        "autoFocus": false,
-        "expanded": true,
-        "parent": null
+        ]
     },
     {
-        "text": "Add project...",
-        "children": [],
-        "isBlank": true,
-        "isProject": true,
+        "docName": "BlankProject",
+        "text": "Add Project",
+        "parent": null,
         "project": null,
-        "docName": "",
-        "autoFocus": false,
+        "isProject": true,
+        "isBlank": 1,
         "expanded": true,
-        "parent": null
+        "autoFocus": false,
+        "children": []
     }
 ]

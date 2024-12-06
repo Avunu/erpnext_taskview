@@ -5,6 +5,7 @@
 				<!-- modify node and stat to perpetuate collapse node states -->
 				<div v-if="modifyNodeAndStat(node, stat)" class="outer-task"
 					:class="{ 'highlighted-project': isHighlightedProject(node) }">
+					<!-- expand/collapse button -->
 					<a class="he-tree__open-icon mtl-mr small-icon" @click="toggleNode(node, stat)"
 						:class="{ 'open': stat.open }">
 						<div class="icon-container">
@@ -14,6 +15,7 @@
 							</svg>
 						</div>
 					</a>
+					<!-- task or project -->
 					<Task :doc="node" class="mtl-ml" @task-interaction="handleTaskInteraction(node)"
 						@add-sibling-task="addSiblingTask(node)" />
 				</div>
@@ -23,7 +25,7 @@
 </template>
 
 <script>
-import { defineComponent, ref, onMounted } from 'vue';
+import { defineComponent, reactive, ref, onMounted, onUnmounted } from 'vue';
 import { Draggable, dragContext, OpenIcon } from '@he-tree/vue';
 import Task from './components/Task.vue';
 import '@he-tree/vue/style/default.css';
@@ -42,23 +44,19 @@ export default defineComponent({
 			required: true,
 			default: () => []
 		},
-		projects: {
-			type: Array,
-			required: true,
-			default: () => []
-		}
 	},
 	setup(props) {
-		const treeData = ref(formatTreeData(props.docs, props.projects));
+		let treeData = reactive(props.docs)
 		const highlightedProject = ref(null);
 		// TODO: SETUP CODE FOR HIGHLIGHTING TASKS
 		const highlightedTask = ref(null);
 
-		// Dark Mode
+		// Dark Mode compatibility
 		const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
 		if (currentTheme.value === "automatic") {
 			currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 		}
+
 		onMounted(() => {
 			// set the theme to match frappe
 			document.documentElement.style.setProperty(
@@ -69,19 +67,26 @@ export default defineComponent({
 				'--icon-color',
 				currentTheme.value === 'dark' ? '#d3d3d3' : '#000000'
 			);
+
 			// initialize the highlighted project
 			updateHighlightedProject();
+
 			// Listen for keypress events to start editing the blank task
 			document.addEventListener('keydown', handleKeydown);
 		});
+
+		onUnmounted(() => {
+            // Clean up the event listener
+            document.removeEventListener('keydown', handleKeydown);
+        });
 
 		// Function to handle the end of a drag-and-drop operation
 		// THE FRAPPE CALLS ARE COMMENTED OUT TEMPORARILY
 		const handleDragEnd = () => {
 
-			// also figure out dragging tasks to the root project level... Turn them into projects? don't allow it? I think don't allow it...
+			// TODO: setup transition from task to project if a task is dragged to a project
 
-			// IMPORTANT FIX NEEDED: THIS NEEDS TO UPDATE THE DEPENDS_ON_TASKS FIELD IN THE DB AS WELL. RIGHT NOW THINGS GET MESSED UP WITH THE TASKS WHEN MOVING THEM BETWEEN PROJECTS.
+			// TODO: don't allow tasks to be dragged to other projects (this could be a feature built out at a later time. The data structure is messy in frappe. There is the project field on the task, but there are also depends on lists.)
 
 			// this gets the dragged node in its new position.
 			const draggedNode = dragContext.dragNode
@@ -135,7 +140,7 @@ export default defineComponent({
 			// NOT SURE IF IT REALLY MATTERS TO KEEP is_group UP TO DATE
 			// don't do this until the children have actually been moved in the db
 			if (draggedNode.data.parent !== draggedNode.data.project) {
-				const oldParent = treeData.value.find(node => node.docName === draggedNode.data.parent);
+				const oldParent = treeData.find(node => node.docName === draggedNode.data.parent);
 				if (oldParent) {
 					if (childrenCheck(oldParent.children) === 0) {
 						// frappe.db.set_value('Task', oldParent.docName, { is_group: 0 });
@@ -184,82 +189,6 @@ export default defineComponent({
 			};
 		}
 
-		// explicit nesting
-		function formatTreeData(docs, projects) {
-
-			console.log('formatting tree data...');
-
-			// Helper function to add a blank task
-			function addBlankTask(tasks, text = 'Add task...', project = null, isProject = false, parent = null) {
-				tasks.push(createNode({ text: text, isBlank: true, project: project, isProject: isProject, parent: parent }));
-			}
-
-			// Step 1: Build a map of all tasks by their name
-			const taskMap = {};
-			docs.forEach(doc => {
-				taskMap[doc.name] = createNode({
-					text: doc.subject,
-					project: doc.project,
-					docName: doc.name,
-				});
-			});
-
-			// Step 2: Build the treeData array with projects as the root level
-			const treeData = projects.map(project =>
-				createNode({
-					text: `${project.name}: ${project.project_name}`,
-					isProject: true,
-					docName: project.name,
-				})
-			);
-
-			// Step 3: Populate the children arrays for tasks
-			docs.forEach(doc => {
-				const task = taskMap[doc.name];
-				const childNames = doc.depends_on_tasks ? doc.depends_on_tasks.split(',').map(depName => depName.trim()) : [];
-
-				childNames.forEach(childName => {
-					const childTask = taskMap[childName];
-					// this checks if the child task is in the same project as the parent task because the task update code on drag and drop isn't updating the depends on lists properly and so tasks got messed up and I'm having trouble deleting them.
-					if (childTask && childTask.project === task.project) {
-						childTask.parent = task.docName;
-						task.children.push(childTask);
-					}
-				});
-
-				if (task.children.length > 0) {
-					addBlankTask(task.children, 'Add task...', task.project, false, task.docName);
-				}
-			});
-
-			// Step 4: Assign root-level tasks to their respective projects
-			docs.forEach(doc => {
-				const task = taskMap[doc.name];
-				const isChild = docs.some(parentDoc => {
-					const childNames = parentDoc.depends_on_tasks ? parentDoc.depends_on_tasks.split(',').map(depName => depName.trim()) : [];
-					return childNames.includes(doc.name);
-				});
-
-				if (!isChild) {
-					const project = treeData.find(p => p.text.startsWith(doc.project));
-					if (project) {
-						task.parent = project.docName;
-						project.children.push(task);
-					}
-				}
-			});
-
-			// Step 5: Add a blank task at the end of each project and root level
-			treeData.forEach(project => {
-				addBlankTask(project.children, 'Add task...', project.docName, false, project.docName);
-			});
-			addBlankTask(treeData, 'Add project...', null, true, null);
-
-			console.log('Tree data:', treeData);
-
-			return treeData;
-		}
-
 		// Function to determine if a node is the highlighted project
 		const isHighlightedProject = (node) => {
 			return node.isProject && node === highlightedProject.value;
@@ -290,7 +219,7 @@ export default defineComponent({
 				// if node is a project and is closed, highlight the first open project
 			} else {
 				// look through the root level of tree data for a project with expanded: true, get the first one, highlight it (don't get the blank project :)
-				const nextExpandedProject = treeData.value.find(project => project.isProject && project.expanded && !project.isBlank);
+				const nextExpandedProject = treeData.find(project => project.isProject && project.expanded && !project.isBlank);
 				if (nextExpandedProject) {
 					highlightedProject.value = nextExpandedProject;
 				} else {
@@ -300,7 +229,7 @@ export default defineComponent({
 		};
 
 		function findParentProject(node) {
-			return treeData.value.find(project => project.docName === node.project);
+			return treeData.find(project => project.docName === node.project);
 		}
 
 		// This adds a new blank task to the tree when a blank task is edited into a new task or project
@@ -325,14 +254,14 @@ export default defineComponent({
 				return null; // If the parent node is not found
 			};
 
-			const parentNode = findParentNode(treeData.value, node.parent);
+			const parentNode = findParentNode(treeData, node.parent);
 			if (parentNode) {
 				const updatedChildren = [...parentNode.children, newNode];
 				parentNode.children = updatedChildren;
-				treeData.value = [...treeData.value];
+				treeData = [...treeData];
 			} else {
 				// Add the new node to the root level
-				treeData.value = [...treeData.value, newNode];
+				treeData = [...treeData, newNode];
 			}
 		};
 
@@ -350,19 +279,22 @@ export default defineComponent({
 
 		// Function to update the highlighted project
 		const updateHighlightedProject = () => {
-			// Find the first expanded project
-			const expandedProjects = treeData.value.filter(node => node.isProject && node.expanded && !node.isBlank);
-			if (expandedProjects.length > 0) {
-				// if there are expanded projects, highlight the first one
-				highlightedProject.value = expandedProjects[0];
-			} else {
-				// otherwise, highlight the blank project
-				const blankProject = treeData.value.find(node => node.isBlank);
-				if (blankProject) {
-					highlightedProject.value = blankProject;
-				}
-			}
-		};
+            if (!treeData || !Array.isArray(treeData)) {
+                console.warn('Tree data is not initialized or not an array');
+                return;
+            }
+            const expandedProjects = treeData.filter(
+                (node) => node.isProject && node.expanded && !node.isBlank
+            );
+            if (expandedProjects.length > 0) {
+                highlightedProject.value = expandedProjects[0];
+            } else {
+                const blankProject = treeData.find((node) => node.isBlank);
+                if (blankProject) {
+                    highlightedProject.value = blankProject;
+                }
+            }
+        };
 
 		// Function to find and edit the root-level blank task under the highlighted project
 		// if all projects are collapsed, or if there are no open projects, edit the blank project
@@ -385,6 +317,7 @@ export default defineComponent({
 			// and no input is focused
 			const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;'",.<>?/`~\- ]$/;
 			if (document.activeElement.tagName !== 'INPUT' && allowedKeys.test(event.key)) {
+				console.log('Key pressed:', event.key);
 				// If no input is focused, start editing the root blank task
 				editRootBlankTask();
 			}

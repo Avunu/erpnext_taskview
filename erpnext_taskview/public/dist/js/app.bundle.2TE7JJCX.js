@@ -11461,15 +11461,10 @@ Expected function or array of functions, received type ${typeof value}.`
         type: Array,
         required: true,
         default: () => []
-      },
-      projects: {
-        type: Array,
-        required: true,
-        default: () => []
       }
     },
     setup(props) {
-      const treeData = ref(formatTreeData(props.docs, props.projects));
+      let treeData = reactive(props.docs);
       const highlightedProject = ref(null);
       const highlightedTask = ref(null);
       const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
@@ -11487,6 +11482,9 @@ Expected function or array of functions, received type ${typeof value}.`
         );
         updateHighlightedProject();
         document.addEventListener("keydown", handleKeydown);
+      });
+      onUnmounted(() => {
+        document.removeEventListener("keydown", handleKeydown);
       });
       const handleDragEnd = () => {
         const draggedNode = context2.dragNode;
@@ -11520,7 +11518,7 @@ Expected function or array of functions, received type ${typeof value}.`
           }
         }
         if (draggedNode.data.parent !== draggedNode.data.project) {
-          const oldParent = treeData.value.find((node) => node.docName === draggedNode.data.parent);
+          const oldParent = treeData.find((node) => node.docName === draggedNode.data.parent);
           if (oldParent) {
             if (childrenCheck(oldParent.children) === 0) {
             }
@@ -11560,61 +11558,6 @@ Expected function or array of functions, received type ${typeof value}.`
           parent
         };
       }
-      function formatTreeData(docs, projects) {
-        console.log("formatting tree data...");
-        function addBlankTask(tasks, text = "Add task...", project = null, isProject = false, parent = null) {
-          tasks.push(createNode({ text, isBlank: true, project, isProject, parent }));
-        }
-        const taskMap = {};
-        docs.forEach((doc2) => {
-          taskMap[doc2.name] = createNode({
-            text: doc2.subject,
-            project: doc2.project,
-            docName: doc2.name
-          });
-        });
-        const treeData2 = projects.map(
-          (project) => createNode({
-            text: `${project.name}: ${project.project_name}`,
-            isProject: true,
-            docName: project.name
-          })
-        );
-        docs.forEach((doc2) => {
-          const task = taskMap[doc2.name];
-          const childNames = doc2.depends_on_tasks ? doc2.depends_on_tasks.split(",").map((depName) => depName.trim()) : [];
-          childNames.forEach((childName) => {
-            const childTask = taskMap[childName];
-            if (childTask && childTask.project === task.project) {
-              childTask.parent = task.docName;
-              task.children.push(childTask);
-            }
-          });
-          if (task.children.length > 0) {
-            addBlankTask(task.children, "Add task...", task.project, false, task.docName);
-          }
-        });
-        docs.forEach((doc2) => {
-          const task = taskMap[doc2.name];
-          const isChild = docs.some((parentDoc) => {
-            const childNames = parentDoc.depends_on_tasks ? parentDoc.depends_on_tasks.split(",").map((depName) => depName.trim()) : [];
-            return childNames.includes(doc2.name);
-          });
-          if (!isChild) {
-            const project = treeData2.find((p2) => p2.text.startsWith(doc2.project));
-            if (project) {
-              task.parent = project.docName;
-              project.children.push(task);
-            }
-          }
-        });
-        treeData2.forEach((project) => {
-          addBlankTask(project.children, "Add task...", project.docName, false, project.docName);
-        });
-        addBlankTask(treeData2, "Add project...", null, true, null);
-        console.log("Tree data:", treeData2);
-        return treeData2;
-      }
       const isHighlightedProject = (node) => {
         return node.isProject && node === highlightedProject.value;
       };
@@ -11634,7 +11577,7 @@ Expected function or array of functions, received type ${typeof value}.`
         } else if (node.isProject && stat.open) {
           highlightedProject.value = node;
         } else {
-          const nextExpandedProject = treeData.value.find((project) => project.isProject && project.expanded && !project.isBlank);
+          const nextExpandedProject = treeData.find((project) => project.isProject && project.expanded && !project.isBlank);
           if (nextExpandedProject) {
             highlightedProject.value = nextExpandedProject;
           } else {
@@ -11643,7 +11586,7 @@ Expected function or array of functions, received type ${typeof value}.`
         }
       };
       function findParentProject(node) {
-        return treeData.value.find((project) => project.docName === node.project);
+        return treeData.find((project) => project.docName === node.project);
       }
       const addSiblingTask = (node) => {
         console.log("Adding sibling task to:", node);
@@ -11661,13 +11604,13 @@ Expected function or array of functions, received type ${typeof value}.`
           }
           return null;
         };
-        const parentNode = findParentNode(treeData.value, node.parent);
+        const parentNode = findParentNode(treeData, node.parent);
         if (parentNode) {
           const updatedChildren = [...parentNode.children, newNode];
           parentNode.children = updatedChildren;
-          treeData.value = [...treeData.value];
+          treeData = [...treeData];
         } else {
-          treeData.value = [...treeData.value, newNode];
+          treeData = [...treeData, newNode];
         }
       };
       const handleTaskInteraction = (node) => {
@@ -11681,11 +11624,17 @@ Expected function or array of functions, received type ${typeof value}.`
         }
       };
       const updateHighlightedProject = () => {
-        const expandedProjects = treeData.value.filter((node) => node.isProject && node.expanded && !node.isBlank);
+        if (!treeData || !Array.isArray(treeData)) {
+          console.warn("Tree data is not initialized or not an array");
+          return;
+        }
+        const expandedProjects = treeData.filter(
+          (node) => node.isProject && node.expanded && !node.isBlank
+        );
         if (expandedProjects.length > 0) {
           highlightedProject.value = expandedProjects[0];
         } else {
-          const blankProject = treeData.value.find((node) => node.isBlank);
+          const blankProject = treeData.find((node) => node.isBlank);
           if (blankProject) {
             highlightedProject.value = blankProject;
           }
@@ -11707,6 +11656,7 @@ Expected function or array of functions, received type ${typeof value}.`
       const handleKeydown = (event) => {
         const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;'",.<>?/`~\- ]$/;
         if (document.activeElement.tagName !== "INPUT" && allowedKeys.test(event.key)) {
+          console.log("Key pressed:", event.key);
           editRootBlankTask();
         }
       };
@@ -11755,10 +11705,12 @@ Expected function or array of functions, received type ${typeof value}.`
             key: 0,
             class: normalizeClass(["outer-task", { "highlighted-project": _ctx.isHighlightedProject(node) }])
           }, [
+            createCommentVNode(" expand/collapse button "),
             createBaseVNode("a", {
               class: normalizeClass(["he-tree__open-icon mtl-mr small-icon", { "open": stat.open }]),
               onClick: ($event) => _ctx.toggleNode(node, stat)
             }, [..._hoisted_42], 10, _hoisted_24),
+            createCommentVNode(" task or project "),
             createVNode(_component_Task, {
               doc: node,
               class: "mtl-ml",
@@ -11801,6 +11753,9 @@ Expected function or array of functions, received type ${typeof value}.`
   frappe.router.list_views.push("tasks");
   frappe.router.list_views_route["tasks"] = "Tasks";
   frappe.views.TasksView = class TasksView extends frappe.views.ListView {
+    prepare_data(r) {
+      this.data = r.message;
+    }
     setup_defaults() {
       super.setup_defaults();
       this.page_title = __("Task View");
@@ -11809,6 +11764,7 @@ Expected function or array of functions, received type ${typeof value}.`
       this.list_view_settings = {
         fields: null
       };
+      this.method = "erpnext_taskview.erpnext_taskview.get";
     }
     setup_page() {
       super.setup_page();
@@ -11833,23 +11789,15 @@ Expected function or array of functions, received type ${typeof value}.`
     render_header(refresh_header = false) {
       this.$result.find(".list-row-head").remove();
     }
-    async render_list() {
+    render_list() {
       this.$result.empty();
-      const projects = await frappe.call({
-        method: "erpnext_taskview.erpnext_taskview.get_projects",
-        args: {}
-      });
-      if (this.data.length > 0 && projects.message) {
-        const container = document.createElement("div");
-        this.$result.append(container);
-        console.log("rendering TaskView");
-        console.log(this);
-        console.log(projects);
-        locals.nodes = {};
-        createApp({
-          render: () => h(TaskView_default2, { docs: this.data, projects: projects.message })
-        }).mount(container);
-      }
+      console.log(this.data);
+      const container = document.createElement("div");
+      this.$result.append(container);
+      locals.nodes = {};
+      createApp({
+        render: () => h(TaskView_default2, { docs: this.data })
+      }).mount(container);
     }
   };
   frappe.views.ListViewSelect = frappe.views.TaskViewSelect;
@@ -11916,4 +11864,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.IXCMN62R.js.map
+//# sourceMappingURL=app.bundle.2TE7JJCX.js.map

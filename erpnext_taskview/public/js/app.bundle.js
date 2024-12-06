@@ -15,11 +15,6 @@ frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListView
 				"Tasks",
 				() => {
                     this.set_route("tasks");
-                    // WHY DOES THIS ONLY SHOW UP WHEN SWITCHING BACK TO LIST VIEW?
-                    // const labelElement = document.querySelector('.custom-btn-group-label');
-                    // if (labelElement) {
-                    //     labelElement.textContent = "Tasks View";
-                    // }
 				}
             );
 		}
@@ -38,6 +33,11 @@ frappe.router.list_views.push("tasks");
 frappe.router.list_views_route["tasks"] = "Tasks";
 
 frappe.views.TasksView = class TasksView extends frappe.views.ListView {
+    
+    prepare_data(r) {
+        this.data = r.message;
+	}
+
     setup_defaults() {
         super.setup_defaults();
         this.page_title = __("Task View");
@@ -46,15 +46,10 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         this.list_view_settings = {
             fields: null,
         };
-        // this.method = "erpnext_taskview.erpnext_taskview.get"
+        this.method = "erpnext_taskview.erpnext_taskview.get"
 
         // TODO: set Task View as the current view in the dropdown and add list view to the list of views
-        // find the dropdown element
-        // set the text to "Task View"
-        // const labelElement = document.querySelector('.custom-btn-group-label');
-        // if (labelElement) {
-        //     labelElement.textContent = "Task View";
-        // }
+        // use setup_view_menu() from base_list.js?
         
     }
 
@@ -90,34 +85,22 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         this.$result.find(".list-row-head").remove();
 	}
     
-    async render_list() {
+    render_list() {
         // Clear everything out of the result area
         this.$result.empty();
 
-        // we need to get the projects first and make them the root nodes, with all tasks being children of the projects
-        // /workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/erpnext_taskview/__init__.py
-        const projects = await frappe.call({
-            method: 'erpnext_taskview.erpnext_taskview.get_projects',
-            args: {}
-        });
-        if (this.data.length > 0 && projects.message) {
-            // Make a new Vue container to hold the header and rows
-            const container = document.createElement('div');
-            this.$result.append(container);
+        console.log(this.data);
 
-            console.log('rendering TaskView');
-            console.log(this);
-            console.log(projects);
+        // Make a new Vue container to hold the header and rows
+        const container = document.createElement('div');
+        this.$result.append(container);
 
-            locals.nodes = {};
-    
-            // Pass the data to TaskView
-            createApp({
-                render: () => h(TaskView, { docs: this.data, projects: projects.message })
-            }).mount(container);
-        }
-    
-    
+        locals.nodes = {};
+
+        // Pass the data to TaskView
+        createApp({
+            render: () => h(TaskView, { docs: this.data })
+        }).mount(container);
     }
 };
 
