@@ -89,8 +89,6 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         // Clear everything out of the result area
         this.$result.empty();
 
-        console.log(this.data);
-
         // Make a new Vue container to hold the header and rows
         const container = document.createElement('div');
         this.$result.append(container);

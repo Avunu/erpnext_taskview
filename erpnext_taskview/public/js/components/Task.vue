@@ -21,24 +21,36 @@
                         Mark as Complete
                     </label>
                 </div>
+                    <!-- Button to start/pause/resume timer -->
+                    <button 
+                        class="btn task-control" 
+                        :class="{
+                            'btn-info': doc.timerStatus === 'stopped',
+                            'btn-warning': doc.timerStatus === 'running', // Pause button
+                            'btn-success': doc.timerStatus === 'paused'  // Resume button
+                        }" 
+                        @click="toggleTimer"
+                    >
+                        {{
+                            doc.timerStatus === 'stopped' 
+                                ? 'Start Timer' 
+                                : doc.timerStatus === 'paused' 
+                                ? 'Resume Timer' 
+                                : 'Pause Timer'
+                        }}
+                    </button>
 
-            <!-- Button to start/stop timer -->
-            <button 
-                class="btn task-control" 
-                :class="timerActive ? 'btn-danger' : 'btn-info'" 
-                @click="toggleTimer"
-            >
-                {{ timerActive ? 'Stop Timer' : 'Start Timer' }}
-            </button>
-
-            <!-- Button to log time -->
-            <button 
-                class="btn btn-secondary task-control" 
-                :disabled="timerActive" 
-                :class="{ 'btn-disabled': timerActive }"
-            >
-                Log Time
-            </button>            
+                    <!-- Button to log time or stop timer -->
+                    <button 
+                        class="btn task-control" 
+                        :class="{
+                            'btn-secondary': doc.timerStatus === 'stopped',
+                            'btn-danger': doc.timerStatus !== 'stopped' // Stop button
+                        }"
+                        @click="logOrStopTimer"
+                    >
+                        {{ doc.timerStatus === 'stopped' ? 'Log Time' : 'Stop Timer' }}
+                    </button>
             </div>
             <!-- if it is a project and is not blank, give it a checkbox to close the project -->
             <div v-if="doc.isProject && !doc.isBlank" class="task-controls">
@@ -69,9 +81,8 @@ export default defineComponent({
     },
     setup(props, { emit }) {
         const isCompleted = ref(false);
-        const timerActive = ref(false);
         const isEditing = ref(false);
-        const editedText = ref(''); // Initialize as empty
+        const editedText = ref('');
 
         // Trigger editing mode if autoFocus is true
         watch(() => props.doc.autoFocus, (newVal) => {
@@ -90,32 +101,50 @@ export default defineComponent({
             console.log(`Task "${props.doc.text}" completed: ${isCompleted.value}`);
         };
 
-        // TODO: Implement timer functionality 
-        const toggleTimer = () => {
-            timerActive.value = !timerActive.value;
-            console.log(
-                `${timerActive.value ? 'Timer started' : 'Timer stopped'} for task "${props.doc.text}"`
-            );
-        };
-        // const toggleTimer = () => {
-        //     if (timerActive.value) {
-        //         // Stop the current timer
-        //         timerActive.value = false;
-        //         console.log(`Timer stopped for task "${props.doc.text}"`);
-        //         activeTimer = null;
-        //     } else {
-        //         // Pause any other active timer
-        //         if (activeTimer && activeTimer !== props.doc.docName) {
-        //             console.log(`Pausing timer for task "${activeTimer}"`);
-        //             emit('pause-timer', activeTimer); // Emit an event to pause other timers
-        //         }
+        const startTimer = () => {
+            if (activeTimer && activeTimer !== props.doc) {
+                console.log(`Pausing timer for task "${activeTimer.text}"`);
+                activeTimer.timerStatus = 'paused'; // Pause the previous task
+            }
 
-        //         // Start this timer
-        //         timerActive.value = true;
-        //         activeTimer = props.doc.docName; // Update the active timer reference
-        //         console.log(`Timer started for task "${props.doc.text}"`);
-        //     }
-        // };
+            props.doc.timerStatus = 'running';
+            activeTimer = props.doc;
+            console.log(`Timer started for task "${props.doc.text}"`);
+        };
+
+        const pauseTimer = () => {
+            props.doc.timerStatus = 'paused';
+            activeTimer = null;
+            console.log(`Timer paused for task "${props.doc.text}"`);
+        };
+
+        const stopTimer = () => {
+            props.doc.timerStatus = 'stopped';
+            if (activeTimer === props.doc) {
+                activeTimer = null;
+            }
+            console.log(`Timer stopped for task "${props.doc.text}"`);
+        };
+
+        const toggleTimer = () => {
+            if (props.doc.timerStatus === 'stopped') {
+                startTimer();
+            } else if (props.doc.timerStatus === 'running') {
+                pauseTimer();
+            } else if (props.doc.timerStatus === 'paused') {
+                startTimer();
+            }
+        };
+
+        const logOrStopTimer = () => {
+            if (props.doc.timerStatus === 'stopped') {
+                // Log time
+                console.log(`Time logged for task "${doc.text}"`);
+            } else {
+                // Stop the timer
+                stopTimer();    
+            }
+        };
 
         const editTask = () => {
             isEditing.value = true;
@@ -156,11 +185,11 @@ export default defineComponent({
 
         return {
             isCompleted,
-            timerActive,
             isEditing,
             editedText,
             toggleComplete,
             toggleTimer,
+            logOrStopTimer,
             editTask,
             saveEdit,
             emitInteraction
@@ -277,10 +306,4 @@ export default defineComponent({
     transform: rotate(45deg);
 }
 
-.btn-disabled {
-    /* background-color: #d8d8d8; */
-    color: #a1a1a1;
-    cursor: not-allowed;
-    pointer-events: none;
-}
 </style>

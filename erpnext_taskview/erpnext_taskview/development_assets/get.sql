@@ -29,7 +29,8 @@ TaskTree AS (
     1 AS level,
     FALSE AS isProject,
     FALSE AS isBlank,
-    "stopped" AS timerStatus,
+    -- TRUE AS expanded,
+    -- Set expanded to TRUE if the task has non-blank children
     EXISTS (
       SELECT 1
       FROM tabTask child
@@ -56,17 +57,45 @@ TaskTree AS (
     tt.level + 1,
     FALSE,
     FALSE,
-    "stopped",
+    -- TRUE,
+    -- Set expanded to TRUE if the task has non-blank children
     EXISTS (
       SELECT 1
       FROM tabTask child
       WHERE child.parent_task = t.name
     ) AS expanded,
+    -- FALSE,
     FALSE as autoFocus,
     CAST(CONCAT(tt.json_path, '.children[', ti.seq_number, ']') AS VARCHAR(1000)) AS json_path
   FROM tabTask t
   JOIN TaskTree tt ON t.parent_task = tt.docName
   JOIN TaskIndexes ti ON t.name = ti.child_name
+  
+  UNION ALL
+  
+  -- Add a blank task at the end of each task list
+  SELECT
+    CONCAT('BlankTask_', tt.docName) AS docName,
+    'Add Task' AS text,
+    tt.docName AS parent,
+    tt.project,
+    tt.project_name,
+    tt.project_idx,
+    (SELECT COALESCE(MAX(ti.seq_number), -1) + 1 
+     FROM TaskIndexes ti 
+     WHERE ti.parent_name = tt.docName) AS task_idx,
+    tt.level + 1,
+    FALSE AS isProject,
+    TRUE AS isBlank,
+    TRUE AS expanded,
+    FALSE AS autoFocus,
+    CAST(CONCAT(tt.json_path, '.children[', 
+                (SELECT COALESCE(MAX(ti.seq_number), -1) + 1 
+                 FROM TaskIndexes ti 
+                 WHERE ti.parent_name = tt.docName), 
+                ']') AS VARCHAR(1000)) AS json_path
+  FROM TaskTree tt
+  WHERE NOT tt.isBlank -- Avoid adding blank tasks to blank tasks
 ),
 projects AS (
   -- Projects list with sequential indices
@@ -74,15 +103,43 @@ projects AS (
     name AS docName,
     CONCAT(name, ': ', project_name) AS text,
     NULL AS parent,
-    -- NULL AS project,
-    name AS project,
+    NULL AS project,
     project_idx,
     TRUE AS isProject,
     FALSE AS isBlank,
-    NULL AS timerStatus,
-    FALSE AS expanded,
     CAST(CONCAT('$[', project_idx, ']') AS VARCHAR(1000)) AS json_path
   FROM ProjectIndexes
+
+  UNION ALL
+
+  -- Add a blank project at the end of the list
+  SELECT 
+    'BlankProject' AS docName,
+    'Add Project' AS text,
+    NULL AS parent,
+    NULL AS project,
+    (SELECT COALESCE(MAX(project_idx), -1) + 1 FROM ProjectIndexes) AS project_idx,
+    TRUE AS isProject,
+    TRUE AS isBlank,
+    CAST(CONCAT('$[', (SELECT COALESCE(MAX(project_idx), -1) + 1 FROM ProjectIndexes), ']') AS VARCHAR(1000)) AS json_path
+
+  UNION ALL
+
+-- Add a blank task to each project
+SELECT
+    CONCAT('BlankTask_', p.name) AS docName,
+    'Add Task' AS text,
+    p.name AS parent,
+    p.name AS project,
+    p.project_idx,
+    FALSE AS isProject,
+    TRUE AS isBlank,
+    CAST(CONCAT('$[', p.project_idx, '].children[', 
+                (SELECT COUNT(*) 
+                 FROM tabTask t 
+                 WHERE t.project = p.name AND t.parent_task IS NULL), 
+                ']') AS VARCHAR(1000)) AS json_path
+FROM ProjectIndexes p
 )
 SELECT json_data, json_path FROM (
   -- Combine projects and tasks
@@ -95,15 +152,13 @@ SELECT json_data, json_path FROM (
       'project', project,
       'isProject', TRUE,
       'isBlank', isBlank,
-      'timerStatus', timerStatus,
-      'expanded', expanded,
+      'expanded', TRUE,
       'autoFocus', FALSE,
       'children', JSON_ARRAY()
     ) AS json_data,
     json_path
   FROM projects
-  WHERE isBlank = FALSE  -- Exclude blank projects
-
+  
   UNION ALL
   
   SELECT 
@@ -115,13 +170,11 @@ SELECT json_data, json_path FROM (
       'project', project,
       'isProject', FALSE,
       'isBlank', isBlank,
-      'timerStatus', timerStatus,
       'expanded', expanded,
       'autoFocus', FALSE,
       'children', JSON_ARRAY()
     ) AS json_data,
     json_path
   FROM TaskTree
-  WHERE isBlank = FALSE  -- Exclude blank tasks
 ) combined
 ORDER BY json_path;

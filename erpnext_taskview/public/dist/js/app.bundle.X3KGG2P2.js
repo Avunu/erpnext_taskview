@@ -1,4 +1,4 @@
-frappe.dom.set_style("/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=style&index=0 */\n.highlighted-project div .task-subject-container[data-v-75df30b2] {\n  font-weight: bold;\n}\n.task[data-v-75df30b2] {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.task-subject-container[data-v-75df30b2] {\n  flex-grow: 1;\n  margin-right: 10px;\n  border-bottom: 1px dashed darkgrey;\n}\n.task-subject[data-v-75df30b2] {\n  padding: 0;\n  margin: 0;\n  cursor: text;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-subject-edit[data-v-75df30b2] {\n  padding: 5px;\n  border: 1px solid #ddd;\n  border-radius: 4px;\n  font-size: 14px;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-controls[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n  flex-shrink: 0;\n}\n.task-control[data-v-75df30b2] {\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n}\n.custom-checkbox[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n  position: relative;\n}\n.custom-checkbox label[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  margin: 0;\n}\n.custom-checkbox input[data-v-75df30b2] {\n  position: absolute;\n  opacity: 0;\n  cursor: pointer;\n}\n.custom-checkbox .checkmark[data-v-75df30b2] {\n  height: 20px;\n  width: 20px;\n  background-color: #d8dfed;\n  border-radius: 4px;\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n.custom-checkbox input:checked ~ .checkmark[data-v-75df30b2] {\n  background-color: #2196F3;\n}\n.custom-checkbox .checkmark[data-v-75df30b2]:after {\n  content: \"\";\n  position: absolute;\n  display: none;\n}\n.custom-checkbox input:checked ~ .checkmark[data-v-75df30b2]:after {\n  display: block;\n  width: 5px;\n  height: 10px;\n  border: solid white;\n  border-width: 0 3px 3px 0;\n  transform: rotate(45deg);\n}\n.btn-disabled[data-v-75df30b2] {\n  color: #a1a1a1;\n  cursor: not-allowed;\n  pointer-events: none;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/default.css */\n.tree-node--with-tree-line {\n  position: relative;\n}\n.tree-line {\n  position: absolute;\n  background-color: #bbb;\n}\n.tree-vline {\n  width: 1px;\n  top: 0;\n  bottom: 0;\n}\n.tree-hline {\n  height: 1px;\n  top: 50%;\n  width: 10px;\n}\n.he-tree--rtl {\n  direction: rtl;\n}\n.he-tree-drag-placeholder {\n  background: #ddf2f9;\n  border: 1px dashed #00d9ff;\n  height: 22px;\n  width: 100%;\n}\n.he-tree__open-icon {\n  cursor: pointer;\n  user-select: none;\n  display: inline-block;\n}\n.he-tree__open-icon.open {\n  transform: rotate(90deg);\n}\n.he-tree__open-icon svg {\n  width: 1em;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/material-design.css */\n.mtl-tree .tree-node-inner {\n  display: flex;\n  align-items: center;\n  font-size: 14px;\n}\n.mtl-tree .tree-node {\n  padding: 1px 0;\n}\n.mtl-tree .tree-node:hover {\n  background-color: #ededed;\n}\n.mtl-checkbox {\n  width: 14px;\n  height: 14px;\n}\n.mtl-ml {\n  margin-left: 4px;\n}\n.mtl-mr {\n  margin-right: 4px;\n}\n.mtl-tree table {\n  width: 100%;\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n.mtl-tree td,\n.mtl-tree th {\n  border-bottom: 1px solid rgba(224, 224, 224, 1);\n  line-height: 1.5;\n}\n.mtl-tree tr:last-child td,\n.mtl-tree tr:last-child tr {\n  border-bottom: 0px;\n}\n.mtl-text-left {\n  text-align: left;\n}\n.mtl-text-center {\n  text-align: center;\n}\n.mtl-text-right {\n  text-align: right;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=style&index=0 */\n.tree-container {\n  font-size: 14px;\n}\n.small-icon {\n  font-size: 1.5em;\n}\n.outer-task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.mtl-tree .tree-node:hover {\n  background-color: var(--task-hover-bg-color);\n}\n.he-tree__open-icon svg path {\n  fill: var(--icon-color);\n}\n/*# sourceMappingURL=app.bundle.SBGRZH33.css.map */\n");
+frappe.dom.set_style("/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=style&index=0 */\n.highlighted-project div .task-subject-container[data-v-75df30b2] {\n  font-weight: bold;\n}\n.task[data-v-75df30b2] {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.task-subject-container[data-v-75df30b2] {\n  flex-grow: 1;\n  margin-right: 10px;\n  border-bottom: 1px dashed darkgrey;\n}\n.task-subject[data-v-75df30b2] {\n  padding: 0;\n  margin: 0;\n  cursor: text;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-subject-edit[data-v-75df30b2] {\n  padding: 5px;\n  border: 1px solid #ddd;\n  border-radius: 4px;\n  font-size: 14px;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-controls[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n  flex-shrink: 0;\n}\n.task-control[data-v-75df30b2] {\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n}\n.custom-checkbox[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n  position: relative;\n}\n.custom-checkbox label[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  margin: 0;\n}\n.custom-checkbox input[data-v-75df30b2] {\n  position: absolute;\n  opacity: 0;\n  cursor: pointer;\n}\n.custom-checkbox .checkmark[data-v-75df30b2] {\n  height: 20px;\n  width: 20px;\n  background-color: #d8dfed;\n  border-radius: 4px;\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n.custom-checkbox input:checked ~ .checkmark[data-v-75df30b2] {\n  background-color: #2196F3;\n}\n.custom-checkbox .checkmark[data-v-75df30b2]:after {\n  content: \"\";\n  position: absolute;\n  display: none;\n}\n.custom-checkbox input:checked ~ .checkmark[data-v-75df30b2]:after {\n  display: block;\n  width: 5px;\n  height: 10px;\n  border: solid white;\n  border-width: 0 3px 3px 0;\n  transform: rotate(45deg);\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/default.css */\n.tree-node--with-tree-line {\n  position: relative;\n}\n.tree-line {\n  position: absolute;\n  background-color: #bbb;\n}\n.tree-vline {\n  width: 1px;\n  top: 0;\n  bottom: 0;\n}\n.tree-hline {\n  height: 1px;\n  top: 50%;\n  width: 10px;\n}\n.he-tree--rtl {\n  direction: rtl;\n}\n.he-tree-drag-placeholder {\n  background: #ddf2f9;\n  border: 1px dashed #00d9ff;\n  height: 22px;\n  width: 100%;\n}\n.he-tree__open-icon {\n  cursor: pointer;\n  user-select: none;\n  display: inline-block;\n}\n.he-tree__open-icon.open {\n  transform: rotate(90deg);\n}\n.he-tree__open-icon svg {\n  width: 1em;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/material-design.css */\n.mtl-tree .tree-node-inner {\n  display: flex;\n  align-items: center;\n  font-size: 14px;\n}\n.mtl-tree .tree-node {\n  padding: 1px 0;\n}\n.mtl-tree .tree-node:hover {\n  background-color: #ededed;\n}\n.mtl-checkbox {\n  width: 14px;\n  height: 14px;\n}\n.mtl-ml {\n  margin-left: 4px;\n}\n.mtl-mr {\n  margin-right: 4px;\n}\n.mtl-tree table {\n  width: 100%;\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n.mtl-tree td,\n.mtl-tree th {\n  border-bottom: 1px solid rgba(224, 224, 224, 1);\n  line-height: 1.5;\n}\n.mtl-tree tr:last-child td,\n.mtl-tree tr:last-child tr {\n  border-bottom: 0px;\n}\n.mtl-text-left {\n  text-align: left;\n}\n.mtl-text-center {\n  text-align: center;\n}\n.mtl-text-right {\n  text-align: right;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=style&index=0 */\n.tree-container {\n  font-size: 14px;\n}\n.small-icon {\n  font-size: 1.5em;\n}\n.outer-task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.mtl-tree .tree-node:hover {\n  background-color: var(--task-hover-bg-color);\n}\n.he-tree__open-icon svg path {\n  fill: var(--icon-color);\n}\n/*# sourceMappingURL=app.bundle.JNJ47MGG.css.map */\n");
 (() => {
   var __defProp = Object.defineProperty;
   var __defProps = Object.defineProperties;
@@ -7199,8 +7199,8 @@ Component that was made reactive: `,
   // ../erpnext_taskview/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-bundler.js
   var svgNS = "http://www.w3.org/2000/svg";
   var mathmlNS = "http://www.w3.org/1998/Math/MathML";
-  var doc = typeof document !== "undefined" ? document : null;
-  var templateContainer = doc && /* @__PURE__ */ doc.createElement("template");
+  var doc2 = typeof document !== "undefined" ? document : null;
+  var templateContainer = doc2 && /* @__PURE__ */ doc2.createElement("template");
   var nodeOps = {
     insert: (child, parent, anchor) => {
       parent.insertBefore(child, anchor || null);
@@ -7212,14 +7212,14 @@ Component that was made reactive: `,
       }
     },
     createElement: (tag, namespace, is, props) => {
-      const el = namespace === "svg" ? doc.createElementNS(svgNS, tag) : namespace === "mathml" ? doc.createElementNS(mathmlNS, tag) : is ? doc.createElement(tag, { is }) : doc.createElement(tag);
+      const el = namespace === "svg" ? doc2.createElementNS(svgNS, tag) : namespace === "mathml" ? doc2.createElementNS(mathmlNS, tag) : is ? doc2.createElement(tag, { is }) : doc2.createElement(tag);
       if (tag === "select" && props && props.multiple != null) {
         el.setAttribute("multiple", props.multiple);
       }
       return el;
     },
-    createText: (text) => doc.createTextNode(text),
-    createComment: (text) => doc.createComment(text),
+    createText: (text) => doc2.createTextNode(text),
+    createComment: (text) => doc2.createComment(text),
     setText: (node, text) => {
       node.nodeValue = text;
     },
@@ -7228,7 +7228,7 @@ Component that was made reactive: `,
     },
     parentNode: (node) => node.parentNode,
     nextSibling: (node) => node.nextSibling,
-    querySelector: (selector) => doc.querySelector(selector),
+    querySelector: (selector) => doc2.querySelector(selector),
     setScopeId(el, id) {
       el.setAttribute(id, "");
     },
@@ -11279,6 +11279,7 @@ Expected function or array of functions, received type ${typeof value}.`
   var OpenIcon = /* @__PURE__ */ _export_sfc2(_sfc_main2, [["render", _sfc_render2]]);
 
   // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=script
+  var activeTimer = null;
   var Task_default = defineComponent({
     name: "Task",
     props: {
@@ -11290,7 +11291,6 @@ Expected function or array of functions, received type ${typeof value}.`
     },
     setup(props, { emit: emit2 }) {
       const isCompleted = ref(false);
-      const timerActive = ref(false);
       const isEditing = ref(false);
       const editedText = ref("");
       watch(() => props.doc.autoFocus, (newVal) => {
@@ -11306,11 +11306,42 @@ Expected function or array of functions, received type ${typeof value}.`
         isCompleted.value = !isCompleted.value;
         console.log(`Task "${props.doc.text}" completed: ${isCompleted.value}`);
       };
+      const startTimer = () => {
+        if (activeTimer && activeTimer !== props.doc) {
+          console.log(`Pausing timer for task "${activeTimer.text}"`);
+          activeTimer.timerStatus = "paused";
+        }
+        props.doc.timerStatus = "running";
+        activeTimer = props.doc;
+        console.log(`Timer started for task "${props.doc.text}"`);
+      };
+      const pauseTimer = () => {
+        props.doc.timerStatus = "paused";
+        activeTimer = null;
+        console.log(`Timer paused for task "${props.doc.text}"`);
+      };
+      const stopTimer = () => {
+        props.doc.timerStatus = "stopped";
+        if (activeTimer === props.doc) {
+          activeTimer = null;
+        }
+        console.log(`Timer stopped for task "${props.doc.text}"`);
+      };
       const toggleTimer = () => {
-        timerActive.value = !timerActive.value;
-        console.log(
-          `${timerActive.value ? "Timer started" : "Timer stopped"} for task "${props.doc.text}"`
-        );
+        if (props.doc.timerStatus === "stopped") {
+          startTimer();
+        } else if (props.doc.timerStatus === "running") {
+          pauseTimer();
+        } else if (props.doc.timerStatus === "paused") {
+          startTimer();
+        }
+      };
+      const logOrStopTimer = () => {
+        if (props.doc.timerStatus === "stopped") {
+          console.log(`Time logged for task "${doc.text}"`);
+        } else {
+          stopTimer();
+        }
       };
       const editTask = () => {
         isEditing.value = true;
@@ -11342,11 +11373,11 @@ Expected function or array of functions, received type ${typeof value}.`
       };
       return {
         isCompleted,
-        timerActive,
         isEditing,
         editedText,
         toggleComplete,
         toggleTimer,
+        logOrStopTimer,
         editTask,
         saveEdit,
         emitInteraction
@@ -11364,17 +11395,16 @@ Expected function or array of functions, received type ${typeof value}.`
   };
   var _hoisted_4 = { class: "custom-checkbox task-control" };
   var _hoisted_5 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("span", { class: "checkmark" }, null, -1));
-  var _hoisted_6 = ["disabled"];
-  var _hoisted_7 = {
+  var _hoisted_6 = {
     key: 1,
     class: "task-controls"
   };
-  var _hoisted_8 = { class: "custom-checkbox task-control" };
-  var _hoisted_9 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("span", { class: "checkmark" }, null, -1));
+  var _hoisted_7 = { class: "custom-checkbox task-control" };
+  var _hoisted_8 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("span", { class: "checkmark" }, null, -1));
   function render(_ctx, _cache, $props, $setup, $data, $options) {
     return openBlock(), createElementBlock("div", {
       class: "task",
-      onClick: _cache[9] || (_cache[9] = (...args) => _ctx.emitInteraction && _ctx.emitInteraction(...args))
+      onClick: _cache[10] || (_cache[10] = (...args) => _ctx.emitInteraction && _ctx.emitInteraction(...args))
     }, [
       createBaseVNode("div", _hoisted_13, [
         createCommentVNode(" Task Subject "),
@@ -11411,29 +11441,36 @@ Expected function or array of functions, received type ${typeof value}.`
               createTextVNode(" Mark as Complete ")
             ])
           ]),
-          createCommentVNode(" Button to start/stop timer "),
+          createCommentVNode(" Button to start/pause/resume timer "),
           createBaseVNode("button", {
-            class: normalizeClass(["btn task-control", _ctx.timerActive ? "btn-danger" : "btn-info"]),
+            class: normalizeClass(["btn task-control", {
+              "btn-info": _ctx.doc.timerStatus === "stopped",
+              "btn-warning": _ctx.doc.timerStatus === "running",
+              "btn-success": _ctx.doc.timerStatus === "paused"
+            }]),
             onClick: _cache[6] || (_cache[6] = (...args) => _ctx.toggleTimer && _ctx.toggleTimer(...args))
-          }, toDisplayString(_ctx.timerActive ? "Stop Timer" : "Start Timer"), 3),
-          createCommentVNode(" Button to log time "),
+          }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Start Timer" : _ctx.doc.timerStatus === "paused" ? "Resume Timer" : "Pause Timer"), 3),
+          createCommentVNode(" Button to log time or stop timer "),
           createBaseVNode("button", {
-            class: normalizeClass(["btn btn-secondary task-control", { "btn-disabled": _ctx.timerActive }]),
-            disabled: _ctx.timerActive
-          }, " Log Time ", 10, _hoisted_6)
+            class: normalizeClass(["btn task-control", {
+              "btn-secondary": _ctx.doc.timerStatus === "stopped",
+              "btn-danger": _ctx.doc.timerStatus !== "stopped"
+            }]),
+            onClick: _cache[7] || (_cache[7] = (...args) => _ctx.logOrStopTimer && _ctx.logOrStopTimer(...args))
+          }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Log Time" : "Stop Timer"), 3)
         ])) : createCommentVNode("v-if", true),
         createCommentVNode(" if it is a project and is not blank, give it a checkbox to close the project "),
-        _ctx.doc.isProject && !_ctx.doc.isBlank ? (openBlock(), createElementBlock("div", _hoisted_7, [
-          createBaseVNode("div", _hoisted_8, [
+        _ctx.doc.isProject && !_ctx.doc.isBlank ? (openBlock(), createElementBlock("div", _hoisted_6, [
+          createBaseVNode("div", _hoisted_7, [
             createBaseVNode("label", null, [
               withDirectives(createBaseVNode("input", {
                 type: "checkbox",
-                "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => _ctx.isCompleted = $event),
-                onChange: _cache[8] || (_cache[8] = (...args) => _ctx.toggleComplete && _ctx.toggleComplete(...args))
+                "onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => _ctx.isCompleted = $event),
+                onChange: _cache[9] || (_cache[9] = (...args) => _ctx.toggleComplete && _ctx.toggleComplete(...args))
               }, null, 544), [
                 [vModelCheckbox, _ctx.isCompleted]
               ]),
-              _hoisted_9,
+              _hoisted_8,
               createTextVNode(" Close Project ")
             ])
           ])
@@ -11464,9 +11501,10 @@ Expected function or array of functions, received type ${typeof value}.`
       }
     },
     setup(props) {
-      let treeData = reactive(props.docs);
-      const highlightedProject = ref(null);
-      const highlightedTask = ref(null);
+      let docs = addBlankProject(props.docs);
+      let treeData = ref(docs);
+      let highlightedProject = ref(null);
+      let highlightedTask = ref(null);
       const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
       if (currentTheme.value === "automatic") {
         currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -11518,7 +11556,7 @@ Expected function or array of functions, received type ${typeof value}.`
           }
         }
         if (draggedNode.data.parent !== draggedNode.data.project) {
-          const oldParent = treeData.find((node) => node.docName === draggedNode.data.parent);
+          const oldParent = treeData.value.find((node) => node.docName === draggedNode.data.parent);
           if (oldParent) {
             if (childrenCheck(oldParent.children) === 0) {
             }
@@ -11528,7 +11566,7 @@ Expected function or array of functions, received type ${typeof value}.`
       };
       function modifyNodeAndStat(node, stat) {
         var _a;
-        if (((_a = locals.nodes) == null ? void 0 : _a[node.docName]) === false) {
+        if (((_a = locals.nodes) == null ? void 0 : _a[node.docName]) === false || !node.expanded) {
           stat.open = false;
           node.expanded = false;
           stat.children.forEach((child) => {
@@ -11538,14 +11576,19 @@ Expected function or array of functions, received type ${typeof value}.`
         ;
         if (node.isBlank || node.isProject) {
           stat.disableDrag = true;
-          stat.disableDrop = true;
+          stat.disableDrop = node.isBlank;
           stat.draggable = false;
-          stat.droppable = false;
+          stat.droppable = !node.isBlank;
+        } else {
+          stat.disableDrag = false;
+          stat.disableDrop = false;
+          stat.draggable = true;
+          stat.droppable = true;
         }
         return { node, stat };
       }
       ;
-      function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = "", autoFocus = false, expanded = true, parent = null }) {
+      function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = "", autoFocus = false, expanded = true, parent = null, timerStatus = null }) {
         return {
           text,
           children,
@@ -11555,8 +11598,14 @@ Expected function or array of functions, received type ${typeof value}.`
           docName,
           autoFocus,
           expanded,
-          parent
+          parent,
+          timerStatus
         };
+      }
+      function addBlankProject(docs2) {
+        newProject = createNode({ text: "Add project...", isBlank: true, isProject: true, expanded: false });
+        docs2.push(newProject);
+        return docs2;
       }
       const isHighlightedProject = (node) => {
         return node.isProject && node === highlightedProject.value;
@@ -11565,8 +11614,11 @@ Expected function or array of functions, received type ${typeof value}.`
         stat.open = !stat.open;
         locals.nodes[node.docName], node.expanded = stat.open;
         if (stat.open) {
+          if (node.children.length === 0 || !node.children.some((child) => child.isBlank)) {
+            addBlankTask(node);
+          }
           stat.children.forEach((child) => {
-            child.hidden = false;
+            child.hidden = !stat.open;
           });
         }
         if (!node.isProject) {
@@ -11577,7 +11629,7 @@ Expected function or array of functions, received type ${typeof value}.`
         } else if (node.isProject && stat.open) {
           highlightedProject.value = node;
         } else {
-          const nextExpandedProject = treeData.find((project) => project.isProject && project.expanded && !project.isBlank);
+          const nextExpandedProject = treeData.value.find((project) => project.isProject && project.expanded && !project.isBlank);
           if (nextExpandedProject) {
             highlightedProject.value = nextExpandedProject;
           } else {
@@ -11585,25 +11637,35 @@ Expected function or array of functions, received type ${typeof value}.`
           }
         }
       };
-      function findParentProject(node) {
-        return treeData.find((project) => project.docName === node.project);
+      function addBlankTask(node) {
+        let blankTask = createNode({ text: "Add task...", isBlank: true, project: node.project, parent: node.docName });
+        node.children = [...node.children, blankTask];
+        node.children.forEach((child) => {
+          if (!child.isBlank) {
+            addBlankTask(child);
+          }
+        });
+        treeData.value = [...treeData.value];
       }
+      function findParentProject(node) {
+        return treeData.value.find((project) => project.docName === node.project);
+      }
+      const findParentNode = (nodes, parentDocName) => {
+        for (let node of nodes) {
+          if (node.docName === parentDocName) {
+            return node;
+          } else if (node.children && node.children.length > 0) {
+            const foundNode = findParentNode(node.children, parentDocName);
+            if (foundNode) {
+              return foundNode;
+            }
+          }
+        }
+        return null;
+      };
       const addSiblingTask = (node) => {
         console.log("Adding sibling task to:", node);
         const newNode = createNode({ text: node.isProject ? "Add project..." : "Add task...", isBlank: true, project: node.isProject ? null : node.project, isProject: node.isProject });
-        const findParentNode = (nodes, parentDocName) => {
-          for (let node2 of nodes) {
-            if (node2.docName === parentDocName) {
-              return node2;
-            } else if (node2.children && node2.children.length > 0) {
-              const foundNode = findParentNode(node2.children, parentDocName);
-              if (foundNode) {
-                return foundNode;
-              }
-            }
-          }
-          return null;
-        };
         const parentNode = findParentNode(treeData, node.parent);
         if (parentNode) {
           const updatedChildren = [...parentNode.children, newNode];
@@ -11624,17 +11686,13 @@ Expected function or array of functions, received type ${typeof value}.`
         }
       };
       const updateHighlightedProject = () => {
-        if (!treeData || !Array.isArray(treeData)) {
-          console.warn("Tree data is not initialized or not an array");
-          return;
-        }
-        const expandedProjects = treeData.filter(
+        const expandedProjects = treeData.value.filter(
           (node) => node.isProject && node.expanded && !node.isBlank
         );
         if (expandedProjects.length > 0) {
           highlightedProject.value = expandedProjects[0];
         } else {
-          const blankProject = treeData.find((node) => node.isBlank);
+          const blankProject = treeData.value.find((node) => node.isBlank);
           if (blankProject) {
             highlightedProject.value = blankProject;
           }
@@ -11770,8 +11828,8 @@ Expected function or array of functions, received type ${typeof value}.`
       super.setup_page();
       frappe.call("frappe.desk.listview.get_list_settings", {
         doctype: this.doctype
-      }).then((doc2) => {
-        this.list_view_settings = doc2.message || {};
+      }).then((doc3) => {
+        this.list_view_settings = doc3.message || {};
         if (this.list_view_settings.fields === void 0) {
           this.list_view_settings.fields = null;
         }
@@ -11791,7 +11849,6 @@ Expected function or array of functions, received type ${typeof value}.`
     }
     render_list() {
       this.$result.empty();
-      console.log(this.data);
       const container = document.createElement("div");
       this.$result.append(container);
       locals.nodes = {};
@@ -11864,4 +11921,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.2TE7JJCX.js.map
+//# sourceMappingURL=app.bundle.X3KGG2P2.js.map

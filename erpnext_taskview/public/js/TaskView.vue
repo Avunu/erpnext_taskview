@@ -46,10 +46,13 @@ export default defineComponent({
 		},
 	},
 	setup(props) {
-		let treeData = reactive(props.docs)
-		const highlightedProject = ref(null);
+		// add a blank project to the end of the list
+		let docs = addBlankProject(props.docs)
+		// instatiate the reactive tree data
+		let treeData = ref(docs);
+		let highlightedProject = ref(null);
 		// TODO: SETUP CODE FOR HIGHLIGHTING TASKS
-		const highlightedTask = ref(null);
+		let highlightedTask = ref(null);
 
 		// Dark Mode compatibility
 		const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
@@ -87,6 +90,8 @@ export default defineComponent({
 			// TODO: setup transition from task to project if a task is dragged to a project
 
 			// TODO: don't allow tasks to be dragged to other projects (this could be a feature built out at a later time. The data structure is messy in frappe. There is the project field on the task, but there are also depends on lists.)
+
+			// TODO: don't allow tasks to be dragged below the blank task on each level
 
 			// this gets the dragged node in its new position.
 			const draggedNode = dragContext.dragNode
@@ -140,7 +145,7 @@ export default defineComponent({
 			// NOT SURE IF IT REALLY MATTERS TO KEEP is_group UP TO DATE
 			// don't do this until the children have actually been moved in the db
 			if (draggedNode.data.parent !== draggedNode.data.project) {
-				const oldParent = treeData.find(node => node.docName === draggedNode.data.parent);
+				const oldParent = treeData.value.find(node => node.docName === draggedNode.data.parent);
 				if (oldParent) {
 					if (childrenCheck(oldParent.children) === 0) {
 						// frappe.db.set_value('Task', oldParent.docName, { is_group: 0 });
@@ -153,7 +158,7 @@ export default defineComponent({
 		};
 
 		function modifyNodeAndStat(node, stat) {
-			if (locals.nodes?.[node.docName] === false) {
+			if (locals.nodes?.[node.docName] === false || !node.expanded) {
 				stat.open = false;
 				node.expanded = false;
 				// go through all children and set them to hidden
@@ -165,9 +170,15 @@ export default defineComponent({
 			// Disable drag and drop for blank tasks and projects
 			if (node.isBlank || node.isProject) {
 				stat.disableDrag = true;
-				stat.disableDrop = true;
+				stat.disableDrop = node.isBlank
 				stat.draggable = false;
-				stat.droppable = false;
+				stat.droppable = !node.isBlank;
+			}
+			else {
+				stat.disableDrag = false;
+				stat.disableDrop = false;
+				stat.draggable = true;
+				stat.droppable = true;
 			}
 			// I thought this would keep a placeholder for the task's previous location while being dragged, but I can't see that it does anything...
 			// stat.keepPlaceholder = true;
@@ -175,7 +186,7 @@ export default defineComponent({
 		};
 
 		// Helper function to create a new node
-		function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = '', autoFocus = false, expanded = true, parent = null }) {
+		function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = '', autoFocus = false, expanded = true, parent = null, timerStatus = null }) {
 			return {
 				text,
 				children,
@@ -185,8 +196,17 @@ export default defineComponent({
 				docName,
 				autoFocus,
 				expanded,
-				parent
+				parent,
+				timerStatus
 			};
+		}
+
+		function addBlankProject(docs) {
+			// add a blank project to the end of the list
+			newProject = createNode({ text: 'Add project...', isBlank: true, isProject: true, expanded: false });
+			docs.push(newProject);
+
+			return docs
 		}
 
 		// Function to determine if a node is the highlighted project
@@ -200,11 +220,15 @@ export default defineComponent({
 
 			// open the children if the node is being opened
 			if (stat.open) {
-				// change the hidden property of all open children to false
+				// look in the children. if there is not a blank task, add one
+				if (node.children.length === 0 || !node.children.some(child => child.isBlank)) {
+					addBlankTask(node);
+				}
+				// change the hidden property of all open children
 				stat.children.forEach(child => {
-					child.hidden = false;
+					child.hidden = !stat.open;
 				});
-			}
+			} 
 
 			// if the node is a task, highlight the parent project
 			if (!node.isProject) {
@@ -219,7 +243,7 @@ export default defineComponent({
 				// if node is a project and is closed, highlight the first open project
 			} else {
 				// look through the root level of tree data for a project with expanded: true, get the first one, highlight it (don't get the blank project :)
-				const nextExpandedProject = treeData.find(project => project.isProject && project.expanded && !project.isBlank);
+				const nextExpandedProject = treeData.value.find(project => project.isProject && project.expanded && !project.isBlank);
 				if (nextExpandedProject) {
 					highlightedProject.value = nextExpandedProject;
 				} else {
@@ -228,9 +252,41 @@ export default defineComponent({
 			}
 		};
 
-		function findParentProject(node) {
-			return treeData.find(project => project.docName === node.project);
+		function addBlankTask(node) {
+			// Add a blank task to the current node's children
+			let blankTask = createNode({ text: 'Add task...', isBlank: true, project: node.project, parent: node.docName });
+			node.children = [...node.children, blankTask];
+
+			// Recursively add a blank task to each child node's children
+			node.children.forEach(child => {
+				if (!child.isBlank) {
+				addBlankTask(child);
+				}
+			});
+
+			// Trigger reactivity update for treeData
+			treeData.value = [...treeData.value];
 		}
+
+
+		function findParentProject(node) {
+			return treeData.value.find(project => project.docName === node.project);
+		}
+
+		// we need to add the new node as a sibling to the node. If the node is a project, add it to the root level
+		const findParentNode = (nodes, parentDocName) => {
+			for (let node of nodes) {
+				if (node.docName === parentDocName) {
+					return node;
+				} else if (node.children && node.children.length > 0) {
+					const foundNode = findParentNode(node.children, parentDocName);
+					if (foundNode) {
+						return foundNode;
+					}
+				}
+			}
+			return null; // If the parent node is not found
+		};
 
 		// This adds a new blank task to the tree when a blank task is edited into a new task or project
 		// IF THE NEW NODE IS A PROJECT, WE NEED TO ADD A BLANK TASK TO THE NEW PROJECT AS WELL?
@@ -239,20 +295,6 @@ export default defineComponent({
 			// Create a new task object
 			const newNode = createNode({ text: node.isProject ? 'Add project...' : 'Add task...', isBlank: true, project: node.isProject ? null : node.project, isProject: node.isProject });
 
-			// we need to add the new node as a sibling to the node. If the node is a project, add it to the root level
-			const findParentNode = (nodes, parentDocName) => {
-				for (let node of nodes) {
-					if (node.docName === parentDocName) {
-						return node;
-					} else if (node.children && node.children.length > 0) {
-						const foundNode = findParentNode(node.children, parentDocName);
-						if (foundNode) {
-							return foundNode;
-						}
-					}
-				}
-				return null; // If the parent node is not found
-			};
 
 			const parentNode = findParentNode(treeData, node.parent);
 			if (parentNode) {
@@ -279,17 +321,18 @@ export default defineComponent({
 
 		// Function to update the highlighted project
 		const updateHighlightedProject = () => {
-            if (!treeData || !Array.isArray(treeData)) {
-                console.warn('Tree data is not initialized or not an array');
-                return;
-            }
-            const expandedProjects = treeData.filter(
+            // if (!treeData.value || !Array.isArray(treeData.value)) {
+            //     console.warn('Tree data is not initialized or not an array');
+			// 	console.log(treeData);
+            //     return;
+            // }
+            const expandedProjects = treeData.value.filter(
                 (node) => node.isProject && node.expanded && !node.isBlank
             );
             if (expandedProjects.length > 0) {
                 highlightedProject.value = expandedProjects[0];
             } else {
-                const blankProject = treeData.find((node) => node.isBlank);
+                const blankProject = treeData.value.find((node) => node.isBlank);
                 if (blankProject) {
                     highlightedProject.value = blankProject;
                 }
@@ -333,7 +376,12 @@ export default defineComponent({
 			handleDragEnd,
 			addSiblingTask
 		};
-	}
+	},
+	// watch: {
+	// 	treeData(newValue, oldValue) {
+	// 		console.log('treeData updated:', newValue);
+	// 	}
+	// }
 });
 </script>
 
