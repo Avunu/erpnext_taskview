@@ -25,7 +25,7 @@
                     <button 
                         class="btn task-control" 
                         :class="{
-                            'btn-info': doc.timerStatus === 'stopped',
+                            'btn-info': doc.timerStatus === 'stopped', // Start button
                             'btn-warning': doc.timerStatus === 'running', // Pause button
                             'btn-success': doc.timerStatus === 'paused'  // Resume button
                         }" 
@@ -44,7 +44,7 @@
                     <button 
                         class="btn task-control" 
                         :class="{
-                            'btn-secondary': doc.timerStatus === 'stopped',
+                            'btn-secondary': doc.timerStatus === 'stopped', // Log time button
                             'btn-danger': doc.timerStatus !== 'stopped' // Stop button
                         }"
                         @click="logOrStopTimer"
@@ -66,9 +66,10 @@
     </div>
 </template>
 <script>
-import { defineComponent, ref, reactive, nextTick, watch } from 'vue';
+import { defineComponent, ref, nextTick, watch } from 'vue';
 
-let activeTimer = null; // Global reference for the currently active timer
+// Global reference for the currently active timer
+let activeTimer = null; 
 
 export default defineComponent({
     name: 'Task',
@@ -102,20 +103,28 @@ export default defineComponent({
         };
 
         const startTimer = () => {
+            // Pause the previous timer if it is running
             if (activeTimer && activeTimer !== props.doc) {
                 console.log(`Pausing timer for task "${activeTimer.text}"`);
                 activeTimer.timerStatus = 'paused'; // Pause the previous task
+                // update the timesheet detail for the previous task
+                activeTimer.timesheet_detail = update_timesheet_detail(activeTimer.project, activeTimer.docName, 'paused', activeTimer.timesheetDetail);
+
             }
 
             props.doc.timerStatus = 'running';
-            activeTimer = props.doc;
             console.log(`Timer started for task "${props.doc.text}"`);
+            // update or create the timesheet detail for this task
+            props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, 'running', props.doc.timesheetDetail);
+            activeTimer = props.doc;
         };
 
         const pauseTimer = () => {
             props.doc.timerStatus = 'paused';
             activeTimer = null;
             console.log(`Timer paused for task "${props.doc.text}"`);
+            // update the timesheet detail for this task
+            props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, 'paused', props.doc.timesheetDetail);
         };
 
         const stopTimer = () => {
@@ -124,6 +133,8 @@ export default defineComponent({
                 activeTimer = null;
             }
             console.log(`Timer stopped for task "${props.doc.text}"`);
+            // update the timesheet detail for this task
+            props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, 'stopped', props.doc.timesheetDetail);
         };
 
         const toggleTimer = () => {
@@ -140,10 +151,28 @@ export default defineComponent({
             if (props.doc.timerStatus === 'stopped') {
                 // Log time
                 console.log(`Time logged for task "${doc.text}"`);
+                // TODO: Log time, probably with a modal
             } else {
                 // Stop the timer
                 stopTimer();    
             }
+        };
+        
+        // update_timesheet_detail(project_name, task_name, status, timesheet_detail)
+        const update_timesheet_detail = (project_name, task_name, status, timesheet_detail) => {
+            frappe.call({
+                method: 'erpnext_taskview.erpnext_taskview.update_timesheet_detail',
+                args: {
+                    project_name: project_name,
+                    task_name: task_name,
+                    status: status,
+                    timesheet_detail: timesheet_detail
+                },
+                freeze: true
+            })
+            .then(r => {
+                return r.message;
+            });
         };
 
         const editTask = () => {

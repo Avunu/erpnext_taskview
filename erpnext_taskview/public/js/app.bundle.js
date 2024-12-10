@@ -47,7 +47,6 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
             fields: null,
         };
         this.method = "erpnext_taskview.erpnext_taskview.get"
-
         // TODO: set Task View as the current view in the dropdown and add list view to the list of views
         // use setup_view_menu() from base_list.js?
         
@@ -94,6 +93,8 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         this.$result.append(container);
 
         locals.nodes = {};
+
+        console.log(this.data)
 
         // Pass the data to TaskView
         createApp({

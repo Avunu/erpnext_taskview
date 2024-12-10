@@ -11310,15 +11310,18 @@ Expected function or array of functions, received type ${typeof value}.`
         if (activeTimer && activeTimer !== props.doc) {
           console.log(`Pausing timer for task "${activeTimer.text}"`);
           activeTimer.timerStatus = "paused";
+          activeTimer.timesheet_detail = update_timesheet_detail(activeTimer.project, activeTimer.docName, "paused", activeTimer.timesheetDetail);
         }
         props.doc.timerStatus = "running";
-        activeTimer = props.doc;
         console.log(`Timer started for task "${props.doc.text}"`);
+        props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, "running", props.doc.timesheetDetail);
+        activeTimer = props.doc;
       };
       const pauseTimer = () => {
         props.doc.timerStatus = "paused";
         activeTimer = null;
         console.log(`Timer paused for task "${props.doc.text}"`);
+        props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, "paused", props.doc.timesheetDetail);
       };
       const stopTimer = () => {
         props.doc.timerStatus = "stopped";
@@ -11326,6 +11329,7 @@ Expected function or array of functions, received type ${typeof value}.`
           activeTimer = null;
         }
         console.log(`Timer stopped for task "${props.doc.text}"`);
+        props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, "stopped", props.doc.timesheetDetail);
       };
       const toggleTimer = () => {
         if (props.doc.timerStatus === "stopped") {
@@ -11342,6 +11346,20 @@ Expected function or array of functions, received type ${typeof value}.`
         } else {
           stopTimer();
         }
+      };
+      const update_timesheet_detail = (project_name, task_name, status, timesheet_detail) => {
+        frappe.call({
+          method: "erpnext_taskview.erpnext_taskview.update_timesheet_detail",
+          args: {
+            project_name,
+            task_name,
+            status,
+            timesheet_detail
+          },
+          freeze: true
+        }).then((r) => {
+          return r.message;
+        });
       };
       const editTask = () => {
         isEditing.value = true;
@@ -11502,6 +11520,7 @@ Expected function or array of functions, received type ${typeof value}.`
     },
     setup(props) {
       let docs = addBlankProject(props.docs);
+      docs = addBlankTasks(docs);
       let treeData = ref(docs);
       let highlightedProject = ref(null);
       let highlightedTask = ref(null);
@@ -11607,6 +11626,14 @@ Expected function or array of functions, received type ${typeof value}.`
         docs2.push(newProject);
         return docs2;
       }
+      function addBlankTasks(docs2) {
+        docs2.forEach((project) => {
+          if (project.expanded && !project.isBlank) {
+            addBlankTask(project);
+          }
+        });
+        return docs2;
+      }
       const isHighlightedProject = (node) => {
         return node.isProject && node === highlightedProject.value;
       };
@@ -11616,6 +11643,7 @@ Expected function or array of functions, received type ${typeof value}.`
         if (stat.open) {
           if (node.children.length === 0 || !node.children.some((child) => child.isBlank)) {
             addBlankTask(node);
+            treeData.value = [...treeData.value];
           }
           stat.children.forEach((child) => {
             child.hidden = !stat.open;
@@ -11645,7 +11673,6 @@ Expected function or array of functions, received type ${typeof value}.`
             addBlankTask(child);
           }
         });
-        treeData.value = [...treeData.value];
       }
       function findParentProject(node) {
         return treeData.value.find((project) => project.docName === node.project);
@@ -11852,6 +11879,7 @@ Expected function or array of functions, received type ${typeof value}.`
       const container = document.createElement("div");
       this.$result.append(container);
       locals.nodes = {};
+      console.log(this.data);
       createApp({
         render: () => h(TaskView_default2, { docs: this.data })
       }).mount(container);
@@ -11921,4 +11949,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.X3KGG2P2.js.map
+//# sourceMappingURL=app.bundle.7HKZ3XJ2.js.map

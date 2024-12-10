@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import { defineComponent, reactive, ref, onMounted, onUnmounted } from 'vue';
+import { defineComponent, ref, onMounted, onUnmounted } from 'vue';
 import { Draggable, dragContext, OpenIcon } from '@he-tree/vue';
 import Task from './components/Task.vue';
 import '@he-tree/vue/style/default.css';
@@ -48,6 +48,8 @@ export default defineComponent({
 	setup(props) {
 		// add a blank project to the end of the list
 		let docs = addBlankProject(props.docs)
+		// add blank tasks to any expanded project branches
+		docs = addBlankTasks(docs);
 		// instatiate the reactive tree data
 		let treeData = ref(docs);
 		let highlightedProject = ref(null);
@@ -206,7 +208,19 @@ export default defineComponent({
 			newProject = createNode({ text: 'Add project...', isBlank: true, isProject: true, expanded: false });
 			docs.push(newProject);
 
+			
 			return docs
+		}
+		
+		// if any of the projects are expanded due to running or paused timers, go ahead and add the blank tasks to the project and tasks now, since otherwise blank tasks are only being added when the project is expanded
+		function addBlankTasks(docs) {
+			// add blank tasks to any expanded project branches
+			docs.forEach(project => {
+				if (project.expanded && !project.isBlank) {
+					addBlankTask(project);
+				}
+			});
+			return docs;
 		}
 
 		// Function to determine if a node is the highlighted project
@@ -223,6 +237,8 @@ export default defineComponent({
 				// look in the children. if there is not a blank task, add one
 				if (node.children.length === 0 || !node.children.some(child => child.isBlank)) {
 					addBlankTask(node);
+					// Trigger reactivity update for treeData
+					treeData.value = [...treeData.value];
 				}
 				// change the hidden property of all open children
 				stat.children.forEach(child => {
@@ -265,7 +281,7 @@ export default defineComponent({
 			});
 
 			// Trigger reactivity update for treeData
-			treeData.value = [...treeData.value];
+			// treeData.value = [...treeData.value];
 		}
 
 
@@ -377,11 +393,6 @@ export default defineComponent({
 			addSiblingTask
 		};
 	},
-	// watch: {
-	// 	treeData(newValue, oldValue) {
-	// 		console.log('treeData updated:', newValue);
-	// 	}
-	// }
 });
 </script>
 

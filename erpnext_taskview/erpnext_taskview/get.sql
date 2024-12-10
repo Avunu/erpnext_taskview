@@ -30,6 +30,7 @@ TaskTree AS (
     FALSE AS isProject,
     FALSE AS isBlank,
     "stopped" AS timerStatus,
+    NULL AS timesheetDetail,
     EXISTS (
       SELECT 1
       FROM tabTask child
@@ -57,6 +58,7 @@ TaskTree AS (
     FALSE,
     FALSE,
     "stopped",
+    NULL,
     EXISTS (
       SELECT 1
       FROM tabTask child
@@ -80,6 +82,7 @@ projects AS (
     TRUE AS isProject,
     FALSE AS isBlank,
     NULL AS timerStatus,
+    NULL AS timesheetDetail,
     FALSE AS expanded,
     CAST(CONCAT('$[', project_idx, ']') AS VARCHAR(1000)) AS json_path
   FROM ProjectIndexes
@@ -96,6 +99,7 @@ SELECT json_data, json_path FROM (
       'isProject', TRUE,
       'isBlank', isBlank,
       'timerStatus', timerStatus,
+      'timesheetDetail', timesheetDetail,
       'expanded', expanded,
       'autoFocus', FALSE,
       'children', JSON_ARRAY()
@@ -116,6 +120,7 @@ SELECT json_data, json_path FROM (
       'isProject', FALSE,
       'isBlank', isBlank,
       'timerStatus', timerStatus,
+      'timesheetDetail', timesheetDetail,
       'expanded', expanded,
       'autoFocus', FALSE,
       'children', JSON_ARRAY()
