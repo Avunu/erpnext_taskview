@@ -11308,28 +11308,25 @@ Expected function or array of functions, received type ${typeof value}.`
       };
       const startTimer = () => {
         if (activeTimer && activeTimer !== props.doc) {
-          console.log(`Pausing timer for task "${activeTimer.text}"`);
+          activeTimer.timesheetDetail = updateTimesheetDetail(activeTimer.project, activeTimer.docName, "paused", activeTimer.timesheetDetail);
           activeTimer.timerStatus = "paused";
-          activeTimer.timesheet_detail = update_timesheet_detail(activeTimer.project, activeTimer.docName, "paused", activeTimer.timesheetDetail);
         }
+        props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, "running", props.doc.timesheetDetail);
         props.doc.timerStatus = "running";
-        console.log(`Timer started for task "${props.doc.text}"`);
-        props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, "running", props.doc.timesheetDetail);
         activeTimer = props.doc;
       };
       const pauseTimer = () => {
+        props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, "paused", props.doc.timesheetDetail);
         props.doc.timerStatus = "paused";
         activeTimer = null;
-        console.log(`Timer paused for task "${props.doc.text}"`);
-        props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, "paused", props.doc.timesheetDetail);
       };
       const stopTimer = () => {
+        updateTimesheetDetail(props.doc.project, props.doc.docName, "stopped", props.doc.timesheetDetail);
         props.doc.timerStatus = "stopped";
         if (activeTimer === props.doc) {
           activeTimer = null;
         }
-        console.log(`Timer stopped for task "${props.doc.text}"`);
-        props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, "stopped", props.doc.timesheetDetail);
+        props.doc.timesheetDetail = {};
       };
       const toggleTimer = () => {
         if (props.doc.timerStatus === "stopped") {
@@ -11347,14 +11344,17 @@ Expected function or array of functions, received type ${typeof value}.`
           stopTimer();
         }
       };
-      const update_timesheet_detail = (project_name, task_name, status, timesheet_detail) => {
+      const updateTimesheetDetail = (projectName, taskName, status, timesheetDetail) => {
+        if (!timesheetDetail) {
+          timesheetDetail = {};
+        }
         frappe.call({
           method: "erpnext_taskview.erpnext_taskview.update_timesheet_detail",
           args: {
-            project_name,
-            task_name,
+            project_name: projectName,
+            task_name: taskName,
             status,
-            timesheet_detail
+            timesheet_detail: timesheetDetail
           },
           freeze: true
         }).then((r) => {
@@ -11543,11 +11543,19 @@ Expected function or array of functions, received type ${typeof value}.`
       onUnmounted(() => {
         document.removeEventListener("keydown", handleKeydown);
       });
+      const handleBeforeDrag = (event) => {
+        console.log(event);
+        if (event.data.timerStatus === "running" || event.data.timerStatus === "paused") {
+          console.log("Cannot drag task with active timer");
+          event.draggable = false;
+          event.disableDrag = true;
+        }
+      };
       const handleDragEnd = () => {
         const draggedNode = context2.dragNode;
-        console.log("Drag end event:", draggedNode);
-        console.log("doc:", draggedNode.data.docName);
-        console.log("new parent:", draggedNode.parent.data.docName);
+        console.log(draggedNode);
+        draggedNode.parent.data.expanded = true;
+        draggedNode.parent.open = true;
         function childrenCheck(children) {
           children = children.filter((child) => !child.isBlank);
           return children.length;
@@ -11574,13 +11582,6 @@ Expected function or array of functions, received type ${typeof value}.`
             updateChildren(draggedNode.data.children);
           }
         }
-        if (draggedNode.data.parent !== draggedNode.data.project) {
-          const oldParent = treeData.value.find((node) => node.docName === draggedNode.data.parent);
-          if (oldParent) {
-            if (childrenCheck(oldParent.children) === 0) {
-            }
-          }
-        }
         handleTaskInteraction(draggedNode.data);
       };
       function modifyNodeAndStat(node, stat) {
@@ -11588,21 +11589,20 @@ Expected function or array of functions, received type ${typeof value}.`
         if (((_a = locals.nodes) == null ? void 0 : _a[node.docName]) === false || !node.expanded) {
           stat.open = false;
           node.expanded = false;
-          stat.children.forEach((child) => {
-            child.hidden = true;
-          });
         }
         ;
-        if (node.isBlank || node.isProject) {
+        if (node.isBlank || node.isProject || node.timerStatus === "Running" || node.timerStatus === "Paused") {
           stat.disableDrag = true;
           stat.disableDrop = node.isBlank;
           stat.draggable = false;
           stat.droppable = !node.isBlank;
+          stat.dragOpen = !node.isBlank;
         } else {
           stat.disableDrag = false;
           stat.disableDrop = false;
           stat.draggable = true;
           stat.droppable = true;
+          stat.dragOpen = true;
         }
         return { node, stat };
       }
@@ -11753,6 +11753,7 @@ Expected function or array of functions, received type ${typeof value}.`
         handleTaskInteraction,
         handleKeydown,
         handleDragEnd,
+        handleBeforeDrag,
         addSiblingTask
       };
     }
@@ -11782,7 +11783,8 @@ Expected function or array of functions, received type ${typeof value}.`
         modelValue: _ctx.treeData,
         "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.treeData = $event),
         treeLine: "",
-        onAfterDrop: _ctx.handleDragEnd
+        onAfterDrop: _ctx.handleDragEnd,
+        onBeforeDragStart: _ctx.handleBeforeDrag
       }, {
         default: withCtx(({ node, stat }) => [
           createCommentVNode(" modify node and stat to perpetuate collapse node states "),
@@ -11805,7 +11807,7 @@ Expected function or array of functions, received type ${typeof value}.`
           ], 2)) : createCommentVNode("v-if", true)
         ]),
         _: 1
-      }, 8, ["modelValue", "onAfterDrop"])
+      }, 8, ["modelValue", "onAfterDrop", "onBeforeDragStart"])
     ]);
   }
 
@@ -11879,7 +11881,6 @@ Expected function or array of functions, received type ${typeof value}.`
       const container = document.createElement("div");
       this.$result.append(container);
       locals.nodes = {};
-      console.log(this.data);
       createApp({
         render: () => h(TaskView_default2, { docs: this.data })
       }).mount(container);
@@ -11949,4 +11950,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.7HKZ3XJ2.js.map
+//# sourceMappingURL=app.bundle.MJZPLFV7.js.map

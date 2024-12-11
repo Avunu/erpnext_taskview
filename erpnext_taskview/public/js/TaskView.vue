@@ -1,6 +1,6 @@
 <template>
 	<div class="tree-container">
-		<Draggable class="mtl-tree" v-model="treeData" treeLine @after-drop="handleDragEnd">
+		<Draggable class="mtl-tree" v-model="treeData" treeLine @after-drop="handleDragEnd" @before-drag-start="handleBeforeDrag">
 			<template #default="{ node, stat }">
 				<!-- modify node and stat to perpetuate collapse node states -->
 				<div v-if="modifyNodeAndStat(node, stat)" class="outer-task"
@@ -46,13 +46,20 @@ export default defineComponent({
 		},
 	},
 	setup(props) {
+
+		// establish variables
 		// add a blank project to the end of the list
 		let docs = addBlankProject(props.docs)
+
 		// add blank tasks to any expanded project branches
 		docs = addBlankTasks(docs);
+
 		// instatiate the reactive tree data
 		let treeData = ref(docs);
+
+		// establish the highlighted project
 		let highlightedProject = ref(null);
+
 		// TODO: SETUP CODE FOR HIGHLIGHTING TASKS
 		let highlightedTask = ref(null);
 
@@ -85,22 +92,37 @@ export default defineComponent({
             document.removeEventListener('keydown', handleKeydown);
         });
 
+		const handleBeforeDrag = (event) => {
+			console.log(event);
+			if (event.data.timerStatus === 'running' || event.data.timerStatus === 'paused') {
+				console.log('Cannot drag task with active timer');
+				// this isn't working. I need to try to get the stat object to disable the drag instead of just the event?
+				event.draggable = false;
+				event.disableDrag = true;
+			}
+		}
+
 		// Function to handle the end of a drag-and-drop operation
 		// THE FRAPPE CALLS ARE COMMENTED OUT TEMPORARILY
 		const handleDragEnd = () => {
 
-			// TODO: setup transition from task to project if a task is dragged to a project
+			// TODO: setup transition from task to project if a task is dragged to a project. don't allow tasks to be dragged if they have an active timer.
 
 			// TODO: don't allow tasks to be dragged to other projects (this could be a feature built out at a later time. The data structure is messy in frappe. There is the project field on the task, but there are also depends on lists.)
+			// it seems like maybe we can just ignore those depends on lists?
 
 			// TODO: don't allow tasks to be dragged below the blank task on each level
 
 			// this gets the dragged node in its new position.
 			const draggedNode = dragContext.dragNode
 
-			console.log('Drag end event:', draggedNode);
-			console.log('doc:', draggedNode.data.docName);
-			console.log('new parent:', draggedNode.parent.data.docName);
+			console.log(draggedNode);
+
+			// since I am having trouble getting dragOpen to work on the stat object, I am going to manually expand the parent node here
+			draggedNode.parent.data.expanded = true;
+			draggedNode.parent.open = true;
+			// TODO: assess whether I need to update locals.nodes here
+
 
 			// if the new parent didn't have any children before, then it needs to be changed to a group task
 			function childrenCheck(children) {
@@ -144,16 +166,16 @@ export default defineComponent({
 			// frappe.db.set_value(draggedNode.data.isProject ? 'Project' : 'Task', draggedNode.data.docName, updateObject);
 
 			// remember to check the old parent. if it doesn't have any more children, unset the is_group value
-			// NOT SURE IF IT REALLY MATTERS TO KEEP is_group UP TO DATE
+			// NOT SURE IF IT REALLY MATTERS TO KEEP is_group UP TO DATE once a task has been set to is_group.
 			// don't do this until the children have actually been moved in the db
-			if (draggedNode.data.parent !== draggedNode.data.project) {
-				const oldParent = treeData.value.find(node => node.docName === draggedNode.data.parent);
-				if (oldParent) {
-					if (childrenCheck(oldParent.children) === 0) {
-						// frappe.db.set_value('Task', oldParent.docName, { is_group: 0 });
-					}
-				}
-			}
+			// if (draggedNode.data.parent !== draggedNode.data.project) {
+			// 	const oldParent = treeData.value.find(node => node.docName === draggedNode.data.parent);
+			// 	if (oldParent) {
+			// 		if (childrenCheck(oldParent.children) === 0) {
+			// 			// frappe.db.set_value('Task', oldParent.docName, { is_group: 0 });
+			// 		}
+			// 	}
+			// }
 
 			// trigger the task interaction
 			handleTaskInteraction(draggedNode.data);
@@ -163,24 +185,22 @@ export default defineComponent({
 			if (locals.nodes?.[node.docName] === false || !node.expanded) {
 				stat.open = false;
 				node.expanded = false;
-				// go through all children and set them to hidden
-				stat.children.forEach(child => {
-					child.hidden = true;
-				});
-
 			};
+			// dragOpen is also not working...
 			// Disable drag and drop for blank tasks and projects
-			if (node.isBlank || node.isProject) {
+			if (node.isBlank || node.isProject || node.timerStatus === 'Running' || node.timerStatus === 'Paused') {
 				stat.disableDrag = true;
 				stat.disableDrop = node.isBlank
 				stat.draggable = false;
 				stat.droppable = !node.isBlank;
+				stat.dragOpen = !node.isBlank;
 			}
 			else {
 				stat.disableDrag = false;
 				stat.disableDrop = false;
 				stat.draggable = true;
 				stat.droppable = true;
+				stat.dragOpen = true;
 			}
 			// I thought this would keep a placeholder for the task's previous location while being dragged, but I can't see that it does anything...
 			// stat.keepPlaceholder = true;
@@ -279,9 +299,6 @@ export default defineComponent({
 				addBlankTask(child);
 				}
 			});
-
-			// Trigger reactivity update for treeData
-			// treeData.value = [...treeData.value];
 		}
 
 
@@ -390,6 +407,7 @@ export default defineComponent({
 			handleTaskInteraction,
 			handleKeydown,
 			handleDragEnd,
+			handleBeforeDrag,
 			addSiblingTask
 		};
 	},

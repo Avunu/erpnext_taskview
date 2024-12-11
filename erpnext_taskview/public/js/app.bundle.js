@@ -94,8 +94,6 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
         locals.nodes = {};
 
-        console.log(this.data)
-
         // Pass the data to TaskView
         createApp({
             render: () => h(TaskView, { docs: this.data })

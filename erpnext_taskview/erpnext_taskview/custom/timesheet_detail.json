@@ -6,6 +6,7 @@
             "fieldtype": "Check",
             "insert_after": "completed",
             "label": "Paused",
+            "read_only": 1,
             "module": "ERPNext Taskview"
         },
         {
@@ -14,6 +15,7 @@
             "fieldtype": "Datetime",
             "insert_after": "paused",
             "label": "Start Time",
+            "read_only": 1,
             "module": "ERPNext Taskview"
         },
         {
@@ -23,6 +25,7 @@
             "fieldtype": "Int",
             "insert_after": "start_time",
             "label": "Paused Time",
+            "read_only": 1,
             "module": "ERPNext Taskview"
         }
     ],

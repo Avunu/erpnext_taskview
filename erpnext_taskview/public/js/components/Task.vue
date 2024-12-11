@@ -105,36 +105,33 @@ export default defineComponent({
         const startTimer = () => {
             // Pause the previous timer if it is running
             if (activeTimer && activeTimer !== props.doc) {
-                console.log(`Pausing timer for task "${activeTimer.text}"`);
-                activeTimer.timerStatus = 'paused'; // Pause the previous task
                 // update the timesheet detail for the previous task
-                activeTimer.timesheet_detail = update_timesheet_detail(activeTimer.project, activeTimer.docName, 'paused', activeTimer.timesheetDetail);
-
+                activeTimer.timesheetDetail = updateTimesheetDetail(activeTimer.project, activeTimer.docName, 'paused', activeTimer.timesheetDetail);
+                activeTimer.timerStatus = 'paused'; // Pause the previous task
             }
 
-            props.doc.timerStatus = 'running';
-            console.log(`Timer started for task "${props.doc.text}"`);
             // update or create the timesheet detail for this task
-            props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, 'running', props.doc.timesheetDetail);
+            props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, 'running', props.doc.timesheetDetail);
+            props.doc.timerStatus = 'running';
             activeTimer = props.doc;
         };
 
         const pauseTimer = () => {
+            // update the timesheet detail for this task
+            props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, 'paused', props.doc.timesheetDetail);
             props.doc.timerStatus = 'paused';
             activeTimer = null;
-            console.log(`Timer paused for task "${props.doc.text}"`);
-            // update the timesheet detail for this task
-            props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, 'paused', props.doc.timesheetDetail);
         };
 
         const stopTimer = () => {
+            // update the timesheet detail for this task
+            updateTimesheetDetail(props.doc.project, props.doc.docName, 'stopped', props.doc.timesheetDetail);
             props.doc.timerStatus = 'stopped';
             if (activeTimer === props.doc) {
                 activeTimer = null;
             }
-            console.log(`Timer stopped for task "${props.doc.text}"`);
-            // update the timesheet detail for this task
-            props.doc.timesheetDetail = update_timesheet_detail(props.doc.project, props.doc.docName, 'stopped', props.doc.timesheetDetail);
+            // once a timer is stopped, we should clear the timesheet detail so a new one can be created if the timer is started again
+            props.doc.timesheetDetail = {};
         };
 
         const toggleTimer = () => {
@@ -158,15 +155,19 @@ export default defineComponent({
             }
         };
         
-        // update_timesheet_detail(project_name, task_name, status, timesheet_detail)
-        const update_timesheet_detail = (project_name, task_name, status, timesheet_detail) => {
+        const updateTimesheetDetail = (projectName, taskName, status, timesheetDetail) => {
+
+            if (!timesheetDetail) {
+                timesheetDetail = {};
+            }
+
             frappe.call({
                 method: 'erpnext_taskview.erpnext_taskview.update_timesheet_detail',
                 args: {
-                    project_name: project_name,
-                    task_name: task_name,
+                    project_name: projectName,
+                    task_name: taskName,
                     status: status,
-                    timesheet_detail: timesheet_detail
+                    timesheet_detail: timesheetDetail
                 },
                 freeze: true
             })
