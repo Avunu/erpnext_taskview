@@ -1,6 +1,6 @@
 <template>
 	<div class="tree-container">
-		<Draggable class="mtl-tree" v-model="treeData" treeLine @after-drop="handleDragEnd" @before-drag-start="handleBeforeDrag">
+		<Draggable class="mtl-tree" v-model="treeData" treeLine @after-drop="handleDragEnd">
 			<template #default="{ node, stat }">
 				<!-- modify node and stat to perpetuate collapse node states -->
 				<div v-if="modifyNodeAndStat(node, stat)" class="outer-task"
@@ -16,8 +16,10 @@
 						</div>
 					</a>
 					<!-- task or project -->
-					<Task :doc="node" class="mtl-ml" @task-interaction="handleTaskInteraction(node)"
-						@add-sibling-task="addSiblingTask(node)" />
+					<Task :doc="node" class="mtl-ml" 
+						@task-interaction="handleTaskInteraction(node)"
+						@add-sibling-task="addSiblingTask(node)" 
+					/>
 				</div>
 			</template>
 		</Draggable>
@@ -70,6 +72,7 @@ export default defineComponent({
 		}
 
 		onMounted(() => {
+			
 			// set the theme to match frappe
 			document.documentElement.style.setProperty(
 				'--task-hover-bg-color',
@@ -92,21 +95,12 @@ export default defineComponent({
             document.removeEventListener('keydown', handleKeydown);
         });
 
-		const handleBeforeDrag = (event) => {
-			console.log(event);
-			if (event.data.timerStatus === 'running' || event.data.timerStatus === 'paused') {
-				console.log('Cannot drag task with active timer');
-				// this isn't working. I need to try to get the stat object to disable the drag instead of just the event?
-				event.draggable = false;
-				event.disableDrag = true;
-			}
-		}
-
 		// Function to handle the end of a drag-and-drop operation
-		// THE FRAPPE CALLS ARE COMMENTED OUT TEMPORARILY
 		const handleDragEnd = () => {
 
-			// TODO: setup transition from task to project if a task is dragged to a project. don't allow tasks to be dragged if they have an active timer.
+			// TODO: setup transition from task to project if a task is dragged to a project. 
+
+			// tasks aren't draggable if they or a child have a running or paused timer
 
 			// TODO: don't allow tasks to be dragged to other projects (this could be a feature built out at a later time. The data structure is messy in frappe. There is the project field on the task, but there are also depends on lists.)
 			// it seems like maybe we can just ignore those depends on lists?
@@ -115,8 +109,6 @@ export default defineComponent({
 
 			// this gets the dragged node in its new position.
 			const draggedNode = dragContext.dragNode
-
-			console.log(draggedNode);
 
 			// since I am having trouble getting dragOpen to work on the stat object, I am going to manually expand the parent node here
 			draggedNode.parent.data.expanded = true;
@@ -132,7 +124,7 @@ export default defineComponent({
 			if (!draggedNode.parent.data.isProject) {
 				if (childrenCheck(draggedNode.parent.data.children) === 1) {
 					// update the parent task to be a group task so it can have children in a moment
-					// frappe.db.set_value('Task', draggedNode.parent.data.docName, { is_group: 1 });
+					frappe.db.set_value('Task', draggedNode.parent.data.docName, { is_group: 1 });
 				}
 			}
 
@@ -142,19 +134,24 @@ export default defineComponent({
 			draggedNode.data.parent = draggedNode.parent.data.docName;
 			updateObject.parent_task = draggedNode.parent.data.isProject ? null : draggedNode.parent.data.docName;
 
-			// update the node here (like parent and project, for this node and any children nodes)
-			if (draggedNode.data.project !== draggedNode.parent.data.project || draggedNode.data.project !== draggedNode.parent.data.docName) {
-				draggedNode.data.project = draggedNode.parent.data.isProject ? draggedNode.parent.data.docName : draggedNode.parent.data.project;
+			// update the node here (like parent and project, for this node and any children nodes) THIS IS ONLY FOR MOVING A TASK TO A NEW PROJECT
+			// if (draggedNode.data.project !== draggedNode.parent.data.project || draggedNode.data.project !== draggedNode.parent.data.docName) {
+			if (draggedNode.data.project !== draggedNode.parent.data.project) {
+				// draggedNode.data.project = draggedNode.parent.data.isProject ? draggedNode.parent.data.docName : draggedNode.parent.data.project;
+				draggedNode.data.project = draggedNode.parent.data.project;
 				updateObject.project = draggedNode.data.project;
 				if (draggedNode.data.children) {
 					// recursively update the children nodes with the new project
 					const updateChildren = (children) => {
 						children.forEach(child => {
 							child.project = draggedNode.data.project;
-							// update the db
-							// frappe.db.set_value('Task', child.docName, { project: draggedNode.data.project });
-							if (child.children) {
-								updateChildren(child.children);
+							// make sure the child isn't a blank task
+							if (!child.isBlank) {
+								// update the db
+								frappe.db.set_value('Task', child.docName, { project: draggedNode.data.project });
+								if (child.children) {
+									updateChildren(child.children);
+								}
 							}
 						});
 					};
@@ -162,11 +159,13 @@ export default defineComponent({
 				}
 			}
 
+			// CURRENTLY THIS IS NOT UPDATING DEPENDS ON LISTS
 			// update the dragged node in the db
-			// frappe.db.set_value(draggedNode.data.isProject ? 'Project' : 'Task', draggedNode.data.docName, updateObject);
+			frappe.db.set_value(draggedNode.data.isProject ? 'Project' : 'Task', draggedNode.data.docName, updateObject);
 
-			// remember to check the old parent. if it doesn't have any more children, unset the is_group value
+
 			// NOT SURE IF IT REALLY MATTERS TO KEEP is_group UP TO DATE once a task has been set to is_group.
+			// remember to check the old parent. if it doesn't have any more children, unset the is_group value
 			// don't do this until the children have actually been moved in the db
 			// if (draggedNode.data.parent !== draggedNode.data.project) {
 			// 	const oldParent = treeData.value.find(node => node.docName === draggedNode.data.parent);
@@ -177,6 +176,9 @@ export default defineComponent({
 			// 	}
 			// }
 
+			// not a thing in the front end...
+			// frappe.db.commit();
+
 			// trigger the task interaction
 			handleTaskInteraction(draggedNode.data);
 		};
@@ -186,9 +188,16 @@ export default defineComponent({
 				stat.open = false;
 				node.expanded = false;
 			};
+
+			var runningChildren = false;
+			// check if this node has any children with a timer running or paused
+			if (node.children && node.children.length > 0) {
+				runningChildren = node.children.some(child => child.timerStatus === 'running' || child.timerStatus === 'paused');
+			}
+
 			// dragOpen is also not working...
-			// Disable drag and drop for blank tasks and projects
-			if (node.isBlank || node.isProject || node.timerStatus === 'Running' || node.timerStatus === 'Paused') {
+			// Disable drag and drop for blank tasks and projects, and for tasks with running or paused timers, or if any children have running or paused timers
+			if (node.isBlank || node.isProject || node.timerStatus === 'running' || node.timerStatus === 'paused' || runningChildren) {
 				stat.disableDrag = true;
 				stat.disableDrop = node.isBlank
 				stat.draggable = false;
@@ -208,7 +217,7 @@ export default defineComponent({
 		};
 
 		// Helper function to create a new node
-		function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = '', autoFocus = false, expanded = true, parent = null, timerStatus = null }) {
+		function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = '', autoFocus = false, expanded = true, parent = null, timerStatus = null, status = 'Open' }) {
 			return {
 				text,
 				children,
@@ -219,7 +228,8 @@ export default defineComponent({
 				autoFocus,
 				expanded,
 				parent,
-				timerStatus
+				timerStatus,
+				status
 			};
 		}
 
@@ -290,7 +300,7 @@ export default defineComponent({
 
 		function addBlankTask(node) {
 			// Add a blank task to the current node's children
-			let blankTask = createNode({ text: 'Add task...', isBlank: true, project: node.project, parent: node.docName });
+			let blankTask = createNode({ text: 'Add task...', isBlank: true, project: node.project, parent: node.docName, timerStatus: 'stopped' });
 			node.children = [...node.children, blankTask];
 
 			// Recursively add a blank task to each child node's children
@@ -322,21 +332,31 @@ export default defineComponent({
 		};
 
 		// This adds a new blank task to the tree when a blank task is edited into a new task or project
-		// IF THE NEW NODE IS A PROJECT, WE NEED TO ADD A BLANK TASK TO THE NEW PROJECT AS WELL?
+		// IF THE NEW NODE IS A PROJECT, WE NEED TO ADD A BLANK TASK TO THE NEW PROJECT AS WELL? NO. Blank projects don't have children.
 		const addSiblingTask = (node) => {
+
+			// we do need to add a blank task to the node children.
+			addBlankTask(node);
+			// and we should expand the node if it's a project
+			node.expanded = node.isProject ? true : false;
+
 			console.log('Adding sibling task to:', node);
 			// Create a new task object
-			const newNode = createNode({ text: node.isProject ? 'Add project...' : 'Add task...', isBlank: true, project: node.isProject ? null : node.project, isProject: node.isProject });
+			const newBlankNode = createNode({ text: node.isProject ? 'Add project...' : 'Add task...', isBlank: true, project: node.project, isProject: node.isProject, parent: node.parent, timerStatus: 'stopped' });
 
+			console.log('New node:', newBlankNode);
 
-			const parentNode = findParentNode(treeData, node.parent);
+			const parentNode = findParentNode(treeData.value, node.parent);
+
+			console.log('Parent node:', parentNode);
+
 			if (parentNode) {
-				const updatedChildren = [...parentNode.children, newNode];
+				const updatedChildren = [...parentNode.children, newBlankNode];
 				parentNode.children = updatedChildren;
-				treeData = [...treeData];
+				treeData.value = [...treeData.value];
 			} else {
 				// Add the new node to the root level
-				treeData = [...treeData, newNode];
+				treeData.value = [...treeData.value, newBlankNode];
 			}
 		};
 
@@ -354,11 +374,10 @@ export default defineComponent({
 
 		// Function to update the highlighted project
 		const updateHighlightedProject = () => {
-            // if (!treeData.value || !Array.isArray(treeData.value)) {
-            //     console.warn('Tree data is not initialized or not an array');
-			// 	console.log(treeData);
-            //     return;
-            // }
+            if (!treeData.value || !Array.isArray(treeData.value)) {
+                console.warn('Tree data is not initialized or not an array');
+                return;
+            }
             const expandedProjects = treeData.value.filter(
                 (node) => node.isProject && node.expanded && !node.isBlank
             );
@@ -389,11 +408,9 @@ export default defineComponent({
 		};
 
 		const handleKeydown = (event) => {
-			// check if the key pressed is a character key (a-z, A-Z, 0-9, special characters)
-			// and no input is focused
+			// check if the key pressed is a character key (a-z, A-Z, 0-9, special characters) and no input is focused
 			const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;'",.<>?/`~\- ]$/;
 			if (document.activeElement.tagName !== 'INPUT' && allowedKeys.test(event.key)) {
-				console.log('Key pressed:', event.key);
 				// If no input is focused, start editing the root blank task
 				editRootBlankTask();
 			}
@@ -407,7 +424,6 @@ export default defineComponent({
 			handleTaskInteraction,
 			handleKeydown,
 			handleDragEnd,
-			handleBeforeDrag,
 			addSiblingTask
 		};
 	},

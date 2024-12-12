@@ -3,7 +3,8 @@ ProjectIndexes AS (
   SELECT 
     name,
     ROW_NUMBER() OVER (ORDER BY name) - 1 AS project_idx,
-    project_name
+    project_name,
+    status
   FROM tabProject
 ),
 TaskIndexes AS (
@@ -23,6 +24,7 @@ TaskTree AS (
     t.subject AS text,
     t.project AS parent,
     t.project,
+    t.status,
     p.project_name,
     p.project_idx,
     ti.seq_number AS task_idx,
@@ -41,7 +43,7 @@ TaskTree AS (
   FROM tabTask t
   JOIN ProjectIndexes p ON t.project = p.name
   JOIN TaskIndexes ti ON t.name = ti.child_name
-  WHERE t.parent_task IS NULL
+  WHERE t.parent_task IS NULL AND t.docstatus = 0
   
   UNION ALL
   
@@ -51,6 +53,7 @@ TaskTree AS (
     t.subject,
     t.parent_task,
     t.project,
+    t.status,
     tt.project_name,
     tt.project_idx,
     ti.seq_number,
@@ -69,6 +72,7 @@ TaskTree AS (
   FROM tabTask t
   JOIN TaskTree tt ON t.parent_task = tt.docName
   JOIN TaskIndexes ti ON t.name = ti.child_name
+  WHERE t.docstatus = 0
 ),
 projects AS (
   -- Projects list with sequential indices
@@ -76,8 +80,8 @@ projects AS (
     name AS docName,
     CONCAT(name, ': ', project_name) AS text,
     NULL AS parent,
-    -- NULL AS project,
     name AS project,
+    status, -- Include status here
     project_idx,
     TRUE AS isProject,
     FALSE AS isBlank,
@@ -96,6 +100,7 @@ SELECT json_data, json_path FROM (
       'text', text,
       'parent', parent,
       'project', project,
+      'status', status, -- Include status in output
       'isProject', TRUE,
       'isBlank', isBlank,
       'timerStatus', timerStatus,
@@ -117,6 +122,7 @@ SELECT json_data, json_path FROM (
       'text', text,
       'parent', parent,
       'project', project,
+      'status', status, -- Include status in output
       'isProject', FALSE,
       'isBlank', isBlank,
       'timerStatus', timerStatus,

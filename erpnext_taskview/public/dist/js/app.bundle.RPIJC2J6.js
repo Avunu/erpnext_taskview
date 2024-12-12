@@ -11290,9 +11290,18 @@ Expected function or array of functions, received type ${typeof value}.`
       }
     },
     setup(props, { emit: emit2 }) {
-      const isCompleted = ref(false);
+      let status;
+      if (props.doc.status === "Completed") {
+        status = true;
+      } else {
+        status = false;
+      }
+      const isCompleted = ref(status);
       const isEditing = ref(false);
       const editedText = ref("");
+      if (props.doc.status === "Completed") {
+        console.log(isCompleted.value);
+      }
       watch(() => props.doc.autoFocus, (newVal) => {
         if (newVal) {
           editTask();
@@ -11303,8 +11312,9 @@ Expected function or array of functions, received type ${typeof value}.`
         emit2("task-interaction");
       };
       const toggleComplete = () => {
-        isCompleted.value = !isCompleted.value;
-        console.log(`Task "${props.doc.text}" completed: ${isCompleted.value}`);
+        props.doc.status = props.doc.status === "Open" ? "Completed" : "Open";
+        isCompleted.value = props.doc.status === "Completed" ? true : false;
+        frappe.db.set_value(props.doc.isProject ? "Project" : "Task", props.doc.docName, "status", props.doc.status);
       };
       const startTimer = () => {
         if (activeTimer && activeTimer !== props.doc) {
@@ -11344,7 +11354,7 @@ Expected function or array of functions, received type ${typeof value}.`
           stopTimer();
         }
       };
-      const updateTimesheetDetail = (projectName, taskName, status, timesheetDetail) => {
+      const updateTimesheetDetail = (projectName, taskName, status2, timesheetDetail) => {
         if (!timesheetDetail) {
           timesheetDetail = {};
         }
@@ -11353,7 +11363,7 @@ Expected function or array of functions, received type ${typeof value}.`
           args: {
             project_name: projectName,
             task_name: taskName,
-            status,
+            status: status2,
             timesheet_detail: timesheetDetail
           },
           freeze: true
@@ -11371,19 +11381,53 @@ Expected function or array of functions, received type ${typeof value}.`
           }
         });
       };
+      const unfocusInput = (event) => {
+        event.target.blur();
+      };
       const saveEdit = () => {
-        console.log("Save edit called");
+        console.log("Saving edit...", props.doc);
         if (editedText.value.trim() !== "") {
           if (editedText.value !== props.doc.text) {
-            console.log(`Task "${props.doc.text}" edited to: ${editedText.value}`);
-            console.log(`Emitting task interaction for task "${props.doc.docName}"`);
-            console.log("this is where I make a new project in frappe?");
             props.doc.text = editedText.value;
             if (props.doc.isBlank) {
-              console.log("Blank task detected");
-              console.log(props.doc);
-              props.doc.isBlank = false;
-              emit2("add-sibling-task", props.doc);
+              let newObject;
+              if (props.doc.isProject) {
+                newObject = {
+                  doctype: "Project",
+                  project_name: editedText.value,
+                  is_active: "Yes",
+                  status: "Open"
+                };
+              } else {
+                let parentTask;
+                if (props.doc.parent === props.doc.project) {
+                  parentTask = null;
+                } else {
+                  frappe.db.set_value("Task", props.doc.parent, { is_group: 1 });
+                  parentTask = props.doc.parent;
+                }
+                newObject = {
+                  doctype: "Task",
+                  subject: editedText.value,
+                  project: props.doc.project,
+                  parent_task: parentTask,
+                  status: "Open",
+                  priority: "Medium"
+                };
+              }
+              frappe.db.insert(newObject).then((doc3) => {
+                props.doc.isBlank = false;
+                props.doc.docName = doc3.name;
+                props.doc.text = props.doc.isProject ? `${doc3.name}: ${doc3.project_name}` : editedText.value;
+                emit2("add-sibling-task", props.doc);
+              });
+            } else {
+              console.log("Updating task or project in the database...");
+              if (props.doc.isProject) {
+                frappe.db.set_value("Project", props.doc.docName, "project_name", editedText.value);
+              } else {
+                frappe.db.set_value("Task", props.doc.docName, "subject", editedText.value);
+              }
             }
           }
         }
@@ -11397,6 +11441,7 @@ Expected function or array of functions, received type ${typeof value}.`
         toggleTimer,
         logOrStopTimer,
         editTask,
+        unfocusInput,
         saveEdit,
         emitInteraction
       };
@@ -11437,7 +11482,7 @@ Expected function or array of functions, received type ${typeof value}.`
             type: "text",
             "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.editedText = $event),
             onBlur: _cache[2] || (_cache[2] = (...args) => _ctx.saveEdit && _ctx.saveEdit(...args)),
-            onKeyup: _cache[3] || (_cache[3] = withKeys((...args) => _ctx.saveEdit && _ctx.saveEdit(...args), ["enter"])),
+            onKeyup: _cache[3] || (_cache[3] = withKeys((...args) => _ctx.unfocusInput && _ctx.unfocusInput(...args), ["enter"])),
             class: "task-subject-edit"
           }, null, 544)), [
             [vModelText, _ctx.editedText]
@@ -11456,26 +11501,28 @@ Expected function or array of functions, received type ${typeof value}.`
                 [vModelCheckbox, _ctx.isCompleted]
               ]),
               _hoisted_5,
-              createTextVNode(" Mark as Complete ")
+              createTextVNode(" " + toDisplayString(_ctx.isCompleted ? "Open Task" : "Complete Task"), 1)
             ])
           ]),
           createCommentVNode(" Button to start/pause/resume timer "),
-          createBaseVNode("button", {
+          _ctx.doc.status !== "Completed" ? (openBlock(), createElementBlock("button", {
+            key: 0,
             class: normalizeClass(["btn task-control", {
               "btn-info": _ctx.doc.timerStatus === "stopped",
               "btn-warning": _ctx.doc.timerStatus === "running",
               "btn-success": _ctx.doc.timerStatus === "paused"
             }]),
             onClick: _cache[6] || (_cache[6] = (...args) => _ctx.toggleTimer && _ctx.toggleTimer(...args))
-          }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Start Timer" : _ctx.doc.timerStatus === "paused" ? "Resume Timer" : "Pause Timer"), 3),
+          }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Start Timer" : _ctx.doc.timerStatus === "paused" ? "Resume Timer" : "Pause Timer"), 3)) : createCommentVNode("v-if", true),
           createCommentVNode(" Button to log time or stop timer "),
-          createBaseVNode("button", {
+          _ctx.doc.status !== "Completed" ? (openBlock(), createElementBlock("button", {
+            key: 1,
             class: normalizeClass(["btn task-control", {
               "btn-secondary": _ctx.doc.timerStatus === "stopped",
               "btn-danger": _ctx.doc.timerStatus !== "stopped"
             }]),
             onClick: _cache[7] || (_cache[7] = (...args) => _ctx.logOrStopTimer && _ctx.logOrStopTimer(...args))
-          }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Log Time" : "Stop Timer"), 3)
+          }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Log Time" : "Stop Timer"), 3)) : createCommentVNode("v-if", true)
         ])) : createCommentVNode("v-if", true),
         createCommentVNode(" if it is a project and is not blank, give it a checkbox to close the project "),
         _ctx.doc.isProject && !_ctx.doc.isBlank ? (openBlock(), createElementBlock("div", _hoisted_6, [
@@ -11489,7 +11536,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 [vModelCheckbox, _ctx.isCompleted]
               ]),
               _hoisted_8,
-              createTextVNode(" Close Project ")
+              createTextVNode(" " + toDisplayString(_ctx.isCompleted ? "Open Project" : "Complete Project"), 1)
             ])
           ])
         ])) : createCommentVNode("v-if", true)
@@ -11543,17 +11590,8 @@ Expected function or array of functions, received type ${typeof value}.`
       onUnmounted(() => {
         document.removeEventListener("keydown", handleKeydown);
       });
-      const handleBeforeDrag = (event) => {
-        console.log(event);
-        if (event.data.timerStatus === "running" || event.data.timerStatus === "paused") {
-          console.log("Cannot drag task with active timer");
-          event.draggable = false;
-          event.disableDrag = true;
-        }
-      };
       const handleDragEnd = () => {
         const draggedNode = context2.dragNode;
-        console.log(draggedNode);
         draggedNode.parent.data.expanded = true;
         draggedNode.parent.open = true;
         function childrenCheck(children) {
@@ -11562,26 +11600,31 @@ Expected function or array of functions, received type ${typeof value}.`
         }
         if (!draggedNode.parent.data.isProject) {
           if (childrenCheck(draggedNode.parent.data.children) === 1) {
+            frappe.db.set_value("Task", draggedNode.parent.data.docName, { is_group: 1 });
           }
         }
         let updateObject = {};
         draggedNode.data.parent = draggedNode.parent.data.docName;
         updateObject.parent_task = draggedNode.parent.data.isProject ? null : draggedNode.parent.data.docName;
-        if (draggedNode.data.project !== draggedNode.parent.data.project || draggedNode.data.project !== draggedNode.parent.data.docName) {
-          draggedNode.data.project = draggedNode.parent.data.isProject ? draggedNode.parent.data.docName : draggedNode.parent.data.project;
+        if (draggedNode.data.project !== draggedNode.parent.data.project) {
+          draggedNode.data.project = draggedNode.parent.data.project;
           updateObject.project = draggedNode.data.project;
           if (draggedNode.data.children) {
             const updateChildren = (children) => {
               children.forEach((child) => {
                 child.project = draggedNode.data.project;
-                if (child.children) {
-                  updateChildren(child.children);
+                if (!child.isBlank) {
+                  frappe.db.set_value("Task", child.docName, { project: draggedNode.data.project });
+                  if (child.children) {
+                    updateChildren(child.children);
+                  }
                 }
               });
             };
             updateChildren(draggedNode.data.children);
           }
         }
+        frappe.db.set_value(draggedNode.data.isProject ? "Project" : "Task", draggedNode.data.docName, updateObject);
         handleTaskInteraction(draggedNode.data);
       };
       function modifyNodeAndStat(node, stat) {
@@ -11591,7 +11634,11 @@ Expected function or array of functions, received type ${typeof value}.`
           node.expanded = false;
         }
         ;
-        if (node.isBlank || node.isProject || node.timerStatus === "Running" || node.timerStatus === "Paused") {
+        var runningChildren = false;
+        if (node.children && node.children.length > 0) {
+          runningChildren = node.children.some((child) => child.timerStatus === "running" || child.timerStatus === "paused");
+        }
+        if (node.isBlank || node.isProject || node.timerStatus === "running" || node.timerStatus === "paused" || runningChildren) {
           stat.disableDrag = true;
           stat.disableDrop = node.isBlank;
           stat.draggable = false;
@@ -11607,7 +11654,7 @@ Expected function or array of functions, received type ${typeof value}.`
         return { node, stat };
       }
       ;
-      function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = "", autoFocus = false, expanded = true, parent = null, timerStatus = null }) {
+      function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = "", autoFocus = false, expanded = true, parent = null, timerStatus = null, status = "Open" }) {
         return {
           text,
           children,
@@ -11618,7 +11665,8 @@ Expected function or array of functions, received type ${typeof value}.`
           autoFocus,
           expanded,
           parent,
-          timerStatus
+          timerStatus,
+          status
         };
       }
       function addBlankProject(docs2) {
@@ -11666,7 +11714,7 @@ Expected function or array of functions, received type ${typeof value}.`
         }
       };
       function addBlankTask(node) {
-        let blankTask = createNode({ text: "Add task...", isBlank: true, project: node.project, parent: node.docName });
+        let blankTask = createNode({ text: "Add task...", isBlank: true, project: node.project, parent: node.docName, timerStatus: "stopped" });
         node.children = [...node.children, blankTask];
         node.children.forEach((child) => {
           if (!child.isBlank) {
@@ -11691,15 +11739,19 @@ Expected function or array of functions, received type ${typeof value}.`
         return null;
       };
       const addSiblingTask = (node) => {
+        addBlankTask(node);
+        node.expanded = node.isProject ? true : false;
         console.log("Adding sibling task to:", node);
-        const newNode = createNode({ text: node.isProject ? "Add project..." : "Add task...", isBlank: true, project: node.isProject ? null : node.project, isProject: node.isProject });
-        const parentNode = findParentNode(treeData, node.parent);
+        const newBlankNode = createNode({ text: node.isProject ? "Add project..." : "Add task...", isBlank: true, project: node.project, isProject: node.isProject, parent: node.parent, timerStatus: "stopped" });
+        console.log("New node:", newBlankNode);
+        const parentNode = findParentNode(treeData.value, node.parent);
+        console.log("Parent node:", parentNode);
         if (parentNode) {
-          const updatedChildren = [...parentNode.children, newNode];
+          const updatedChildren = [...parentNode.children, newBlankNode];
           parentNode.children = updatedChildren;
-          treeData = [...treeData];
+          treeData.value = [...treeData.value];
         } else {
-          treeData = [...treeData, newNode];
+          treeData.value = [...treeData.value, newBlankNode];
         }
       };
       const handleTaskInteraction = (node) => {
@@ -11713,6 +11765,10 @@ Expected function or array of functions, received type ${typeof value}.`
         }
       };
       const updateHighlightedProject = () => {
+        if (!treeData.value || !Array.isArray(treeData.value)) {
+          console.warn("Tree data is not initialized or not an array");
+          return;
+        }
         const expandedProjects = treeData.value.filter(
           (node) => node.isProject && node.expanded && !node.isBlank
         );
@@ -11741,7 +11797,6 @@ Expected function or array of functions, received type ${typeof value}.`
       const handleKeydown = (event) => {
         const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;'",.<>?/`~\- ]$/;
         if (document.activeElement.tagName !== "INPUT" && allowedKeys.test(event.key)) {
-          console.log("Key pressed:", event.key);
           editRootBlankTask();
         }
       };
@@ -11753,7 +11808,6 @@ Expected function or array of functions, received type ${typeof value}.`
         handleTaskInteraction,
         handleKeydown,
         handleDragEnd,
-        handleBeforeDrag,
         addSiblingTask
       };
     }
@@ -11783,8 +11837,7 @@ Expected function or array of functions, received type ${typeof value}.`
         modelValue: _ctx.treeData,
         "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.treeData = $event),
         treeLine: "",
-        onAfterDrop: _ctx.handleDragEnd,
-        onBeforeDragStart: _ctx.handleBeforeDrag
+        onAfterDrop: _ctx.handleDragEnd
       }, {
         default: withCtx(({ node, stat }) => [
           createCommentVNode(" modify node and stat to perpetuate collapse node states "),
@@ -11807,7 +11860,7 @@ Expected function or array of functions, received type ${typeof value}.`
           ], 2)) : createCommentVNode("v-if", true)
         ]),
         _: 1
-      }, 8, ["modelValue", "onAfterDrop", "onBeforeDragStart"])
+      }, 8, ["modelValue", "onAfterDrop"])
     ]);
   }
 
@@ -11950,4 +12003,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.MJZPLFV7.js.map
+//# sourceMappingURL=app.bundle.RPIJC2J6.js.map

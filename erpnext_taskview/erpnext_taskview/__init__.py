@@ -196,8 +196,6 @@ def get_timesheet_detail(project_name, task_name, timesheet_detail_name):
 				timesheet.append('time_logs', {
 					'project': project_name,
 					'task': task_name,
-					# 'from_time': frappe.utils.now_datetime(),
-					# 'start_time': frappe.utils.now_datetime()
 				})
 				timesheet.insert(ignore_permissions=True)
 			# otherwise get the timesheet and add a timesheet detail for the current task
@@ -206,36 +204,8 @@ def get_timesheet_detail(project_name, task_name, timesheet_detail_name):
 				timesheet.append('time_logs', {
 					'project': project_name,
 					'task': task_name,
-					# 'from_time': frappe.utils.now_datetime(),
-					# 'start_time': frappe.utils.now_datetime()
 				})
 				timesheet.save(ignore_permissions=True)
 			frappe.db.commit()
 			timesheet_detail_doc = frappe.get_doc('Timesheet Detail', timesheet.time_logs[-1].name)
 	return timesheet_detail_doc
-
-
-@frappe.whitelist()
-def submit_task():
-	pass
-
-
-# nothing is using this right now
-@frappe.whitelist()
-def update_edit(node):
-
-	# if docname is nonetype, it means the doc is new. if the new doc is a task, use the project value to assign a project
-	# for creating new tasks, we need subject, project, is_group, and parent_task
-	# for creating new projects, we need project_name
-	try:
-		# doc = frappe.get_doc({
-		#     'doctype': 'Task',
-		#     'title': 'New Task'
-		# })
-		doc = frappe.get_doc({
-
-		})
-		return True
-	except Exception as e:
-		frappe.log_error(frappe.get_traceback(), f'{e}')
-		return False
