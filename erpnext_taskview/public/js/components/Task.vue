@@ -1,6 +1,14 @@
 <template>
     <div class="task" @click="emitInteraction">
         <div class="task">
+            <!-- Spiced-up Checkbox -->
+            <div class="custom-checkbox task-control">
+                <label>
+                    <input type="checkbox" :checked="doc.status === 'Completed'" @change="toggleComplete" />
+                    <span class="checkmark"></span>
+                </label>
+            </div>
+            
             <!-- Task Subject -->
             <div class="task-subject-container">
                 <p v-if="!isEditing" class="task-subject" @click="editTask">
@@ -10,57 +18,40 @@
                     class="task-subject-edit" />
             </div>
 
+
             <!-- only render the controls if the doc is not a project and is not blank -->
             <div v-if="!doc.isProject && !doc.isBlank" class="task-controls">
 
-                <!-- Spiced-up Checkbox -->
-                <div class="custom-checkbox task-control">
-                    <label>
-                        <input type="checkbox" v-model="isCompleted" @change="toggleComplete" />
-                        <span class="checkmark"></span>
-                        {{ isCompleted ? 'Open Task' : 'Complete Task' }}
-                    </label>
-                </div>
-                    <!-- Button to start/pause/resume timer -->
-                    <button v-if="doc.status!=='Completed'"
-                        class="btn task-control" 
-                        :class="{
-                            'btn-info': doc.timerStatus === 'stopped', // Start button
-                            'btn-warning': doc.timerStatus === 'running', // Pause button
-                            'btn-success': doc.timerStatus === 'paused'  // Resume button
-                        }" 
-                        @click="toggleTimer"
-                    >
-                        {{
-                            doc.timerStatus === 'stopped' 
-                                ? 'Start Timer' 
-                                : doc.timerStatus === 'paused' 
-                                ? 'Resume Timer' 
-                                : 'Pause Timer'
-                        }}
-                    </button>
+                <!-- Button to start/pause/resume timer -->
+                <button v-if="doc.status!=='Completed'"
+                    class="btn task-control" 
+                    :class="{
+                        'btn-info': doc.timerStatus === 'stopped', // Start button
+                        'btn-warning': doc.timerStatus === 'running', // Pause button
+                        'btn-success': doc.timerStatus === 'paused'  // Resume button
+                    }" 
+                    @click="toggleTimer"
+                >
+                    {{
+                        doc.timerStatus === 'stopped' 
+                            ? 'Start Timer' 
+                            : doc.timerStatus === 'paused' 
+                            ? 'Resume Timer' 
+                            : 'Pause Timer'
+                    }}
+                </button>
 
-                    <!-- Button to log time or stop timer -->
-                    <button v-if="doc.status!=='Completed'"
-                        class="btn task-control" 
-                        :class="{
-                            'btn-secondary': doc.timerStatus === 'stopped', // Log time button
-                            'btn-danger': doc.timerStatus !== 'stopped' // Stop button
-                        }"
-                        @click="logOrStopTimer"
-                    >
-                        {{ doc.timerStatus === 'stopped' ? 'Log Time' : 'Stop Timer' }}
-                    </button>
-            </div>
-            <!-- if it is a project and is not blank, give it a checkbox to close the project -->
-            <div v-if="doc.isProject && !doc.isBlank" class="task-controls">
-                <div class="custom-checkbox task-control">
-                    <label>
-                        <input type="checkbox" v-model="isCompleted" @change="toggleComplete" />
-                        <span class="checkmark"></span>
-                        {{ isCompleted ? 'Open Project' : 'Complete Project' }}
-                    </label>
-                </div>
+                <!-- Button to log time or stop timer -->
+                <button v-if="doc.status!=='Completed'"
+                    class="btn task-control" 
+                    :class="{
+                        'btn-secondary': doc.timerStatus === 'stopped', // Log time button
+                        'btn-danger': doc.timerStatus !== 'stopped' // Stop button
+                    }"
+                    @click="logOrStopTimer"
+                >
+                    {{ doc.timerStatus === 'stopped' ? 'Log Time' : 'Stop Timer' }}
+                </button>
             </div>
         </div>
     </div>
@@ -81,21 +72,13 @@ export default defineComponent({
         }
     },
     setup(props, { emit }) {
-        let status
-        if (props.doc.status === 'Completed') {
-            status = true
-        }
-        else {
-            status = false
-        }
-        // const isCompleted = ref(props.doc.status === 'Completed' ? true : false);
-        const isCompleted = ref(status);
+        // const isCompleted = ref(props.doc.status === 'Completed');
         const isEditing = ref(false);
         const editedText = ref('');
 
-        if (props.doc.status === 'Completed') {
-            console.log(isCompleted.value)
-        }
+        // watch(() => props.doc.status, (newStatus) => {
+        //     isCompleted.value = newStatus === 'Completed';
+        // });
 
         // Trigger editing mode if autoFocus is true
         watch(() => props.doc.autoFocus, (newVal) => {
@@ -124,7 +107,7 @@ export default defineComponent({
 
             // TODO: DEBUG THIS AND ISCOMPLETED VALUE ON LOAD, CHECK THE STATUS VALUE COMING IN FROM THE DATABASE. GET THE CHECKBOX WORKING WITH AN INITIAL COMPLETED STATUS
             props.doc.status = props.doc.status === 'Open' ? 'Completed' : 'Open';
-            isCompleted.value = props.doc.status === 'Completed' ? true : false;
+            // isCompleted.value = props.doc.status === 'Completed' ? true : false;
             // update completed_by, completed_on, and status in the database
             // status change from Open to Completed
             frappe.db.set_value(props.doc.isProject ? 'Project' : 'Task', props.doc.docName, 'status', props.doc.status)
@@ -293,7 +276,7 @@ export default defineComponent({
         };
 
         return {
-            isCompleted,
+            // isCompleted,
             isEditing,
             editedText,
             toggleComplete,

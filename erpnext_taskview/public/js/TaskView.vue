@@ -363,6 +363,12 @@ export default defineComponent({
 		// Function to highlight projects based on task interactions
 		const handleTaskInteraction = (node) => {
 			if (node.isProject) {
+				if (node.expanded && !node.isBlank && node.status !== 'Completed') {
+					highlightedProject.value = node;
+				} 
+				else {
+					return
+				}
 				highlightedProject.value = node;
 			} else {
 				const parentProject = findParentProject(node);

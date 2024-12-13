@@ -44,7 +44,6 @@ frappe.dom.set_style("/* sfc-style:/workspace/development/frappe-bench/apps/erpn
   var isArray = Array.isArray;
   var isMap = (val) => toTypeString(val) === "[object Map]";
   var isSet = (val) => toTypeString(val) === "[object Set]";
-  var isDate = (val) => toTypeString(val) === "[object Date]";
   var isFunction = (val) => typeof val === "function";
   var isString = (val) => typeof val === "string";
   var isSymbol = (val) => typeof val === "symbol";
@@ -176,57 +175,6 @@ frappe.dom.set_style("/* sfc-style:/workspace/development/frappe-bench/apps/erpn
   );
   function includeBooleanAttr(value) {
     return !!value || value === "";
-  }
-  function looseCompareArrays(a, b) {
-    if (a.length !== b.length)
-      return false;
-    let equal = true;
-    for (let i = 0; equal && i < a.length; i++) {
-      equal = looseEqual(a[i], b[i]);
-    }
-    return equal;
-  }
-  function looseEqual(a, b) {
-    if (a === b)
-      return true;
-    let aValidType = isDate(a);
-    let bValidType = isDate(b);
-    if (aValidType || bValidType) {
-      return aValidType && bValidType ? a.getTime() === b.getTime() : false;
-    }
-    aValidType = isSymbol(a);
-    bValidType = isSymbol(b);
-    if (aValidType || bValidType) {
-      return a === b;
-    }
-    aValidType = isArray(a);
-    bValidType = isArray(b);
-    if (aValidType || bValidType) {
-      return aValidType && bValidType ? looseCompareArrays(a, b) : false;
-    }
-    aValidType = isObject(a);
-    bValidType = isObject(b);
-    if (aValidType || bValidType) {
-      if (!aValidType || !bValidType) {
-        return false;
-      }
-      const aKeysCount = Object.keys(a).length;
-      const bKeysCount = Object.keys(b).length;
-      if (aKeysCount !== bKeysCount) {
-        return false;
-      }
-      for (const key in a) {
-        const aHasKey = a.hasOwnProperty(key);
-        const bHasKey = b.hasOwnProperty(key);
-        if (aHasKey && !bHasKey || !aHasKey && bHasKey || !looseEqual(a[key], b[key])) {
-          return false;
-        }
-      }
-    }
-    return String(a) === String(b);
-  }
-  function looseIndexOf(arr, val) {
-    return arr.findIndex((item) => looseEqual(item, val));
   }
   var isRef = (val) => {
     return !!(val && val.__v_isRef === true);
@@ -8089,61 +8037,6 @@ Expected function or array of functions, received type ${typeof value}.`
       el.value = newValue;
     }
   };
-  var vModelCheckbox = {
-    deep: true,
-    created(el, _, vnode) {
-      el[assignKey] = getModelAssigner(vnode);
-      addEventListener(el, "change", () => {
-        const modelValue = el._modelValue;
-        const elementValue = getValue(el);
-        const checked = el.checked;
-        const assign = el[assignKey];
-        if (isArray(modelValue)) {
-          const index = looseIndexOf(modelValue, elementValue);
-          const found = index !== -1;
-          if (checked && !found) {
-            assign(modelValue.concat(elementValue));
-          } else if (!checked && found) {
-            const filtered = [...modelValue];
-            filtered.splice(index, 1);
-            assign(filtered);
-          }
-        } else if (isSet(modelValue)) {
-          const cloned = new Set(modelValue);
-          if (checked) {
-            cloned.add(elementValue);
-          } else {
-            cloned.delete(elementValue);
-          }
-          assign(cloned);
-        } else {
-          assign(getCheckboxValue(el, checked));
-        }
-      });
-    },
-    mounted: setChecked,
-    beforeUpdate(el, binding, vnode) {
-      el[assignKey] = getModelAssigner(vnode);
-      setChecked(el, binding, vnode);
-    }
-  };
-  function setChecked(el, { value, oldValue }, vnode) {
-    el._modelValue = value;
-    if (isArray(value)) {
-      el.checked = looseIndexOf(value, vnode.props.value) > -1;
-    } else if (isSet(value)) {
-      el.checked = value.has(vnode.props.value);
-    } else if (value !== oldValue) {
-      el.checked = looseEqual(value, getCheckboxValue(el, true));
-    }
-  }
-  function getValue(el) {
-    return "_value" in el ? el._value : el.value;
-  }
-  function getCheckboxValue(el, checked) {
-    const key = checked ? "_trueValue" : "_falseValue";
-    return key in el ? el[key] : checked;
-  }
   var keyNames = {
     esc: "escape",
     space: " ",
@@ -11290,18 +11183,8 @@ Expected function or array of functions, received type ${typeof value}.`
       }
     },
     setup(props, { emit: emit2 }) {
-      let status;
-      if (props.doc.status === "Completed") {
-        status = true;
-      } else {
-        status = false;
-      }
-      const isCompleted = ref(status);
       const isEditing = ref(false);
       const editedText = ref("");
-      if (props.doc.status === "Completed") {
-        console.log(isCompleted.value);
-      }
       watch(() => props.doc.autoFocus, (newVal) => {
         if (newVal) {
           editTask();
@@ -11313,7 +11196,6 @@ Expected function or array of functions, received type ${typeof value}.`
       };
       const toggleComplete = () => {
         props.doc.status = props.doc.status === "Open" ? "Completed" : "Open";
-        isCompleted.value = props.doc.status === "Completed" ? true : false;
         frappe.db.set_value(props.doc.isProject ? "Project" : "Task", props.doc.docName, "status", props.doc.status);
       };
       const startTimer = () => {
@@ -11354,7 +11236,7 @@ Expected function or array of functions, received type ${typeof value}.`
           stopTimer();
         }
       };
-      const updateTimesheetDetail = (projectName, taskName, status2, timesheetDetail) => {
+      const updateTimesheetDetail = (projectName, taskName, status, timesheetDetail) => {
         if (!timesheetDetail) {
           timesheetDetail = {};
         }
@@ -11363,7 +11245,7 @@ Expected function or array of functions, received type ${typeof value}.`
           args: {
             project_name: projectName,
             task_name: taskName,
-            status: status2,
+            status,
             timesheet_detail: timesheetDetail
           },
           freeze: true
@@ -11434,7 +11316,6 @@ Expected function or array of functions, received type ${typeof value}.`
         isEditing.value = false;
       };
       return {
-        isCompleted,
         isEditing,
         editedText,
         toggleComplete,
@@ -11451,59 +11332,51 @@ Expected function or array of functions, received type ${typeof value}.`
   // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=template
   var _withScopeId = (n) => (pushScopeId("data-v-75df30b2"), n = n(), popScopeId(), n);
   var _hoisted_13 = { class: "task" };
-  var _hoisted_23 = { class: "task-subject-container" };
-  var _hoisted_32 = {
+  var _hoisted_23 = { class: "custom-checkbox task-control" };
+  var _hoisted_32 = ["checked"];
+  var _hoisted_4 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("span", { class: "checkmark" }, null, -1));
+  var _hoisted_5 = { class: "task-subject-container" };
+  var _hoisted_6 = {
     key: 0,
     class: "task-controls"
   };
-  var _hoisted_4 = { class: "custom-checkbox task-control" };
-  var _hoisted_5 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("span", { class: "checkmark" }, null, -1));
-  var _hoisted_6 = {
-    key: 1,
-    class: "task-controls"
-  };
-  var _hoisted_7 = { class: "custom-checkbox task-control" };
-  var _hoisted_8 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("span", { class: "checkmark" }, null, -1));
   function render(_ctx, _cache, $props, $setup, $data, $options) {
     return openBlock(), createElementBlock("div", {
       class: "task",
-      onClick: _cache[10] || (_cache[10] = (...args) => _ctx.emitInteraction && _ctx.emitInteraction(...args))
+      onClick: _cache[7] || (_cache[7] = (...args) => _ctx.emitInteraction && _ctx.emitInteraction(...args))
     }, [
       createBaseVNode("div", _hoisted_13, [
-        createCommentVNode(" Task Subject "),
+        createCommentVNode(" Spiced-up Checkbox "),
         createBaseVNode("div", _hoisted_23, [
+          createBaseVNode("label", null, [
+            createBaseVNode("input", {
+              type: "checkbox",
+              checked: _ctx.doc.status === "Completed",
+              onChange: _cache[0] || (_cache[0] = (...args) => _ctx.toggleComplete && _ctx.toggleComplete(...args))
+            }, null, 40, _hoisted_32),
+            _hoisted_4
+          ])
+        ]),
+        createCommentVNode(" Task Subject "),
+        createBaseVNode("div", _hoisted_5, [
           !_ctx.isEditing ? (openBlock(), createElementBlock("p", {
             key: 0,
             class: "task-subject",
-            onClick: _cache[0] || (_cache[0] = (...args) => _ctx.editTask && _ctx.editTask(...args))
+            onClick: _cache[1] || (_cache[1] = (...args) => _ctx.editTask && _ctx.editTask(...args))
           }, toDisplayString(_ctx.doc.text), 1)) : createCommentVNode("v-if", true),
           _ctx.isEditing ? withDirectives((openBlock(), createElementBlock("input", {
             key: 1,
             type: "text",
-            "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.editedText = $event),
-            onBlur: _cache[2] || (_cache[2] = (...args) => _ctx.saveEdit && _ctx.saveEdit(...args)),
-            onKeyup: _cache[3] || (_cache[3] = withKeys((...args) => _ctx.unfocusInput && _ctx.unfocusInput(...args), ["enter"])),
+            "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => _ctx.editedText = $event),
+            onBlur: _cache[3] || (_cache[3] = (...args) => _ctx.saveEdit && _ctx.saveEdit(...args)),
+            onKeyup: _cache[4] || (_cache[4] = withKeys((...args) => _ctx.unfocusInput && _ctx.unfocusInput(...args), ["enter"])),
             class: "task-subject-edit"
           }, null, 544)), [
             [vModelText, _ctx.editedText]
           ]) : createCommentVNode("v-if", true)
         ]),
         createCommentVNode(" only render the controls if the doc is not a project and is not blank "),
-        !_ctx.doc.isProject && !_ctx.doc.isBlank ? (openBlock(), createElementBlock("div", _hoisted_32, [
-          createCommentVNode(" Spiced-up Checkbox "),
-          createBaseVNode("div", _hoisted_4, [
-            createBaseVNode("label", null, [
-              withDirectives(createBaseVNode("input", {
-                type: "checkbox",
-                "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => _ctx.isCompleted = $event),
-                onChange: _cache[5] || (_cache[5] = (...args) => _ctx.toggleComplete && _ctx.toggleComplete(...args))
-              }, null, 544), [
-                [vModelCheckbox, _ctx.isCompleted]
-              ]),
-              _hoisted_5,
-              createTextVNode(" " + toDisplayString(_ctx.isCompleted ? "Open Task" : "Complete Task"), 1)
-            ])
-          ]),
+        !_ctx.doc.isProject && !_ctx.doc.isBlank ? (openBlock(), createElementBlock("div", _hoisted_6, [
           createCommentVNode(" Button to start/pause/resume timer "),
           _ctx.doc.status !== "Completed" ? (openBlock(), createElementBlock("button", {
             key: 0,
@@ -11512,7 +11385,7 @@ Expected function or array of functions, received type ${typeof value}.`
               "btn-warning": _ctx.doc.timerStatus === "running",
               "btn-success": _ctx.doc.timerStatus === "paused"
             }]),
-            onClick: _cache[6] || (_cache[6] = (...args) => _ctx.toggleTimer && _ctx.toggleTimer(...args))
+            onClick: _cache[5] || (_cache[5] = (...args) => _ctx.toggleTimer && _ctx.toggleTimer(...args))
           }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Start Timer" : _ctx.doc.timerStatus === "paused" ? "Resume Timer" : "Pause Timer"), 3)) : createCommentVNode("v-if", true),
           createCommentVNode(" Button to log time or stop timer "),
           _ctx.doc.status !== "Completed" ? (openBlock(), createElementBlock("button", {
@@ -11521,24 +11394,8 @@ Expected function or array of functions, received type ${typeof value}.`
               "btn-secondary": _ctx.doc.timerStatus === "stopped",
               "btn-danger": _ctx.doc.timerStatus !== "stopped"
             }]),
-            onClick: _cache[7] || (_cache[7] = (...args) => _ctx.logOrStopTimer && _ctx.logOrStopTimer(...args))
+            onClick: _cache[6] || (_cache[6] = (...args) => _ctx.logOrStopTimer && _ctx.logOrStopTimer(...args))
           }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Log Time" : "Stop Timer"), 3)) : createCommentVNode("v-if", true)
-        ])) : createCommentVNode("v-if", true),
-        createCommentVNode(" if it is a project and is not blank, give it a checkbox to close the project "),
-        _ctx.doc.isProject && !_ctx.doc.isBlank ? (openBlock(), createElementBlock("div", _hoisted_6, [
-          createBaseVNode("div", _hoisted_7, [
-            createBaseVNode("label", null, [
-              withDirectives(createBaseVNode("input", {
-                type: "checkbox",
-                "onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => _ctx.isCompleted = $event),
-                onChange: _cache[9] || (_cache[9] = (...args) => _ctx.toggleComplete && _ctx.toggleComplete(...args))
-              }, null, 544), [
-                [vModelCheckbox, _ctx.isCompleted]
-              ]),
-              _hoisted_8,
-              createTextVNode(" " + toDisplayString(_ctx.isCompleted ? "Open Project" : "Complete Project"), 1)
-            ])
-          ])
         ])) : createCommentVNode("v-if", true)
       ])
     ]);
@@ -11756,6 +11613,11 @@ Expected function or array of functions, received type ${typeof value}.`
       };
       const handleTaskInteraction = (node) => {
         if (node.isProject) {
+          if (node.expanded && !node.isBlank && node.status !== "Completed") {
+            highlightedProject.value = node;
+          } else {
+            return;
+          }
           highlightedProject.value = node;
         } else {
           const parentProject = findParentProject(node);
@@ -12003,4 +11865,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.RPIJC2J6.js.map
+//# sourceMappingURL=app.bundle.M72U7X4J.js.map
