@@ -1,4 +1,4 @@
-frappe.dom.set_style("/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=style&index=0 */\n.highlighted-project div .task-subject-container[data-v-75df30b2] {\n  font-weight: bold;\n}\n.task[data-v-75df30b2] {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.task-subject-container[data-v-75df30b2] {\n  flex-grow: 1;\n  margin-right: 10px;\n  border-bottom: 1px dashed darkgrey;\n}\n.task-subject[data-v-75df30b2] {\n  padding: 0;\n  margin: 0;\n  cursor: text;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-subject-edit[data-v-75df30b2] {\n  padding: 5px;\n  border: 1px solid #ddd;\n  border-radius: 4px;\n  font-size: 14px;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-controls[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n  flex-shrink: 0;\n}\n.task-control[data-v-75df30b2] {\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n}\n.custom-checkbox[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n  position: relative;\n}\n.custom-checkbox label[data-v-75df30b2] {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  margin: 0;\n}\n.custom-checkbox input[data-v-75df30b2] {\n  position: absolute;\n  opacity: 0;\n  cursor: pointer;\n}\n.custom-checkbox .checkmark[data-v-75df30b2] {\n  height: 20px;\n  width: 20px;\n  background-color: #d8dfed;\n  border-radius: 4px;\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n.custom-checkbox input:checked ~ .checkmark[data-v-75df30b2] {\n  background-color: #2196F3;\n}\n.custom-checkbox .checkmark[data-v-75df30b2]:after {\n  content: \"\";\n  position: absolute;\n  display: none;\n}\n.custom-checkbox input:checked ~ .checkmark[data-v-75df30b2]:after {\n  display: block;\n  width: 5px;\n  height: 10px;\n  border: solid white;\n  border-width: 0 3px 3px 0;\n  transform: rotate(45deg);\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/default.css */\n.tree-node--with-tree-line {\n  position: relative;\n}\n.tree-line {\n  position: absolute;\n  background-color: #bbb;\n}\n.tree-vline {\n  width: 1px;\n  top: 0;\n  bottom: 0;\n}\n.tree-hline {\n  height: 1px;\n  top: 50%;\n  width: 10px;\n}\n.he-tree--rtl {\n  direction: rtl;\n}\n.he-tree-drag-placeholder {\n  background: #ddf2f9;\n  border: 1px dashed #00d9ff;\n  height: 22px;\n  width: 100%;\n}\n.he-tree__open-icon {\n  cursor: pointer;\n  user-select: none;\n  display: inline-block;\n}\n.he-tree__open-icon.open {\n  transform: rotate(90deg);\n}\n.he-tree__open-icon svg {\n  width: 1em;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/material-design.css */\n.mtl-tree .tree-node-inner {\n  display: flex;\n  align-items: center;\n  font-size: 14px;\n}\n.mtl-tree .tree-node {\n  padding: 1px 0;\n}\n.mtl-tree .tree-node:hover {\n  background-color: #ededed;\n}\n.mtl-checkbox {\n  width: 14px;\n  height: 14px;\n}\n.mtl-ml {\n  margin-left: 4px;\n}\n.mtl-mr {\n  margin-right: 4px;\n}\n.mtl-tree table {\n  width: 100%;\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n.mtl-tree td,\n.mtl-tree th {\n  border-bottom: 1px solid rgba(224, 224, 224, 1);\n  line-height: 1.5;\n}\n.mtl-tree tr:last-child td,\n.mtl-tree tr:last-child tr {\n  border-bottom: 0px;\n}\n.mtl-text-left {\n  text-align: left;\n}\n.mtl-text-center {\n  text-align: center;\n}\n.mtl-text-right {\n  text-align: right;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=style&index=0 */\n.tree-container {\n  font-size: 14px;\n}\n.small-icon {\n  font-size: 1.5em;\n}\n.outer-task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.mtl-tree .tree-node:hover {\n  background-color: var(--task-hover-bg-color);\n}\n.he-tree__open-icon svg path {\n  fill: var(--icon-color);\n}\n/*# sourceMappingURL=app.bundle.JNJ47MGG.css.map */\n");
+frappe.dom.set_style("/* ../erpnext_taskview/erpnext_taskview/public/js/assets/style/task.css */\n.highlighted-project div .task-subject-container {\n  font-weight: bold;\n}\n.task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.task-subject-container {\n  flex-grow: 1;\n  margin-right: 10px;\n  border-bottom: 1px dashed darkgrey;\n}\n.task-subject {\n  padding: 0;\n  margin: 0;\n  cursor: text;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-subject-edit {\n  padding: 5px;\n  border: 1px solid #ddd;\n  border-radius: 4px;\n  font-size: 14px;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-controls {\n  display: flex;\n  align-items: center;\n  flex-shrink: 0;\n}\n.task-control {\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n}\n.custom-checkbox {\n  display: flex;\n  align-items: center;\n  position: relative;\n}\n.custom-checkbox label {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  margin: 0;\n}\n.custom-checkbox input {\n  position: absolute;\n  opacity: 0;\n  cursor: pointer;\n}\n.custom-checkbox .checkmark {\n  height: 20px;\n  width: 20px;\n  background-color: #d8dfed;\n  border-radius: 4px;\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n.custom-checkbox input:checked ~ .checkmark {\n  background-color: #2196F3;\n}\n.custom-checkbox .checkmark:after {\n  content: \"\";\n  position: absolute;\n  display: none;\n}\n.custom-checkbox input:checked ~ .checkmark:after {\n  display: block;\n  width: 5px;\n  height: 10px;\n  border: solid white;\n  border-width: 0 3px 3px 0;\n  transform: rotate(45deg);\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=style&index=0 */\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/default.css */\n.tree-node--with-tree-line {\n  position: relative;\n}\n.tree-line {\n  position: absolute;\n  background-color: #bbb;\n}\n.tree-vline {\n  width: 1px;\n  top: 0;\n  bottom: 0;\n}\n.tree-hline {\n  height: 1px;\n  top: 50%;\n  width: 10px;\n}\n.he-tree--rtl {\n  direction: rtl;\n}\n.he-tree-drag-placeholder {\n  background: #ddf2f9;\n  border: 1px dashed #00d9ff;\n  height: 22px;\n  width: 100%;\n}\n.he-tree__open-icon {\n  cursor: pointer;\n  user-select: none;\n  display: inline-block;\n}\n.he-tree__open-icon.open {\n  transform: rotate(90deg);\n}\n.he-tree__open-icon svg {\n  width: 1em;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/material-design.css */\n.mtl-tree .tree-node-inner {\n  display: flex;\n  align-items: center;\n  font-size: 14px;\n}\n.mtl-tree .tree-node {\n  padding: 1px 0;\n}\n.mtl-tree .tree-node:hover {\n  background-color: #ededed;\n}\n.mtl-checkbox {\n  width: 14px;\n  height: 14px;\n}\n.mtl-ml {\n  margin-left: 4px;\n}\n.mtl-mr {\n  margin-right: 4px;\n}\n.mtl-tree table {\n  width: 100%;\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n.mtl-tree td,\n.mtl-tree th {\n  border-bottom: 1px solid rgba(224, 224, 224, 1);\n  line-height: 1.5;\n}\n.mtl-tree tr:last-child td,\n.mtl-tree tr:last-child tr {\n  border-bottom: 0px;\n}\n.mtl-text-left {\n  text-align: left;\n}\n.mtl-text-center {\n  text-align: center;\n}\n.mtl-text-right {\n  text-align: right;\n}\n\n/* ../erpnext_taskview/erpnext_taskview/public/js/assets/style/taskview.css */\n.tree-container {\n  font-size: 14px;\n}\n.small-icon {\n  font-size: 1.5em;\n}\n.outer-task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.mtl-tree .tree-node:hover {\n  background-color: var(--task-hover-bg-color);\n}\n.he-tree__open-icon svg path {\n  fill: var(--icon-color);\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=style&index=0 */\n/*# sourceMappingURL=app.bundle.B3IF4B3I.css.map */\n");
 (() => {
   var __defProp = Object.defineProperty;
   var __defProps = Object.defineProperties;
@@ -11171,6 +11171,147 @@ Expected function or array of functions, received type ${typeof value}.`
   }
   var OpenIcon = /* @__PURE__ */ _export_sfc2(_sfc_main2, [["render", _sfc_render2]]);
 
+  // ../erpnext_taskview/erpnext_taskview/public/js/assets/js/task.js
+  function useTask(props, emit2, isEditing, editedText, activeTimer2) {
+    const emitInteraction = () => {
+      emit2("task-interaction");
+    };
+    const toggleComplete = () => {
+      props.doc.status = props.doc.status === "Open" ? "Completed" : "Open";
+      frappe.db.set_value(props.doc.isProject ? "Project" : "Task", props.doc.docName, "status", props.doc.status);
+    };
+    const startTimer = () => {
+      if (activeTimer2 && activeTimer2 !== props.doc) {
+        activeTimer2.timesheetDetail = updateTimesheetDetail(activeTimer2.project, activeTimer2.docName, "paused", activeTimer2.timesheetDetail);
+        activeTimer2.timerStatus = "paused";
+      }
+      props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, "running", props.doc.timesheetDetail);
+      props.doc.timerStatus = "running";
+      activeTimer2 = props.doc;
+    };
+    const pauseTimer = () => {
+      props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, "paused", props.doc.timesheetDetail);
+      props.doc.timerStatus = "paused";
+      activeTimer2 = null;
+    };
+    const stopTimer = () => {
+      updateTimesheetDetail(props.doc.project, props.doc.docName, "stopped", props.doc.timesheetDetail);
+      props.doc.timerStatus = "stopped";
+      if (activeTimer2 === props.doc) {
+        activeTimer2 = null;
+      }
+      props.doc.timesheetDetail = {};
+    };
+    const toggleTimer = () => {
+      if (props.doc.timerStatus === "stopped") {
+        startTimer();
+      } else if (props.doc.timerStatus === "running") {
+        pauseTimer();
+      } else if (props.doc.timerStatus === "paused") {
+        startTimer();
+      }
+    };
+    const logOrStopTimer = () => {
+      if (props.doc.timerStatus === "stopped") {
+        console.log(`Time logged for task "${doc.text}"`);
+      } else {
+        stopTimer();
+      }
+    };
+    const updateTimesheetDetail = (projectName, taskName, status, timesheetDetail) => {
+      if (!timesheetDetail) {
+        timesheetDetail = {};
+      }
+      frappe.call({
+        method: "erpnext_taskview.erpnext_taskview.update_timesheet_detail",
+        args: {
+          project_name: projectName,
+          task_name: taskName,
+          status,
+          timesheet_detail: timesheetDetail
+        },
+        freeze: true
+      }).then((r) => {
+        return r.message;
+      });
+    };
+    const editTask = () => {
+      isEditing.value = true;
+      editedText.value = props.doc.isBlank ? "" : props.doc.text;
+      nextTick(() => {
+        const inputElement = document.querySelector(".task-subject-edit");
+        if (inputElement) {
+          inputElement.focus();
+        }
+      });
+    };
+    const unfocusInput = (event) => {
+      event.target.blur();
+    };
+    const saveEdit = () => {
+      console.log("Saving edit...", props.doc);
+      if (editedText.value.trim() !== "") {
+        if (editedText.value !== props.doc.text) {
+          props.doc.text = editedText.value;
+          if (props.doc.isBlank) {
+            let newObject;
+            if (props.doc.isProject) {
+              newObject = {
+                doctype: "Project",
+                project_name: editedText.value,
+                is_active: "Yes",
+                status: "Open"
+              };
+            } else {
+              let parentTask;
+              if (props.doc.parent === props.doc.project) {
+                parentTask = null;
+              } else {
+                frappe.db.set_value("Task", props.doc.parent, { is_group: 1 });
+                parentTask = props.doc.parent;
+              }
+              newObject = {
+                doctype: "Task",
+                subject: editedText.value,
+                project: props.doc.project,
+                parent_task: parentTask,
+                status: "Open",
+                priority: "Medium"
+              };
+            }
+            frappe.db.insert(newObject).then((doc3) => {
+              props.doc.isBlank = false;
+              props.doc.docName = doc3.name;
+              props.doc.text = props.doc.isProject ? `${doc3.name}: ${doc3.project_name}` : editedText.value;
+              emit2("add-sibling-task", props.doc);
+            });
+          } else {
+            console.log("Updating task or project in the database...");
+            if (props.doc.isProject) {
+              frappe.db.set_value("Project", props.doc.docName, "project_name", editedText.value);
+            } else {
+              frappe.db.set_value("Task", props.doc.docName, "subject", editedText.value);
+            }
+          }
+        }
+      }
+      isEditing.value = false;
+    };
+    return {
+      emitInteraction,
+      toggleComplete,
+      startTimer,
+      pauseTimer,
+      stopTimer,
+      toggleTimer,
+      logOrStopTimer,
+      updateTimesheetDetail,
+      editTask,
+      unfocusInput,
+      saveEdit
+    };
+  }
+
   // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=script
   var activeTimer = null;
   var Task_default = defineComponent({
@@ -11185,136 +11326,21 @@ Expected function or array of functions, received type ${typeof value}.`
     setup(props, { emit: emit2 }) {
       const isEditing = ref(false);
       const editedText = ref("");
+      const {
+        emitInteraction,
+        toggleComplete,
+        toggleTimer,
+        logOrStopTimer,
+        editTask,
+        unfocusInput,
+        saveEdit
+      } = useTask(props, emit2, isEditing, editedText, activeTimer);
       watch(() => props.doc.autoFocus, (newVal) => {
         if (newVal) {
           editTask();
           props.doc.autoFocus = false;
         }
       });
-      const emitInteraction = () => {
-        emit2("task-interaction");
-      };
-      const toggleComplete = () => {
-        props.doc.status = props.doc.status === "Open" ? "Completed" : "Open";
-        frappe.db.set_value(props.doc.isProject ? "Project" : "Task", props.doc.docName, "status", props.doc.status);
-      };
-      const startTimer = () => {
-        if (activeTimer && activeTimer !== props.doc) {
-          activeTimer.timesheetDetail = updateTimesheetDetail(activeTimer.project, activeTimer.docName, "paused", activeTimer.timesheetDetail);
-          activeTimer.timerStatus = "paused";
-        }
-        props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, "running", props.doc.timesheetDetail);
-        props.doc.timerStatus = "running";
-        activeTimer = props.doc;
-      };
-      const pauseTimer = () => {
-        props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, "paused", props.doc.timesheetDetail);
-        props.doc.timerStatus = "paused";
-        activeTimer = null;
-      };
-      const stopTimer = () => {
-        updateTimesheetDetail(props.doc.project, props.doc.docName, "stopped", props.doc.timesheetDetail);
-        props.doc.timerStatus = "stopped";
-        if (activeTimer === props.doc) {
-          activeTimer = null;
-        }
-        props.doc.timesheetDetail = {};
-      };
-      const toggleTimer = () => {
-        if (props.doc.timerStatus === "stopped") {
-          startTimer();
-        } else if (props.doc.timerStatus === "running") {
-          pauseTimer();
-        } else if (props.doc.timerStatus === "paused") {
-          startTimer();
-        }
-      };
-      const logOrStopTimer = () => {
-        if (props.doc.timerStatus === "stopped") {
-          console.log(`Time logged for task "${doc.text}"`);
-        } else {
-          stopTimer();
-        }
-      };
-      const updateTimesheetDetail = (projectName, taskName, status, timesheetDetail) => {
-        if (!timesheetDetail) {
-          timesheetDetail = {};
-        }
-        frappe.call({
-          method: "erpnext_taskview.erpnext_taskview.update_timesheet_detail",
-          args: {
-            project_name: projectName,
-            task_name: taskName,
-            status,
-            timesheet_detail: timesheetDetail
-          },
-          freeze: true
-        }).then((r) => {
-          return r.message;
-        });
-      };
-      const editTask = () => {
-        isEditing.value = true;
-        editedText.value = props.doc.isBlank ? "" : props.doc.text;
-        nextTick(() => {
-          const inputElement = document.querySelector(".task-subject-edit");
-          if (inputElement) {
-            inputElement.focus();
-          }
-        });
-      };
-      const unfocusInput = (event) => {
-        event.target.blur();
-      };
-      const saveEdit = () => {
-        console.log("Saving edit...", props.doc);
-        if (editedText.value.trim() !== "") {
-          if (editedText.value !== props.doc.text) {
-            props.doc.text = editedText.value;
-            if (props.doc.isBlank) {
-              let newObject;
-              if (props.doc.isProject) {
-                newObject = {
-                  doctype: "Project",
-                  project_name: editedText.value,
-                  is_active: "Yes",
-                  status: "Open"
-                };
-              } else {
-                let parentTask;
-                if (props.doc.parent === props.doc.project) {
-                  parentTask = null;
-                } else {
-                  frappe.db.set_value("Task", props.doc.parent, { is_group: 1 });
-                  parentTask = props.doc.parent;
-                }
-                newObject = {
-                  doctype: "Task",
-                  subject: editedText.value,
-                  project: props.doc.project,
-                  parent_task: parentTask,
-                  status: "Open",
-                  priority: "Medium"
-                };
-              }
-              frappe.db.insert(newObject).then((doc3) => {
-                props.doc.isBlank = false;
-                props.doc.docName = doc3.name;
-                props.doc.text = props.doc.isProject ? `${doc3.name}: ${doc3.project_name}` : editedText.value;
-                emit2("add-sibling-task", props.doc);
-              });
-            } else {
-              console.log("Updating task or project in the database...");
-              if (props.doc.isProject) {
-                frappe.db.set_value("Project", props.doc.docName, "project_name", editedText.value);
-              } else {
-                frappe.db.set_value("Task", props.doc.docName, "subject", editedText.value);
-              }
-            }
-          }
-        }
-        isEditing.value = false;
-      };
       return {
         isEditing,
         editedText,
@@ -11407,6 +11433,262 @@ Expected function or array of functions, received type ${typeof value}.`
   Task_default.__scopeId = "data-v-75df30b2";
   var Task_default2 = Task_default;
 
+  // ../erpnext_taskview/erpnext_taskview/public/js/assets/js/taskview.js
+  function useTaskview(props, treeData, highlightedProject, dragContext, currentTheme) {
+    const premount = () => {
+      let docs = addBlankProject(props.docs);
+      docs = addBlankTasks(docs);
+      treeData.value = docs;
+    };
+    const useOnMounted = () => {
+      document.documentElement.style.setProperty(
+        "--task-hover-bg-color",
+        currentTheme.value === "dark" ? "#686868" : "#ededed"
+      );
+      document.documentElement.style.setProperty(
+        "--icon-color",
+        currentTheme.value === "dark" ? "#d3d3d3" : "#000000"
+      );
+      updateHighlightedProject();
+      document.addEventListener("keydown", handleKeydown);
+    };
+    const useOnUnmounted = () => {
+      document.removeEventListener("keydown", handleKeydown);
+    };
+    const handleDragEnd = () => {
+      const draggedNode = dragContext.dragNode;
+      draggedNode.parent.data.expanded = true;
+      draggedNode.parent.open = true;
+      const childrenCheck = (children) => {
+        children = children.filter((child) => !child.isBlank);
+        return children.length;
+      };
+      if (!draggedNode.parent.data.isProject) {
+        if (childrenCheck(draggedNode.parent.data.children) === 1) {
+          frappe.db.set_value("Task", draggedNode.parent.data.docName, { is_group: 1 });
+        }
+      }
+      let updateObject = {};
+      draggedNode.data.parent = draggedNode.parent.data.docName;
+      updateObject.parent_task = draggedNode.parent.data.isProject ? null : draggedNode.parent.data.docName;
+      if (draggedNode.data.project !== draggedNode.parent.data.project) {
+        draggedNode.data.project = draggedNode.parent.data.project;
+        updateObject.project = draggedNode.data.project;
+        if (draggedNode.data.children) {
+          const updateChildren = (children) => {
+            children.forEach((child) => {
+              child.project = draggedNode.data.project;
+              if (!child.isBlank) {
+                frappe.db.set_value("Task", child.docName, { project: draggedNode.data.project });
+                if (child.children) {
+                  updateChildren(child.children);
+                }
+              }
+            });
+          };
+          updateChildren(draggedNode.data.children);
+        }
+      }
+      frappe.db.set_value(draggedNode.data.isProject ? "Project" : "Task", draggedNode.data.docName, updateObject);
+      handleTaskInteraction(draggedNode.data);
+    };
+    const modifyNodeAndStat = (node, stat) => {
+      var _a;
+      if (((_a = locals.nodes) == null ? void 0 : _a[node.docName]) === false || !node.expanded) {
+        stat.open = false;
+        node.expanded = false;
+      }
+      ;
+      var runningChildren = false;
+      if (node.children && node.children.length > 0) {
+        runningChildren = node.children.some((child) => child.timerStatus === "running" || child.timerStatus === "paused");
+      }
+      if (node.isBlank || node.isProject || node.timerStatus === "running" || node.timerStatus === "paused" || runningChildren) {
+        stat.disableDrag = true;
+        stat.disableDrop = node.isBlank;
+        stat.draggable = false;
+        stat.droppable = !node.isBlank;
+        stat.dragOpen = !node.isBlank;
+      } else {
+        stat.disableDrag = false;
+        stat.disableDrop = false;
+        stat.draggable = true;
+        stat.droppable = true;
+        stat.dragOpen = true;
+      }
+      return { node, stat };
+    };
+    const createNode = ({ text, children = [], isBlank = false, isProject = false, project = null, docName = "", autoFocus = false, expanded = true, parent = null, timerStatus = null, status = "Open" }) => {
+      return {
+        text,
+        children,
+        isBlank,
+        isProject,
+        project,
+        docName,
+        autoFocus,
+        expanded,
+        parent,
+        timerStatus,
+        status
+      };
+    };
+    const addBlankProject = (docs) => {
+      newProject = createNode({ text: "Add project...", isBlank: true, isProject: true, expanded: false });
+      docs.push(newProject);
+      return docs;
+    };
+    const addBlankTasks = (docs) => {
+      docs.forEach((project) => {
+        if (project.expanded && !project.isBlank) {
+          addBlankTask(project);
+        }
+      });
+      return docs;
+    };
+    const isHighlightedProject = (node) => {
+      return node.isProject && node === highlightedProject.value;
+    };
+    const toggleNode = (node, stat) => {
+      stat.open = !stat.open;
+      locals.nodes[node.docName], node.expanded = stat.open;
+      if (stat.open) {
+        if (node.children.length === 0 || !node.children.some((child) => child.isBlank)) {
+          addBlankTask(node);
+          treeData.value = [...treeData.value];
+        }
+        stat.children.forEach((child) => {
+          child.hidden = !stat.open;
+        });
+      }
+      if (!node.isProject) {
+        const parentProject = findParentProject(node);
+        if (parentProject) {
+          highlightedProject.value = parentProject;
+        }
+      } else if (node.isProject && stat.open) {
+        highlightedProject.value = node;
+      } else {
+        const nextExpandedProject = treeData.value.find((project) => project.isProject && project.expanded && !project.isBlank);
+        if (nextExpandedProject) {
+          highlightedProject.value = nextExpandedProject;
+        } else {
+          updateHighlightedProject();
+        }
+      }
+    };
+    const addBlankTask = (node) => {
+      let blankTask = createNode({ text: "Add task...", isBlank: true, project: node.project, parent: node.docName, timerStatus: "stopped" });
+      node.children = [...node.children, blankTask];
+      node.children.forEach((child) => {
+        if (!child.isBlank) {
+          addBlankTask(child);
+        }
+      });
+    };
+    const findParentProject = (node) => {
+      return treeData.value.find((project) => project.docName === node.project);
+    };
+    const findParentNode = (nodes, parentDocName) => {
+      for (let node of nodes) {
+        if (node.docName === parentDocName) {
+          return node;
+        } else if (node.children && node.children.length > 0) {
+          const foundNode = findParentNode(node.children, parentDocName);
+          if (foundNode) {
+            return foundNode;
+          }
+        }
+      }
+      return null;
+    };
+    const addSiblingTask = (node) => {
+      addBlankTask(node);
+      node.expanded = node.isProject ? true : false;
+      console.log("Adding sibling task to:", node);
+      const newBlankNode = createNode({ text: node.isProject ? "Add project..." : "Add task...", isBlank: true, project: node.project, isProject: node.isProject, parent: node.parent, timerStatus: "stopped" });
+      console.log("New node:", newBlankNode);
+      const parentNode = findParentNode(treeData.value, node.parent);
+      console.log("Parent node:", parentNode);
+      if (parentNode) {
+        const updatedChildren = [...parentNode.children, newBlankNode];
+        parentNode.children = updatedChildren;
+        treeData.value = [...treeData.value];
+      } else {
+        treeData.value = [...treeData.value, newBlankNode];
+      }
+    };
+    const handleTaskInteraction = (node) => {
+      if (node.isProject) {
+        if (node.expanded && !node.isBlank && node.status !== "Completed") {
+          highlightedProject.value = node;
+        } else {
+          return;
+        }
+        highlightedProject.value = node;
+      } else {
+        const parentProject = findParentProject(node);
+        if (parentProject) {
+          highlightedProject.value = parentProject;
+        }
+      }
+    };
+    const updateHighlightedProject = () => {
+      if (!treeData.value || !Array.isArray(treeData.value)) {
+        console.warn("Tree data is not initialized or not an array");
+        return;
+      }
+      const expandedProjects = treeData.value.filter(
+        (node) => node.isProject && node.expanded && !node.isBlank
+      );
+      if (expandedProjects.length > 0) {
+        highlightedProject.value = expandedProjects[0];
+      } else {
+        const blankProject = treeData.value.find((node) => node.isBlank);
+        if (blankProject) {
+          highlightedProject.value = blankProject;
+        }
+      }
+    };
+    const editRootBlankTask = () => {
+      const project = highlightedProject.value;
+      if (project) {
+        if (project.isBlank) {
+          project.autoFocus = true;
+        } else {
+          const blankTask = project.children.find((task) => task.isBlank);
+          if (blankTask) {
+            blankTask.autoFocus = true;
+          }
+        }
+      }
+    };
+    const handleKeydown = (event) => {
+      const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;'",.<>?/`~\- ]$/;
+      if (document.activeElement.tagName !== "INPUT" && allowedKeys.test(event.key)) {
+        editRootBlankTask();
+      }
+    };
+    return {
+      premount,
+      useOnMounted,
+      useOnUnmounted,
+      handleDragEnd,
+      modifyNodeAndStat,
+      createNode,
+      addBlankProject,
+      addBlankTasks,
+      isHighlightedProject,
+      toggleNode,
+      addSiblingTask,
+      findParentNode,
+      handleTaskInteraction,
+      updateHighlightedProject,
+      editRootBlankTask,
+      handleKeydown
+    };
+  }
+
   // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=script
   var TaskView_default = defineComponent({
     name: "TaskView",
@@ -11423,245 +11705,32 @@ Expected function or array of functions, received type ${typeof value}.`
       }
     },
     setup(props) {
-      let docs = addBlankProject(props.docs);
-      docs = addBlankTasks(docs);
-      let treeData = ref(docs);
       let highlightedProject = ref(null);
       let highlightedTask = ref(null);
+      let treeData = ref([]);
       const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
       if (currentTheme.value === "automatic") {
         currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       }
+      const {
+        premount,
+        useOnMounted,
+        useOnUnmounted,
+        handleDragEnd,
+        modifyNodeAndStat,
+        isHighlightedProject,
+        toggleNode,
+        addSiblingTask,
+        handleTaskInteraction,
+        handleKeydown
+      } = useTaskview(props, treeData, highlightedProject, context2, currentTheme);
+      premount();
       onMounted(() => {
-        document.documentElement.style.setProperty(
-          "--task-hover-bg-color",
-          currentTheme.value === "dark" ? "#686868" : "#ededed"
-        );
-        document.documentElement.style.setProperty(
-          "--icon-color",
-          currentTheme.value === "dark" ? "#d3d3d3" : "#000000"
-        );
-        updateHighlightedProject();
-        document.addEventListener("keydown", handleKeydown);
+        useOnMounted();
       });
       onUnmounted(() => {
-        document.removeEventListener("keydown", handleKeydown);
+        useOnUnmounted();
       });
-      const handleDragEnd = () => {
-        const draggedNode = context2.dragNode;
-        draggedNode.parent.data.expanded = true;
-        draggedNode.parent.open = true;
-        function childrenCheck(children) {
-          children = children.filter((child) => !child.isBlank);
-          return children.length;
-        }
-        if (!draggedNode.parent.data.isProject) {
-          if (childrenCheck(draggedNode.parent.data.children) === 1) {
-            frappe.db.set_value("Task", draggedNode.parent.data.docName, { is_group: 1 });
-          }
-        }
-        let updateObject = {};
-        draggedNode.data.parent = draggedNode.parent.data.docName;
-        updateObject.parent_task = draggedNode.parent.data.isProject ? null : draggedNode.parent.data.docName;
-        if (draggedNode.data.project !== draggedNode.parent.data.project) {
-          draggedNode.data.project = draggedNode.parent.data.project;
-          updateObject.project = draggedNode.data.project;
-          if (draggedNode.data.children) {
-            const updateChildren = (children) => {
-              children.forEach((child) => {
-                child.project = draggedNode.data.project;
-                if (!child.isBlank) {
-                  frappe.db.set_value("Task", child.docName, { project: draggedNode.data.project });
-                  if (child.children) {
-                    updateChildren(child.children);
-                  }
-                }
-              });
-            };
-            updateChildren(draggedNode.data.children);
-          }
-        }
-        frappe.db.set_value(draggedNode.data.isProject ? "Project" : "Task", draggedNode.data.docName, updateObject);
-        handleTaskInteraction(draggedNode.data);
-      };
-      function modifyNodeAndStat(node, stat) {
-        var _a;
-        if (((_a = locals.nodes) == null ? void 0 : _a[node.docName]) === false || !node.expanded) {
-          stat.open = false;
-          node.expanded = false;
-        }
-        ;
-        var runningChildren = false;
-        if (node.children && node.children.length > 0) {
-          runningChildren = node.children.some((child) => child.timerStatus === "running" || child.timerStatus === "paused");
-        }
-        if (node.isBlank || node.isProject || node.timerStatus === "running" || node.timerStatus === "paused" || runningChildren) {
-          stat.disableDrag = true;
-          stat.disableDrop = node.isBlank;
-          stat.draggable = false;
-          stat.droppable = !node.isBlank;
-          stat.dragOpen = !node.isBlank;
-        } else {
-          stat.disableDrag = false;
-          stat.disableDrop = false;
-          stat.draggable = true;
-          stat.droppable = true;
-          stat.dragOpen = true;
-        }
-        return { node, stat };
-      }
-      ;
-      function createNode({ text, children = [], isBlank = false, isProject = false, project = null, docName = "", autoFocus = false, expanded = true, parent = null, timerStatus = null, status = "Open" }) {
-        return {
-          text,
-          children,
-          isBlank,
-          isProject,
-          project,
-          docName,
-          autoFocus,
-          expanded,
-          parent,
-          timerStatus,
-          status
-        };
-      }
-      function addBlankProject(docs2) {
-        newProject = createNode({ text: "Add project...", isBlank: true, isProject: true, expanded: false });
-        docs2.push(newProject);
-        return docs2;
-      }
-      function addBlankTasks(docs2) {
-        docs2.forEach((project) => {
-          if (project.expanded && !project.isBlank) {
-            addBlankTask(project);
-          }
-        });
-        return docs2;
-      }
-      const isHighlightedProject = (node) => {
-        return node.isProject && node === highlightedProject.value;
-      };
-      const toggleNode = (node, stat) => {
-        stat.open = !stat.open;
-        locals.nodes[node.docName], node.expanded = stat.open;
-        if (stat.open) {
-          if (node.children.length === 0 || !node.children.some((child) => child.isBlank)) {
-            addBlankTask(node);
-            treeData.value = [...treeData.value];
-          }
-          stat.children.forEach((child) => {
-            child.hidden = !stat.open;
-          });
-        }
-        if (!node.isProject) {
-          const parentProject = findParentProject(node);
-          if (parentProject) {
-            highlightedProject.value = parentProject;
-          }
-        } else if (node.isProject && stat.open) {
-          highlightedProject.value = node;
-        } else {
-          const nextExpandedProject = treeData.value.find((project) => project.isProject && project.expanded && !project.isBlank);
-          if (nextExpandedProject) {
-            highlightedProject.value = nextExpandedProject;
-          } else {
-            updateHighlightedProject();
-          }
-        }
-      };
-      function addBlankTask(node) {
-        let blankTask = createNode({ text: "Add task...", isBlank: true, project: node.project, parent: node.docName, timerStatus: "stopped" });
-        node.children = [...node.children, blankTask];
-        node.children.forEach((child) => {
-          if (!child.isBlank) {
-            addBlankTask(child);
-          }
-        });
-      }
-      function findParentProject(node) {
-        return treeData.value.find((project) => project.docName === node.project);
-      }
-      const findParentNode = (nodes, parentDocName) => {
-        for (let node of nodes) {
-          if (node.docName === parentDocName) {
-            return node;
-          } else if (node.children && node.children.length > 0) {
-            const foundNode = findParentNode(node.children, parentDocName);
-            if (foundNode) {
-              return foundNode;
-            }
-          }
-        }
-        return null;
-      };
-      const addSiblingTask = (node) => {
-        addBlankTask(node);
-        node.expanded = node.isProject ? true : false;
-        console.log("Adding sibling task to:", node);
-        const newBlankNode = createNode({ text: node.isProject ? "Add project..." : "Add task...", isBlank: true, project: node.project, isProject: node.isProject, parent: node.parent, timerStatus: "stopped" });
-        console.log("New node:", newBlankNode);
-        const parentNode = findParentNode(treeData.value, node.parent);
-        console.log("Parent node:", parentNode);
-        if (parentNode) {
-          const updatedChildren = [...parentNode.children, newBlankNode];
-          parentNode.children = updatedChildren;
-          treeData.value = [...treeData.value];
-        } else {
-          treeData.value = [...treeData.value, newBlankNode];
-        }
-      };
-      const handleTaskInteraction = (node) => {
-        if (node.isProject) {
-          if (node.expanded && !node.isBlank && node.status !== "Completed") {
-            highlightedProject.value = node;
-          } else {
-            return;
-          }
-          highlightedProject.value = node;
-        } else {
-          const parentProject = findParentProject(node);
-          if (parentProject) {
-            highlightedProject.value = parentProject;
-          }
-        }
-      };
-      const updateHighlightedProject = () => {
-        if (!treeData.value || !Array.isArray(treeData.value)) {
-          console.warn("Tree data is not initialized or not an array");
-          return;
-        }
-        const expandedProjects = treeData.value.filter(
-          (node) => node.isProject && node.expanded && !node.isBlank
-        );
-        if (expandedProjects.length > 0) {
-          highlightedProject.value = expandedProjects[0];
-        } else {
-          const blankProject = treeData.value.find((node) => node.isBlank);
-          if (blankProject) {
-            highlightedProject.value = blankProject;
-          }
-        }
-      };
-      const editRootBlankTask = () => {
-        const project = highlightedProject.value;
-        if (project) {
-          if (project.isBlank) {
-            project.autoFocus = true;
-          } else {
-            const blankTask = project.children.find((task) => task.isBlank);
-            if (blankTask) {
-              blankTask.autoFocus = true;
-            }
-          }
-        }
-      };
-      const handleKeydown = (event) => {
-        const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;'",.<>?/`~\- ]$/;
-        if (document.activeElement.tagName !== "INPUT" && allowedKeys.test(event.key)) {
-          editRootBlankTask();
-        }
-      };
       return {
         treeData,
         isHighlightedProject,
@@ -11865,4 +11934,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.M72U7X4J.js.map
+//# sourceMappingURL=app.bundle.55DR6VTO.js.map

@@ -1,0 +1,25 @@
+.tree-container {
+	/* Adjusts overall tree font size */
+	font-size: 14px;
+}
+
+.small-icon {
+	/* Scales down the icon size */
+	font-size: 1.5em;
+}
+
+.outer-task {
+	/* align center */
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	width: 100%;
+}
+
+.mtl-tree .tree-node:hover {
+	background-color: var(--task-hover-bg-color);
+}
+
+.he-tree__open-icon svg path {
+	fill: var(--icon-color);
+}

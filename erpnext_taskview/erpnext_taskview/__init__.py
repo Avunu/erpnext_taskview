@@ -119,19 +119,6 @@ def set_timer_status(node, timesheet_details):
     return has_active_timer
 
 
-# timesheet docs are project specific, timesheet detail docs are task specific
-# the standard timsheet detail has a from_time, to_time, and an hours field. we added custom fields for paused, start_time, and paused_time_in_seconds
-
-# from_time will always be the time the timer was originally started
-# to_time will be used at the end to mark the end time based on hours and from_time
-# hours will be the total time spent on the task. This will be calculated at the end, based on start_time, the actual timestamp when the timer is stopped, and the paused_time_in_seconds
-# paused will be a boolean value that will be used to determine if the timer is paused or not. When paused, current timestamp and start_time will be used to calculate the paused_time_in_seconds, along with the previous paused_time_in_seconds
-# start_time will be the timestamp when the timer is started or resumed
-# paused_time_in_seconds will be the total time the timer has run previously.
-# status coming from the front end will be stopped, running, or paused. 
-# stopped: final values will be calculated and the timesheet detail will be saved and submitted.
-# running: the timer will be started or resumed
-# paused: the timer will be paused
 @frappe.whitelist()
 def update_timesheet_detail(project_name, task_name, status, timesheet_detail):
 
@@ -209,3 +196,64 @@ def get_timesheet_detail(project_name, task_name, timesheet_detail_name):
 			frappe.db.commit()
 			timesheet_detail_doc = frappe.get_doc('Timesheet Detail', timesheet.time_logs[-1].name)
 	return timesheet_detail_doc
+
+
+@frappe.whitelist()
+def backend_handler():
+	# things this function needs to handle:
+
+	# // status change from Open to Completed
+	# frappe.db.set_value(props.doc.isProject ? 'Project' : 'Task', props.doc.docName, 'status', props.doc.status)
+
+	# // MAKE SURE THE PARENT TASK HAS IS_GROUP = 1
+	# frappe.db.set_value('Task', props.doc.parent, { is_group: 1 })
+
+	# // update the task or project in the database
+	# if (props.doc.isProject) {
+	# 	frappe.db.set_value('Project', props.doc.docName, 'project_name', editedText.value)
+	# }
+	# else {
+	# 	frappe.db.set_value('Task', props.doc.docName, 'subject', editedText.value)
+
+	# // insert the new task or project
+	# frappe.db.insert(newObject)
+
+	# // update the parent task to be a group task so it can have children in a moment
+	# frappe.db.set_value('Task', draggedNode.parent.data.docName, { is_group: 1 });
+
+	# if (draggedNode.data.children) {
+	# 	// recursively update the children nodes with the new project
+	# 	const updateChildren = (children) => {
+	# 		children.forEach(child => {
+	# 			child.project = draggedNode.data.project;
+	# 			// make sure the child isn't a blank task
+	# 			if (!child.isBlank) {
+	# 				// update the db
+	# 				frappe.db.set_value('Task', child.docName, { project: draggedNode.data.project });
+	# 				if (child.children) {
+	# 					updateChildren(child.children);
+	# 				}
+	# 			}
+	# 		});
+	# 	};
+	# 	updateChildren(draggedNode.data.children);
+	# }
+
+	# // CURRENTLY THIS IS NOT UPDATING DEPENDS ON LISTS
+	# // update the dragged node in the db
+	# frappe.db.set_value(draggedNode.data.isProject ? 'Project' : 'Task', draggedNode.data.docName, updateObject);
+
+	# frappe.call({
+	# 	method: 'erpnext_taskview.erpnext_taskview.update_timesheet_detail',
+	# 	args: {
+	# 		project_name: projectName,
+	# 		task_name: taskName,
+	# 		status: status,
+	# 		timesheet_detail: timesheetDetail
+	# 	},
+	# 	freeze: true
+	# })
+
+
+
+	pass
