@@ -248,23 +248,47 @@ def handle_insert(node):
 
 
 def handle_update_parent(node, update_object):
-	if not node.get('parent').get('data').get('isProject'):
-		if len([child for child in node.get('parent').get('data').get('children') if not child.get('isBlank')]) == 1:
-			# update the parent task to be a group task so it can have children in a moment
-			frappe.db.set_value('Task', node.get('parent').get('data').get('docName'), {'is_group': 1})
 
-	if node.get('data').get('children'):
+	# node.parent.data.isProject
+	# node.parent.data.docName
+	# node.parent.data.children
+		# child.isBlank
+
+	# node.data.project
+	# node.data.children
+		# child.isBlank
+		# child.docName
+		# child.children (recursive - isBlank, docName, children) if not isBlank and has children
+
+	# node.data.isProject
+	# node.data.docName
+
+	# {
+	# 	isProject: node.data.isProject,
+	# 	project: node.data.project,
+	# 	docName: node.data.docName,
+	# 	parent: essentialNodeParent(node.parent),
+	# 	children: essentialNodeChildren(node.data)
+	# }
+
+	if not node.get('parent').get('isProject'):
+		if len([child for child in node.get('parent').get('children') if not child.get('isBlank')]) == 1:
+			# update the parent task to be a group task so it can have children in a moment
+			frappe.db.set_value('Task', node.get('parent').get('docName'), {'is_group': 1})
+
+
+	if node.get('children'):
 		def update_children(children):
 			for child in children:
-				child['project'] = node.get('data').get('project')
+				child['project'] = node.get('project')
 				if not child.get('isBlank'):
-					frappe.db.set_value('Task', child.get('docName'), {'project': node.get('data').get('project')})
+					frappe.db.set_value('Task', child.get('docName'), {'project': node.get('project')})
 					if child.get('children'):
 						update_children(child.get('children'))
-		update_children(node.get('data').get('children'))
+		update_children(node.get('children'))
 
 	# // CURRENTLY THIS IS NOT UPDATING DEPENDS ON LISTS
-	frappe.db.set_value('Project' if node.get('data').get('isProject') else 'Task', node.get('data').get('docName'), update_object)
+	frappe.db.set_value('Project' if node.get('isProject') else 'Task', node.get('docName'), update_object)
 
 
 def handle_toggle_timer(node):

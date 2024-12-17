@@ -1,4 +1,4 @@
-import callBackendHandler from './assets/js/script.js';
+import callBackendHandler from './script.js';
 
 export default function useTaskview (props, treeData, highlightedProject, dragContext, currentTheme) {
 
@@ -34,7 +34,7 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
     };
 
     // Function to handle the end of a drag-and-drop operation
-    const handleDragEnd = () => {
+    const handleDragEnd = async () => {
 
         // TODO: setup transition from task to project if a task is dragged to a project. 
 
@@ -60,15 +60,60 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
         if (draggedNode.data.project !== draggedNode.parent.data.project) {
             draggedNode.data.project = draggedNode.parent.data.project;
             updateObject.project = draggedNode.data.project;
-        }
-
-        callBackendHandler('update_parent', draggedNode, updateObject).then(
-            (r) => {
-                premount(new_docs = r.message);
-                // trigger the task interaction
-                handleTaskInteraction(draggedNode.data);
+        }    
+        
+        // update the children on the node
+        const essentialNodeChildren = (nodeData) => {
+            if (!nodeData.children || nodeData.children.length === 0 || nodeData.isBlank) {
+                return [];
             }
-        );
+            if (nodeData.children.length === 1 && nodeData.children[0].isBlank) {
+                return [];
+            }
+            return nodeData.children.map(child => ({
+                isBlank: child.isBlank,
+                docName: child.docName,
+                children: essentialNodeChildren(child) // Recursively process children
+            }));
+        };
+        
+        // update the parent on the node
+        const essentialNodeParent = (parent) => {
+            return {
+                isProject: parent.data.isProject,
+                docName: parent.data.docName || null,
+                children: parent.data.children.map(child => ({
+                    isBlank: child.isBlank
+                }))
+            };
+        };
+
+        // update the node with just the essentials, especially getting rid of circular references between parents and children
+        const essentialNodeProperties = (node) => {
+            return {
+                isProject: node.data.isProject,
+                project: node.data.project,
+                docName: node.data.docName,
+                parent: essentialNodeParent(node.parent),
+                children: essentialNodeChildren(node.data)
+            };
+        };
+
+        const essentialNode = essentialNodeProperties(draggedNode);
+
+        try {
+            const r = await callBackendHandler('update_parent', essentialNode, updateObject);
+            
+            // update the tree data with the new docs
+            premount(new_docs = r.message);
+            
+            // trigger the task interaction
+            handleTaskInteraction(draggedNode.data);
+        } catch (error) {
+            // TODO: THIS ERROR HANDLING NEEDS TO REFRESH THE TREE DATA AS WELL.
+            console.error('Error updating parent:', error);
+            frappe.msgprint('Error updating parent');
+        }
     };
 
     const modifyNodeAndStat = (node, stat) => {
@@ -262,6 +307,10 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
             if (parentProject) {
                 highlightedProject.value = parentProject;
             }
+        }
+        // make sure the highlighted project is expanded and the interacted task is expanded
+        if (!highlightedProject.value.isBlank) {
+            highlightedProject.value.expanded = true;
         }
     };
 

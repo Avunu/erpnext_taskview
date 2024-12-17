@@ -1,5 +1,5 @@
 import { nextTick } from 'vue';
-import callBackendHandler from './assets/js/script.js';
+import callBackendHandler from './script.js';
 
 
 export default function useTask(props, emit, isEditing, editedText, activeTimer) {

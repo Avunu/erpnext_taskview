@@ -11171,6 +11171,26 @@ Expected function or array of functions, received type ${typeof value}.`
   }
   var OpenIcon = /* @__PURE__ */ _export_sfc2(_sfc_main2, [["render", _sfc_render2]]);
 
+  // ../erpnext_taskview/erpnext_taskview/public/js/assets/js/script.js
+  function callBackendHandler(action, node, updateObject) {
+    return new Promise((resolve2, reject) => {
+      frappe.call({
+        method: "erpnext_taskview.erpnext_taskview.backend_handler",
+        args: {
+          action,
+          node,
+          update_object: updateObject
+        },
+        callback: function(r) {
+          resolve2(r);
+        },
+        error: function(err) {
+          reject(err);
+        }
+      });
+    });
+  }
+
   // ../erpnext_taskview/erpnext_taskview/public/js/assets/js/task.js
   function useTask(props, emit2, isEditing, editedText, activeTimer2) {
     const emitInteraction = () => {
@@ -11435,8 +11455,8 @@ Expected function or array of functions, received type ${typeof value}.`
 
   // ../erpnext_taskview/erpnext_taskview/public/js/assets/js/taskview.js
   function useTaskview(props, treeData, highlightedProject, dragContext, currentTheme) {
-    const premount = () => {
-      let docs = addBlankProject(props.docs);
+    const premount = (new_docs2 = null) => {
+      let docs = addBlankProject(new_docs2 || props.docs);
       docs = addBlankTasks(docs);
       treeData.value = docs;
     };
@@ -11455,42 +11475,57 @@ Expected function or array of functions, received type ${typeof value}.`
     const useOnUnmounted = () => {
       document.removeEventListener("keydown", handleKeydown);
     };
-    const handleDragEnd = () => {
+    const handleDragEnd = async () => {
       const draggedNode = dragContext.dragNode;
       draggedNode.parent.data.expanded = true;
       draggedNode.parent.open = true;
-      const childrenCheck = (children) => {
-        children = children.filter((child) => !child.isBlank);
-        return children.length;
-      };
-      if (!draggedNode.parent.data.isProject) {
-        if (childrenCheck(draggedNode.parent.data.children) === 1) {
-          frappe.db.set_value("Task", draggedNode.parent.data.docName, { is_group: 1 });
-        }
-      }
       let updateObject = {};
       draggedNode.data.parent = draggedNode.parent.data.docName;
       updateObject.parent_task = draggedNode.parent.data.isProject ? null : draggedNode.parent.data.docName;
       if (draggedNode.data.project !== draggedNode.parent.data.project) {
         draggedNode.data.project = draggedNode.parent.data.project;
         updateObject.project = draggedNode.data.project;
-        if (draggedNode.data.children) {
-          const updateChildren = (children) => {
-            children.forEach((child) => {
-              child.project = draggedNode.data.project;
-              if (!child.isBlank) {
-                frappe.db.set_value("Task", child.docName, { project: draggedNode.data.project });
-                if (child.children) {
-                  updateChildren(child.children);
-                }
-              }
-            });
-          };
-          updateChildren(draggedNode.data.children);
-        }
       }
-      frappe.db.set_value(draggedNode.data.isProject ? "Project" : "Task", draggedNode.data.docName, updateObject);
-      handleTaskInteraction(draggedNode.data);
+      const essentialNodeChildren = (nodeData) => {
+        if (!nodeData.children || nodeData.children.length === 0 || nodeData.isBlank) {
+          return [];
+        }
+        if (nodeData.children.length === 1 && nodeData.children[0].isBlank) {
+          return [];
+        }
+        return nodeData.children.map((child) => ({
+          isBlank: child.isBlank,
+          docName: child.docName,
+          children: essentialNodeChildren(child)
+        }));
+      };
+      const essentialNodeParent = (parent) => {
+        return {
+          isProject: parent.data.isProject,
+          docName: parent.data.docName || null,
+          children: parent.data.children.map((child) => ({
+            isBlank: child.isBlank
+          }))
+        };
+      };
+      const essentialNodeProperties = (node) => {
+        return {
+          isProject: node.data.isProject,
+          project: node.data.project,
+          docName: node.data.docName,
+          parent: essentialNodeParent(node.parent),
+          children: essentialNodeChildren(node.data)
+        };
+      };
+      const essentialNode = essentialNodeProperties(draggedNode);
+      try {
+        const r = await callBackendHandler("update_parent", essentialNode, updateObject);
+        premount(new_docs = r.message);
+        handleTaskInteraction(draggedNode.data);
+      } catch (error) {
+        console.error("Error updating parent:", error);
+        frappe.msgprint("Error updating parent");
+      }
     };
     const modifyNodeAndStat = (node, stat) => {
       var _a;
@@ -11631,6 +11666,9 @@ Expected function or array of functions, received type ${typeof value}.`
         if (parentProject) {
           highlightedProject.value = parentProject;
         }
+      }
+      if (!highlightedProject.value.isBlank) {
+        highlightedProject.value.expanded = true;
       }
     };
     const updateHighlightedProject = () => {
@@ -11934,4 +11972,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.55DR6VTO.js.map
+//# sourceMappingURL=app.bundle.A67WKZHQ.js.map
