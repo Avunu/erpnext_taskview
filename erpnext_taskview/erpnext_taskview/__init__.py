@@ -1,9 +1,9 @@
 import datetime
 import frappe
 import json
-from frappe.desk.reportview import get_form_params
+from frappe.desk.reportview import get_form_params # type: ignore
 from pathlib import Path
-from jsonpath_ng import parse
+from jsonpath_ng import parse # type: ignore
 
 
 @frappe.whitelist()
@@ -111,10 +111,6 @@ def set_timer_status(node, timesheet_details):
     # If this node or any of its children has an active timer, mark this node as expanded
     if has_active_timer:
         node["expanded"] = True
-
-	# in the initial data query we are setting projects to collapsed and tasks to expanded if they have any children.
-    # else:
-    #     node["expanded"] = False  # Optional: collapse nodes with no active timers
     
     return has_active_timer
 
@@ -199,15 +195,37 @@ def get_timesheet_detail(project_name, task_name, timesheet_detail_name):
 
 
 @frappe.whitelist()
-def backend_handler():
-	# things this function needs to handle:
+def backend_handler(action, node, update_object):
 
-	# // status change from Open to Completed
+	# data = json.loads(data) if data else None
+	node = json.loads(node)
+	update_object = json.loads(update_object) if update_object else None
+
+	if action == 'status_change':
+		handle_status_change(node, update_object)
+	elif action == 'title_change':
+		handle_title_change(node, update_object)
+	elif action == 'insert':
+		handle_insert(node, update_object)
+	elif action == 'update_parent':
+		handle_update_parent(node, update_object)
+	elif action == 'toggle_timer':
+		handle_toggle_timer(node)
+	elif action == 'log_time':
+		handle_log_time(node)
+
+	frappe.db.commit()
+
+	return get()
+
+
+# - status change from Open to Completed or vice versa
+def handle_status_change(node):
 	# frappe.db.set_value(props.doc.isProject ? 'Project' : 'Task', props.doc.docName, 'status', props.doc.status)
+	pass
 
-	# // MAKE SURE THE PARENT TASK HAS IS_GROUP = 1
-	# frappe.db.set_value('Task', props.doc.parent, { is_group: 1 })
 
+def handle_title_change(node):
 	# // update the task or project in the database
 	# if (props.doc.isProject) {
 	# 	frappe.db.set_value('Project', props.doc.docName, 'project_name', editedText.value)
@@ -215,34 +233,41 @@ def backend_handler():
 	# else {
 	# 	frappe.db.set_value('Task', props.doc.docName, 'subject', editedText.value)
 
+	pass
+
+
+def handle_insert(node):
+	# // MAKE SURE THE PARENT TASK HAS IS_GROUP = 1
+	# if the parent is a task, set is_group to 1
+	# frappe.db.set_value('Task', props.doc.parent, { is_group: 1 })
+
 	# // insert the new task or project
 	# frappe.db.insert(newObject)
 
-	# // update the parent task to be a group task so it can have children in a moment
-	# frappe.db.set_value('Task', draggedNode.parent.data.docName, { is_group: 1 });
+	pass
 
-	# if (draggedNode.data.children) {
-	# 	// recursively update the children nodes with the new project
-	# 	const updateChildren = (children) => {
-	# 		children.forEach(child => {
-	# 			child.project = draggedNode.data.project;
-	# 			// make sure the child isn't a blank task
-	# 			if (!child.isBlank) {
-	# 				// update the db
-	# 				frappe.db.set_value('Task', child.docName, { project: draggedNode.data.project });
-	# 				if (child.children) {
-	# 					updateChildren(child.children);
-	# 				}
-	# 			}
-	# 		});
-	# 	};
-	# 	updateChildren(draggedNode.data.children);
-	# }
+
+def handle_update_parent(node, update_object):
+	if not node.get('parent').get('data').get('isProject'):
+		if len([child for child in node.get('parent').get('data').get('children') if not child.get('isBlank')]) == 1:
+			# update the parent task to be a group task so it can have children in a moment
+			frappe.db.set_value('Task', node.get('parent').get('data').get('docName'), {'is_group': 1})
+
+	if node.get('data').get('children'):
+		def update_children(children):
+			for child in children:
+				child['project'] = node.get('data').get('project')
+				if not child.get('isBlank'):
+					frappe.db.set_value('Task', child.get('docName'), {'project': node.get('data').get('project')})
+					if child.get('children'):
+						update_children(child.get('children'))
+		update_children(node.get('data').get('children'))
 
 	# // CURRENTLY THIS IS NOT UPDATING DEPENDS ON LISTS
-	# // update the dragged node in the db
-	# frappe.db.set_value(draggedNode.data.isProject ? 'Project' : 'Task', draggedNode.data.docName, updateObject);
+	frappe.db.set_value('Project' if node.get('data').get('isProject') else 'Task', node.get('data').get('docName'), update_object)
 
+
+def handle_toggle_timer(node):
 	# frappe.call({
 	# 	method: 'erpnext_taskview.erpnext_taskview.update_timesheet_detail',
 	# 	args: {
@@ -253,7 +278,8 @@ def backend_handler():
 	# 	},
 	# 	freeze: true
 	# })
+	pass
 
 
-
+def handle_log_time(node):
 	pass

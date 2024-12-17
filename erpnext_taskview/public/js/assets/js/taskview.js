@@ -1,12 +1,12 @@
+import callBackendHandler from './assets/js/script.js';
+
 export default function useTaskview (props, treeData, highlightedProject, dragContext, currentTheme) {
 
-    const premount = () => {
+    const premount = (new_docs = null) => {
         // add a blank project to the end of the list
-		let docs = addBlankProject(props.docs)
-
+		let docs = addBlankProject(new_docs || props.docs);
 		// add blank tasks to any expanded project branches
 		docs = addBlankTasks(docs);
-
 		treeData.value = docs;
     }
 
@@ -50,19 +50,6 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
         draggedNode.parent.open = true;
         // TODO: assess whether I need to update locals.nodes here
 
-
-        // if the new parent didn't have any children before, then it needs to be changed to a group task
-        const childrenCheck = (children) => {
-            children = children.filter(child => !child.isBlank);
-            return children.length
-        }
-        if (!draggedNode.parent.data.isProject) {
-            if (childrenCheck(draggedNode.parent.data.children) === 1) {
-                // update the parent task to be a group task so it can have children in a moment
-                frappe.db.set_value('Task', draggedNode.parent.data.docName, { is_group: 1 });
-            }
-        }
-
         let updateObject = {};
 
         // update the parent on the node and the update object
@@ -73,31 +60,15 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
         if (draggedNode.data.project !== draggedNode.parent.data.project) {
             draggedNode.data.project = draggedNode.parent.data.project;
             updateObject.project = draggedNode.data.project;
-            if (draggedNode.data.children) {
-                // recursively update the children nodes with the new project
-                const updateChildren = (children) => {
-                    children.forEach(child => {
-                        child.project = draggedNode.data.project;
-                        // make sure the child isn't a blank task
-                        if (!child.isBlank) {
-                            // update the db
-                            frappe.db.set_value('Task', child.docName, { project: draggedNode.data.project });
-                            if (child.children) {
-                                updateChildren(child.children);
-                            }
-                        }
-                    });
-                };
-                updateChildren(draggedNode.data.children);
-            }
         }
 
-        // CURRENTLY THIS IS NOT UPDATING DEPENDS ON LISTS
-        // update the dragged node in the db
-        frappe.db.set_value(draggedNode.data.isProject ? 'Project' : 'Task', draggedNode.data.docName, updateObject);
-
-        // trigger the task interaction
-        handleTaskInteraction(draggedNode.data);
+        callBackendHandler('update_parent', draggedNode, updateObject).then(
+            (r) => {
+                premount(new_docs = r.message);
+                // trigger the task interaction
+                handleTaskInteraction(draggedNode.data);
+            }
+        );
     };
 
     const modifyNodeAndStat = (node, stat) => {
