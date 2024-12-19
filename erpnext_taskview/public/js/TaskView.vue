@@ -16,9 +16,11 @@
 						</div>
 					</a>
 					<!-- task or project -->
-					<Task :doc="node" class="mtl-ml" 
+					<Task :doc="node" :activeTimer="activeTimer" class="mtl-ml" 
 						@task-interaction="handleTaskInteraction(node)"
 						@add-sibling-task="addSiblingTask(node)" 
+						@catch-error="catchError"
+						@catch-success="premount"
 					/>
 				</div>
 			</template>
@@ -59,6 +61,8 @@ export default defineComponent({
 		// instanitate the reactive tree data
 		let treeData = ref([]);
 
+		let activeTimer = ref({});
+
 		// Dark Mode compatibility
 		const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
 		if (currentTheme.value === "automatic") {
@@ -67,6 +71,7 @@ export default defineComponent({
 
 		// get the functions from the useTaskview composition
 		const {
+			catchError,
 			premount,
 			useOnMounted,
 			useOnUnmounted,
@@ -95,6 +100,9 @@ export default defineComponent({
 
 		return {
 			treeData,
+			activeTimer,
+			catchError,
+			premount,
 			isHighlightedProject,
 			modifyNodeAndStat,
 			toggleNode,

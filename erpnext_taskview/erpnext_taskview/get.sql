@@ -13,7 +13,8 @@ TaskIndexes AS (
     COALESCE(t.parent_task, t.project) AS parent_name,
     ROW_NUMBER() OVER (
       PARTITION BY COALESCE(t.parent_task, t.project) 
-      ORDER BY t.name
+      -- ORDER BY t.name
+      ORDER BY t.creation  -- Order by creation instead of name
     ) - 1 AS seq_number
   FROM tabTask t
 ),

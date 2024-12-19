@@ -1,61 +1,61 @@
 import { nextTick } from 'vue';
-import callBackendHandler from './script.js';
+import useBackendHandler from './script.js';
 
 
-export default function useTask(props, emit, isEditing, editedText, activeTimer) {
+export default function useTask(props, emit, isEditing, editedText) {
+
+    const { callBackendHandler } = useBackendHandler();
 
     const emitInteraction = () => {
         emit('task-interaction');
     };
 
-    const toggleComplete = () => {
+    const toggleComplete = async () => {
+        // QUESTIONS ABOUT COMPLETION PARAMETERS WILL BE HANDLED IN THE BACKEND (SEE backend_handler IN init.py)
 
-        // TODO: DON'T ALLOW PROJECTS OR TASKS TO CLOSE IF THEY OR THEIR CHILDREN HAVE RUNNING OR PAUSED TIMERS
-        // OR
-        // STOP ALL TIMERS WHEN A PROJECT OR TASK IS CLOSED
-
-        // TODO: mark child tasks as completed when a parent task is completed, otherwise frappe can't handle it
-
-        // TASKS CAN'T BE COMPLETED IF THEY HAVE TIMERS RUNNING OR PAUSED OR IF THEY HAVE CHILDREN THAT AREN'T COMPLETED
-
-        // DO WE WANT TO THROW AN ERROR, OR AUTOMATICALLY STOP THE TIMER AND MARK THE CHILDREN AS COMPLETED? THROW AN ERROR FOR NOW
-
-
-        // TODO: DEBUG THIS AND ISCOMPLETED VALUE ON LOAD, CHECK THE STATUS VALUE COMING IN FROM THE DATABASE. GET THE CHECKBOX WORKING WITH AN INITIAL COMPLETED STATUS
         props.doc.status = props.doc.status === 'Open' ? 'Completed' : 'Open';
-        // isCompleted.value = props.doc.status === 'Completed' ? true : false;
-        // update completed_by, completed_on, and status in the database
-        // status change from Open to Completed
-        frappe.db.set_value(props.doc.isProject ? 'Project' : 'Task', props.doc.docName, 'status', props.doc.status)
+        locals.nodes[props.doc.docName] = true;
+        const updateObject = {
+            status: props.doc.status
+        }
+        try {
+            const r = await callBackendHandler('status_change', props.doc, updateObject);
+            emit('catch-success', r.message);
+        }
+        catch (error) {
+            emit('catch-error', error);
+        }
+        // ensure this tree branch is expanded with the new data
+        emitInteraction();
     };
 
     const startTimer = () => {
         // Pause the previous timer if it is running
-        if (activeTimer && activeTimer !== props.doc) {
+        if (props.activeTimer.value && props.activeTimer.value !== props.doc) {
             // update the timesheet detail for the previous task
-            activeTimer.timesheetDetail = updateTimesheetDetail(activeTimer.project, activeTimer.docName, 'paused', activeTimer.timesheetDetail);
-            activeTimer.timerStatus = 'paused'; // Pause the previous task
+            props.activeTimer.value.timesheetDetail = updateTimesheetDetail(props.activeTimer.value.project, props.activeTimer.value.docName, 'paused', props.activeTimer.value.timesheetDetail);
+            props.activeTimer.value.timerStatus = 'paused'; // Pause the previous task
         }
 
         // update or create the timesheet detail for this task
         props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, 'running', props.doc.timesheetDetail);
         props.doc.timerStatus = 'running';
-        activeTimer = props.doc;
+        props.activeTimer.value = props.doc;
     };
 
     const pauseTimer = () => {
         // update the timesheet detail for this task
         props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, 'paused', props.doc.timesheetDetail);
         props.doc.timerStatus = 'paused';
-        activeTimer = null;
+        props.activeTimer.value = {};
     };
 
     const stopTimer = () => {
         // update the timesheet detail for this task
         updateTimesheetDetail(props.doc.project, props.doc.docName, 'stopped', props.doc.timesheetDetail);
         props.doc.timerStatus = 'stopped';
-        if (activeTimer === props.doc) {
-            activeTimer = null;
+        if (props.activeTimer.value === props.doc) {
+            props.activeTimer.value = {};
         }
         // once a timer is stopped, we should clear the timesheet detail so a new one can be created if the timer is started again
         props.doc.timesheetDetail = {};
@@ -85,25 +85,34 @@ export default function useTask(props, emit, isEditing, editedText, activeTimer)
     };
 
     // Update the timesheet detail for the task
-    const updateTimesheetDetail = (projectName, taskName, status, timesheetDetail) => {
+    const updateTimesheetDetail = async (projectName, taskName, status, timesheetDetail) => {
 
         if (!timesheetDetail) {
             timesheetDetail = {};
         }
 
-        frappe.call({
-            method: 'erpnext_taskview.erpnext_taskview.update_timesheet_detail',
-            args: {
-                project_name: projectName,
-                task_name: taskName,
-                status: status,
-                timesheet_detail: timesheetDetail
-            },
-            freeze: true
-        })
-        .then(r => {
+        // frappe.call({
+        //     method: 'erpnext_taskview.erpnext_taskview.update_timesheet_detail',
+        //     args: {
+        //         project_name: projectName,
+        //         task_name: taskName,
+        //         status: status,
+        //         timesheet_detail: timesheetDetail
+        //     },
+        //     freeze: true
+        // })
+        // .then(r => {
+        //     return r.message;
+        // });
+
+        // use callBackendHandler to update the timesheet detail
+        try {
+            const r = await callBackendHandler('toggle_timer', {project: projectName, docName: taskName, status: status, timesheetDetail: timesheetDetail}, null);
             return r.message;
-        });
+        }
+        catch (error) {
+            emit('catch-error', error)
+        }
     };
 
     const editTask = () => {
@@ -122,8 +131,7 @@ export default function useTask(props, emit, isEditing, editedText, activeTimer)
         event.target.blur(); // This triggers the @blur event, calling saveEdit
     };
 
-    const saveEdit = () => {
-        console.log('Saving edit...', props.doc)
+    const saveEdit = async () => {
         if (editedText.value.trim() !== '') {
             if (editedText.value !== props.doc.text) {
                 // THIS IS WHERE WE UPDATE THE TASK OR PROJECT IN THE DATABASE
@@ -134,6 +142,7 @@ export default function useTask(props, emit, isEditing, editedText, activeTimer)
                 if (props.doc.isBlank) {
 
                     let newObject
+                    let parentTask = null
                     if (props.doc.isProject) {
                         newObject = {
                             doctype: 'Project',
@@ -144,13 +153,7 @@ export default function useTask(props, emit, isEditing, editedText, activeTimer)
                     }
                     else {
                         // deal with parent_task
-                        let parentTask
-                        if (props.doc.parent === props.doc.project) {
-                            parentTask = null
-                        }
-                        else {
-                            // MAKE SURE THE PARENT TASK HAS IS_GROUP = 1
-                            frappe.db.set_value('Task', props.doc.parent, { is_group: 1 })
+                        if (props.doc.parent !== props.doc.project) {
                             parentTask = props.doc.parent
                         }
 
@@ -165,29 +168,50 @@ export default function useTask(props, emit, isEditing, editedText, activeTimer)
                     }
 
                     // insert the new task or project
-                    frappe.db.insert(newObject).then(doc => {
-                        // Mark the current task as no longer blank
-                        props.doc.isBlank = false;
-                        props.doc.docName = doc.name;
-                        
-                        // props.doc.text = `${doc.name}: ${doc.project_name}`;
-                        props.doc.text = props.doc.isProject ? `${doc.name}: ${doc.project_name}` : editedText.value;
-                        // Emit an event to notify the parent component to add a new blank task
-                        emit('add-sibling-task', props.doc);
-                    })
+                    try {
+                        const r = await callBackendHandler('insert', {parent: {isProject: parentTask ? true : false}}, newObject);
+                        emit('catch-success', r.message);
+                        // emit('add-sibling-task')
+                    }
+                    catch (error) {
+                        emit('catch-error', error);
+                    }
                 }
                 else {
-                    console.log('Updating task or project in the database...')
-                    // update the task or project in the database
+                    let text = editedText.value;
                     if (props.doc.isProject) {
-                        frappe.db.set_value('Project', props.doc.docName, 'project_name', editedText.value)
+                        // Split on the first colon and strip whitespace from the second part
+                        const parts = editedText.value.split(':', 2); // Split on the first colon only
+                        text = parts[1].trim(); // Remove any leading/trailing whitespace
                     }
-                    else {
-                        frappe.db.set_value('Task', props.doc.docName, 'subject', editedText.value)
+                    const updateObject = props.doc.isProject ? {project_name: text} : {subject: text};
+                    const nodeObject = {
+                        isProject: props.doc.isProject,
+                        docName: props.doc.docName
+                    }
+                        
+                    // update the task or project in the database
+                    try {
+                        const r = await callBackendHandler('title_change', nodeObject, updateObject);
+                        emit('catch-success', r.message);
+                    }
+                    catch (error) {
+                        emit('catch-error', error);
                     }
                 }
+
             }
         }
+        // ensure this tree branch is expanded with the new data
+        props.doc.isBlank = false;
+        props.doc.expanded = true;
+        if (props.doc.docName === "" && props.doc.isProject) {
+            locals.nodes[props.doc.text] = true;
+        } 
+        else {
+            locals.nodes[props.doc.project] = true;
+        }
+        emitInteraction();
         isEditing.value = false;
     };
 

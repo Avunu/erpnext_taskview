@@ -61,7 +61,7 @@ import { defineComponent, ref, watch } from 'vue';
 import useTask from '../assets/js/task.js';
 
 // Global reference for the currently active timer
-let activeTimer = null;
+// let activeTimer = null;
 
 export default defineComponent({
     name: 'Task',
@@ -70,6 +70,11 @@ export default defineComponent({
             type: Object,
             required: true,
             default: () => ({})
+        },
+        activeTimer: {
+            type: Object,
+            required: false,
+            default: null
         }
     },
     setup(props, { emit }) {
@@ -85,7 +90,7 @@ export default defineComponent({
             editTask,
             unfocusInput,
             saveEdit
-        } = useTask(props, emit, isEditing, editedText, activeTimer);
+        } = useTask(props, emit, isEditing, editedText);
 
         // Trigger editing mode if autoFocus is true
         watch(() => props.doc.autoFocus, (newVal) => {

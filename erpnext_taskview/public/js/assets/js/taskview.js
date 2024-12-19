@@ -1,15 +1,21 @@
-import callBackendHandler from './script.js';
+import useBackendHandler from './script.js';
 
 export default function useTaskview (props, treeData, highlightedProject, dragContext, currentTheme) {
 
-    const premount = (new_docs = null) => {
+    // this finalizes the tree data by adding a blank project to the end of the list and blank tasks to any expanded project branches
+    const premount = (newDocs = null) => {
         // add a blank project to the end of the list
-		let docs = addBlankProject(new_docs || props.docs);
+		let docs = addBlankProject(newDocs || props.docs);
+
 		// add blank tasks to any expanded project branches
 		docs = addBlankTasks(docs);
 		treeData.value = docs;
     }
 
+    // get the backend handler functions
+    const { callBackendHandler, catchError } = useBackendHandler(premount);
+
+    // this sets the theme to match frappe, initializes the highlighted project, and initializes the keydown event listener for editing the blank task
     const useOnMounted = () => {
 			
         // set the theme to match frappe
@@ -103,25 +109,45 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
 
         try {
             const r = await callBackendHandler('update_parent', essentialNode, updateObject);
-            
             // update the tree data with the new docs
-            premount(new_docs = r.message);
-            
+            premount(newDocs = r.message);
             // trigger the task interaction
             handleTaskInteraction(draggedNode.data);
         } catch (error) {
-            // TODO: THIS ERROR HANDLING NEEDS TO REFRESH THE TREE DATA AS WELL.
-            console.error('Error updating parent:', error);
-            frappe.msgprint('Error updating parent');
+            catchError(error);
         }
     };
 
     const modifyNodeAndStat = (node, stat) => {
+        
+        // this is a workaround for when the blank project node gets turned into a project node. There's no docname to use as a key in locals.nodes, so we need to use the text instead, and then switch it to the docname when we get the new docname from the backend
+        let splitText = '';
+        let pleaseExpandMe = false;
+        // if node.text starts with PROJ-
+        if (node.text.startsWith('PROJ-')) {
+            splitText = node.text.split(':', 2);
+            splitText = splitText[1].trim();
+        }
+        if (splitText !== '' && splitText in locals.nodes) { // Check if the key exists
+            const value = locals.nodes[splitText]; // Retrieve the value
+            stat.open = value; // Update stat.open
+            node.expanded = value; // Update node.expanded
+            locals.nodes[node.docName] = value; // Add new key-value pair
+            delete locals.nodes[splitText]; // Remove old key
+            pleaseExpandMe = value;
+        }
+
         if (locals.nodes?.[node.docName] === false || !node.expanded) {
             stat.open = false;
             node.expanded = false;
         };
-
+        if (locals.nodes?.[node.docName] === true || node.expanded || pleaseExpandMe) {
+            stat.open = true;
+            node.expanded = true;
+            // make sure there are blank tasks under this expanded project
+            addBlankTask(node);
+            updateHighlightedProject();
+        }
         var runningChildren = false;
         // check if this node has any children with a timer running or paused
         if (node.children && node.children.length > 0) {
@@ -171,7 +197,6 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
         newProject = createNode({ text: 'Add project...', isBlank: true, isProject: true, expanded: false });
         docs.push(newProject);
 
-        
         return docs
     }
     
@@ -188,12 +213,22 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
 
     // Function to determine if a node is the highlighted project
     const isHighlightedProject = (node) => {
-        return node.isProject && node === highlightedProject.value;
+        // try to compare the docName fields of the node and the highlighted project
+        try {
+            return node.isProject && node.docName === highlightedProject.value.docName;
+        }
+        catch (error) {
+            return node.isProject && node === highlightedProject.value
+        }
     };
 
     const toggleNode = (node, stat) => {
+        if (node.isBlank) {
+            return;
+        }
         stat.open = !stat.open;
-        locals.nodes[node.docName], node.expanded = stat.open;
+        locals.nodes[node.docName] = stat.open;
+        node.expanded = stat.open;
 
         // open the children if the node is being opened
         if (stat.open) {
@@ -232,9 +267,14 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
     };
 
     const addBlankTask = (node) => {
+        let blankNodeAdded = false;
         // Add a blank task to the current node's children
-        let blankTask = createNode({ text: 'Add task...', isBlank: true, project: node.project, parent: node.docName, timerStatus: 'stopped' });
-        node.children = [...node.children, blankTask];
+        // check first to make sure there isn't already a blank task
+        if (!node.children.some(child => child.isBlank)) {
+            let blankTask = createNode({ text: 'Add task...', isBlank: true, project: node.project, parent: node.docName, timerStatus: 'stopped', expanded: false });
+            node.children = [...node.children, blankTask];
+            blankNodeAdded = true;
+        }
 
         // Recursively add a blank task to each child node's children
         node.children.forEach(child => {
@@ -242,6 +282,10 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
             addBlankTask(child);
             }
         });
+
+        if (blankNodeAdded) {
+            treeData.value = [...treeData.value];
+        }
     }
 
     const findParentProject = (node) => {
@@ -272,15 +316,10 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
         // and we should expand the node if it's a project
         node.expanded = node.isProject ? true : false;
 
-        console.log('Adding sibling task to:', node);
         // Create a new task object
         const newBlankNode = createNode({ text: node.isProject ? 'Add project...' : 'Add task...', isBlank: true, project: node.project, isProject: node.isProject, parent: node.parent, timerStatus: 'stopped' });
 
-        console.log('New node:', newBlankNode);
-
         const parentNode = findParentNode(treeData.value, node.parent);
-
-        console.log('Parent node:', parentNode);
 
         if (parentNode) {
             const updatedChildren = [...parentNode.children, newBlankNode];
@@ -301,7 +340,6 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
             else {
                 return
             }
-            highlightedProject.value = node;
         } else {
             const parentProject = findParentProject(node);
             if (parentProject) {
@@ -310,7 +348,11 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
         }
         // make sure the highlighted project is expanded and the interacted task is expanded
         if (!highlightedProject.value.isBlank) {
-            highlightedProject.value.expanded = true;
+            // make sure there are blank tasks under this expanded project
+            if (highlightedProject.value.docName !== "") {
+                locals.nodes[highlightedProject.value.docName] = true;
+                addBlankTask(highlightedProject.value);
+            }
         }
     };
 
@@ -359,6 +401,7 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
     };
 
     return {
+        catchError,
         premount,
         useOnMounted,
         useOnUnmounted,

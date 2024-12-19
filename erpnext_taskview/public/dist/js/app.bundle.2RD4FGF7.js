@@ -11172,53 +11172,86 @@ Expected function or array of functions, received type ${typeof value}.`
   var OpenIcon = /* @__PURE__ */ _export_sfc2(_sfc_main2, [["render", _sfc_render2]]);
 
   // ../erpnext_taskview/erpnext_taskview/public/js/assets/js/script.js
-  function callBackendHandler(action, node, updateObject) {
-    return new Promise((resolve2, reject) => {
-      frappe.call({
-        method: "erpnext_taskview.erpnext_taskview.backend_handler",
-        args: {
-          action,
-          node,
-          update_object: updateObject
-        },
-        callback: function(r) {
-          resolve2(r);
-        },
-        error: function(err) {
-          reject(err);
-        }
+  function useBackendHandler(premount = null) {
+    const callBackendHandler = (action, node, updateObject) => {
+      return new Promise((resolve2, reject) => {
+        frappe.call({
+          method: "erpnext_taskview.erpnext_taskview.backend_handler",
+          args: {
+            action,
+            node,
+            update_object: updateObject
+          },
+          callback: function(r) {
+            resolve2(r);
+          },
+          error: function(err) {
+            reject(err);
+          }
+        });
       });
-    });
+    };
+    const catchError = async (error) => {
+      console.error("Error updating data:", error);
+      frappe.msgprint(`Error updating data: ${error}`);
+      try {
+        if (premount) {
+          const r = await callBackendHandler("get", null, null);
+          premount(newDocs = r.message);
+        } else {
+          console.error("No premount function provided");
+          frappe.msgprint("No premount function provided");
+        }
+      } catch (error2) {
+        console.error("Error getting updated docs:", error2);
+        frappe.msgprint(`Error getting updated docs: ${error2}`);
+      }
+    };
+    return {
+      catchError,
+      callBackendHandler
+    };
   }
 
   // ../erpnext_taskview/erpnext_taskview/public/js/assets/js/task.js
-  function useTask(props, emit2, isEditing, editedText, activeTimer2) {
+  function useTask(props, emit2, isEditing, editedText) {
+    const { callBackendHandler } = useBackendHandler();
     const emitInteraction = () => {
       emit2("task-interaction");
     };
-    const toggleComplete = () => {
+    const toggleComplete = async () => {
       props.doc.status = props.doc.status === "Open" ? "Completed" : "Open";
-      frappe.db.set_value(props.doc.isProject ? "Project" : "Task", props.doc.docName, "status", props.doc.status);
+      locals.nodes[props.doc.docName] = true;
+      const updateObject = {
+        status: props.doc.status
+      };
+      try {
+        const r = await callBackendHandler("status_change", props.doc, updateObject);
+        emit2("catch-success", r.message);
+      } catch (error) {
+        emit2("catch-error", error);
+      }
+      emitInteraction();
     };
     const startTimer = () => {
-      if (activeTimer2 && activeTimer2 !== props.doc) {
-        activeTimer2.timesheetDetail = updateTimesheetDetail(activeTimer2.project, activeTimer2.docName, "paused", activeTimer2.timesheetDetail);
-        activeTimer2.timerStatus = "paused";
+      if (props.activeTimer.value && props.activeTimer.value !== props.doc) {
+        props.activeTimer.value.timesheetDetail = updateTimesheetDetail(props.activeTimer.value.project, props.activeTimer.value.docName, "paused", props.activeTimer.value.timesheetDetail);
+        props.activeTimer.value.timerStatus = "paused";
       }
       props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, "running", props.doc.timesheetDetail);
       props.doc.timerStatus = "running";
-      activeTimer2 = props.doc;
+      props.activeTimer.value = props.doc;
     };
     const pauseTimer = () => {
       props.doc.timesheetDetail = updateTimesheetDetail(props.doc.project, props.doc.docName, "paused", props.doc.timesheetDetail);
       props.doc.timerStatus = "paused";
-      activeTimer2 = null;
+      props.activeTimer.value = {};
     };
     const stopTimer = () => {
       updateTimesheetDetail(props.doc.project, props.doc.docName, "stopped", props.doc.timesheetDetail);
       props.doc.timerStatus = "stopped";
-      if (activeTimer2 === props.doc) {
-        activeTimer2 = null;
+      if (props.activeTimer.value === props.doc) {
+        props.activeTimer.value = {};
       }
       props.doc.timesheetDetail = {};
     };
@@ -11238,22 +11271,16 @@ Expected function or array of functions, received type ${typeof value}.`
         stopTimer();
       }
     };
-    const updateTimesheetDetail = (projectName, taskName, status, timesheetDetail) => {
+    const updateTimesheetDetail = async (projectName, taskName, status, timesheetDetail) => {
       if (!timesheetDetail) {
         timesheetDetail = {};
       }
-      frappe.call({
-        method: "erpnext_taskview.erpnext_taskview.update_timesheet_detail",
-        args: {
-          project_name: projectName,
-          task_name: taskName,
-          status,
-          timesheet_detail: timesheetDetail
-        },
-        freeze: true
-      }).then((r) => {
+      try {
+        const r = await callBackendHandler("toggle_timer", { project: projectName, docName: taskName, status, timesheetDetail }, null);
         return r.message;
-      });
+      } catch (error) {
+        emit2("catch-error", error);
+      }
     };
     const editTask = () => {
       isEditing.value = true;
@@ -11268,13 +11295,13 @@ Expected function or array of functions, received type ${typeof value}.`
     const unfocusInput = (event) => {
       event.target.blur();
     };
-    const saveEdit = () => {
-      console.log("Saving edit...", props.doc);
+    const saveEdit = async () => {
       if (editedText.value.trim() !== "") {
         if (editedText.value !== props.doc.text) {
           props.doc.text = editedText.value;
           if (props.doc.isBlank) {
             let newObject;
+            let parentTask = null;
             if (props.doc.isProject) {
               newObject = {
                 doctype: "Project",
@@ -11283,11 +11310,7 @@ Expected function or array of functions, received type ${typeof value}.`
                 status: "Open"
               };
             } else {
-              let parentTask;
-              if (props.doc.parent === props.doc.project) {
-                parentTask = null;
-              } else {
-                frappe.db.set_value("Task", props.doc.parent, { is_group: 1 });
+              if (props.doc.parent !== props.doc.project) {
                 parentTask = props.doc.parent;
               }
               newObject = {
@@ -11299,22 +11322,40 @@ Expected function or array of functions, received type ${typeof value}.`
                 priority: "Medium"
               };
             }
-            frappe.db.insert(newObject).then((doc3) => {
-              props.doc.isBlank = false;
-              props.doc.docName = doc3.name;
-              props.doc.text = props.doc.isProject ? `${doc3.name}: ${doc3.project_name}` : editedText.value;
-              emit2("add-sibling-task", props.doc);
-            });
+            try {
+              const r = await callBackendHandler("insert", { parent: { isProject: parentTask ? true : false } }, newObject);
+              emit2("catch-success", r.message);
+            } catch (error) {
+              emit2("catch-error", error);
+            }
           } else {
-            console.log("Updating task or project in the database...");
+            let text = editedText.value;
             if (props.doc.isProject) {
-              frappe.db.set_value("Project", props.doc.docName, "project_name", editedText.value);
-            } else {
-              frappe.db.set_value("Task", props.doc.docName, "subject", editedText.value);
+              const parts = editedText.value.split(":", 2);
+              text = parts[1].trim();
+            }
+            const updateObject = props.doc.isProject ? { project_name: text } : { subject: text };
+            const nodeObject = {
+              isProject: props.doc.isProject,
+              docName: props.doc.docName
+            };
+            try {
+              const r = await callBackendHandler("title_change", nodeObject, updateObject);
+              emit2("catch-success", r.message);
+            } catch (error) {
+              emit2("catch-error", error);
             }
           }
         }
       }
+      props.doc.isBlank = false;
+      props.doc.expanded = true;
+      if (props.doc.docName === "" && props.doc.isProject) {
+        locals.nodes[props.doc.text] = true;
+      } else {
+        locals.nodes[props.doc.project] = true;
+      }
+      emitInteraction();
       isEditing.value = false;
     };
     return {
@@ -11333,7 +11374,6 @@ Expected function or array of functions, received type ${typeof value}.`
   }
 
   // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=script
-  var activeTimer = null;
   var Task_default = defineComponent({
     name: "Task",
     props: {
@@ -11341,6 +11381,11 @@ Expected function or array of functions, received type ${typeof value}.`
         type: Object,
         required: true,
         default: () => ({})
+      },
+      activeTimer: {
+        type: Object,
+        required: false,
+        default: null
       }
     },
     setup(props, { emit: emit2 }) {
@@ -11354,7 +11399,7 @@ Expected function or array of functions, received type ${typeof value}.`
         editTask,
         unfocusInput,
         saveEdit
-      } = useTask(props, emit2, isEditing, editedText, activeTimer);
+      } = useTask(props, emit2, isEditing, editedText);
       watch(() => props.doc.autoFocus, (newVal) => {
         if (newVal) {
           editTask();
@@ -11455,11 +11500,12 @@ Expected function or array of functions, received type ${typeof value}.`
 
   // ../erpnext_taskview/erpnext_taskview/public/js/assets/js/taskview.js
   function useTaskview(props, treeData, highlightedProject, dragContext, currentTheme) {
-    const premount = (new_docs2 = null) => {
-      let docs = addBlankProject(new_docs2 || props.docs);
+    const premount = (newDocs2 = null) => {
+      let docs = addBlankProject(newDocs2 || props.docs);
       docs = addBlankTasks(docs);
       treeData.value = docs;
     };
+    const { callBackendHandler, catchError } = useBackendHandler(premount);
     const useOnMounted = () => {
       document.documentElement.style.setProperty(
         "--task-hover-bg-color",
@@ -11520,20 +11566,39 @@ Expected function or array of functions, received type ${typeof value}.`
       const essentialNode = essentialNodeProperties(draggedNode);
       try {
         const r = await callBackendHandler("update_parent", essentialNode, updateObject);
-        premount(new_docs = r.message);
+        premount(newDocs = r.message);
         handleTaskInteraction(draggedNode.data);
       } catch (error) {
-        console.error("Error updating parent:", error);
-        frappe.msgprint("Error updating parent");
+        catchError(error);
       }
     };
     const modifyNodeAndStat = (node, stat) => {
-      var _a;
+      var _a, _b;
+      let splitText = "";
+      let pleaseExpandMe = false;
+      if (node.text.startsWith("PROJ-")) {
+        splitText = node.text.split(":", 2);
+        splitText = splitText[1].trim();
+      }
+      if (splitText !== "" && splitText in locals.nodes) {
+        const value = locals.nodes[splitText];
+        stat.open = value;
+        node.expanded = value;
+        locals.nodes[node.docName] = value;
+        delete locals.nodes[splitText];
+        pleaseExpandMe = value;
+      }
       if (((_a = locals.nodes) == null ? void 0 : _a[node.docName]) === false || !node.expanded) {
         stat.open = false;
         node.expanded = false;
       }
       ;
+      if (((_b = locals.nodes) == null ? void 0 : _b[node.docName]) === true || node.expanded || pleaseExpandMe) {
+        stat.open = true;
+        node.expanded = true;
+        addBlankTask(node);
+        updateHighlightedProject();
+      }
       var runningChildren = false;
       if (node.children && node.children.length > 0) {
         runningChildren = node.children.some((child) => child.timerStatus === "running" || child.timerStatus === "paused");
@@ -11582,11 +11647,19 @@ Expected function or array of functions, received type ${typeof value}.`
       return docs;
     };
     const isHighlightedProject = (node) => {
-      return node.isProject && node === highlightedProject.value;
+      try {
+        return node.isProject && node.docName === highlightedProject.value.docName;
+      } catch (error) {
+        return node.isProject && node === highlightedProject.value;
+      }
     };
     const toggleNode = (node, stat) => {
+      if (node.isBlank) {
+        return;
+      }
       stat.open = !stat.open;
-      locals.nodes[node.docName], node.expanded = stat.open;
+      locals.nodes[node.docName] = stat.open;
+      node.expanded = stat.open;
       if (stat.open) {
         if (node.children.length === 0 || !node.children.some((child) => child.isBlank)) {
           addBlankTask(node);
@@ -11613,13 +11686,20 @@ Expected function or array of functions, received type ${typeof value}.`
       }
     };
     const addBlankTask = (node) => {
-      let blankTask = createNode({ text: "Add task...", isBlank: true, project: node.project, parent: node.docName, timerStatus: "stopped" });
-      node.children = [...node.children, blankTask];
+      let blankNodeAdded = false;
+      if (!node.children.some((child) => child.isBlank)) {
+        let blankTask = createNode({ text: "Add task...", isBlank: true, project: node.project, parent: node.docName, timerStatus: "stopped", expanded: false });
+        node.children = [...node.children, blankTask];
+        blankNodeAdded = true;
+      }
       node.children.forEach((child) => {
         if (!child.isBlank) {
           addBlankTask(child);
         }
       });
+      if (blankNodeAdded) {
+        treeData.value = [...treeData.value];
+      }
     };
     const findParentProject = (node) => {
       return treeData.value.find((project) => project.docName === node.project);
@@ -11640,11 +11720,8 @@ Expected function or array of functions, received type ${typeof value}.`
     const addSiblingTask = (node) => {
       addBlankTask(node);
       node.expanded = node.isProject ? true : false;
-      console.log("Adding sibling task to:", node);
       const newBlankNode = createNode({ text: node.isProject ? "Add project..." : "Add task...", isBlank: true, project: node.project, isProject: node.isProject, parent: node.parent, timerStatus: "stopped" });
-      console.log("New node:", newBlankNode);
       const parentNode = findParentNode(treeData.value, node.parent);
-      console.log("Parent node:", parentNode);
       if (parentNode) {
         const updatedChildren = [...parentNode.children, newBlankNode];
         parentNode.children = updatedChildren;
@@ -11660,7 +11737,6 @@ Expected function or array of functions, received type ${typeof value}.`
         } else {
           return;
         }
-        highlightedProject.value = node;
       } else {
         const parentProject = findParentProject(node);
         if (parentProject) {
@@ -11668,7 +11744,10 @@ Expected function or array of functions, received type ${typeof value}.`
         }
       }
       if (!highlightedProject.value.isBlank) {
-        highlightedProject.value.expanded = true;
+        if (highlightedProject.value.docName !== "") {
+          locals.nodes[highlightedProject.value.docName] = true;
+          addBlankTask(highlightedProject.value);
+        }
       }
     };
     const updateHighlightedProject = () => {
@@ -11708,6 +11787,7 @@ Expected function or array of functions, received type ${typeof value}.`
       }
     };
     return {
+      catchError,
       premount,
       useOnMounted,
       useOnUnmounted,
@@ -11746,11 +11826,13 @@ Expected function or array of functions, received type ${typeof value}.`
       let highlightedProject = ref(null);
       let highlightedTask = ref(null);
       let treeData = ref([]);
+      let activeTimer = ref({});
       const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
       if (currentTheme.value === "automatic") {
         currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       }
       const {
+        catchError,
         premount,
         useOnMounted,
         useOnUnmounted,
@@ -11771,6 +11853,9 @@ Expected function or array of functions, received type ${typeof value}.`
       });
       return {
         treeData,
+        activeTimer,
+        catchError,
+        premount,
         isHighlightedProject,
         modifyNodeAndStat,
         toggleNode,
@@ -11822,10 +11907,13 @@ Expected function or array of functions, received type ${typeof value}.`
             createCommentVNode(" task or project "),
             createVNode(_component_Task, {
               doc: node,
+              activeTimer: _ctx.activeTimer,
               class: "mtl-ml",
               onTaskInteraction: ($event) => _ctx.handleTaskInteraction(node),
-              onAddSiblingTask: ($event) => _ctx.addSiblingTask(node)
-            }, null, 8, ["doc", "onTaskInteraction", "onAddSiblingTask"])
+              onAddSiblingTask: ($event) => _ctx.addSiblingTask(node),
+              onCatchError: _ctx.catchError,
+              onCatchSuccess: _ctx.premount
+            }, null, 8, ["doc", "activeTimer", "onTaskInteraction", "onAddSiblingTask", "onCatchError", "onCatchSuccess"])
           ], 2)) : createCommentVNode("v-if", true)
         ]),
         _: 1
@@ -11972,4 +12060,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.A67WKZHQ.js.map
+//# sourceMappingURL=app.bundle.2RD4FGF7.js.map

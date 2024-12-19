@@ -27,6 +27,16 @@
             "label": "Paused Time",
             "read_only": 1,
             "module": "ERPNext Taskview"
+        },
+        {
+            "dt": "Timesheet Detail",
+            "fetch_from": "task.subject",
+            "fieldname": "task_subject",
+            "fieldtype": "Data",
+            "insert_after": "task",
+            "label": "Task Subject",
+            "read_only": 1,
+            "module": "ERPNext Taskview"
         }
     ],
     "property_setters": [],
