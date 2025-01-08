@@ -267,6 +267,9 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
     };
 
     const addBlankTask = (node) => {
+        if (node.status === 'Completed') {
+            return;
+        }
         let blankNodeAdded = false;
         // Add a blank task to the current node's children
         // check first to make sure there isn't already a blank task

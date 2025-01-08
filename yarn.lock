@@ -536,6 +536,11 @@ aria-hidden@^1.2.4:
   dependencies:
     tslib "^2.0.0"
 
+body-scroll-lock@^4.0.0-beta.0:
+  version "4.0.0-beta.0"
+  resolved "https://registry.yarnpkg.com/body-scroll-lock/-/body-scroll-lock-4.0.0-beta.0.tgz#4f78789d10e6388115c0460cd6d7d4dd2bbc4f7e"
+  integrity sha512-a7tP5+0Mw3YlUJcGAKUqIBkYYGlYxk2fnCasq/FUph1hadxlTRjF+gAcZksxANnaMnALjxEddmSi/H3OR8ugcQ==
+
 classnames@^2.2.5:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.5.1.tgz#ba774c614be0f016da105c858e7159eae8e7687b"
@@ -1026,6 +1031,13 @@ vue-demi@>=0.13.0, vue-demi@>=0.14.8, vue-demi@^0.14.10, vue-demi@latest:
   version "0.14.10"
   resolved "https://registry.yarnpkg.com/vue-demi/-/vue-demi-0.14.10.tgz#afc78de3d6f9e11bf78c55e8510ee12814522f04"
   integrity sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==
+
+vue3-side-panel@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/vue3-side-panel/-/vue3-side-panel-1.3.0.tgz#50bcf3acc44f79b79dd2c73a87f4e7736322a15a"
+  integrity sha512-H2nsptd+7O4dTZfvjuhMt9v6/UBCDyeArL424qYkwqfeL7LGi9L5gpgWDXkYtj41G+miFooclmJphmRdllDp/Q==
+  dependencies:
+    body-scroll-lock "^4.0.0-beta.0"
 
 vue@^3:
   version "3.4.38"

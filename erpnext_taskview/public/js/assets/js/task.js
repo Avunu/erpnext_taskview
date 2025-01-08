@@ -2,7 +2,7 @@ import { nextTick } from 'vue';
 import useBackendHandler from './script.js';
 
 
-export default function useTask(props, emit, isEditing, editedText) {
+export default function useTask(props, emit, isEditing, editedText, cancelTriggered) {
 
     const { callBackendHandler } = useBackendHandler();
 
@@ -91,20 +91,6 @@ export default function useTask(props, emit, isEditing, editedText) {
             timesheetDetail = {};
         }
 
-        // frappe.call({
-        //     method: 'erpnext_taskview.erpnext_taskview.update_timesheet_detail',
-        //     args: {
-        //         project_name: projectName,
-        //         task_name: taskName,
-        //         status: status,
-        //         timesheet_detail: timesheetDetail
-        //     },
-        //     freeze: true
-        // })
-        // .then(r => {
-        //     return r.message;
-        // });
-
         // use callBackendHandler to update the timesheet detail
         try {
             const r = await callBackendHandler('toggle_timer', {project: projectName, docName: taskName, status: status, timesheetDetail: timesheetDetail}, null);
@@ -130,6 +116,20 @@ export default function useTask(props, emit, isEditing, editedText) {
     const unfocusInput = (event) => {
         event.target.blur(); // This triggers the @blur event, calling saveEdit
     };
+
+    const cancelEdit = () => {
+        cancelTriggered.value = true; // Indicate that the edit is being canceled
+        isEditing.value = false; // Exit editing mode
+        editedText.value = props.doc.text; // Revert changes
+      };
+  
+    const handleBlur = async () => {
+        if (cancelTriggered.value) {
+          cancelTriggered.value = false; // Reset the flag
+          return; // Do nothing if cancel was triggered
+        }
+        await saveEdit(); // Save the edit otherwise
+      };
 
     const saveEdit = async () => {
         if (editedText.value.trim() !== '') {
@@ -226,6 +226,8 @@ export default function useTask(props, emit, isEditing, editedText) {
         updateTimesheetDetail,
         editTask,
         unfocusInput,
-        saveEdit
+        saveEdit,
+        cancelEdit,
+        handleBlur
     }
 }

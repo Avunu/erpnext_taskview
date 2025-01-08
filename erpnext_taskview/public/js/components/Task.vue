@@ -14,10 +14,9 @@
                 <p v-if="!isEditing" class="task-subject" @click="editTask">
                     {{ doc.text }}
                 </p>
-                <input v-if="isEditing" type="text" v-model="editedText" @blur="saveEdit" @keyup.enter="unfocusInput"
+                <input v-if="isEditing" type="text" v-model="editedText" @blur="handleBlur" @keyup.enter="unfocusInput" @keydown.esc="cancelEdit"
                     class="task-subject-edit" />
             </div>
-
 
             <!-- only render the controls if the doc is not a project and is not blank -->
             <div v-if="!doc.isProject && !doc.isBlank" class="task-controls">
@@ -34,10 +33,10 @@
                 >
                     {{
                         doc.timerStatus === 'stopped' 
-                            ? 'Start Timer' 
+                            ? 'Start' 
                             : doc.timerStatus === 'paused' 
-                            ? 'Resume Timer' 
-                            : 'Pause Timer'
+                            ? 'Resume' 
+                            : 'Pause'
                     }}
                 </button>
 
@@ -50,7 +49,7 @@
                     }"
                     @click="logOrStopTimer"
                 >
-                    {{ doc.timerStatus === 'stopped' ? 'Log Time' : 'Stop Timer' }}
+                    {{ doc.timerStatus === 'stopped' ? 'Log' : 'Stop' }}
                 </button>
             </div>
         </div>
@@ -60,8 +59,6 @@
 import { defineComponent, ref, watch } from 'vue';
 import useTask from '../assets/js/task.js';
 
-// Global reference for the currently active timer
-// let activeTimer = null;
 
 export default defineComponent({
     name: 'Task',
@@ -81,6 +78,7 @@ export default defineComponent({
         // const isCompleted = ref(props.doc.status === 'Completed');
         const isEditing = ref(false);
         const editedText = ref('');
+        const cancelTriggered = ref(false);
 
         const {
             emitInteraction,
@@ -89,8 +87,10 @@ export default defineComponent({
             logOrStopTimer,
             editTask,
             unfocusInput,
-            saveEdit
-        } = useTask(props, emit, isEditing, editedText);
+            saveEdit,
+            cancelEdit,
+            handleBlur
+        } = useTask(props, emit, isEditing, editedText, cancelTriggered);
 
         // Trigger editing mode if autoFocus is true
         watch(() => props.doc.autoFocus, (newVal) => {
@@ -109,6 +109,8 @@ export default defineComponent({
             editTask,
             unfocusInput,
             saveEdit,
+            cancelEdit,
+            handleBlur,
             emitInteraction
         };
     }

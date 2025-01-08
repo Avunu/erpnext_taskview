@@ -1,6 +1,9 @@
 frappe.provide("frappe.views");
 import { createApp, h } from "vue";
 import TaskView from "./TaskView.vue";
+import Sidebar from "./components/Sidebar.vue";
+import VueSidePanel from 'vue3-side-panel';
+import 'vue3-side-panel/dist/vue3-side-panel.css';
 
 
 frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListViewSelect {
@@ -94,10 +97,23 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
         locals.nodes = {};
 
+        console.log(this.data);
+
         // Pass the data to TaskView
         createApp({
             render: () => h(TaskView, { docs: this.data })
         }).mount(container);
+
+        // class layout-side-section is where we are going to put the sidebar, after the other children in that element.
+        const sidebarParentElement = document.querySelector('.layout-side-section');
+        // make an element to hold the sidebar
+        const sidebarElement = document.createElement('div');
+        sidebarElement.id = 'sidebar';
+        sidebarParentElement.appendChild(sidebarElement);
+
+        createApp({
+            render: () => h(Sidebar, { data: this.data })
+        }).use(VueSidePanel).mount(sidebarElement);
     }
 };
 
