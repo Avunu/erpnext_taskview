@@ -2,7 +2,7 @@ import { nextTick } from 'vue';
 import useBackendHandler from './script.js';
 
 
-export default function useTask(props, emit, isEditing, editedText, cancelTriggered) {
+export default function useTask(props, emit, isEditing, editedText, cancelTriggered, isOpened) {
 
     const { callBackendHandler } = useBackendHandler();
 
@@ -215,6 +215,10 @@ export default function useTask(props, emit, isEditing, editedText, cancelTrigge
         isEditing.value = false;
     };
 
+    const toggleSidebar = () => {
+        isOpened.value = !isOpened.value;
+    };
+
     return {
         emitInteraction,
         toggleComplete,
@@ -228,6 +232,7 @@ export default function useTask(props, emit, isEditing, editedText, cancelTrigge
         unfocusInput,
         saveEdit,
         cancelEdit,
-        handleBlur
+        handleBlur,
+        toggleSidebar
     }
 }

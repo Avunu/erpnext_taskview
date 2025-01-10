@@ -1,0 +1,33 @@
+.sidebar-header {
+	position: relative;
+  }
+  
+  .close-btn {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	background-color: #333; /* Darker color to reduce the brightness */
+	border: none;
+	border-radius: 5px; /* Rounded corners */
+	font-size: 20px;
+	color: white; /* Text color for the button */
+	padding: 8px 12px; /* Space around the icon */
+	cursor: pointer;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .close-btn:hover {
+	background-color: #555; /* Slightly lighter shade on hover */
+	transform: none; /* Remove scaling to prevent shifting */
+  }
+  
+  .close-btn:focus {
+	outline: none; /* Remove default focus outline */
+  }
+  
+  .sidebar {
+	background-color: var(--sidebar-bg-color);
+	height: 100%;
+	padding-left: 20px;
+  }
+  

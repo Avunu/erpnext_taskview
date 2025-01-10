@@ -16,7 +16,7 @@
 						</div>
 					</a>
 					<!-- task or project -->
-					<Task :doc="node" :activeTimer="activeTimer" class="mtl-ml" 
+					<Task :doc="node" :activeTimer="activeTimer" :sideTimersElement="sideTimersElement" class="mtl-ml" 
 						@task-interaction="handleTaskInteraction(node)"
 						@add-sibling-task="addSiblingTask(node)" 
 						@catch-error="catchError"
@@ -69,6 +69,12 @@ export default defineComponent({
 			currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 		}
 
+		// make an element to hold the sidetimers
+		let sideTimersParentElement = document.querySelector('.layout-side-section');
+        let sideTimersElement = document.createElement('div');
+        sideTimersElement.id = 'sidetimers';
+        sideTimersParentElement.appendChild(sideTimersElement);
+
 		// get the functions from the useTaskview composition
 		const {
 			catchError,
@@ -109,7 +115,8 @@ export default defineComponent({
 			handleTaskInteraction,
 			handleKeydown,
 			handleDragEnd,
-			addSiblingTask
+			addSiblingTask,
+			sideTimersElement,
 		};
 	},
 });

@@ -1,4 +1,4 @@
-frappe.dom.set_style("/* ../erpnext_taskview/erpnext_taskview/public/js/assets/style/task.css */\n.highlighted-project div .task-subject-container {\n  font-weight: bold;\n}\n.task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.task-subject-container {\n  flex-grow: 1;\n  margin-right: 10px;\n  border-bottom: 1px dashed darkgrey;\n}\n.task-subject {\n  padding: 0;\n  margin: 0;\n  cursor: text;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-subject-edit {\n  padding: 5px;\n  border: 1px solid #ddd;\n  border-radius: 4px;\n  font-size: 14px;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-controls {\n  display: flex;\n  align-items: center;\n  flex-shrink: 0;\n}\n.task-control {\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n}\n.custom-checkbox {\n  display: flex;\n  align-items: center;\n  position: relative;\n}\n.custom-checkbox label {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  margin: 0;\n}\n.custom-checkbox input {\n  position: absolute;\n  opacity: 0;\n  cursor: pointer;\n}\n.custom-checkbox .checkmark {\n  height: 20px;\n  width: 20px;\n  background-color: #d8dfed;\n  border-radius: 4px;\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n.custom-checkbox input:checked ~ .checkmark {\n  background-color: #2196F3;\n}\n.custom-checkbox .checkmark:after {\n  content: \"\";\n  position: absolute;\n  display: none;\n}\n.custom-checkbox input:checked ~ .checkmark:after {\n  display: block;\n  width: 5px;\n  height: 10px;\n  border: solid white;\n  border-width: 0 3px 3px 0;\n  transform: rotate(45deg);\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=style&index=0 */\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/default.css */\n.tree-node--with-tree-line {\n  position: relative;\n}\n.tree-line {\n  position: absolute;\n  background-color: #bbb;\n}\n.tree-vline {\n  width: 1px;\n  top: 0;\n  bottom: 0;\n}\n.tree-hline {\n  height: 1px;\n  top: 50%;\n  width: 10px;\n}\n.he-tree--rtl {\n  direction: rtl;\n}\n.he-tree-drag-placeholder {\n  background: #ddf2f9;\n  border: 1px dashed #00d9ff;\n  height: 22px;\n  width: 100%;\n}\n.he-tree__open-icon {\n  cursor: pointer;\n  user-select: none;\n  display: inline-block;\n}\n.he-tree__open-icon.open {\n  transform: rotate(90deg);\n}\n.he-tree__open-icon svg {\n  width: 1em;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/material-design.css */\n.mtl-tree .tree-node-inner {\n  display: flex;\n  align-items: center;\n  font-size: 14px;\n}\n.mtl-tree .tree-node {\n  padding: 1px 0;\n}\n.mtl-tree .tree-node:hover {\n  background-color: #ededed;\n}\n.mtl-checkbox {\n  width: 14px;\n  height: 14px;\n}\n.mtl-ml {\n  margin-left: 4px;\n}\n.mtl-mr {\n  margin-right: 4px;\n}\n.mtl-tree table {\n  width: 100%;\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n.mtl-tree td,\n.mtl-tree th {\n  border-bottom: 1px solid rgba(224, 224, 224, 1);\n  line-height: 1.5;\n}\n.mtl-tree tr:last-child td,\n.mtl-tree tr:last-child tr {\n  border-bottom: 0px;\n}\n.mtl-text-left {\n  text-align: left;\n}\n.mtl-text-center {\n  text-align: center;\n}\n.mtl-text-right {\n  text-align: right;\n}\n\n/* ../erpnext_taskview/erpnext_taskview/public/js/assets/style/taskview.css */\n.tree-container {\n  font-size: 14px;\n}\n.small-icon {\n  font-size: 1.5em;\n}\n.outer-task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.mtl-tree .tree-node:hover {\n  background-color: var(--task-hover-bg-color);\n}\n.he-tree__open-icon svg path {\n  fill: var(--icon-color);\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=style&index=0 */\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/SidebarNode.vue?type=style&index=0 */\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Sidebar.vue?type=style&index=0 */\n\n/* ../erpnext_taskview/node_modules/vue3-side-panel/dist/vue3-side-panel.css */\n.vsp-wrapper .vsp-overlay {\n  position: fixed;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n}\n.vsp-wrapper .vsp {\n  position: fixed;\n}\n.vsp-wrapper .vsp--right-side,\n.vsp-wrapper .vsp--left-side {\n  top: 0;\n  height: 100%;\n}\n.vsp-wrapper .vsp--right-side {\n  right: 0;\n  left: unset;\n}\n.vsp-wrapper .vsp--left-side {\n  right: unset;\n  left: 0;\n}\n.vsp-wrapper .vsp--bottom-side,\n.vsp-wrapper .vsp--top-side {\n  left: 0;\n  width: 100%;\n}\n.vsp-wrapper .vsp--bottom-side {\n  bottom: 0;\n}\n.vsp-wrapper .vsp--top-side {\n  top: 0;\n}\n.vsp-wrapper .vsp__header,\n.vsp-wrapper .vsp__body,\n.vsp-wrapper .vsp__footer {\n  overflow: auto;\n}\n.vsp-wrapper .vsp__body {\n  position: relative;\n}\n.vsp-wrapper .overlay-enter-active,\n.vsp-wrapper .overlay-leave-active {\n  animation: overlay-transition;\n}\n.vsp-wrapper .overlay-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-right-enter-active,\n.vsp-wrapper .slide-right-leave-active {\n  animation: slide-right;\n}\n.vsp-wrapper .slide-right-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-left-enter-active,\n.vsp-wrapper .slide-left-leave-active {\n  animation: slide-left;\n}\n.vsp-wrapper .slide-left-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-top-enter-active,\n.vsp-wrapper .slide-top-leave-active {\n  animation: slide-left;\n}\n.vsp-wrapper .slide-top-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-top-enter-active,\n.vsp-wrapper .slide-top-leave-active {\n  animation: slide-top;\n}\n.vsp-wrapper .slide-top-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-bottom-enter-active,\n.vsp-wrapper .slide-bottom-leave-active {\n  animation: slide-bottom;\n}\n.vsp-wrapper .slide-bottom-leave-active {\n  animation-direction: reverse;\n}\n@keyframes slide-right {\n  0% {\n    transform: translateX(100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateX(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-left {\n  0% {\n    transform: translateX(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateX(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-bottom {\n  0% {\n    transform: translateY(100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-top {\n  0% {\n    transform: translateY(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-top {\n  0% {\n    transform: translateY(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes overlay-transition {\n  0% {\n    opacity: 0;\n  }\n  100% {\n    opacity: var(--overlay-opacity);\n  }\n}\n.vsp-close {\n  position: absolute;\n  top: 24px;\n  right: 24px;\n  display: inline-block;\n  width: 36px;\n  height: 36px;\n  text-align: center;\n  cursor: pointer;\n  background: white;\n  border-radius: 50%;\n  transition: background-color 0.1s;\n}\n.vsp-close:hover {\n  background: #f7f7f7;\n}\n.vsp-close__x {\n  position: relative;\n  top: 8px;\n  left: -1px;\n  display: inline-block;\n  width: 20px;\n  height: 20px;\n}\n.vsp-close__x::before,\n.vsp-close__x::after {\n  position: absolute;\n  width: 2px;\n  height: 20px;\n  content: \" \";\n  background-color: #777;\n}\n.vsp-close__x::before {\n  transform: rotate(-45deg);\n}\n.vsp-close__x::after {\n  transform: rotate(45deg);\n}\n.vsp-close:active .vsp-close__x {\n  top: 9px;\n  left: -1px;\n}\n.vsp-close:active {\n  top: 23px;\n  right: 23px;\n  width: 38px;\n  height: 38px;\n  background: #f1f1f1;\n}\n/*# sourceMappingURL=app.bundle.65NEQ6KF.css.map */\n");
+frappe.dom.set_style("/* ../erpnext_taskview/node_modules/vue3-side-panel/dist/vue3-side-panel.css */\n.vsp-wrapper .vsp-overlay {\n  position: fixed;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n}\n.vsp-wrapper .vsp {\n  position: fixed;\n}\n.vsp-wrapper .vsp--right-side,\n.vsp-wrapper .vsp--left-side {\n  top: 0;\n  height: 100%;\n}\n.vsp-wrapper .vsp--right-side {\n  right: 0;\n  left: unset;\n}\n.vsp-wrapper .vsp--left-side {\n  right: unset;\n  left: 0;\n}\n.vsp-wrapper .vsp--bottom-side,\n.vsp-wrapper .vsp--top-side {\n  left: 0;\n  width: 100%;\n}\n.vsp-wrapper .vsp--bottom-side {\n  bottom: 0;\n}\n.vsp-wrapper .vsp--top-side {\n  top: 0;\n}\n.vsp-wrapper .vsp__header,\n.vsp-wrapper .vsp__body,\n.vsp-wrapper .vsp__footer {\n  overflow: auto;\n}\n.vsp-wrapper .vsp__body {\n  position: relative;\n}\n.vsp-wrapper .overlay-enter-active,\n.vsp-wrapper .overlay-leave-active {\n  animation: overlay-transition;\n}\n.vsp-wrapper .overlay-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-right-enter-active,\n.vsp-wrapper .slide-right-leave-active {\n  animation: slide-right;\n}\n.vsp-wrapper .slide-right-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-left-enter-active,\n.vsp-wrapper .slide-left-leave-active {\n  animation: slide-left;\n}\n.vsp-wrapper .slide-left-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-top-enter-active,\n.vsp-wrapper .slide-top-leave-active {\n  animation: slide-left;\n}\n.vsp-wrapper .slide-top-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-top-enter-active,\n.vsp-wrapper .slide-top-leave-active {\n  animation: slide-top;\n}\n.vsp-wrapper .slide-top-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-bottom-enter-active,\n.vsp-wrapper .slide-bottom-leave-active {\n  animation: slide-bottom;\n}\n.vsp-wrapper .slide-bottom-leave-active {\n  animation-direction: reverse;\n}\n@keyframes slide-right {\n  0% {\n    transform: translateX(100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateX(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-left {\n  0% {\n    transform: translateX(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateX(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-bottom {\n  0% {\n    transform: translateY(100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-top {\n  0% {\n    transform: translateY(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-top {\n  0% {\n    transform: translateY(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes overlay-transition {\n  0% {\n    opacity: 0;\n  }\n  100% {\n    opacity: var(--overlay-opacity);\n  }\n}\n.vsp-close {\n  position: absolute;\n  top: 24px;\n  right: 24px;\n  display: inline-block;\n  width: 36px;\n  height: 36px;\n  text-align: center;\n  cursor: pointer;\n  background: white;\n  border-radius: 50%;\n  transition: background-color 0.1s;\n}\n.vsp-close:hover {\n  background: #f7f7f7;\n}\n.vsp-close__x {\n  position: relative;\n  top: 8px;\n  left: -1px;\n  display: inline-block;\n  width: 20px;\n  height: 20px;\n}\n.vsp-close__x::before,\n.vsp-close__x::after {\n  position: absolute;\n  width: 2px;\n  height: 20px;\n  content: \" \";\n  background-color: #777;\n}\n.vsp-close__x::before {\n  transform: rotate(-45deg);\n}\n.vsp-close__x::after {\n  transform: rotate(45deg);\n}\n.vsp-close:active .vsp-close__x {\n  top: 9px;\n  left: -1px;\n}\n.vsp-close:active {\n  top: 23px;\n  right: 23px;\n  width: 38px;\n  height: 38px;\n  background: #f1f1f1;\n}\n\n/* ../erpnext_taskview/erpnext_taskview/public/js/assets/style/sidebar.css */\n.sidebar-header {\n  position: relative;\n}\n.close-btn {\n  position: absolute;\n  top: 10px;\n  right: 10px;\n  background-color: #333;\n  border: none;\n  border-radius: 5px;\n  font-size: 20px;\n  color: white;\n  padding: 8px 12px;\n  cursor: pointer;\n  transition: background-color 0.3s ease, transform 0.2s ease;\n}\n.close-btn:hover {\n  background-color: #555;\n  transform: none;\n}\n.close-btn:focus {\n  outline: none;\n}\n.sidebar {\n  background-color: var(--sidebar-bg-color);\n  height: 100%;\n  padding-left: 20px;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Sidebar.vue?type=style&index=0 */\n\n/* ../erpnext_taskview/erpnext_taskview/public/js/assets/style/task.css */\n.highlighted-project div .task-subject-container {\n  font-weight: bold;\n}\n.task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.task-subject-container {\n  flex-grow: 1;\n  margin-right: 10px;\n  margin-left: 10px;\n  border-bottom: 1px dashed darkgrey;\n}\n.task-subject {\n  padding: 0;\n  margin: 0;\n  cursor: text;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-subject-edit {\n  padding: 5px;\n  border: 1px solid #ddd;\n  border-radius: 4px;\n  font-size: 14px;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-controls {\n  display: flex;\n  align-items: center;\n  flex-shrink: 0;\n}\n.task-control {\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n}\n.custom-checkbox {\n  display: flex;\n  align-items: center;\n  position: relative;\n}\n.custom-checkbox label {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  margin: 0;\n}\n.custom-checkbox input {\n  position: absolute;\n  opacity: 0;\n  cursor: pointer;\n}\n.custom-checkbox .checkmark {\n  height: 20px;\n  width: 20px;\n  background-color: #d8dfed;\n  border-radius: 4px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n.custom-checkbox input:checked ~ .checkmark {\n  background-color: #2196F3;\n}\n.custom-checkbox .checkmark:after {\n  content: \"\";\n  position: absolute;\n  display: none;\n}\n.custom-checkbox input:checked ~ .checkmark:after {\n  display: block;\n  width: 5px;\n  height: 10px;\n  border: solid white;\n  border-width: 0 3px 3px 0;\n  transform: rotate(45deg);\n}\n.expand-sidebar {\n  height: 20px;\n  width: 20px;\n  background-color: #d8dfed;\n  border-radius: 4px;\n  border: none;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  transition: color 0.3s ease;\n  outline: none;\n  position: relative;\n}\n.expand-sidebar .expand-icon {\n  font-size: 16px;\n  color: #1976D2;\n  font-weight: bold;\n  pointer-events: none;\n}\n.expand-sidebar:hover .expand-icon {\n  color: #0D47A1;\n}\n.expand-sidebar:active .expand-icon {\n  color: #0A3C8A;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=style&index=0 */\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/default.css */\n.tree-node--with-tree-line {\n  position: relative;\n}\n.tree-line {\n  position: absolute;\n  background-color: #bbb;\n}\n.tree-vline {\n  width: 1px;\n  top: 0;\n  bottom: 0;\n}\n.tree-hline {\n  height: 1px;\n  top: 50%;\n  width: 10px;\n}\n.he-tree--rtl {\n  direction: rtl;\n}\n.he-tree-drag-placeholder {\n  background: #ddf2f9;\n  border: 1px dashed #00d9ff;\n  height: 22px;\n  width: 100%;\n}\n.he-tree__open-icon {\n  cursor: pointer;\n  user-select: none;\n  display: inline-block;\n}\n.he-tree__open-icon.open {\n  transform: rotate(90deg);\n}\n.he-tree__open-icon svg {\n  width: 1em;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/material-design.css */\n.mtl-tree .tree-node-inner {\n  display: flex;\n  align-items: center;\n  font-size: 14px;\n}\n.mtl-tree .tree-node {\n  padding: 1px 0;\n}\n.mtl-tree .tree-node:hover {\n  background-color: #ededed;\n}\n.mtl-checkbox {\n  width: 14px;\n  height: 14px;\n}\n.mtl-ml {\n  margin-left: 4px;\n}\n.mtl-mr {\n  margin-right: 4px;\n}\n.mtl-tree table {\n  width: 100%;\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n.mtl-tree td,\n.mtl-tree th {\n  border-bottom: 1px solid rgba(224, 224, 224, 1);\n  line-height: 1.5;\n}\n.mtl-tree tr:last-child td,\n.mtl-tree tr:last-child tr {\n  border-bottom: 0px;\n}\n.mtl-text-left {\n  text-align: left;\n}\n.mtl-text-center {\n  text-align: center;\n}\n.mtl-text-right {\n  text-align: right;\n}\n\n/* ../erpnext_taskview/erpnext_taskview/public/js/assets/style/taskview.css */\n.tree-container {\n  font-size: 14px;\n}\n.small-icon {\n  font-size: 1.5em;\n}\n.outer-task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.mtl-tree .tree-node:hover {\n  background-color: var(--task-hover-bg-color);\n}\n.he-tree__open-icon svg path {\n  fill: var(--icon-color);\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=style&index=0 */\n/*# sourceMappingURL=app.bundle.6VE6MR2U.css.map */\n");
 (() => {
   var __defProp = Object.defineProperty;
   var __defProps = Object.defineProperties;
@@ -2779,7 +2779,7 @@ If this is a native custom element, make sure to exclude it from component resol
       beforeUnmount,
       destroyed,
       unmounted,
-      render: render6,
+      render: render5,
       renderTracked,
       renderTriggered,
       errorCaptured,
@@ -2931,8 +2931,8 @@ If this is a native custom element, make sure to exclude it from component resol
         instance.exposed = {};
       }
     }
-    if (render6 && instance.render === NOOP) {
-      instance.render = render6;
+    if (render5 && instance.render === NOOP) {
+      instance.render = render5;
     }
     if (inheritAttrs != null) {
       instance.inheritAttrs = inheritAttrs;
@@ -3168,7 +3168,7 @@ If this is a native custom element, make sure to exclude it from component resol
     };
   }
   var uid$1 = 0;
-  function createAppAPI(render6, hydrate) {
+  function createAppAPI(render5, hydrate) {
     return function createApp2(rootComponent, rootProps = null) {
       if (!isFunction(rootComponent)) {
         rootComponent = extend({}, rootComponent);
@@ -3271,7 +3271,7 @@ If this is a native custom element, make sure to exclude it from component resol
             }
             if (true) {
               context3.reload = () => {
-                render6(
+                render5(
                   cloneVNode(vnode),
                   rootContainer,
                   namespace
@@ -3281,7 +3281,7 @@ If this is a native custom element, make sure to exclude it from component resol
             if (isHydrate && hydrate) {
               hydrate(vnode, rootContainer);
             } else {
-              render6(vnode, rootContainer, namespace);
+              render5(vnode, rootContainer, namespace);
             }
             isMounted = true;
             app._container = rootContainer;
@@ -3300,7 +3300,7 @@ If you want to remount the same app, move your app creation logic into a factory
         },
         unmount() {
           if (isMounted) {
-            render6(null, app._container);
+            render5(null, app._container);
             if (true) {
               app._instance = null;
               devtoolsUnmountApp(app);
@@ -5635,7 +5635,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       return teleportEnd ? hostNextSibling(teleportEnd) : el;
     };
     let isFlushing2 = false;
-    const render6 = (vnode, container, namespace) => {
+    const render5 = (vnode, container, namespace) => {
       if (vnode == null) {
         if (container._vnode) {
           unmount(container._vnode, null, null, true);
@@ -5679,9 +5679,9 @@ For more details, see https://link.vuejs.org/feature-flags.`
       );
     }
     return {
-      render: render6,
+      render: render5,
       hydrate,
-      createApp: createAppAPI(render6, hydrate)
+      createApp: createAppAPI(render5, hydrate)
     };
   }
   function resolveChildrenNamespace({ type, props }, currentNamespace) {
@@ -6186,7 +6186,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       slots,
       attrs,
       emit: emit2,
-      render: render6,
+      render: render5,
       renderCache,
       props,
       data,
@@ -6214,7 +6214,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
           }
         }) : proxyToUse;
         result = normalizeVNode(
-          render6.call(
+          render5.call(
             thisProxy,
             proxyToUse,
             renderCache,
@@ -11513,7 +11513,7 @@ Expected function or array of functions, received type ${typeof value}.`
   }
 
   // ../erpnext_taskview/erpnext_taskview/public/js/assets/js/task.js
-  function useTask(props, emit2, isEditing, editedText, cancelTriggered) {
+  function useTask(props, emit2, isEditing, editedText, cancelTriggered, isOpened) {
     const { callBackendHandler } = useBackendHandler();
     const emitInteraction = () => {
       emit2("task-interaction");
@@ -11669,6 +11669,9 @@ Expected function or array of functions, received type ${typeof value}.`
       emitInteraction();
       isEditing.value = false;
     };
+    const toggleSidebar = () => {
+      isOpened.value = !isOpened.value;
+    };
     return {
       emitInteraction,
       toggleComplete,
@@ -11682,13 +11685,603 @@ Expected function or array of functions, received type ${typeof value}.`
       unfocusInput,
       saveEdit,
       cancelEdit,
-      handleBlur
+      handleBlur,
+      toggleSidebar
     };
   }
+
+  // ../erpnext_taskview/node_modules/body-scroll-lock/lib/bodyScrollLock.esm.js
+  function _toConsumableArray(arr) {
+    if (Array.isArray(arr)) {
+      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+        arr2[i] = arr[i];
+      }
+      return arr2;
+    } else {
+      return Array.from(arr);
+    }
+  }
+  var hasPassiveEvents = false;
+  if (typeof window !== "undefined") {
+    passiveTestOptions = {
+      get passive() {
+        hasPassiveEvents = true;
+        return void 0;
+      }
+    };
+    window.addEventListener("testPassive", null, passiveTestOptions);
+    window.removeEventListener("testPassive", null, passiveTestOptions);
+  }
+  var passiveTestOptions;
+  var isIosDevice = typeof window !== "undefined" && window.navigator && window.navigator.platform && (/iP(ad|hone|od)/.test(window.navigator.platform) || window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1);
+  var locks = [];
+  var documentListenerAdded = false;
+  var initialClientY = -1;
+  var previousBodyOverflowSetting = void 0;
+  var previousBodyPosition = void 0;
+  var previousBodyPaddingRight = void 0;
+  var allowTouchMove = function allowTouchMove2(el) {
+    return locks.some(function(lock) {
+      if (lock.options.allowTouchMove && lock.options.allowTouchMove(el)) {
+        return true;
+      }
+      return false;
+    });
+  };
+  var preventDefault = function preventDefault2(rawEvent) {
+    var e = rawEvent || window.event;
+    if (allowTouchMove(e.target)) {
+      return true;
+    }
+    if (e.touches.length > 1)
+      return true;
+    if (e.preventDefault)
+      e.preventDefault();
+    return false;
+  };
+  var setOverflowHidden = function setOverflowHidden2(options) {
+    if (previousBodyPaddingRight === void 0) {
+      var _reserveScrollBarGap = !!options && options.reserveScrollBarGap === true;
+      var scrollBarGap = window.innerWidth - document.documentElement.clientWidth;
+      if (_reserveScrollBarGap && scrollBarGap > 0) {
+        var computedBodyPaddingRight = parseInt(window.getComputedStyle(document.body).getPropertyValue("padding-right"), 10);
+        previousBodyPaddingRight = document.body.style.paddingRight;
+        document.body.style.paddingRight = computedBodyPaddingRight + scrollBarGap + "px";
+      }
+    }
+    if (previousBodyOverflowSetting === void 0) {
+      previousBodyOverflowSetting = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+    }
+  };
+  var restoreOverflowSetting = function restoreOverflowSetting2() {
+    if (previousBodyPaddingRight !== void 0) {
+      document.body.style.paddingRight = previousBodyPaddingRight;
+      previousBodyPaddingRight = void 0;
+    }
+    if (previousBodyOverflowSetting !== void 0) {
+      document.body.style.overflow = previousBodyOverflowSetting;
+      previousBodyOverflowSetting = void 0;
+    }
+  };
+  var setPositionFixed = function setPositionFixed2() {
+    return window.requestAnimationFrame(function() {
+      if (previousBodyPosition === void 0) {
+        previousBodyPosition = {
+          position: document.body.style.position,
+          top: document.body.style.top,
+          left: document.body.style.left
+        };
+        var _window = window, scrollY = _window.scrollY, scrollX = _window.scrollX, innerHeight = _window.innerHeight;
+        document.body.style.position = "fixed";
+        document.body.style.top = -scrollY;
+        document.body.style.left = -scrollX;
+        setTimeout(function() {
+          return window.requestAnimationFrame(function() {
+            var bottomBarHeight = innerHeight - window.innerHeight;
+            if (bottomBarHeight && scrollY >= innerHeight) {
+              document.body.style.top = -(scrollY + bottomBarHeight);
+            }
+          });
+        }, 300);
+      }
+    });
+  };
+  var restorePositionSetting = function restorePositionSetting2() {
+    if (previousBodyPosition !== void 0) {
+      var y = -parseInt(document.body.style.top, 10);
+      var x = -parseInt(document.body.style.left, 10);
+      document.body.style.position = previousBodyPosition.position;
+      document.body.style.top = previousBodyPosition.top;
+      document.body.style.left = previousBodyPosition.left;
+      window.scrollTo(x, y);
+      previousBodyPosition = void 0;
+    }
+  };
+  var isTargetElementTotallyScrolled = function isTargetElementTotallyScrolled2(targetElement) {
+    return targetElement ? targetElement.scrollHeight - targetElement.scrollTop <= targetElement.clientHeight : false;
+  };
+  var handleScroll = function handleScroll2(event, targetElement) {
+    var clientY = event.targetTouches[0].clientY - initialClientY;
+    if (allowTouchMove(event.target)) {
+      return false;
+    }
+    if (targetElement && targetElement.scrollTop === 0 && clientY > 0) {
+      return preventDefault(event);
+    }
+    if (isTargetElementTotallyScrolled(targetElement) && clientY < 0) {
+      return preventDefault(event);
+    }
+    event.stopPropagation();
+    return true;
+  };
+  var disableBodyScroll = function disableBodyScroll2(targetElement, options) {
+    if (!targetElement) {
+      console.error("disableBodyScroll unsuccessful - targetElement must be provided when calling disableBodyScroll on IOS devices.");
+      return;
+    }
+    if (locks.some(function(lock2) {
+      return lock2.targetElement === targetElement;
+    })) {
+      return;
+    }
+    var lock = {
+      targetElement,
+      options: options || {}
+    };
+    locks = [].concat(_toConsumableArray(locks), [lock]);
+    if (isIosDevice) {
+      setPositionFixed();
+    } else {
+      setOverflowHidden(options);
+    }
+    if (isIosDevice) {
+      targetElement.ontouchstart = function(event) {
+        if (event.targetTouches.length === 1) {
+          initialClientY = event.targetTouches[0].clientY;
+        }
+      };
+      targetElement.ontouchmove = function(event) {
+        if (event.targetTouches.length === 1) {
+          handleScroll(event, targetElement);
+        }
+      };
+      if (!documentListenerAdded) {
+        document.addEventListener("touchmove", preventDefault, hasPassiveEvents ? { passive: false } : void 0);
+        documentListenerAdded = true;
+      }
+    }
+  };
+  var enableBodyScroll = function enableBodyScroll2(targetElement) {
+    if (!targetElement) {
+      console.error("enableBodyScroll unsuccessful - targetElement must be provided when calling enableBodyScroll on IOS devices.");
+      return;
+    }
+    locks = locks.filter(function(lock) {
+      return lock.targetElement !== targetElement;
+    });
+    if (isIosDevice) {
+      targetElement.ontouchstart = null;
+      targetElement.ontouchmove = null;
+      if (documentListenerAdded && locks.length === 0) {
+        document.removeEventListener("touchmove", preventDefault, hasPassiveEvents ? { passive: false } : void 0);
+        documentListenerAdded = false;
+      }
+    }
+    if (isIosDevice) {
+      restorePositionSetting();
+    } else {
+      restoreOverflowSetting();
+    }
+  };
+
+  // ../erpnext_taskview/node_modules/vue3-side-panel/dist/vue3-side-panel.esm.js
+  var script$1 = defineComponent({
+    name: "SidePanelCloseButton",
+    emits: ["close"]
+  });
+  var _hoisted_13 = /* @__PURE__ */ createBaseVNode("span", { class: "vsp-close__x" }, null, -1);
+  var _hoisted_23 = [
+    _hoisted_13
+  ];
+  function render$1(_ctx, _cache, $props, $setup, $data, $options) {
+    return openBlock(), createElementBlock("div", {
+      class: "vsp-close",
+      onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("close"))
+    }, [..._hoisted_23]);
+  }
+  script$1.render = render$1;
+  script$1.__file = "src/components/SidePanelCloseButton.vue";
+  var script = defineComponent({
+    name: "VueSidePanel",
+    components: {
+      SidePanelCloseButton: script$1
+    },
+    props: {
+      idName: {
+        type: String,
+        default: "vsp-container"
+      },
+      hideCloseBtn: {
+        type: Boolean,
+        default: false
+      },
+      noClose: {
+        type: Boolean,
+        default: false
+      },
+      side: {
+        type: String,
+        validator: (value) => ["top", "right", "bottom", "left"].includes(value),
+        default: "right"
+      },
+      rerender: {
+        type: Boolean,
+        default: false
+      },
+      zIndex: {
+        type: [Number, String],
+        default: "auto"
+      },
+      width: {
+        type: String,
+        default: "auto"
+      },
+      height: {
+        type: String,
+        default: "auto"
+      },
+      lockScroll: {
+        type: Boolean,
+        default: false
+      },
+      lockScrollHtml: {
+        type: Boolean,
+        default: true
+      },
+      modelValue: {
+        type: Boolean,
+        default: false,
+        required: true
+      },
+      overlayColor: {
+        type: String,
+        default: "black"
+      },
+      overlayOpacity: {
+        type: Number,
+        default: 0.5
+      },
+      overlayDuration: {
+        type: Number,
+        default: 500
+      },
+      panelColor: {
+        type: String,
+        default: "white"
+      },
+      panelDuration: {
+        type: Number,
+        default: 300
+      },
+      transitionName: {
+        type: String,
+        default: void 0
+      },
+      headerClass: {
+        type: String,
+        default: ""
+      },
+      bodyClass: {
+        type: String,
+        default: ""
+      },
+      footerClass: {
+        type: String,
+        default: ""
+      }
+    },
+    emits: ["update:modelValue", "closed", "opened"],
+    setup(props, { emit: emit2, attrs }) {
+      let teleportContainer = void 0;
+      const panel = ref(null);
+      const overlay = ref(null);
+      const footer = ref(null);
+      const header = ref(null);
+      const body = ref(null);
+      const footerHeight = ref(0);
+      const bodyScrollHeight = ref(0);
+      const headerHeight = ref(0);
+      const panelHeight = ref(0);
+      const windowHeight = ref(0);
+      const zIndex = ref();
+      const isBodyAlreadyLocked = ref(false);
+      const calculateRightSize = async () => {
+        if ((window == null ? void 0 : window.innerHeight) > 0)
+          windowHeight.value = window.innerHeight;
+        footerHeight.value = footer.value ? footer.value.clientHeight : 0;
+        headerHeight.value = header.value ? header.value.clientHeight : 0;
+        bodyScrollHeight.value = body.value ? body.value.scrollHeight : 0;
+        panelHeight.value = panel.value ? panel.value.clientHeight : 0;
+      };
+      const closePanel = () => emit2("update:modelValue", false);
+      const lockUnlockBodyScroll = (elem, lock) => {
+        if (lock) {
+          setTimeout(() => {
+            disableBodyScroll(elem, { reserveScrollBarGap: true });
+            if (props.lockScrollHtml)
+              document.documentElement.style.overflow = "hidden";
+          }, 0);
+          return;
+        }
+        enableBodyScroll(elem);
+        if (props.lockScrollHtml)
+          document.documentElement.style.removeProperty("overflow");
+      };
+      const getMaxZIndex = () => Math.max(...Array.from(document.querySelectorAll("body *"), (el) => parseFloat(window.getComputedStyle(el).zIndex)).filter((zIndex2) => !Number.isNaN(zIndex2)), 0);
+      onMounted(() => {
+        zIndex.value = props.zIndex === "auto" ? getMaxZIndex() : props.zIndex;
+      });
+      onBeforeMount(() => {
+        const alreadyCreatedTarget = document.getElementById(props.idName);
+        if (!!alreadyCreatedTarget)
+          return;
+        teleportContainer = document.createElement("div");
+        teleportContainer.setAttribute("id", props.idName);
+        document.body.appendChild(teleportContainer);
+      });
+      onBeforeUnmount(() => {
+        const { modelValue, lockScroll } = props;
+        if (lockScroll && panel.value && modelValue)
+          lockUnlockBodyScroll(panel.value, false);
+        if (teleportContainer)
+          document.body.removeChild(teleportContainer);
+        window.removeEventListener("resize", calculateRightSize);
+      });
+      watch(() => [header.value, footer.value, props.height, props.width, props.side, props.modelValue], () => {
+        nextTick(() => calculateRightSize());
+      });
+      watch(() => [props.modelValue, panel.value], (newP, oldP) => {
+        const wasShown = oldP ? oldP[0] : false;
+        const [isShown, panelEl] = newP;
+        const isOpening = isShown;
+        const isClosing = wasShown && !isShown;
+        if (!panelEl)
+          return;
+        if (isOpening)
+          isBodyAlreadyLocked.value = !!document.body.style.overflow;
+        if (isShown) {
+          if (props.lockScroll)
+            lockUnlockBodyScroll(panelEl, true);
+          calculateRightSize();
+          window.addEventListener("resize", calculateRightSize);
+          return;
+        }
+        if (!props.lockScroll || !isClosing || isBodyAlreadyLocked.value)
+          return;
+        setTimeout(() => {
+          if (panelEl)
+            lockUnlockBodyScroll(panelEl, false);
+        }, props.panelDuration);
+        window.removeEventListener("resize", calculateRightSize);
+      }, { immediate: true });
+      const bodyHeight = computed2(() => {
+        if (!panelHeight.value)
+          return;
+        const panelMaxHeight = bodyScrollHeight.value + headerHeight.value + footerHeight.value;
+        let height = panelHeight.value - headerHeight.value - footerHeight.value;
+        if (["top", "bottom"].includes(props.side) && props.height === "auto") {
+          height = windowHeight.value >= panelMaxHeight ? bodyScrollHeight.value : windowHeight.value - headerHeight.value - footerHeight.value;
+        }
+        return height;
+      });
+      const overlayStyles = computed2(() => ({
+        zIndex: zIndex.value,
+        animationDuration: `${props.overlayDuration}ms`,
+        "--overlay-opacity": props.overlayOpacity,
+        opacity: props.modelValue ? props.overlayOpacity : 0,
+        backgroundColor: props.overlayColor,
+        pointerEvents: !props.modelValue ? "none" : "all"
+      }));
+      const panelStyles = computed2(() => __spreadValues(__spreadProps(__spreadValues({
+        width: ["left", "right"].includes(props.side) ? props.width : void 0,
+        maxWidth: "100%"
+      }, ["top", "bottom"].includes(props.side) ? {
+        height: props.height,
+        maxHeight: "100%"
+      } : {}), {
+        zIndex: zIndex.value,
+        backgroundColor: props.panelColor,
+        animationDuration: `${props.panelDuration}ms`
+      }), Object.assign({}, attrs.style)));
+      return {
+        body,
+        panel,
+        overlay,
+        overlayStyles,
+        header,
+        footer,
+        closePanel,
+        panelStyles,
+        bodyHeight
+      };
+    }
+  });
+  function render(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_SidePanelCloseButton = resolveComponent("SidePanelCloseButton");
+    return openBlock(), createBlock(Teleport, {
+      to: `#${_ctx.idName}`
+    }, [
+      createBaseVNode("div", {
+        class: normalizeClass(["vsp-wrapper", [_ctx.modelValue && "vsp-wrapper--active"]])
+      }, [
+        createVNode(Transition, {
+          name: "overlay",
+          persisted: ""
+        }, {
+          default: withCtx(() => [
+            withDirectives(createBaseVNode("div", {
+              ref: "overlay",
+              class: "vsp-overlay",
+              style: normalizeStyle(_ctx.overlayStyles),
+              onClick: _cache[0] || (_cache[0] = () => _ctx.noClose ? void 0 : _ctx.closePanel())
+            }, null, 4), [
+              [vShow, _ctx.modelValue]
+            ])
+          ]),
+          _: 1
+        }),
+        createVNode(Transition, {
+          name: _ctx.transitionName || `slide-${_ctx.side}`,
+          onAfterEnter: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("opened")),
+          onAfterLeave: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("closed"))
+        }, {
+          default: withCtx(() => [
+            (_ctx.rerender ? _ctx.modelValue : true) ? withDirectives((openBlock(), createElementBlock("div", {
+              key: 0,
+              ref: "panel",
+              class: normalizeClass(["vsp", [`vsp--${_ctx.side}-side`, _ctx.$attrs.class]]),
+              style: normalizeStyle(_ctx.panelStyles)
+            }, [
+              !!_ctx.$slots.header ? (openBlock(), createElementBlock("div", {
+                key: 0,
+                ref: "header",
+                class: normalizeClass([_ctx.headerClass, "vsp__header"])
+              }, [
+                renderSlot(_ctx.$slots, "header", { close: _ctx.closePanel })
+              ], 2)) : createCommentVNode("v-if", true),
+              createBaseVNode("div", {
+                ref: "body",
+                class: normalizeClass([_ctx.bodyClass, "vsp__body"]),
+                style: normalizeStyle({ height: `${_ctx.bodyHeight}px` })
+              }, [
+                renderSlot(_ctx.$slots, "default", { close: _ctx.closePanel }),
+                !_ctx.hideCloseBtn ? (openBlock(), createBlock(_component_SidePanelCloseButton, {
+                  key: 0,
+                  onClose: _ctx.closePanel
+                }, null, 8, ["onClose"])) : createCommentVNode("v-if", true)
+              ], 6),
+              !!_ctx.$slots.footer ? (openBlock(), createElementBlock("div", {
+                key: 1,
+                ref: "footer",
+                class: normalizeClass([_ctx.footerClass, "vsp__footer"])
+              }, [
+                renderSlot(_ctx.$slots, "footer")
+              ], 2)) : createCommentVNode("v-if", true)
+            ], 6)), [
+              [vShow, _ctx.rerender ? true : _ctx.modelValue]
+            ]) : createCommentVNode("v-if", true)
+          ]),
+          _: 3
+        }, 8, ["name"])
+      ], 2)
+    ], 8, ["to"]);
+  }
+  script.render = render;
+  script.__file = "src/components/SidePanel.vue";
+
+  // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Sidebar.vue?type=script
+  var Sidebar_default = defineComponent({
+    name: "Sidebar",
+    emits: ["close"],
+    components: {
+      VueSidePanel: script
+    },
+    props: {
+      isOpened: {
+        type: Boolean,
+        required: true
+      },
+      doc: {
+        type: Object,
+        required: true
+      }
+    },
+    setup(props, { emit: emit2 }) {
+      const emitClose = () => {
+        emit2("close");
+      };
+      const formWrapper = ref(null);
+      let formInstance = null;
+      const loadForm = async () => {
+        if (!props.isOpened || !formWrapper.value)
+          return;
+        const doctype = props.doc.isProject ? "Project" : "Task";
+        try {
+          await frappe.model.with_doctype(doctype);
+          formInstance = new frappe.ui.form.Form(doctype, formWrapper.value);
+          formInstance.refresh();
+          console.log("Form loaded successfully");
+          console.log("Form instance:", formInstance);
+        } catch (err) {
+          console.error("Error loading form:", err);
+        }
+      };
+      watch(
+        () => props.isOpened,
+        (newVal) => {
+          if (newVal) {
+            loadForm();
+          }
+        }
+      );
+      return {
+        emitClose,
+        formWrapper
+      };
+    }
+  });
+
+  // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Sidebar.vue?type=template
+  var _withScopeId = (n) => (pushScopeId("data-v-50af3cde"), n = n(), popScopeId(), n);
+  var _hoisted_14 = { class: "sidebar" };
+  var _hoisted_24 = { class: "sidebar-header" };
+  var _hoisted_32 = { style: { "padding-top": "20px", "color": "#f14668" } };
+  var _hoisted_4 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("h3", null, "Sidebar Content", -1));
+  var _hoisted_5 = { ref: "formWrapper" };
+  function render2(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_VueSidePanel = resolveComponent("VueSidePanel");
+    return openBlock(), createElementBlock("div", null, [
+      createVNode(_component_VueSidePanel, {
+        modelValue: _ctx.isOpened,
+        "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.isOpened = $event),
+        "lock-scroll": "",
+        "hide-close-btn": "",
+        width: "65%"
+      }, {
+        default: withCtx(() => [
+          createBaseVNode("div", _hoisted_14, [
+            createBaseVNode("div", _hoisted_24, [
+              createCommentVNode(" Custom close button "),
+              createBaseVNode("button", {
+                class: "close-btn",
+                onClick: _cache[0] || (_cache[0] = (...args) => _ctx.emitClose && _ctx.emitClose(...args))
+              }, "X")
+            ]),
+            createBaseVNode("div", _hoisted_32, [
+              _hoisted_4,
+              createCommentVNode(" Form will be inserted here "),
+              createBaseVNode("div", _hoisted_5, null, 512)
+            ])
+          ])
+        ]),
+        _: 1
+      }, 8, ["modelValue"])
+    ]);
+  }
+
+  // ../erpnext_taskview/erpnext_taskview/public/js/components/Sidebar.vue
+  Sidebar_default.render = render2;
+  Sidebar_default.__file = "../erpnext_taskview/erpnext_taskview/public/js/components/Sidebar.vue";
+  Sidebar_default.__scopeId = "data-v-50af3cde";
+  var Sidebar_default2 = Sidebar_default;
 
   // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=script
   var Task_default = defineComponent({
     name: "Task",
+    components: {
+      Sidebar: Sidebar_default2
+    },
     props: {
       doc: {
         type: Object,
@@ -11699,12 +12292,18 @@ Expected function or array of functions, received type ${typeof value}.`
         type: Object,
         required: false,
         default: null
+      },
+      sideTimersElement: {
+        type: Object,
+        required: false,
+        default: null
       }
     },
     setup(props, { emit: emit2 }) {
       const isEditing = ref(false);
       const editedText = ref("");
       const cancelTriggered = ref(false);
+      const isOpened = ref(false);
       const {
         emitInteraction,
         toggleComplete,
@@ -11714,8 +12313,9 @@ Expected function or array of functions, received type ${typeof value}.`
         unfocusInput,
         saveEdit,
         cancelEdit,
-        handleBlur
-      } = useTask(props, emit2, isEditing, editedText, cancelTriggered);
+        handleBlur,
+        toggleSidebar
+      } = useTask(props, emit2, isEditing, editedText, cancelTriggered, isOpened);
       watch(() => props.doc.autoFocus, (newVal) => {
         if (newVal) {
           editTask();
@@ -11724,6 +12324,7 @@ Expected function or array of functions, received type ${typeof value}.`
       });
       return {
         isEditing,
+        isOpened,
         editedText,
         toggleComplete,
         toggleTimer,
@@ -11733,61 +12334,78 @@ Expected function or array of functions, received type ${typeof value}.`
         saveEdit,
         cancelEdit,
         handleBlur,
-        emitInteraction
+        emitInteraction,
+        toggleSidebar
       };
     }
   });
 
   // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=template
-  var _withScopeId = (n) => (pushScopeId("data-v-75df30b2"), n = n(), popScopeId(), n);
-  var _hoisted_13 = { class: "task" };
-  var _hoisted_23 = { class: "custom-checkbox task-control" };
-  var _hoisted_32 = ["checked"];
-  var _hoisted_4 = /* @__PURE__ */ _withScopeId(() => /* @__PURE__ */ createBaseVNode("span", { class: "checkmark" }, null, -1));
-  var _hoisted_5 = { class: "task-subject-container" };
-  var _hoisted_6 = {
+  var _withScopeId2 = (n) => (pushScopeId("data-v-75df30b2"), n = n(), popScopeId(), n);
+  var _hoisted_15 = { class: "task" };
+  var _hoisted_25 = {
     key: 0,
+    class: "custom-checkbox task-control"
+  };
+  var _hoisted_33 = ["checked"];
+  var _hoisted_42 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("span", { class: "checkmark" }, null, -1));
+  var _hoisted_52 = { class: "expand-sidebar-container" };
+  var _hoisted_6 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("span", { class: "expand-icon" }, "\u2922", -1));
+  var _hoisted_7 = [
+    _hoisted_6
+  ];
+  var _hoisted_8 = { class: "task-subject-container" };
+  var _hoisted_9 = {
+    key: 1,
     class: "task-controls"
   };
-  function render(_ctx, _cache, $props, $setup, $data, $options) {
+  function render3(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_Sidebar = resolveComponent("Sidebar");
     return openBlock(), createElementBlock("div", {
       class: "task",
-      onClick: _cache[8] || (_cache[8] = (...args) => _ctx.emitInteraction && _ctx.emitInteraction(...args))
+      onClick: _cache[9] || (_cache[9] = (...args) => _ctx.emitInteraction && _ctx.emitInteraction(...args))
     }, [
-      createBaseVNode("div", _hoisted_13, [
+      createBaseVNode("div", _hoisted_15, [
         createCommentVNode(" Spiced-up Checkbox "),
-        createBaseVNode("div", _hoisted_23, [
+        !_ctx.doc.isBlank ? (openBlock(), createElementBlock("div", _hoisted_25, [
           createBaseVNode("label", null, [
             createBaseVNode("input", {
               type: "checkbox",
               checked: _ctx.doc.status === "Completed",
               onChange: _cache[0] || (_cache[0] = (...args) => _ctx.toggleComplete && _ctx.toggleComplete(...args))
-            }, null, 40, _hoisted_32),
-            _hoisted_4
+            }, null, 40, _hoisted_33),
+            _hoisted_42
           ])
+        ])) : createCommentVNode("v-if", true),
+        createCommentVNode(" button to expand sidebar with this node (only for non-blank projects and tasks) "),
+        createBaseVNode("div", _hoisted_52, [
+          !_ctx.doc.isBlank ? (openBlock(), createElementBlock("button", {
+            key: 0,
+            class: "expand-sidebar",
+            onClick: _cache[1] || (_cache[1] = (...args) => _ctx.toggleSidebar && _ctx.toggleSidebar(...args))
+          }, [..._hoisted_7])) : createCommentVNode("v-if", true)
         ]),
         createCommentVNode(" Task Subject "),
-        createBaseVNode("div", _hoisted_5, [
+        createBaseVNode("div", _hoisted_8, [
           !_ctx.isEditing ? (openBlock(), createElementBlock("p", {
             key: 0,
             class: "task-subject",
-            onClick: _cache[1] || (_cache[1] = (...args) => _ctx.editTask && _ctx.editTask(...args))
+            onClick: _cache[2] || (_cache[2] = (...args) => _ctx.editTask && _ctx.editTask(...args))
           }, toDisplayString(_ctx.doc.text), 1)) : createCommentVNode("v-if", true),
           _ctx.isEditing ? withDirectives((openBlock(), createElementBlock("input", {
             key: 1,
             type: "text",
-            "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => _ctx.editedText = $event),
-            onBlur: _cache[3] || (_cache[3] = (...args) => _ctx.handleBlur && _ctx.handleBlur(...args)),
-            onKeyup: _cache[4] || (_cache[4] = withKeys((...args) => _ctx.unfocusInput && _ctx.unfocusInput(...args), ["enter"])),
-            onKeydown: _cache[5] || (_cache[5] = withKeys((...args) => _ctx.cancelEdit && _ctx.cancelEdit(...args), ["esc"])),
+            "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => _ctx.editedText = $event),
+            onBlur: _cache[4] || (_cache[4] = (...args) => _ctx.handleBlur && _ctx.handleBlur(...args)),
+            onKeyup: _cache[5] || (_cache[5] = withKeys((...args) => _ctx.unfocusInput && _ctx.unfocusInput(...args), ["enter"])),
+            onKeydown: _cache[6] || (_cache[6] = withKeys((...args) => _ctx.cancelEdit && _ctx.cancelEdit(...args), ["esc"])),
             class: "task-subject-edit"
           }, null, 544)), [
             [vModelText, _ctx.editedText]
           ]) : createCommentVNode("v-if", true)
         ]),
         createCommentVNode(" only render the controls if the doc is not a project and is not blank "),
-        !_ctx.doc.isProject && !_ctx.doc.isBlank ? (openBlock(), createElementBlock("div", _hoisted_6, [
-          createCommentVNode(" Button to start/pause/resume timer "),
+        !_ctx.doc.isProject && !_ctx.doc.isBlank ? (openBlock(), createElementBlock("div", _hoisted_9, [
           _ctx.doc.status !== "Completed" ? (openBlock(), createElementBlock("button", {
             key: 0,
             class: normalizeClass(["btn task-control", {
@@ -11795,24 +12413,29 @@ Expected function or array of functions, received type ${typeof value}.`
               "btn-warning": _ctx.doc.timerStatus === "running",
               "btn-success": _ctx.doc.timerStatus === "paused"
             }]),
-            onClick: _cache[6] || (_cache[6] = (...args) => _ctx.toggleTimer && _ctx.toggleTimer(...args))
+            onClick: _cache[7] || (_cache[7] = (...args) => _ctx.toggleTimer && _ctx.toggleTimer(...args))
           }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Start" : _ctx.doc.timerStatus === "paused" ? "Resume" : "Pause"), 3)) : createCommentVNode("v-if", true),
-          createCommentVNode(" Button to log time or stop timer "),
           _ctx.doc.status !== "Completed" ? (openBlock(), createElementBlock("button", {
             key: 1,
             class: normalizeClass(["btn task-control", {
               "btn-secondary": _ctx.doc.timerStatus === "stopped",
               "btn-danger": _ctx.doc.timerStatus !== "stopped"
             }]),
-            onClick: _cache[7] || (_cache[7] = (...args) => _ctx.logOrStopTimer && _ctx.logOrStopTimer(...args))
+            onClick: _cache[8] || (_cache[8] = (...args) => _ctx.logOrStopTimer && _ctx.logOrStopTimer(...args))
           }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Log" : "Stop"), 3)) : createCommentVNode("v-if", true)
         ])) : createCommentVNode("v-if", true)
-      ])
+      ]),
+      createCommentVNode(" Sidebar component "),
+      createVNode(_component_Sidebar, {
+        doc: _ctx.doc,
+        isOpened: _ctx.isOpened,
+        onClose: _ctx.toggleSidebar
+      }, null, 8, ["doc", "isOpened", "onClose"])
     ]);
   }
 
   // ../erpnext_taskview/erpnext_taskview/public/js/components/Task.vue
-  Task_default.render = render;
+  Task_default.render = render3;
   Task_default.__file = "../erpnext_taskview/erpnext_taskview/public/js/components/Task.vue";
   Task_default.__scopeId = "data-v-75df30b2";
   var Task_default2 = Task_default;
@@ -11826,6 +12449,14 @@ Expected function or array of functions, received type ${typeof value}.`
     };
     const { callBackendHandler, catchError } = useBackendHandler(premount);
     const useOnMounted = () => {
+      setTheme();
+      updateHighlightedProject();
+      document.addEventListener("keydown", handleKeydown);
+    };
+    const useOnUnmounted = () => {
+      document.removeEventListener("keydown", handleKeydown);
+    };
+    const setTheme = () => {
       document.documentElement.style.setProperty(
         "--task-hover-bg-color",
         currentTheme.value === "dark" ? "#686868" : "#ededed"
@@ -11834,11 +12465,10 @@ Expected function or array of functions, received type ${typeof value}.`
         "--icon-color",
         currentTheme.value === "dark" ? "#d3d3d3" : "#000000"
       );
-      updateHighlightedProject();
-      document.addEventListener("keydown", handleKeydown);
-    };
-    const useOnUnmounted = () => {
-      document.removeEventListener("keydown", handleKeydown);
+      document.documentElement.style.setProperty(
+        "--sidebar-bg-color",
+        currentTheme.value === "dark" ? "#2f2f2f" : "#f9f9f9"
+      );
     };
     const handleDragEnd = async () => {
       const draggedNode = dragContext.dragNode;
@@ -12153,6 +12783,10 @@ Expected function or array of functions, received type ${typeof value}.`
       if (currentTheme.value === "automatic") {
         currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       }
+      let sideTimersParentElement = document.querySelector(".layout-side-section");
+      let sideTimersElement = document.createElement("div");
+      sideTimersElement.id = "sidetimers";
+      sideTimersParentElement.appendChild(sideTimersElement);
       const {
         catchError,
         premount,
@@ -12184,15 +12818,16 @@ Expected function or array of functions, received type ${typeof value}.`
         handleTaskInteraction,
         handleKeydown,
         handleDragEnd,
-        addSiblingTask
+        addSiblingTask,
+        sideTimersElement
       };
     }
   });
 
   // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=template
-  var _hoisted_14 = { class: "tree-container" };
-  var _hoisted_24 = ["onClick"];
-  var _hoisted_33 = /* @__PURE__ */ createBaseVNode("div", { class: "icon-container" }, [
+  var _hoisted_16 = { class: "tree-container" };
+  var _hoisted_26 = ["onClick"];
+  var _hoisted_34 = /* @__PURE__ */ createBaseVNode("div", { class: "icon-container" }, [
     /* @__PURE__ */ createBaseVNode("svg", {
       xmlns: "http://www.w3.org/2000/svg",
       viewBox: "0 0 24 24"
@@ -12201,13 +12836,13 @@ Expected function or array of functions, received type ${typeof value}.`
       /* @__PURE__ */ createBaseVNode("path", { d: "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" })
     ])
   ], -1);
-  var _hoisted_42 = [
-    _hoisted_33
+  var _hoisted_43 = [
+    _hoisted_34
   ];
-  function render2(_ctx, _cache, $props, $setup, $data, $options) {
+  function render4(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_Task = resolveComponent("Task");
     const _component_Draggable = resolveComponent("Draggable");
-    return openBlock(), createElementBlock("div", _hoisted_14, [
+    return openBlock(), createElementBlock("div", _hoisted_16, [
       createVNode(_component_Draggable, {
         class: "mtl-tree",
         modelValue: _ctx.treeData,
@@ -12225,17 +12860,18 @@ Expected function or array of functions, received type ${typeof value}.`
             createBaseVNode("a", {
               class: normalizeClass(["he-tree__open-icon mtl-mr small-icon", { "open": stat.open }]),
               onClick: ($event) => _ctx.toggleNode(node, stat)
-            }, [..._hoisted_42], 10, _hoisted_24),
+            }, [..._hoisted_43], 10, _hoisted_26),
             createCommentVNode(" task or project "),
             createVNode(_component_Task, {
               doc: node,
               activeTimer: _ctx.activeTimer,
+              sideTimersElement: _ctx.sideTimersElement,
               class: "mtl-ml",
               onTaskInteraction: ($event) => _ctx.handleTaskInteraction(node),
               onAddSiblingTask: ($event) => _ctx.addSiblingTask(node),
               onCatchError: _ctx.catchError,
               onCatchSuccess: _ctx.premount
-            }, null, 8, ["doc", "activeTimer", "onTaskInteraction", "onAddSiblingTask", "onCatchError", "onCatchSuccess"])
+            }, null, 8, ["doc", "activeTimer", "sideTimersElement", "onTaskInteraction", "onAddSiblingTask", "onCatchError", "onCatchSuccess"])
           ], 2)) : createCommentVNode("v-if", true)
         ]),
         _: 1
@@ -12244,630 +12880,9 @@ Expected function or array of functions, received type ${typeof value}.`
   }
 
   // ../erpnext_taskview/erpnext_taskview/public/js/TaskView.vue
-  TaskView_default.render = render2;
+  TaskView_default.render = render4;
   TaskView_default.__file = "../erpnext_taskview/erpnext_taskview/public/js/TaskView.vue";
   var TaskView_default2 = TaskView_default;
-
-  // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/SidebarNode.vue?type=script
-  var SidebarNode_default = defineComponent({
-    name: "SidebarNode",
-    props: {
-      node: {
-        type: Object,
-        required: true
-      },
-      pauseTimer: Function,
-      resumeTimer: Function,
-      stopTimer: Function
-    }
-  });
-
-  // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/SidebarNode.vue?type=template
-  function render3(_ctx, _cache, $props, $setup, $data, $options) {
-    return openBlock(), createElementBlock("div", null, [
-      createBaseVNode("span", null, toDisplayString(_ctx.node.text), 1),
-      createCommentVNode(" Render Pause/Resume and Stop buttons "),
-      _ctx.node.timerStatus === "running" ? (openBlock(), createElementBlock("button", {
-        key: 0,
-        onClick: _cache[0] || (_cache[0] = ($event) => _ctx.pauseTimer(_ctx.node))
-      }, "Pause")) : createCommentVNode("v-if", true),
-      _ctx.node.timerStatus === "paused" ? (openBlock(), createElementBlock("button", {
-        key: 1,
-        onClick: _cache[1] || (_cache[1] = ($event) => _ctx.resumeTimer(_ctx.node))
-      }, "Resume")) : createCommentVNode("v-if", true),
-      createBaseVNode("button", {
-        onClick: _cache[2] || (_cache[2] = ($event) => _ctx.stopTimer(_ctx.node))
-      }, "Stop")
-    ]);
-  }
-
-  // ../erpnext_taskview/erpnext_taskview/public/js/components/SidebarNode.vue
-  SidebarNode_default.render = render3;
-  SidebarNode_default.__file = "../erpnext_taskview/erpnext_taskview/public/js/components/SidebarNode.vue";
-  SidebarNode_default.__scopeId = "data-v-951fa6c4";
-  var SidebarNode_default2 = SidebarNode_default;
-
-  // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Sidebar.vue?type=script
-  var Sidebar_default = defineComponent({
-    components: {
-      SidebarNode: SidebarNode_default2
-    },
-    props: {
-      data: {
-        type: Array,
-        required: true
-      }
-    },
-    setup() {
-      const isOpened = ref(false);
-      const filterData = (nodes) => {
-        let filteredNodes = [];
-        nodes.forEach((node) => {
-          if (node.timerStatus !== "stopped" && node.timerStatus !== void 0 && node.timerStatus !== null) {
-            filteredNodes.push(node);
-          }
-          if (node.children) {
-            filteredNodes = filteredNodes.concat(filterData(node.children));
-          }
-        });
-        console.log("Filtered nodes:", filteredNodes);
-        return filteredNodes;
-      };
-      const pauseTimer = (node) => {
-        node.timerStatus = "paused";
-        console.log(`Paused timer for ${node.text}`);
-      };
-      const resumeTimer = (node) => {
-        node.timerStatus = "running";
-        console.log(`Resumed timer for ${node.text}`);
-      };
-      const stopTimer = (node) => {
-        node.timerStatus = "stopped";
-        console.log(`Stopped timer for ${node.text}`);
-      };
-      return {
-        isOpened,
-        filterData,
-        pauseTimer,
-        resumeTimer,
-        stopTimer
-      };
-    }
-  });
-
-  // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Sidebar.vue?type=template
-  var _withScopeId2 = (n) => (pushScopeId("data-v-50af3cde"), n = n(), popScopeId(), n);
-  var _hoisted_15 = { style: { "padding-top": "20px", "color": "#f14668" } };
-  var _hoisted_25 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("h3", null, "Task Timer Controls", -1));
-  function render4(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_SidebarNode = resolveComponent("SidebarNode");
-    const _component_VueSidePanel = resolveComponent("VueSidePanel");
-    return openBlock(), createBlock(_component_VueSidePanel, {
-      modelValue: _ctx.isOpened,
-      "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.isOpened = $event),
-      "lock-scroll": "",
-      width: "100%"
-    }, {
-      default: withCtx(() => [
-        createBaseVNode("div", _hoisted_15, [
-          _hoisted_25,
-          createCommentVNode(" Render each node with its children if it has a timerStatus other than 'stopped' "),
-          (openBlock(true), createElementBlock(Fragment, null, renderList(_ctx.filterData(_ctx.data), (node, index) => {
-            return openBlock(), createElementBlock("div", { key: index }, [
-              createVNode(_component_SidebarNode, {
-                node,
-                pauseTimer: _ctx.pauseTimer,
-                resumeTimer: _ctx.resumeTimer,
-                stopTimer: _ctx.stopTimer
-              }, null, 8, ["node", "pauseTimer", "resumeTimer", "stopTimer"])
-            ]);
-          }), 128))
-        ])
-      ]),
-      _: 1
-    }, 8, ["modelValue"]);
-  }
-
-  // ../erpnext_taskview/erpnext_taskview/public/js/components/Sidebar.vue
-  Sidebar_default.render = render4;
-  Sidebar_default.__file = "../erpnext_taskview/erpnext_taskview/public/js/components/Sidebar.vue";
-  Sidebar_default.__scopeId = "data-v-50af3cde";
-  var Sidebar_default2 = Sidebar_default;
-
-  // ../erpnext_taskview/node_modules/body-scroll-lock/lib/bodyScrollLock.esm.js
-  function _toConsumableArray(arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
-        arr2[i] = arr[i];
-      }
-      return arr2;
-    } else {
-      return Array.from(arr);
-    }
-  }
-  var hasPassiveEvents = false;
-  if (typeof window !== "undefined") {
-    passiveTestOptions = {
-      get passive() {
-        hasPassiveEvents = true;
-        return void 0;
-      }
-    };
-    window.addEventListener("testPassive", null, passiveTestOptions);
-    window.removeEventListener("testPassive", null, passiveTestOptions);
-  }
-  var passiveTestOptions;
-  var isIosDevice = typeof window !== "undefined" && window.navigator && window.navigator.platform && (/iP(ad|hone|od)/.test(window.navigator.platform) || window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1);
-  var locks = [];
-  var documentListenerAdded = false;
-  var initialClientY = -1;
-  var previousBodyOverflowSetting = void 0;
-  var previousBodyPosition = void 0;
-  var previousBodyPaddingRight = void 0;
-  var allowTouchMove = function allowTouchMove2(el) {
-    return locks.some(function(lock) {
-      if (lock.options.allowTouchMove && lock.options.allowTouchMove(el)) {
-        return true;
-      }
-      return false;
-    });
-  };
-  var preventDefault = function preventDefault2(rawEvent) {
-    var e = rawEvent || window.event;
-    if (allowTouchMove(e.target)) {
-      return true;
-    }
-    if (e.touches.length > 1)
-      return true;
-    if (e.preventDefault)
-      e.preventDefault();
-    return false;
-  };
-  var setOverflowHidden = function setOverflowHidden2(options) {
-    if (previousBodyPaddingRight === void 0) {
-      var _reserveScrollBarGap = !!options && options.reserveScrollBarGap === true;
-      var scrollBarGap = window.innerWidth - document.documentElement.clientWidth;
-      if (_reserveScrollBarGap && scrollBarGap > 0) {
-        var computedBodyPaddingRight = parseInt(window.getComputedStyle(document.body).getPropertyValue("padding-right"), 10);
-        previousBodyPaddingRight = document.body.style.paddingRight;
-        document.body.style.paddingRight = computedBodyPaddingRight + scrollBarGap + "px";
-      }
-    }
-    if (previousBodyOverflowSetting === void 0) {
-      previousBodyOverflowSetting = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-    }
-  };
-  var restoreOverflowSetting = function restoreOverflowSetting2() {
-    if (previousBodyPaddingRight !== void 0) {
-      document.body.style.paddingRight = previousBodyPaddingRight;
-      previousBodyPaddingRight = void 0;
-    }
-    if (previousBodyOverflowSetting !== void 0) {
-      document.body.style.overflow = previousBodyOverflowSetting;
-      previousBodyOverflowSetting = void 0;
-    }
-  };
-  var setPositionFixed = function setPositionFixed2() {
-    return window.requestAnimationFrame(function() {
-      if (previousBodyPosition === void 0) {
-        previousBodyPosition = {
-          position: document.body.style.position,
-          top: document.body.style.top,
-          left: document.body.style.left
-        };
-        var _window = window, scrollY = _window.scrollY, scrollX = _window.scrollX, innerHeight = _window.innerHeight;
-        document.body.style.position = "fixed";
-        document.body.style.top = -scrollY;
-        document.body.style.left = -scrollX;
-        setTimeout(function() {
-          return window.requestAnimationFrame(function() {
-            var bottomBarHeight = innerHeight - window.innerHeight;
-            if (bottomBarHeight && scrollY >= innerHeight) {
-              document.body.style.top = -(scrollY + bottomBarHeight);
-            }
-          });
-        }, 300);
-      }
-    });
-  };
-  var restorePositionSetting = function restorePositionSetting2() {
-    if (previousBodyPosition !== void 0) {
-      var y = -parseInt(document.body.style.top, 10);
-      var x = -parseInt(document.body.style.left, 10);
-      document.body.style.position = previousBodyPosition.position;
-      document.body.style.top = previousBodyPosition.top;
-      document.body.style.left = previousBodyPosition.left;
-      window.scrollTo(x, y);
-      previousBodyPosition = void 0;
-    }
-  };
-  var isTargetElementTotallyScrolled = function isTargetElementTotallyScrolled2(targetElement) {
-    return targetElement ? targetElement.scrollHeight - targetElement.scrollTop <= targetElement.clientHeight : false;
-  };
-  var handleScroll = function handleScroll2(event, targetElement) {
-    var clientY = event.targetTouches[0].clientY - initialClientY;
-    if (allowTouchMove(event.target)) {
-      return false;
-    }
-    if (targetElement && targetElement.scrollTop === 0 && clientY > 0) {
-      return preventDefault(event);
-    }
-    if (isTargetElementTotallyScrolled(targetElement) && clientY < 0) {
-      return preventDefault(event);
-    }
-    event.stopPropagation();
-    return true;
-  };
-  var disableBodyScroll = function disableBodyScroll2(targetElement, options) {
-    if (!targetElement) {
-      console.error("disableBodyScroll unsuccessful - targetElement must be provided when calling disableBodyScroll on IOS devices.");
-      return;
-    }
-    if (locks.some(function(lock2) {
-      return lock2.targetElement === targetElement;
-    })) {
-      return;
-    }
-    var lock = {
-      targetElement,
-      options: options || {}
-    };
-    locks = [].concat(_toConsumableArray(locks), [lock]);
-    if (isIosDevice) {
-      setPositionFixed();
-    } else {
-      setOverflowHidden(options);
-    }
-    if (isIosDevice) {
-      targetElement.ontouchstart = function(event) {
-        if (event.targetTouches.length === 1) {
-          initialClientY = event.targetTouches[0].clientY;
-        }
-      };
-      targetElement.ontouchmove = function(event) {
-        if (event.targetTouches.length === 1) {
-          handleScroll(event, targetElement);
-        }
-      };
-      if (!documentListenerAdded) {
-        document.addEventListener("touchmove", preventDefault, hasPassiveEvents ? { passive: false } : void 0);
-        documentListenerAdded = true;
-      }
-    }
-  };
-  var enableBodyScroll = function enableBodyScroll2(targetElement) {
-    if (!targetElement) {
-      console.error("enableBodyScroll unsuccessful - targetElement must be provided when calling enableBodyScroll on IOS devices.");
-      return;
-    }
-    locks = locks.filter(function(lock) {
-      return lock.targetElement !== targetElement;
-    });
-    if (isIosDevice) {
-      targetElement.ontouchstart = null;
-      targetElement.ontouchmove = null;
-      if (documentListenerAdded && locks.length === 0) {
-        document.removeEventListener("touchmove", preventDefault, hasPassiveEvents ? { passive: false } : void 0);
-        documentListenerAdded = false;
-      }
-    }
-    if (isIosDevice) {
-      restorePositionSetting();
-    } else {
-      restoreOverflowSetting();
-    }
-  };
-
-  // ../erpnext_taskview/node_modules/vue3-side-panel/dist/vue3-side-panel.esm.js
-  var script$1 = defineComponent({
-    name: "SidePanelCloseButton",
-    emits: ["close"]
-  });
-  var _hoisted_16 = /* @__PURE__ */ createBaseVNode("span", { class: "vsp-close__x" }, null, -1);
-  var _hoisted_26 = [
-    _hoisted_16
-  ];
-  function render$1(_ctx, _cache, $props, $setup, $data, $options) {
-    return openBlock(), createElementBlock("div", {
-      class: "vsp-close",
-      onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("close"))
-    }, [..._hoisted_26]);
-  }
-  script$1.render = render$1;
-  script$1.__file = "src/components/SidePanelCloseButton.vue";
-  var script = defineComponent({
-    name: "VueSidePanel",
-    components: {
-      SidePanelCloseButton: script$1
-    },
-    props: {
-      idName: {
-        type: String,
-        default: "vsp-container"
-      },
-      hideCloseBtn: {
-        type: Boolean,
-        default: false
-      },
-      noClose: {
-        type: Boolean,
-        default: false
-      },
-      side: {
-        type: String,
-        validator: (value) => ["top", "right", "bottom", "left"].includes(value),
-        default: "right"
-      },
-      rerender: {
-        type: Boolean,
-        default: false
-      },
-      zIndex: {
-        type: [Number, String],
-        default: "auto"
-      },
-      width: {
-        type: String,
-        default: "auto"
-      },
-      height: {
-        type: String,
-        default: "auto"
-      },
-      lockScroll: {
-        type: Boolean,
-        default: false
-      },
-      lockScrollHtml: {
-        type: Boolean,
-        default: true
-      },
-      modelValue: {
-        type: Boolean,
-        default: false,
-        required: true
-      },
-      overlayColor: {
-        type: String,
-        default: "black"
-      },
-      overlayOpacity: {
-        type: Number,
-        default: 0.5
-      },
-      overlayDuration: {
-        type: Number,
-        default: 500
-      },
-      panelColor: {
-        type: String,
-        default: "white"
-      },
-      panelDuration: {
-        type: Number,
-        default: 300
-      },
-      transitionName: {
-        type: String,
-        default: void 0
-      },
-      headerClass: {
-        type: String,
-        default: ""
-      },
-      bodyClass: {
-        type: String,
-        default: ""
-      },
-      footerClass: {
-        type: String,
-        default: ""
-      }
-    },
-    emits: ["update:modelValue", "closed", "opened"],
-    setup(props, { emit: emit2, attrs }) {
-      let teleportContainer = void 0;
-      const panel = ref(null);
-      const overlay = ref(null);
-      const footer = ref(null);
-      const header = ref(null);
-      const body = ref(null);
-      const footerHeight = ref(0);
-      const bodyScrollHeight = ref(0);
-      const headerHeight = ref(0);
-      const panelHeight = ref(0);
-      const windowHeight = ref(0);
-      const zIndex = ref();
-      const isBodyAlreadyLocked = ref(false);
-      const calculateRightSize = async () => {
-        if ((window == null ? void 0 : window.innerHeight) > 0)
-          windowHeight.value = window.innerHeight;
-        footerHeight.value = footer.value ? footer.value.clientHeight : 0;
-        headerHeight.value = header.value ? header.value.clientHeight : 0;
-        bodyScrollHeight.value = body.value ? body.value.scrollHeight : 0;
-        panelHeight.value = panel.value ? panel.value.clientHeight : 0;
-      };
-      const closePanel = () => emit2("update:modelValue", false);
-      const lockUnlockBodyScroll = (elem, lock) => {
-        if (lock) {
-          setTimeout(() => {
-            disableBodyScroll(elem, { reserveScrollBarGap: true });
-            if (props.lockScrollHtml)
-              document.documentElement.style.overflow = "hidden";
-          }, 0);
-          return;
-        }
-        enableBodyScroll(elem);
-        if (props.lockScrollHtml)
-          document.documentElement.style.removeProperty("overflow");
-      };
-      const getMaxZIndex = () => Math.max(...Array.from(document.querySelectorAll("body *"), (el) => parseFloat(window.getComputedStyle(el).zIndex)).filter((zIndex2) => !Number.isNaN(zIndex2)), 0);
-      onMounted(() => {
-        zIndex.value = props.zIndex === "auto" ? getMaxZIndex() : props.zIndex;
-      });
-      onBeforeMount(() => {
-        const alreadyCreatedTarget = document.getElementById(props.idName);
-        if (!!alreadyCreatedTarget)
-          return;
-        teleportContainer = document.createElement("div");
-        teleportContainer.setAttribute("id", props.idName);
-        document.body.appendChild(teleportContainer);
-      });
-      onBeforeUnmount(() => {
-        const { modelValue, lockScroll } = props;
-        if (lockScroll && panel.value && modelValue)
-          lockUnlockBodyScroll(panel.value, false);
-        if (teleportContainer)
-          document.body.removeChild(teleportContainer);
-        window.removeEventListener("resize", calculateRightSize);
-      });
-      watch(() => [header.value, footer.value, props.height, props.width, props.side, props.modelValue], () => {
-        nextTick(() => calculateRightSize());
-      });
-      watch(() => [props.modelValue, panel.value], (newP, oldP) => {
-        const wasShown = oldP ? oldP[0] : false;
-        const [isShown, panelEl] = newP;
-        const isOpening = isShown;
-        const isClosing = wasShown && !isShown;
-        if (!panelEl)
-          return;
-        if (isOpening)
-          isBodyAlreadyLocked.value = !!document.body.style.overflow;
-        if (isShown) {
-          if (props.lockScroll)
-            lockUnlockBodyScroll(panelEl, true);
-          calculateRightSize();
-          window.addEventListener("resize", calculateRightSize);
-          return;
-        }
-        if (!props.lockScroll || !isClosing || isBodyAlreadyLocked.value)
-          return;
-        setTimeout(() => {
-          if (panelEl)
-            lockUnlockBodyScroll(panelEl, false);
-        }, props.panelDuration);
-        window.removeEventListener("resize", calculateRightSize);
-      }, { immediate: true });
-      const bodyHeight = computed2(() => {
-        if (!panelHeight.value)
-          return;
-        const panelMaxHeight = bodyScrollHeight.value + headerHeight.value + footerHeight.value;
-        let height = panelHeight.value - headerHeight.value - footerHeight.value;
-        if (["top", "bottom"].includes(props.side) && props.height === "auto") {
-          height = windowHeight.value >= panelMaxHeight ? bodyScrollHeight.value : windowHeight.value - headerHeight.value - footerHeight.value;
-        }
-        return height;
-      });
-      const overlayStyles = computed2(() => ({
-        zIndex: zIndex.value,
-        animationDuration: `${props.overlayDuration}ms`,
-        "--overlay-opacity": props.overlayOpacity,
-        opacity: props.modelValue ? props.overlayOpacity : 0,
-        backgroundColor: props.overlayColor,
-        pointerEvents: !props.modelValue ? "none" : "all"
-      }));
-      const panelStyles = computed2(() => __spreadValues(__spreadProps(__spreadValues({
-        width: ["left", "right"].includes(props.side) ? props.width : void 0,
-        maxWidth: "100%"
-      }, ["top", "bottom"].includes(props.side) ? {
-        height: props.height,
-        maxHeight: "100%"
-      } : {}), {
-        zIndex: zIndex.value,
-        backgroundColor: props.panelColor,
-        animationDuration: `${props.panelDuration}ms`
-      }), Object.assign({}, attrs.style)));
-      return {
-        body,
-        panel,
-        overlay,
-        overlayStyles,
-        header,
-        footer,
-        closePanel,
-        panelStyles,
-        bodyHeight
-      };
-    }
-  });
-  function render5(_ctx, _cache, $props, $setup, $data, $options) {
-    const _component_SidePanelCloseButton = resolveComponent("SidePanelCloseButton");
-    return openBlock(), createBlock(Teleport, {
-      to: `#${_ctx.idName}`
-    }, [
-      createBaseVNode("div", {
-        class: normalizeClass(["vsp-wrapper", [_ctx.modelValue && "vsp-wrapper--active"]])
-      }, [
-        createVNode(Transition, {
-          name: "overlay",
-          persisted: ""
-        }, {
-          default: withCtx(() => [
-            withDirectives(createBaseVNode("div", {
-              ref: "overlay",
-              class: "vsp-overlay",
-              style: normalizeStyle(_ctx.overlayStyles),
-              onClick: _cache[0] || (_cache[0] = () => _ctx.noClose ? void 0 : _ctx.closePanel())
-            }, null, 4), [
-              [vShow, _ctx.modelValue]
-            ])
-          ]),
-          _: 1
-        }),
-        createVNode(Transition, {
-          name: _ctx.transitionName || `slide-${_ctx.side}`,
-          onAfterEnter: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("opened")),
-          onAfterLeave: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("closed"))
-        }, {
-          default: withCtx(() => [
-            (_ctx.rerender ? _ctx.modelValue : true) ? withDirectives((openBlock(), createElementBlock("div", {
-              key: 0,
-              ref: "panel",
-              class: normalizeClass(["vsp", [`vsp--${_ctx.side}-side`, _ctx.$attrs.class]]),
-              style: normalizeStyle(_ctx.panelStyles)
-            }, [
-              !!_ctx.$slots.header ? (openBlock(), createElementBlock("div", {
-                key: 0,
-                ref: "header",
-                class: normalizeClass([_ctx.headerClass, "vsp__header"])
-              }, [
-                renderSlot(_ctx.$slots, "header", { close: _ctx.closePanel })
-              ], 2)) : createCommentVNode("v-if", true),
-              createBaseVNode("div", {
-                ref: "body",
-                class: normalizeClass([_ctx.bodyClass, "vsp__body"]),
-                style: normalizeStyle({ height: `${_ctx.bodyHeight}px` })
-              }, [
-                renderSlot(_ctx.$slots, "default", { close: _ctx.closePanel }),
-                !_ctx.hideCloseBtn ? (openBlock(), createBlock(_component_SidePanelCloseButton, {
-                  key: 0,
-                  onClose: _ctx.closePanel
-                }, null, 8, ["onClose"])) : createCommentVNode("v-if", true)
-              ], 6),
-              !!_ctx.$slots.footer ? (openBlock(), createElementBlock("div", {
-                key: 1,
-                ref: "footer",
-                class: normalizeClass([_ctx.footerClass, "vsp__footer"])
-              }, [
-                renderSlot(_ctx.$slots, "footer")
-              ], 2)) : createCommentVNode("v-if", true)
-            ], 6)), [
-              [vShow, _ctx.rerender ? true : _ctx.modelValue]
-            ]) : createCommentVNode("v-if", true)
-          ]),
-          _: 3
-        }, 8, ["name"])
-      ], 2)
-    ], 8, ["to"]);
-  }
-  script.render = render5;
-  script.__file = "src/components/SidePanel.vue";
-  var VueSidePanelPlugin = {
-    install(app) {
-      app.component("VueSidePanel", script);
-    }
-  };
 
   // ../erpnext_taskview/erpnext_taskview/public/js/app.bundle.js
   frappe.provide("frappe.views");
@@ -12934,17 +12949,9 @@ Expected function or array of functions, received type ${typeof value}.`
       const container = document.createElement("div");
       this.$result.append(container);
       locals.nodes = {};
-      console.log(this.data);
       createApp({
         render: () => h(TaskView_default2, { docs: this.data })
       }).mount(container);
-      const sidebarParentElement = document.querySelector(".layout-side-section");
-      const sidebarElement = document.createElement("div");
-      sidebarElement.id = "sidebar";
-      sidebarParentElement.appendChild(sidebarElement);
-      createApp({
-        render: () => h(Sidebar_default2, { data: this.data })
-      }).use(VueSidePanelPlugin).mount(sidebarElement);
     }
   };
   frappe.views.ListViewSelect = frappe.views.TaskViewSelect;
@@ -13011,4 +13018,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.OH7ZDVTW.js.map
+//# sourceMappingURL=app.bundle.O64ET6YB.js.map

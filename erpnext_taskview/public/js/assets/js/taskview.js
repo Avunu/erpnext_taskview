@@ -1,15 +1,15 @@
 import useBackendHandler from './script.js';
 
-export default function useTaskview (props, treeData, highlightedProject, dragContext, currentTheme) {
+export default function useTaskview(props, treeData, highlightedProject, dragContext, currentTheme) {
 
     // this finalizes the tree data by adding a blank project to the end of the list and blank tasks to any expanded project branches
     const premount = (newDocs = null) => {
         // add a blank project to the end of the list
-		let docs = addBlankProject(newDocs || props.docs);
+        let docs = addBlankProject(newDocs || props.docs);
 
-		// add blank tasks to any expanded project branches
-		docs = addBlankTasks(docs);
-		treeData.value = docs;
+        // add blank tasks to any expanded project branches
+        docs = addBlankTasks(docs);
+        treeData.value = docs;
     }
 
     // get the backend handler functions
@@ -17,16 +17,9 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
 
     // this sets the theme to match frappe, initializes the highlighted project, and initializes the keydown event listener for editing the blank task
     const useOnMounted = () => {
-			
+
         // set the theme to match frappe
-        document.documentElement.style.setProperty(
-            '--task-hover-bg-color',
-            currentTheme.value === 'dark' ? '#686868' : '#ededed'
-        );
-        document.documentElement.style.setProperty(
-            '--icon-color',
-            currentTheme.value === 'dark' ? '#d3d3d3' : '#000000'
-        );
+        setTheme();
 
         // initialize the highlighted project
         updateHighlightedProject();
@@ -37,6 +30,25 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
 
     const useOnUnmounted = () => {
         document.removeEventListener('keydown', handleKeydown);
+    };
+
+    const setTheme = () => {
+        // set the theme for the drag-and-drop task tree
+        document.documentElement.style.setProperty(
+            '--task-hover-bg-color',
+            currentTheme.value === 'dark' ? '#686868' : '#ededed'
+        );
+        document.documentElement.style.setProperty(
+            '--icon-color',
+            currentTheme.value === 'dark' ? '#d3d3d3' : '#000000'
+        );
+
+        // set the theme for the sidebar
+        document.documentElement.style.setProperty(
+            '--sidebar-bg-color',
+            currentTheme.value === 'dark' ? '#2f2f2f' : '#f9f9f9'
+        );
+
     };
 
     // Function to handle the end of a drag-and-drop operation
@@ -66,8 +78,8 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
         if (draggedNode.data.project !== draggedNode.parent.data.project) {
             draggedNode.data.project = draggedNode.parent.data.project;
             updateObject.project = draggedNode.data.project;
-        }    
-        
+        }
+
         // update the children on the node
         const essentialNodeChildren = (nodeData) => {
             if (!nodeData.children || nodeData.children.length === 0 || nodeData.isBlank) {
@@ -82,7 +94,7 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
                 children: essentialNodeChildren(child) // Recursively process children
             }));
         };
-        
+
         // update the parent on the node
         const essentialNodeParent = (parent) => {
             return {
@@ -119,7 +131,7 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
     };
 
     const modifyNodeAndStat = (node, stat) => {
-        
+
         // this is a workaround for when the blank project node gets turned into a project node. There's no docname to use as a key in locals.nodes, so we need to use the text instead, and then switch it to the docname when we get the new docname from the backend
         let splitText = '';
         let pleaseExpandMe = false;
@@ -199,7 +211,7 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
 
         return docs
     }
-    
+
     // if any of the projects are expanded due to running or paused timers, go ahead and add the blank tasks to the project and tasks now, since otherwise blank tasks are only being added when the project is expanded
     const addBlankTasks = (docs) => {
         // add blank tasks to any expanded project branches
@@ -242,7 +254,7 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
             stat.children.forEach(child => {
                 child.hidden = !stat.open;
             });
-        } 
+        }
 
         // if the node is a task, highlight the parent project
         if (!node.isProject) {
@@ -282,7 +294,7 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
         // Recursively add a blank task to each child node's children
         node.children.forEach(child => {
             if (!child.isBlank) {
-            addBlankTask(child);
+                addBlankTask(child);
             }
         });
 
@@ -339,7 +351,7 @@ export default function useTaskview (props, treeData, highlightedProject, dragCo
         if (node.isProject) {
             if (node.expanded && !node.isBlank && node.status !== 'Completed') {
                 highlightedProject.value = node;
-            } 
+            }
             else {
                 return
             }
