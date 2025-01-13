@@ -12208,11 +12208,20 @@ Expected function or array of functions, received type ${typeof value}.`
           return;
         const doctype = props.doc.isProject ? "Project" : "Task";
         try {
+          if (!document.body.contains(formWrapper.value)) {
+            console.error("formWrapper is not attached to the DOM");
+            return;
+          }
           await frappe.model.with_doctype(doctype);
-          formInstance = new frappe.ui.form.Form(doctype, formWrapper.value);
-          formInstance.refresh();
+          console.log("Creating form instance for doctype:", doctype);
+          formInstance = new frappe.ui.form.Form(doctype, formWrapper.value, true, "");
           console.log("Form loaded successfully");
           console.log("Form instance:", formInstance);
+          console.log("Form instance doc:", formInstance.doc);
+          console.log("Loading form with docName (refresh):", props.doc.docName);
+          formInstance.refresh(props.doc.docName);
+          console.log("Form instance with docName:", formInstance);
+          console.log("doc:", props.doc);
         } catch (err) {
           console.error("Error loading form:", err);
         }
@@ -12886,6 +12895,8 @@ Expected function or array of functions, received type ${typeof value}.`
 
   // ../erpnext_taskview/erpnext_taskview/public/js/app.bundle.js
   frappe.provide("frappe.views");
+  frappe.provide("frappe.ui.toolbar");
+  frappe.provide("frappe.ui.form");
   frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListViewSelect {
     setup_views() {
       super.setup_views();
@@ -12907,6 +12918,234 @@ Expected function or array of functions, received type ${typeof value}.`
   };
   frappe.router.list_views.push("tasks");
   frappe.router.list_views_route["tasks"] = "Tasks";
+  frappe.ui.form.CustomForm = class CustomForm extends frappe.ui.form.Form {
+    constructor(...args) {
+      super(...args);
+    }
+    async is_new() {
+      if (!this.doc) {
+        let docExists = await frappe.db.exists(this.doctype, this.docname);
+        if (docExists) {
+          this.doc = await frappe.get_doc(this.doctype, this.docname);
+          return false;
+        } else {
+          return true;
+        }
+      }
+      return this.doc.__islocal;
+    }
+  };
+  frappe.ui.form.CustomToolbar = class CustomToolbar extends frappe.ui.form.Toolbar {
+    constructor(...args) {
+      super(...args);
+    }
+    async custom_form_get_doc_patch() {
+      console.log("custom_form_get_doc_patch called");
+      console.log("this.frm.doc", this.frm.doc);
+      console.log("this.frm.doctype", this.frm.doctype);
+      console.log("this.frm.docname", this.frm.docname);
+      if (!this.frm.doc) {
+        const docExists = await frappe.db.exists(this.frm.doctype, this.frm.docname);
+        if (docExists) {
+          const doc3 = await frappe.get_doc(this.frm.doctype, this.frm.docname);
+          return doc3;
+        } else {
+          return null;
+        }
+      } else {
+        return this.frm.doc;
+      }
+    }
+    async get_docinfo() {
+      console.log("get_docinfo called");
+      console.log("this.doctype", this.doctype);
+      console.log("this.docname", this.docname);
+      return frappe.model.docinfo[this.doctype][this.docname];
+    }
+    async refresh() {
+      this.frm.doc = await this.custom_form_get_doc_patch();
+      this.make_menu();
+      this.set_title();
+      this.page.clear_user_actions();
+      this.show_title_as_dirty();
+      this.set_primary_action();
+      if (this.frm.meta.hide_toolbar) {
+        this.page.hide_menu();
+      } else {
+        if (this.frm.doc.__islocal) {
+          this.page.hide_menu();
+          this.print_icon && this.print_icon.addClass("hide");
+        } else {
+          this.page.show_menu();
+          this.print_icon && this.print_icon.removeClass("hide");
+        }
+      }
+    }
+    async make_menu_items() {
+      const me = this;
+      const p2 = this.frm.perm[0];
+      this.frm.doc = await this.custom_form_get_doc_patch();
+      const docstatus = cint(this.frm.doc.docstatus);
+      const is_submittable = frappe.model.is_submittable(this.frm.doc.doctype);
+      const print_settings = frappe.model.get_doc(":Print Settings", "Print Settings");
+      const allow_print_for_draft = cint(print_settings.allow_print_for_draft);
+      const allow_print_for_cancelled = cint(print_settings.allow_print_for_cancelled);
+      if (!is_submittable || docstatus == 1 || allow_print_for_cancelled && docstatus == 2 || allow_print_for_draft && docstatus == 0) {
+        if (frappe.model.can_print(null, me.frm) && !this.frm.meta.issingle) {
+          this.page.add_menu_item(
+            __("Print"),
+            function() {
+              me.frm.print_doc();
+            },
+            true
+          );
+          this.print_icon = this.page.add_action_icon(
+            "printer",
+            function() {
+              me.frm.print_doc();
+            },
+            "",
+            __("Print")
+          );
+        }
+      }
+      if (frappe.model.can_email(null, me.frm) && me.frm.doc.docstatus < 2) {
+        this.page.add_menu_item(
+          __("Email"),
+          function() {
+            me.frm.email_doc();
+          },
+          true,
+          {
+            shortcut: "Ctrl+E",
+            condition: () => !this.frm.is_new()
+          }
+        );
+      }
+      this.page.add_menu_item(
+        __("Jump to field"),
+        function() {
+          me.show_jump_to_field_dialog();
+        },
+        true,
+        "Ctrl+J"
+      );
+      if (!me.frm.meta.issingle) {
+        this.page.add_menu_item(
+          __("Links"),
+          function() {
+            me.show_linked_with();
+          },
+          true
+        );
+      }
+      if (frappe.boot.user.can_create.includes(me.frm.doctype) && !me.frm.meta.allow_copy) {
+        this.page.add_menu_item(
+          __("Duplicate"),
+          function() {
+            me.frm.copy_doc();
+          },
+          true,
+          "Shift+D"
+        );
+      }
+      this.page.add_menu_item(
+        __("Copy to Clipboard"),
+        function() {
+          frappe.utils.copy_to_clipboard(JSON.stringify(me.frm.doc));
+        },
+        true
+      );
+      if (this.can_rename()) {
+        this.page.add_menu_item(
+          __("Rename"),
+          function() {
+            me.frm.rename_doc();
+          },
+          true
+        );
+      }
+      this.page.add_menu_item(
+        __("Reload"),
+        function() {
+          me.frm.reload_doc();
+        },
+        true
+      );
+      if (cint(me.frm.doc.docstatus) != 1 && !me.frm.doc.__islocal && !frappe.model.is_single(me.frm.doctype) && frappe.model.can_delete(me.frm.doctype)) {
+        this.page.add_menu_item(
+          __("Delete"),
+          function() {
+            me.frm.savetrash();
+          },
+          true,
+          {
+            shortcut: "Shift+Ctrl+D",
+            condition: () => !this.frm.is_new()
+          }
+        );
+      }
+      this.page.add_menu_item(
+        __("Remind Me"),
+        () => {
+          let reminder_maanger = new ReminderManager({ frm: this.frm });
+          reminder_maanger.show();
+        },
+        true,
+        {
+          shortcut: "Shift+R",
+          condition: () => !this.frm.is_new()
+        }
+      );
+      this.page.add_menu_item(
+        __("Undo"),
+        () => {
+          this.frm.undo_manager.undo();
+        },
+        true,
+        {
+          shortcut: "Ctrl+Z",
+          condition: () => !this.frm.is_form_builder(),
+          description: __("Undo last action")
+        }
+      );
+      this.page.add_menu_item(
+        __("Redo"),
+        () => {
+          this.frm.undo_manager.redo();
+        },
+        true,
+        {
+          shortcut: "Ctrl+Y",
+          condition: () => !this.frm.is_form_builder(),
+          description: __("Redo last action")
+        }
+      );
+      this.make_customize_buttons();
+      if (this.can_repeat()) {
+        this.page.add_menu_item(
+          __("Repeat"),
+          function() {
+            frappe.utils.new_auto_repeat_prompt(me.frm);
+          },
+          true
+        );
+      }
+      if (p2[CREATE] && !this.frm.meta.issingle && !this.frm.meta.in_create) {
+        this.page.add_menu_item(
+          __("New {0}", [__(me.frm.doctype)]),
+          function() {
+            frappe.new_doc(me.frm.doctype, true);
+          },
+          true,
+          {
+            shortcut: "Ctrl+B",
+            condition: () => !this.frm.is_new()
+          }
+        );
+      }
+    }
+  };
   frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     prepare_data(r) {
       this.data = r.message;
@@ -12955,6 +13194,8 @@ Expected function or array of functions, received type ${typeof value}.`
     }
   };
   frappe.views.ListViewSelect = frappe.views.TaskViewSelect;
+  frappe.ui.form.Form = frappe.ui.form.CustomForm;
+  frappe.ui.form.Toolbar = frappe.ui.form.CustomToolbar;
 })();
 /*!
  * @he-tree/dnd-utils v0.1.0-alpha.4
@@ -13018,4 +13259,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.O64ET6YB.js.map
+//# sourceMappingURL=app.bundle.35CWVCDW.js.map

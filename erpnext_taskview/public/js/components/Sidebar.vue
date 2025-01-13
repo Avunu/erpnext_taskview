@@ -51,20 +51,47 @@ export default defineComponent({
 			const doctype = props.doc.isProject ? "Project" : "Task";
 
 			try {
+				// Ensure the wrapper is attached to the DOM
+				if (!document.body.contains(formWrapper.value)) {
+					console.error("formWrapper is not attached to the DOM");
+					return;
+				}
+
 				// Ensure doctype metadata is loaded
 				await frappe.model.with_doctype(doctype);
 
+				// Establish a page for the form
+				// console.log("Initializing app page...");
+				// frappe.ui.make_app_page({
+				// 	parent: formWrapper.value,
+				// 	single_column: true, // Use single-column layout for the sidebar form
+				// });
+
+				// // Validate wrapper page
+				// const wrapperPage = formWrapper.value.page;
+				// if (!wrapperPage) {
+				// 	throw new Error("Page attribute not found on form wrapper.");
+				// }
+
 				// Create and load the Frappe form
-				formInstance = new frappe.ui.form.Form(doctype, formWrapper.value);
-				formInstance.refresh(); // Refresh to load the form with the data
+				console.log("Creating form instance for doctype:", doctype);
+				// formInstance = new frappe.ui.form.Form(doctype, wrapperPage);
+				formInstance = new frappe.ui.form.Form(doctype, formWrapper.value, true, '');
 
 				console.log("Form loaded successfully");
 				console.log("Form instance:", formInstance);
+				console.log("Form instance doc:", formInstance.doc);
 
+				console.log("Loading form with docName (refresh):", props.doc.docName);
+				formInstance.refresh(props.doc.docName);
+
+				console.log("Form instance with docName:", formInstance);
+				console.log("doc:", props.doc);
 			} catch (err) {
 				console.error("Error loading form:", err);
 			}
 		};
+
 
 		watch(
 			() => props.isOpened,
