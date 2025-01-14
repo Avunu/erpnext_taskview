@@ -115,7 +115,6 @@ def set_timer_status(node, timesheet_details):
 	return has_active_timer
 
 
-# this is where the frontend is currently calling the backend for timer updates
 @frappe.whitelist()
 def update_timesheet_detail(project_name, task_name, status, timesheet_detail):
 
@@ -217,7 +216,7 @@ def backend_handler(action, node, update_object):
 		elif action == 'toggle_timer':
 			return handle_toggle_timer(node)
 		elif action == 'log_time':
-			handle_log_time(node)
+			return handle_log_time(node)
 		elif action == 'get':
 			return get()
 		
@@ -282,7 +281,7 @@ def handle_toggle_timer(node):
 
 
 def handle_log_time(node):
-	pass
+	return get_timesheet_detail(node.get('project'), node.get('docName'), None).as_dict()
 
 
 def node_to_doc(node):

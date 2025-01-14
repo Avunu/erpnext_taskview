@@ -1,6 +1,6 @@
 import useBackendHandler from './script.js';
 
-export default function useTaskview(props, treeData, highlightedProject, dragContext, currentTheme) {
+export default function useTaskview(props, treeData, highlightedProject, dragContext, currentTheme, isOpened, formWrapper) {
 
     // this finalizes the tree data by adding a blank project to the end of the list and blank tasks to any expanded project branches
     const premount = (newDocs = null) => {
@@ -415,6 +415,51 @@ export default function useTaskview(props, treeData, highlightedProject, dragCon
         }
     };
 
+    const loadForm = async (doc) => {
+        let formInstance = null; // Store the form instance
+        let doctype
+        let docName
+
+        if (Object.hasOwn(doc, 'isProject')) {
+            doctype = doc.isProject ? "Project" : "Task";
+        } else {
+            doctype = "Timesheet Detail";
+        }
+
+        if (Object.hasOwn(doc, 'docName')) {
+            docName = doc.docName;
+        } else {
+            docName = doc.name;
+        }
+
+        try {
+            // Ensure the wrapper is attached to the DOM
+            if (!document.body.contains(formWrapper.value)) {
+                console.error("formWrapper is not attached to the DOM");
+                return;
+            }
+
+            // Ensure doctype metadata is loaded
+            await frappe.model.with_doctype(doctype);
+
+            // Create and load the Frappe form
+            formInstance = new frappe.ui.form.Form(doctype, formWrapper.value, true, '');
+
+            // Load the form with the docName
+            await frappe.model.with_doc(doctype, docName);
+            formInstance.refresh(docName);
+
+        } catch (err) {
+            console.error("Error loading form:", err);
+        }
+    };
+
+    const openSidebar = (doc) => {
+        isOpened.value = true;
+        // console.log('Opening sidebar for', doc);
+        loadForm(doc);
+    };
+
     return {
         catchError,
         premount,
@@ -433,5 +478,6 @@ export default function useTaskview(props, treeData, highlightedProject, dragCon
         updateHighlightedProject,
         editRootBlankTask,
         handleKeydown,
-    }
+        openSidebar
+    };
 }

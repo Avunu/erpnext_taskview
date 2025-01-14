@@ -2,7 +2,7 @@ import { nextTick } from 'vue';
 import useBackendHandler from './script.js';
 
 
-export default function useTask(props, emit, isEditing, editedText, cancelTriggered, isOpened) {
+export default function useTask(props, emit, isEditing, editedText, cancelTriggered) {
 
     const { callBackendHandler } = useBackendHandler();
 
@@ -73,11 +73,21 @@ export default function useTask(props, emit, isEditing, editedText, cancelTrigge
     };
 
     // Log time or stop the timer
-    const logOrStopTimer = () => {
+    const logOrStopTimer = async () => {
         if (props.doc.timerStatus === 'stopped') {
             // Log time
-            console.log(`Time logged for task "${doc.text}"`);
+            console.log(`Time logged for task "${props.doc.text}"`);
             // TODO: Log time, probably with a modal
+            try {
+                const r = await callBackendHandler('log_time', {project: props.doc.projectName, docName: props.doc.taskName}, null);
+
+                // r.message should be the timesheet detail object, which we want to send to the sidebar
+                emit('open-sidebar', r.message);
+                
+            }
+            catch (error) {
+                emit('catch-error', error)
+            }
         } else {
             // Stop the timer
             stopTimer();
@@ -215,8 +225,8 @@ export default function useTask(props, emit, isEditing, editedText, cancelTrigge
         isEditing.value = false;
     };
 
-    const toggleSidebar = () => {
-        isOpened.value = !isOpened.value;
+    const emitSidebar = () => {
+        emit('open-sidebar', props.doc);
     };
 
     return {
@@ -233,6 +243,6 @@ export default function useTask(props, emit, isEditing, editedText, cancelTrigge
         saveEdit,
         cancelEdit,
         handleBlur,
-        toggleSidebar
+        emitSidebar
     }
 }

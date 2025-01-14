@@ -11,7 +11,7 @@
 
 			<!-- button to expand sidebar with this node (only for non-blank projects and tasks) -->
 			<div class="expand-sidebar-container">
-				<button v-if="!doc.isBlank" class="expand-sidebar" @click="toggleSidebar">
+				<button v-if="!doc.isBlank" class="expand-sidebar" @click="emitSidebar">
 					<span class="expand-icon">⤢</span>
 				</button>
 			</div>
@@ -51,24 +51,17 @@
 				</button>
 			</div>
 		</div>
-
-		<!-- Sidebar component -->
-		<Sidebar :doc="doc" :isOpened="isOpened" @close="toggleSidebar"/>
-		 
 	</div>
 </template>
 
 <script>
 import { defineComponent, ref, watch } from 'vue';
 import useTask from '../assets/js/task.js';
-import Sidebar from './Sidebar.vue';
 
 
 export default defineComponent({
 	name: 'Task',
-	components: {
-		Sidebar,
-	},
+	components: {},
 	props: {
 		doc: {
 			type: Object,
@@ -90,7 +83,6 @@ export default defineComponent({
 		const isEditing = ref(false);
 		const editedText = ref('');
 		const cancelTriggered = ref(false);
-		const isOpened = ref(false);
 
 		const {
 			emitInteraction,
@@ -102,8 +94,8 @@ export default defineComponent({
 			saveEdit,
 			cancelEdit,
 			handleBlur,
-			toggleSidebar,
-		} = useTask(props, emit, isEditing, editedText, cancelTriggered, isOpened);
+			emitSidebar
+		} = useTask(props, emit, isEditing, editedText, cancelTriggered);
 
 		watch(() => props.doc.autoFocus, (newVal) => {
 			if (newVal) {
@@ -114,7 +106,6 @@ export default defineComponent({
 
 		return {
 			isEditing,
-			isOpened,
 			editedText,
 			toggleComplete,
 			toggleTimer,
@@ -125,7 +116,7 @@ export default defineComponent({
 			cancelEdit,
 			handleBlur,
 			emitInteraction,
-			toggleSidebar,
+			emitSidebar
 		};
 	},
 });

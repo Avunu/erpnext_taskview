@@ -21,10 +21,19 @@
 						@add-sibling-task="addSiblingTask(node)" 
 						@catch-error="catchError"
 						@catch-success="premount"
+						@open-sidebar="openSidebar"
 					/>
 				</div>
 			</template>
 		</Draggable>
+	</div>
+	<div>
+		<VueSidePanel v-model="isOpened" width="80%" panel-color="var(--sidebar-bg-color)">
+			<div class="sidebar">
+					<!-- Form will be inserted here -->
+					<div ref="formWrapper"></div>
+			</div>
+		</VueSidePanel>
 	</div>
 </template>
 
@@ -33,6 +42,8 @@ import { defineComponent, ref, onMounted, onUnmounted } from 'vue';
 import { Draggable, dragContext, OpenIcon } from '@he-tree/vue';
 import Task from './components/Task.vue';
 import useTaskview from './assets/js/taskview.js';
+import { VueSidePanel } from "vue3-side-panel";
+import "vue3-side-panel/dist/vue3-side-panel.css";
 import '@he-tree/vue/style/default.css';
 import '@he-tree/vue/style/material-design.css';
 
@@ -41,7 +52,8 @@ export default defineComponent({
 	components: {
 		Draggable,
 		OpenIcon,
-		Task
+		Task,
+		VueSidePanel
 	},
 	props: {
 		docs: {
@@ -63,13 +75,19 @@ export default defineComponent({
 
 		let activeTimer = ref({});
 
+		let isOpened = ref(false);
+
+		const formWrapper = ref(null); // Reference for the form wrapper
+
+
+
 		// Dark Mode compatibility
 		const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
 		if (currentTheme.value === "automatic") {
 			currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 		}
 
-		// make an element to hold the sidetimers
+		// make an element to hold the sidetimers (future development)
 		let sideTimersParentElement = document.querySelector('.layout-side-section');
         let sideTimersElement = document.createElement('div');
         sideTimersElement.id = 'sidetimers';
@@ -88,7 +106,8 @@ export default defineComponent({
 			addSiblingTask,
 			handleTaskInteraction,
 			handleKeydown,
-		} = useTaskview(props, treeData, highlightedProject, dragContext, currentTheme);
+			openSidebar
+		} = useTaskview(props, treeData, highlightedProject, dragContext, currentTheme, isOpened, formWrapper);
 
 		// setup the tree data before mounting
 		premount();
@@ -107,6 +126,9 @@ export default defineComponent({
 		return {
 			treeData,
 			activeTimer,
+			sideTimersElement,
+			isOpened,
+			formWrapper,
 			catchError,
 			premount,
 			isHighlightedProject,
@@ -116,7 +138,7 @@ export default defineComponent({
 			handleKeydown,
 			handleDragEnd,
 			addSiblingTask,
-			sideTimersElement,
+			openSidebar,
 		};
 	},
 });

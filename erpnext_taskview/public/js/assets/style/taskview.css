@@ -23,3 +23,14 @@
 .he-tree__open-icon svg path {
 	fill: var(--icon-color);
 }
+
+/* sidebar */
+
+.sidebar {
+	/* background-color: var(--sidebar-bg-color); */
+	/* height: 100%; */
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-bottom: 20px;
+	padding-top: 65px;
+}
