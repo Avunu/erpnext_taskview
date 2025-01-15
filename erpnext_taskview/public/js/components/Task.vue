@@ -78,6 +78,11 @@ export default defineComponent({
 			required: false,
 			default: null,
 		},
+		isOpened: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	setup(props, { emit }) {
 		const isEditing = ref(false);
@@ -98,7 +103,8 @@ export default defineComponent({
 		} = useTask(props, emit, isEditing, editedText, cancelTriggered);
 
 		watch(() => props.doc.autoFocus, (newVal) => {
-			if (newVal) {
+			// if (newVal) {
+			if (newVal && !props.isOpened.value) {
 				editTask();
 				props.doc.autoFocus = false;
 			}

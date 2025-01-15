@@ -1,4 +1,4 @@
-frappe.dom.set_style("/* ../erpnext_taskview/erpnext_taskview/public/js/assets/style/task.css */\n.highlighted-project div .task-subject-container {\n  font-weight: bold;\n}\n.task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.task-subject-container {\n  flex-grow: 1;\n  margin-right: 10px;\n  margin-left: 10px;\n  border-bottom: 1px dashed darkgrey;\n}\n.task-subject {\n  padding: 0;\n  margin: 0;\n  cursor: text;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-subject-edit {\n  padding: 5px;\n  border: 1px solid #ddd;\n  border-radius: 4px;\n  font-size: 14px;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-controls {\n  display: flex;\n  align-items: center;\n  flex-shrink: 0;\n}\n.task-control {\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n}\n.custom-checkbox {\n  display: flex;\n  align-items: center;\n  position: relative;\n}\n.custom-checkbox label {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  margin: 0;\n}\n.custom-checkbox input {\n  position: absolute;\n  opacity: 0;\n  cursor: pointer;\n}\n.custom-checkbox .checkmark {\n  height: 20px;\n  width: 20px;\n  background-color: #d8dfed;\n  border-radius: 4px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n.custom-checkbox input:checked ~ .checkmark {\n  background-color: #2196F3;\n}\n.custom-checkbox .checkmark:after {\n  content: \"\";\n  position: absolute;\n  display: none;\n}\n.custom-checkbox input:checked ~ .checkmark:after {\n  display: block;\n  width: 5px;\n  height: 10px;\n  border: solid white;\n  border-width: 0 3px 3px 0;\n  transform: rotate(45deg);\n}\n.expand-sidebar {\n  height: 20px;\n  width: 20px;\n  background-color: #d8dfed;\n  border-radius: 4px;\n  border: none;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  transition: color 0.3s ease;\n  outline: none;\n  position: relative;\n}\n.expand-sidebar .expand-icon {\n  font-size: 16px;\n  color: #1976D2;\n  font-weight: bold;\n  pointer-events: none;\n}\n.expand-sidebar:hover .expand-icon {\n  color: #0D47A1;\n}\n.expand-sidebar:active .expand-icon {\n  color: #0A3C8A;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=style&index=0 */\n\n/* ../erpnext_taskview/node_modules/vue3-side-panel/dist/vue3-side-panel.css */\n.vsp-wrapper .vsp-overlay {\n  position: fixed;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n}\n.vsp-wrapper .vsp {\n  position: fixed;\n}\n.vsp-wrapper .vsp--right-side,\n.vsp-wrapper .vsp--left-side {\n  top: 0;\n  height: 100%;\n}\n.vsp-wrapper .vsp--right-side {\n  right: 0;\n  left: unset;\n}\n.vsp-wrapper .vsp--left-side {\n  right: unset;\n  left: 0;\n}\n.vsp-wrapper .vsp--bottom-side,\n.vsp-wrapper .vsp--top-side {\n  left: 0;\n  width: 100%;\n}\n.vsp-wrapper .vsp--bottom-side {\n  bottom: 0;\n}\n.vsp-wrapper .vsp--top-side {\n  top: 0;\n}\n.vsp-wrapper .vsp__header,\n.vsp-wrapper .vsp__body,\n.vsp-wrapper .vsp__footer {\n  overflow: auto;\n}\n.vsp-wrapper .vsp__body {\n  position: relative;\n}\n.vsp-wrapper .overlay-enter-active,\n.vsp-wrapper .overlay-leave-active {\n  animation: overlay-transition;\n}\n.vsp-wrapper .overlay-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-right-enter-active,\n.vsp-wrapper .slide-right-leave-active {\n  animation: slide-right;\n}\n.vsp-wrapper .slide-right-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-left-enter-active,\n.vsp-wrapper .slide-left-leave-active {\n  animation: slide-left;\n}\n.vsp-wrapper .slide-left-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-top-enter-active,\n.vsp-wrapper .slide-top-leave-active {\n  animation: slide-left;\n}\n.vsp-wrapper .slide-top-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-top-enter-active,\n.vsp-wrapper .slide-top-leave-active {\n  animation: slide-top;\n}\n.vsp-wrapper .slide-top-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-bottom-enter-active,\n.vsp-wrapper .slide-bottom-leave-active {\n  animation: slide-bottom;\n}\n.vsp-wrapper .slide-bottom-leave-active {\n  animation-direction: reverse;\n}\n@keyframes slide-right {\n  0% {\n    transform: translateX(100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateX(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-left {\n  0% {\n    transform: translateX(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateX(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-bottom {\n  0% {\n    transform: translateY(100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-top {\n  0% {\n    transform: translateY(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-top {\n  0% {\n    transform: translateY(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes overlay-transition {\n  0% {\n    opacity: 0;\n  }\n  100% {\n    opacity: var(--overlay-opacity);\n  }\n}\n.vsp-close {\n  position: absolute;\n  top: 24px;\n  right: 24px;\n  display: inline-block;\n  width: 36px;\n  height: 36px;\n  text-align: center;\n  cursor: pointer;\n  background: white;\n  border-radius: 50%;\n  transition: background-color 0.1s;\n}\n.vsp-close:hover {\n  background: #f7f7f7;\n}\n.vsp-close__x {\n  position: relative;\n  top: 8px;\n  left: -1px;\n  display: inline-block;\n  width: 20px;\n  height: 20px;\n}\n.vsp-close__x::before,\n.vsp-close__x::after {\n  position: absolute;\n  width: 2px;\n  height: 20px;\n  content: \" \";\n  background-color: #777;\n}\n.vsp-close__x::before {\n  transform: rotate(-45deg);\n}\n.vsp-close__x::after {\n  transform: rotate(45deg);\n}\n.vsp-close:active .vsp-close__x {\n  top: 9px;\n  left: -1px;\n}\n.vsp-close:active {\n  top: 23px;\n  right: 23px;\n  width: 38px;\n  height: 38px;\n  background: #f1f1f1;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/default.css */\n.tree-node--with-tree-line {\n  position: relative;\n}\n.tree-line {\n  position: absolute;\n  background-color: #bbb;\n}\n.tree-vline {\n  width: 1px;\n  top: 0;\n  bottom: 0;\n}\n.tree-hline {\n  height: 1px;\n  top: 50%;\n  width: 10px;\n}\n.he-tree--rtl {\n  direction: rtl;\n}\n.he-tree-drag-placeholder {\n  background: #ddf2f9;\n  border: 1px dashed #00d9ff;\n  height: 22px;\n  width: 100%;\n}\n.he-tree__open-icon {\n  cursor: pointer;\n  user-select: none;\n  display: inline-block;\n}\n.he-tree__open-icon.open {\n  transform: rotate(90deg);\n}\n.he-tree__open-icon svg {\n  width: 1em;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/material-design.css */\n.mtl-tree .tree-node-inner {\n  display: flex;\n  align-items: center;\n  font-size: 14px;\n}\n.mtl-tree .tree-node {\n  padding: 1px 0;\n}\n.mtl-tree .tree-node:hover {\n  background-color: #ededed;\n}\n.mtl-checkbox {\n  width: 14px;\n  height: 14px;\n}\n.mtl-ml {\n  margin-left: 4px;\n}\n.mtl-mr {\n  margin-right: 4px;\n}\n.mtl-tree table {\n  width: 100%;\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n.mtl-tree td,\n.mtl-tree th {\n  border-bottom: 1px solid rgba(224, 224, 224, 1);\n  line-height: 1.5;\n}\n.mtl-tree tr:last-child td,\n.mtl-tree tr:last-child tr {\n  border-bottom: 0px;\n}\n.mtl-text-left {\n  text-align: left;\n}\n.mtl-text-center {\n  text-align: center;\n}\n.mtl-text-right {\n  text-align: right;\n}\n\n/* ../erpnext_taskview/erpnext_taskview/public/js/assets/style/taskview.css */\n.tree-container {\n  font-size: 14px;\n}\n.small-icon {\n  font-size: 1.5em;\n}\n.outer-task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.mtl-tree .tree-node:hover {\n  background-color: var(--task-hover-bg-color);\n}\n.he-tree__open-icon svg path {\n  fill: var(--icon-color);\n}\n.sidebar {\n  padding-left: 10px;\n  padding-right: 10px;\n  padding-bottom: 20px;\n  padding-top: 65px;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=style&index=0 */\n/*# sourceMappingURL=app.bundle.DMGLU6PN.css.map */\n");
+frappe.dom.set_style("/* ../erpnext_taskview/erpnext_taskview/public/js/assets/style/task.css */\n.highlighted-project div .task-subject-container {\n  font-weight: bold;\n}\n.task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.task-subject-container {\n  flex-grow: 1;\n  margin-right: 10px;\n  margin-left: 10px;\n  border-bottom: 1px dashed darkgrey;\n}\n.task-subject {\n  padding: 0;\n  margin: 0;\n  cursor: text;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-subject-edit {\n  padding: 5px;\n  border: 1px solid #ddd;\n  border-radius: 4px;\n  font-size: 14px;\n  width: 100%;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.task-controls {\n  display: flex;\n  align-items: center;\n  flex-shrink: 0;\n}\n.task-control {\n  margin-right: 10px;\n  display: flex;\n  align-items: center;\n}\n.custom-checkbox {\n  display: flex;\n  align-items: center;\n  position: relative;\n}\n.custom-checkbox label {\n  display: flex;\n  align-items: center;\n  cursor: pointer;\n  margin: 0;\n}\n.custom-checkbox input {\n  position: absolute;\n  opacity: 0;\n  cursor: pointer;\n}\n.custom-checkbox .checkmark {\n  height: 20px;\n  width: 20px;\n  background-color: #d8dfed;\n  border-radius: 4px;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n}\n.custom-checkbox input:checked ~ .checkmark {\n  background-color: #2196F3;\n}\n.custom-checkbox .checkmark:after {\n  content: \"\";\n  position: absolute;\n  display: none;\n}\n.custom-checkbox input:checked ~ .checkmark:after {\n  display: block;\n  width: 5px;\n  height: 10px;\n  border: solid white;\n  border-width: 0 3px 3px 0;\n  transform: rotate(45deg);\n}\n.expand-sidebar {\n  height: 20px;\n  width: 20px;\n  background-color: #d8dfed;\n  border-radius: 4px;\n  border: none;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  transition: color 0.3s ease;\n  outline: none;\n  position: relative;\n}\n.expand-sidebar .expand-icon {\n  font-size: 16px;\n  color: #1976D2;\n  font-weight: bold;\n  pointer-events: none;\n}\n.expand-sidebar:hover .expand-icon {\n  color: #0D47A1;\n}\n.expand-sidebar:active .expand-icon {\n  color: #0A3C8A;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/Task.vue?type=style&index=0 */\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/TimeLogger.vue?type=style&index=0 */\n.sidebar-content[data-v-bc1e3033] {\n  text-align: center;\n  background-color: var(--sidebar-background, #f9f9f9);\n  padding: 20px;\n  border-radius: 8px;\n  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);\n}\nh3[data-v-bc1e3033] {\n  color: var(--text-color, #333);\n}\nform[data-v-bc1e3033] {\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n  align-items: center;\n}\nlabel[data-v-bc1e3033] {\n  margin-bottom: 5px;\n  color: var(--label-color, #333);\n}\ninput[data-v-bc1e3033],\ntextarea[data-v-bc1e3033] {\n  padding: 5px;\n  border: 1px solid var(--border-color, #ccc);\n  border-radius: 4px;\n  background-color: var(--input-background-color, #fff);\n  color: var(--input-color, #333);\n}\n.button-group[data-v-bc1e3033] {\n  margin-top: 15px;\n}\nbutton[data-v-bc1e3033] {\n  padding: 8px 16px;\n  margin-right: 5px;\n  border: none;\n  border-radius: 4px;\n  cursor: pointer;\n}\nbutton[type=submit][data-v-bc1e3033] {\n  background-color: var(--submit-button-bg, #007bff);\n  color: white;\n}\nbutton[type=button][data-v-bc1e3033] {\n  background-color: var(--cancel-button-bg, #dc3545);\n  color: white;\n}\n[data-theme=dark][data-v-bc1e3033] {\n  --sidebar-background: #252525;\n  --text-color: #f1f1f1;\n  --label-color: #f1f1f1;\n  --border-color: #555;\n  --input-background-color: #444;\n  --input-color: #f1f1f1;\n  --submit-button-bg: #007bff;\n  --cancel-button-bg: #dc3545;\n}\n\n/* ../erpnext_taskview/node_modules/vue3-side-panel/dist/vue3-side-panel.css */\n.vsp-wrapper .vsp-overlay {\n  position: fixed;\n  top: 0;\n  left: 0;\n  width: 100%;\n  height: 100%;\n}\n.vsp-wrapper .vsp {\n  position: fixed;\n}\n.vsp-wrapper .vsp--right-side,\n.vsp-wrapper .vsp--left-side {\n  top: 0;\n  height: 100%;\n}\n.vsp-wrapper .vsp--right-side {\n  right: 0;\n  left: unset;\n}\n.vsp-wrapper .vsp--left-side {\n  right: unset;\n  left: 0;\n}\n.vsp-wrapper .vsp--bottom-side,\n.vsp-wrapper .vsp--top-side {\n  left: 0;\n  width: 100%;\n}\n.vsp-wrapper .vsp--bottom-side {\n  bottom: 0;\n}\n.vsp-wrapper .vsp--top-side {\n  top: 0;\n}\n.vsp-wrapper .vsp__header,\n.vsp-wrapper .vsp__body,\n.vsp-wrapper .vsp__footer {\n  overflow: auto;\n}\n.vsp-wrapper .vsp__body {\n  position: relative;\n}\n.vsp-wrapper .overlay-enter-active,\n.vsp-wrapper .overlay-leave-active {\n  animation: overlay-transition;\n}\n.vsp-wrapper .overlay-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-right-enter-active,\n.vsp-wrapper .slide-right-leave-active {\n  animation: slide-right;\n}\n.vsp-wrapper .slide-right-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-left-enter-active,\n.vsp-wrapper .slide-left-leave-active {\n  animation: slide-left;\n}\n.vsp-wrapper .slide-left-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-top-enter-active,\n.vsp-wrapper .slide-top-leave-active {\n  animation: slide-left;\n}\n.vsp-wrapper .slide-top-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-top-enter-active,\n.vsp-wrapper .slide-top-leave-active {\n  animation: slide-top;\n}\n.vsp-wrapper .slide-top-leave-active {\n  animation-direction: reverse;\n}\n.vsp-wrapper .slide-bottom-enter-active,\n.vsp-wrapper .slide-bottom-leave-active {\n  animation: slide-bottom;\n}\n.vsp-wrapper .slide-bottom-leave-active {\n  animation-direction: reverse;\n}\n@keyframes slide-right {\n  0% {\n    transform: translateX(100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateX(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-left {\n  0% {\n    transform: translateX(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateX(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-bottom {\n  0% {\n    transform: translateY(100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-top {\n  0% {\n    transform: translateY(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes slide-top {\n  0% {\n    transform: translateY(-100%);\n    opacity: 0;\n  }\n  100% {\n    transform: translateY(0);\n    opacity: 1;\n  }\n}\n@keyframes overlay-transition {\n  0% {\n    opacity: 0;\n  }\n  100% {\n    opacity: var(--overlay-opacity);\n  }\n}\n.vsp-close {\n  position: absolute;\n  top: 24px;\n  right: 24px;\n  display: inline-block;\n  width: 36px;\n  height: 36px;\n  text-align: center;\n  cursor: pointer;\n  background: white;\n  border-radius: 50%;\n  transition: background-color 0.1s;\n}\n.vsp-close:hover {\n  background: #f7f7f7;\n}\n.vsp-close__x {\n  position: relative;\n  top: 8px;\n  left: -1px;\n  display: inline-block;\n  width: 20px;\n  height: 20px;\n}\n.vsp-close__x::before,\n.vsp-close__x::after {\n  position: absolute;\n  width: 2px;\n  height: 20px;\n  content: \" \";\n  background-color: #777;\n}\n.vsp-close__x::before {\n  transform: rotate(-45deg);\n}\n.vsp-close__x::after {\n  transform: rotate(45deg);\n}\n.vsp-close:active .vsp-close__x {\n  top: 9px;\n  left: -1px;\n}\n.vsp-close:active {\n  top: 23px;\n  right: 23px;\n  width: 38px;\n  height: 38px;\n  background: #f1f1f1;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/default.css */\n.tree-node--with-tree-line {\n  position: relative;\n}\n.tree-line {\n  position: absolute;\n  background-color: #bbb;\n}\n.tree-vline {\n  width: 1px;\n  top: 0;\n  bottom: 0;\n}\n.tree-hline {\n  height: 1px;\n  top: 50%;\n  width: 10px;\n}\n.he-tree--rtl {\n  direction: rtl;\n}\n.he-tree-drag-placeholder {\n  background: #ddf2f9;\n  border: 1px dashed #00d9ff;\n  height: 22px;\n  width: 100%;\n}\n.he-tree__open-icon {\n  cursor: pointer;\n  user-select: none;\n  display: inline-block;\n}\n.he-tree__open-icon.open {\n  transform: rotate(90deg);\n}\n.he-tree__open-icon svg {\n  width: 1em;\n}\n\n/* ../erpnext_taskview/node_modules/@he-tree/vue/style/material-design.css */\n.mtl-tree .tree-node-inner {\n  display: flex;\n  align-items: center;\n  font-size: 14px;\n}\n.mtl-tree .tree-node {\n  padding: 1px 0;\n}\n.mtl-tree .tree-node:hover {\n  background-color: #ededed;\n}\n.mtl-checkbox {\n  width: 14px;\n  height: 14px;\n}\n.mtl-ml {\n  margin-left: 4px;\n}\n.mtl-mr {\n  margin-right: 4px;\n}\n.mtl-tree table {\n  width: 100%;\n  border-collapse: collapse;\n  border-spacing: 0;\n}\n.mtl-tree td,\n.mtl-tree th {\n  border-bottom: 1px solid rgba(224, 224, 224, 1);\n  line-height: 1.5;\n}\n.mtl-tree tr:last-child td,\n.mtl-tree tr:last-child tr {\n  border-bottom: 0px;\n}\n.mtl-text-left {\n  text-align: left;\n}\n.mtl-text-center {\n  text-align: center;\n}\n.mtl-text-right {\n  text-align: right;\n}\n\n/* ../erpnext_taskview/erpnext_taskview/public/js/assets/style/taskview.css */\n.tree-container {\n  font-size: 14px;\n}\n.small-icon {\n  font-size: 1.5em;\n}\n.outer-task {\n  display: flex;\n  flex-direction: row;\n  align-items: center;\n  width: 100%;\n}\n.mtl-tree .tree-node:hover {\n  background-color: var(--task-hover-bg-color);\n}\n.he-tree__open-icon svg path {\n  fill: var(--icon-color);\n}\n.sidebar {\n  padding-left: 10px;\n  padding-right: 10px;\n  padding-bottom: 20px;\n  padding-top: 65px;\n}\n\n/* sfc-style:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=style&index=0 */\n/*# sourceMappingURL=app.bundle.OWXYHQ75.css.map */\n");
 (() => {
   var __defProp = Object.defineProperty;
   var __defProps = Object.defineProperties;
@@ -2779,7 +2779,7 @@ If this is a native custom element, make sure to exclude it from component resol
       beforeUnmount,
       destroyed,
       unmounted,
-      render: render4,
+      render: render5,
       renderTracked,
       renderTriggered,
       errorCaptured,
@@ -2931,8 +2931,8 @@ If this is a native custom element, make sure to exclude it from component resol
         instance.exposed = {};
       }
     }
-    if (render4 && instance.render === NOOP) {
-      instance.render = render4;
+    if (render5 && instance.render === NOOP) {
+      instance.render = render5;
     }
     if (inheritAttrs != null) {
       instance.inheritAttrs = inheritAttrs;
@@ -3168,7 +3168,7 @@ If this is a native custom element, make sure to exclude it from component resol
     };
   }
   var uid$1 = 0;
-  function createAppAPI(render4, hydrate) {
+  function createAppAPI(render5, hydrate) {
     return function createApp2(rootComponent, rootProps = null) {
       if (!isFunction(rootComponent)) {
         rootComponent = extend({}, rootComponent);
@@ -3271,7 +3271,7 @@ If this is a native custom element, make sure to exclude it from component resol
             }
             if (true) {
               context3.reload = () => {
-                render4(
+                render5(
                   cloneVNode(vnode),
                   rootContainer,
                   namespace
@@ -3281,7 +3281,7 @@ If this is a native custom element, make sure to exclude it from component resol
             if (isHydrate && hydrate) {
               hydrate(vnode, rootContainer);
             } else {
-              render4(vnode, rootContainer, namespace);
+              render5(vnode, rootContainer, namespace);
             }
             isMounted = true;
             app._container = rootContainer;
@@ -3300,7 +3300,7 @@ If you want to remount the same app, move your app creation logic into a factory
         },
         unmount() {
           if (isMounted) {
-            render4(null, app._container);
+            render5(null, app._container);
             if (true) {
               app._instance = null;
               devtoolsUnmountApp(app);
@@ -5635,7 +5635,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       return teleportEnd ? hostNextSibling(teleportEnd) : el;
     };
     let isFlushing2 = false;
-    const render4 = (vnode, container, namespace) => {
+    const render5 = (vnode, container, namespace) => {
       if (vnode == null) {
         if (container._vnode) {
           unmount(container._vnode, null, null, true);
@@ -5679,9 +5679,9 @@ For more details, see https://link.vuejs.org/feature-flags.`
       );
     }
     return {
-      render: render4,
+      render: render5,
       hydrate,
-      createApp: createAppAPI(render4, hydrate)
+      createApp: createAppAPI(render5, hydrate)
     };
   }
   function resolveChildrenNamespace({ type, props }, currentNamespace) {
@@ -6186,7 +6186,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
       slots,
       attrs,
       emit: emit2,
-      render: render4,
+      render: render5,
       renderCache,
       props,
       data,
@@ -6214,7 +6214,7 @@ For more details, see https://link.vuejs.org/feature-flags.`
           }
         }) : proxyToUse;
         result = normalizeVNode(
-          render4.call(
+          render5.call(
             thisProxy,
             proxyToUse,
             renderCache,
@@ -8335,6 +8335,32 @@ Expected function or array of functions, received type ${typeof value}.`
       }
       el.value = newValue;
     }
+  };
+  var systemModifiers = ["ctrl", "shift", "alt", "meta"];
+  var modifierGuards = {
+    stop: (e) => e.stopPropagation(),
+    prevent: (e) => e.preventDefault(),
+    self: (e) => e.target !== e.currentTarget,
+    ctrl: (e) => !e.ctrlKey,
+    shift: (e) => !e.shiftKey,
+    alt: (e) => !e.altKey,
+    meta: (e) => !e.metaKey,
+    left: (e) => "button" in e && e.button !== 0,
+    middle: (e) => "button" in e && e.button !== 1,
+    right: (e) => "button" in e && e.button !== 2,
+    exact: (e, modifiers) => systemModifiers.some((m) => e[`${m}Key`] && !modifiers.includes(m))
+  };
+  var withModifiers = (fn, modifiers) => {
+    const cache = fn._withMods || (fn._withMods = {});
+    const cacheKey = modifiers.join(".");
+    return cache[cacheKey] || (cache[cacheKey] = (event, ...args) => {
+      for (let i = 0; i < modifiers.length; i++) {
+        const guard = modifierGuards[modifiers[i]];
+        if (guard && guard(event, modifiers))
+          return;
+      }
+      return fn(event, ...args);
+    });
   };
   var keyNames = {
     esc: "escape",
@@ -11565,13 +11591,11 @@ Expected function or array of functions, received type ${typeof value}.`
     };
     const logOrStopTimer = async () => {
       if (props.doc.timerStatus === "stopped") {
-        console.log(`Time logged for task "${props.doc.text}"`);
-        try {
-          const r = await callBackendHandler("log_time", { project: props.doc.projectName, docName: props.doc.taskName }, null);
-          emit2("open-sidebar", r.message);
-        } catch (error) {
-          emit2("catch-error", error);
-        }
+        emit2("open-sidebar", {
+          project: props.doc.project,
+          docName: props.doc.docName,
+          text: props.doc.text
+        });
       } else {
         stopTimer();
       }
@@ -11715,6 +11739,11 @@ Expected function or array of functions, received type ${typeof value}.`
         type: Object,
         required: false,
         default: null
+      },
+      isOpened: {
+        type: Boolean,
+        required: false,
+        default: false
       }
     },
     setup(props, { emit: emit2 }) {
@@ -11734,7 +11763,7 @@ Expected function or array of functions, received type ${typeof value}.`
         emitSidebar
       } = useTask(props, emit2, isEditing, editedText, cancelTriggered);
       watch(() => props.doc.autoFocus, (newVal) => {
-        if (newVal) {
+        if (newVal && !props.isOpened.value) {
           editTask();
           props.doc.autoFocus = false;
         }
@@ -11850,7 +11879,7 @@ Expected function or array of functions, received type ${typeof value}.`
   var Task_default2 = Task_default;
 
   // ../erpnext_taskview/erpnext_taskview/public/js/assets/js/taskview.js
-  function useTaskview(props, treeData, highlightedProject, dragContext, currentTheme, isOpened, formWrapper) {
+  function useTaskview(props, treeData, highlightedProject, dragContext, currentTheme, isOpened, formWrapper, showForm, timeLoggerDoc) {
     const premount = (newDocs2 = null) => {
       let docs = addBlankProject(newDocs2 || props.docs);
       docs = addBlankTasks(docs);
@@ -12143,24 +12172,14 @@ Expected function or array of functions, received type ${typeof value}.`
     };
     const handleKeydown = (event) => {
       const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;'",.<>?/`~\- ]$/;
-      if (document.activeElement.tagName !== "INPUT" && allowedKeys.test(event.key)) {
+      if (document.activeElement.tagName !== "INPUT" && allowedKeys.test(event.key) && !isOpened.value) {
         editRootBlankTask();
       }
     };
     const loadForm = async (doc2) => {
       let formInstance = null;
-      let doctype;
-      let docName;
-      if (Object.hasOwn(doc2, "isProject")) {
-        doctype = doc2.isProject ? "Project" : "Task";
-      } else {
-        doctype = "Timesheet Detail";
-      }
-      if (Object.hasOwn(doc2, "docName")) {
-        docName = doc2.docName;
-      } else {
-        docName = doc2.name;
-      }
+      let doctype = doc2.isProject ? "Project" : "Task";
+      let docName = doc2.docName;
       try {
         if (!document.body.contains(formWrapper.value)) {
           console.error("formWrapper is not attached to the DOM");
@@ -12176,7 +12195,17 @@ Expected function or array of functions, received type ${typeof value}.`
     };
     const openSidebar = (doc2) => {
       isOpened.value = true;
-      loadForm(doc2);
+      if (Object.hasOwn(doc2, "isProject")) {
+        loadForm(doc2);
+      } else {
+        timeLoggerDoc.value = doc2;
+        showForm.value = false;
+      }
+    };
+    const closeTimeLogger = () => {
+      timeLoggerDoc.value = null;
+      showForm.value = true;
+      isOpened.value = false;
     };
     return {
       catchError,
@@ -12196,7 +12225,8 @@ Expected function or array of functions, received type ${typeof value}.`
       updateHighlightedProject,
       editRootBlankTask,
       handleKeydown,
-      openSidebar
+      openSidebar,
+      closeTimeLogger
     };
   }
 
@@ -12690,6 +12720,172 @@ Expected function or array of functions, received type ${typeof value}.`
   script.render = render2;
   script.__file = "src/components/SidePanel.vue";
 
+  // ../erpnext_taskview/erpnext_taskview/public/js/assets/js/timelogger.js
+  function useTimeLogger(props, emit2, description, startTime, stopTime, docText) {
+    const { callBackendHandler } = useBackendHandler();
+    const formatDateTime = (date) => {
+      const pad = (num) => String(num).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+    const logTime = async () => {
+      if (!startTime.value || !stopTime.value) {
+        alert("Both start time and stop time are required!");
+        return;
+      }
+      console.log(`Logged time for ${docText.value}: Start Time - ${startTime.value}, Stop Time - ${stopTime.value}, Description - ${description.value}`);
+      console.log(props.doc);
+      try {
+        const r = await callBackendHandler("log_time", {
+          project: props.doc.project,
+          docName: props.doc.taskName,
+          startTime: startTime.value,
+          stopTime: stopTime.value,
+          description: description.value || ""
+        }, null);
+        frappe.show_alert({
+          message: __(`Time logged for ${docText.value}`),
+          indicator: "green"
+        });
+      } catch (error) {
+        emit2("catch-error", error);
+      }
+      closeSidebar();
+    };
+    const closeSidebar = () => {
+      emit2("close-time-logger");
+    };
+    return {
+      formatDateTime,
+      logTime,
+      closeSidebar
+    };
+  }
+
+  // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/TimeLogger.vue?type=script
+  var TimeLogger_default = defineComponent({
+    props: {
+      doc: Object,
+      isOpened: Boolean,
+      currentTheme: String
+    },
+    setup(props, { emit: emit2 }) {
+      let description = ref("");
+      let startTime = ref(null);
+      let stopTime = ref(null);
+      const descriptionInput = ref(null);
+      const docText = computed2(() => props.doc.text);
+      const {
+        logTime,
+        formatDateTime,
+        closeSidebar
+      } = useTimeLogger(props, emit2, description, startTime, stopTime, docText);
+      let defaultDate = formatDateTime(new Date());
+      startTime.value = defaultDate;
+      stopTime.value = defaultDate;
+      onMounted(() => {
+        nextTick(() => {
+          if (props.isOpened && descriptionInput.value) {
+            descriptionInput.value.focus();
+          }
+        });
+      });
+      onUnmounted(() => {
+        if (descriptionInput.value) {
+          description.value = "";
+          descriptionInput.value.blur();
+        }
+      });
+      watch(
+        () => props.isOpened,
+        (newVal) => {
+          if (newVal && descriptionInput.value) {
+            console.log("Sidebar opened, focusing input...");
+            nextTick(() => {
+              descriptionInput.value.focus();
+            });
+          }
+        }
+      );
+      return {
+        description,
+        startTime,
+        stopTime,
+        docText,
+        logTime,
+        closeSidebar,
+        descriptionInput
+      };
+    }
+  });
+
+  // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/components/TimeLogger.vue?type=template
+  var _withScopeId2 = (n) => (pushScopeId("data-v-bc1e3033"), n = n(), popScopeId(), n);
+  var _hoisted_15 = ["data-theme"];
+  var _hoisted_25 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("label", { for: "description" }, "Description:", -1));
+  var _hoisted_33 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("label", { for: "start-time" }, "Start Time:", -1));
+  var _hoisted_42 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("label", { for: "stop-time" }, "Stop Time:", -1));
+  var _hoisted_52 = { class: "button-group" };
+  var _hoisted_62 = /* @__PURE__ */ _withScopeId2(() => /* @__PURE__ */ createBaseVNode("button", {
+    type: "submit",
+    id: "log-button"
+  }, "Log", -1));
+  function render3(_ctx, _cache, $props, $setup, $data, $options) {
+    return openBlock(), createElementBlock("div", {
+      class: "sidebar-content",
+      "data-theme": _ctx.currentTheme
+    }, [
+      createBaseVNode("h3", null, "Log time for " + toDisplayString(_ctx.docText), 1),
+      createBaseVNode("form", {
+        id: "log-time-form",
+        onSubmit: _cache[4] || (_cache[4] = withModifiers((...args) => _ctx.logTime && _ctx.logTime(...args), ["prevent"]))
+      }, [
+        _hoisted_25,
+        withDirectives(createBaseVNode("textarea", {
+          id: "description",
+          "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => _ctx.description = $event),
+          rows: "4",
+          cols: "40",
+          placeholder: "Add a description...",
+          ref: "descriptionInput"
+        }, null, 512), [
+          [vModelText, _ctx.description]
+        ]),
+        _hoisted_33,
+        withDirectives(createBaseVNode("input", {
+          type: "datetime-local",
+          id: "start-time",
+          "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => _ctx.startTime = $event),
+          required: ""
+        }, null, 512), [
+          [vModelText, _ctx.startTime]
+        ]),
+        _hoisted_42,
+        withDirectives(createBaseVNode("input", {
+          type: "datetime-local",
+          id: "stop-time",
+          "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => _ctx.stopTime = $event),
+          required: ""
+        }, null, 512), [
+          [vModelText, _ctx.stopTime]
+        ]),
+        createBaseVNode("div", _hoisted_52, [
+          _hoisted_62,
+          createBaseVNode("button", {
+            type: "button",
+            id: "cancel-button",
+            onClick: _cache[3] || (_cache[3] = (...args) => _ctx.closeSidebar && _ctx.closeSidebar(...args))
+          }, "Cancel")
+        ])
+      ], 32)
+    ], 8, _hoisted_15);
+  }
+
+  // ../erpnext_taskview/erpnext_taskview/public/js/components/TimeLogger.vue
+  TimeLogger_default.render = render3;
+  TimeLogger_default.__file = "../erpnext_taskview/erpnext_taskview/public/js/components/TimeLogger.vue";
+  TimeLogger_default.__scopeId = "data-v-bc1e3033";
+  var TimeLogger_default2 = TimeLogger_default;
+
   // sfc-script:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=script
   var TaskView_default = defineComponent({
     name: "TaskView",
@@ -12697,7 +12893,8 @@ Expected function or array of functions, received type ${typeof value}.`
       Draggable: cpt2,
       OpenIcon,
       Task: Task_default2,
-      VueSidePanel: script
+      VueSidePanel: script,
+      TimeLogger: TimeLogger_default2
     },
     props: {
       docs: {
@@ -12713,6 +12910,8 @@ Expected function or array of functions, received type ${typeof value}.`
       let activeTimer = ref({});
       let isOpened = ref(false);
       const formWrapper = ref(null);
+      let showForm = ref(true);
+      let timeLoggerDoc = ref({});
       const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
       if (currentTheme.value === "automatic") {
         currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -12733,8 +12932,9 @@ Expected function or array of functions, received type ${typeof value}.`
         addSiblingTask,
         handleTaskInteraction,
         handleKeydown,
-        openSidebar
-      } = useTaskview(props, treeData, highlightedProject, context2, currentTheme, isOpened, formWrapper);
+        openSidebar,
+        closeTimeLogger
+      } = useTaskview(props, treeData, highlightedProject, context2, currentTheme, isOpened, formWrapper, showForm, timeLoggerDoc);
       premount();
       onMounted(() => {
         useOnMounted();
@@ -12748,6 +12948,9 @@ Expected function or array of functions, received type ${typeof value}.`
         sideTimersElement,
         isOpened,
         formWrapper,
+        showForm,
+        currentTheme,
+        timeLoggerDoc,
         catchError,
         premount,
         isHighlightedProject,
@@ -12757,15 +12960,16 @@ Expected function or array of functions, received type ${typeof value}.`
         handleKeydown,
         handleDragEnd,
         addSiblingTask,
-        openSidebar
+        openSidebar,
+        closeTimeLogger
       };
     }
   });
 
   // sfc-template:/workspace/development/frappe-bench/apps/erpnext_taskview/erpnext_taskview/public/js/TaskView.vue?type=template
-  var _hoisted_15 = { class: "tree-container" };
-  var _hoisted_25 = ["onClick"];
-  var _hoisted_33 = /* @__PURE__ */ createBaseVNode("div", { class: "icon-container" }, [
+  var _hoisted_16 = { class: "tree-container" };
+  var _hoisted_26 = ["onClick"];
+  var _hoisted_34 = /* @__PURE__ */ createBaseVNode("div", { class: "icon-container" }, [
     /* @__PURE__ */ createBaseVNode("svg", {
       xmlns: "http://www.w3.org/2000/svg",
       viewBox: "0 0 24 24"
@@ -12774,17 +12978,21 @@ Expected function or array of functions, received type ${typeof value}.`
       /* @__PURE__ */ createBaseVNode("path", { d: "M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" })
     ])
   ], -1);
-  var _hoisted_42 = [
-    _hoisted_33
+  var _hoisted_43 = [
+    _hoisted_34
   ];
-  var _hoisted_52 = { class: "sidebar" };
-  var _hoisted_62 = { ref: "formWrapper" };
-  function render3(_ctx, _cache, $props, $setup, $data, $options) {
+  var _hoisted_53 = { class: "sidebar" };
+  var _hoisted_63 = {
+    key: 0,
+    ref: "formWrapper"
+  };
+  function render4(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_Task = resolveComponent("Task");
     const _component_Draggable = resolveComponent("Draggable");
+    const _component_TimeLogger = resolveComponent("TimeLogger");
     const _component_VueSidePanel = resolveComponent("VueSidePanel");
     return openBlock(), createElementBlock(Fragment, null, [
-      createBaseVNode("div", _hoisted_15, [
+      createBaseVNode("div", _hoisted_16, [
         createVNode(_component_Draggable, {
           class: "mtl-tree",
           modelValue: _ctx.treeData,
@@ -12802,19 +13010,20 @@ Expected function or array of functions, received type ${typeof value}.`
               createBaseVNode("a", {
                 class: normalizeClass(["he-tree__open-icon mtl-mr small-icon", { "open": stat.open }]),
                 onClick: ($event) => _ctx.toggleNode(node, stat)
-              }, [..._hoisted_42], 10, _hoisted_25),
+              }, [..._hoisted_43], 10, _hoisted_26),
               createCommentVNode(" task or project "),
               createVNode(_component_Task, {
                 doc: node,
                 activeTimer: _ctx.activeTimer,
                 sideTimersElement: _ctx.sideTimersElement,
+                isOpened: _ctx.isOpened,
                 class: "mtl-ml",
                 onTaskInteraction: ($event) => _ctx.handleTaskInteraction(node),
                 onAddSiblingTask: ($event) => _ctx.addSiblingTask(node),
                 onCatchError: _ctx.catchError,
                 onCatchSuccess: _ctx.premount,
                 onOpenSidebar: _ctx.openSidebar
-              }, null, 8, ["doc", "activeTimer", "sideTimersElement", "onTaskInteraction", "onAddSiblingTask", "onCatchError", "onCatchSuccess", "onOpenSidebar"])
+              }, null, 8, ["doc", "activeTimer", "sideTimersElement", "isOpened", "onTaskInteraction", "onAddSiblingTask", "onCatchError", "onCatchSuccess", "onOpenSidebar"])
             ], 2)) : createCommentVNode("v-if", true)
           ]),
           _: 1
@@ -12828,9 +13037,17 @@ Expected function or array of functions, received type ${typeof value}.`
           "panel-color": "var(--sidebar-bg-color)"
         }, {
           default: withCtx(() => [
-            createBaseVNode("div", _hoisted_52, [
+            createBaseVNode("div", _hoisted_53, [
               createCommentVNode(" Form will be inserted here "),
-              createBaseVNode("div", _hoisted_62, null, 512)
+              _ctx.showForm ? (openBlock(), createElementBlock("div", _hoisted_63, null, 512)) : createCommentVNode("v-if", true),
+              createCommentVNode(" TimeLogger component, only shown when `showForm` is false "),
+              !_ctx.showForm ? (openBlock(), createBlock(_component_TimeLogger, {
+                key: 1,
+                doc: _ctx.timeLoggerDoc,
+                currentTheme: _ctx.currentTheme,
+                isOpened: _ctx.isOpened,
+                onCloseTimeLogger: _ctx.closeTimeLogger
+              }, null, 8, ["doc", "currentTheme", "isOpened", "onCloseTimeLogger"])) : createCommentVNode("v-if", true)
             ])
           ]),
           _: 1
@@ -12840,7 +13057,7 @@ Expected function or array of functions, received type ${typeof value}.`
   }
 
   // ../erpnext_taskview/erpnext_taskview/public/js/TaskView.vue
-  TaskView_default.render = render3;
+  TaskView_default.render = render4;
   TaskView_default.__file = "../erpnext_taskview/erpnext_taskview/public/js/TaskView.vue";
   var TaskView_default2 = TaskView_default;
 
@@ -12980,4 +13197,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.GNFQSMVU.js.map
+//# sourceMappingURL=app.bundle.IUUF2WXF.js.map

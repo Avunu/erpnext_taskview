@@ -281,7 +281,32 @@ def handle_toggle_timer(node):
 
 
 def handle_log_time(node):
-	return get_timesheet_detail(node.get('project'), node.get('docName'), None).as_dict()
+	# return get_timesheet_detail(node.get('project'), node.get('docName'), None).as_dict()
+	# const r = await callBackendHandler('log_time', {
+    #             project: props.doc.project,
+    #             docName: props.doc.taskName,
+    #             startTime: startTime.value,
+    #             stopTime: stopTime.value,
+    #             description: description.value
+    #         }, null);
+	# 	if stop_time:
+	# 	stop_time = frappe.utils.data.get_datetime(stop_time)
+	# if start_time:
+	# 	start_time = frappe.utils.data.get_datetime(start_time)
+	# from_time, to_time, description
+
+	timesheet_detail_doc = get_timesheet_detail(node.get('project'), node.get('docName'), None)
+	timesheet_detail_doc.from_time = frappe.utils.data.get_datetime(node.get('startTime'))
+	timesheet_detail_doc.to_time = frappe.utils.data.get_datetime(node.get('stopTime'))
+	timesheet_detail_doc.description = node.get('description')
+	timesheet_detail_doc.task = node.get('docName')
+
+	hours = (timesheet_detail_doc.to_time - timesheet_detail_doc.from_time).total_seconds() / 3600
+	timesheet_detail_doc.hours = hours
+
+	timesheet_detail_doc.save(ignore_permissions=True)
+	frappe.db.commit()
+	return 'success'
 
 
 def node_to_doc(node):

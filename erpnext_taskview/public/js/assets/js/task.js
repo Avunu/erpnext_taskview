@@ -75,19 +75,14 @@ export default function useTask(props, emit, isEditing, editedText, cancelTrigge
     // Log time or stop the timer
     const logOrStopTimer = async () => {
         if (props.doc.timerStatus === 'stopped') {
-            // Log time
-            console.log(`Time logged for task "${props.doc.text}"`);
-            // TODO: Log time, probably with a modal
-            try {
-                const r = await callBackendHandler('log_time', {project: props.doc.projectName, docName: props.doc.taskName}, null);
 
-                // r.message should be the timesheet detail object, which we want to send to the sidebar
-                emit('open-sidebar', r.message);
-                
-            }
-            catch (error) {
-                emit('catch-error', error)
-            }
+            // open the sidebar to choose the start and stop times
+            emit('open-sidebar', {
+                project: props.doc.project,
+                docName: props.doc.docName,
+                text: props.doc.text,
+            });
+
         } else {
             // Stop the timer
             stopTimer();
@@ -118,6 +113,7 @@ export default function useTask(props, emit, isEditing, editedText, cancelTrigge
         nextTick(() => {
             const inputElement = document.querySelector('.task-subject-edit');
             if (inputElement) {
+            // if (inputElement && !props.isOpened.value) {
                 inputElement.focus(); // Focus on input field
             }
         });

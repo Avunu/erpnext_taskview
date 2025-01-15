@@ -8,3 +8,85 @@ separate timer component - timer data needs to live in backend so it can reload 
 
 for using the bench:
     bench use development.localhost
+
+old time logger collapsed
+
+	// const openSidebarWithTimeLogger = (doc) => {
+	// 	const { text } = doc;
+	
+	// 	formWrapper.value.innerHTML = `
+	// 		<div style="display: flex; justify-content: center; align-items: center; height: 100%; width: 100%;">
+	// 			<div style="text-align: center; background-color: ${currentTheme.value === 'dark' ? '#333' : '#f9f9f9'}; padding: 20px; border-radius: 8px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+	// 				<h3 style="color: ${currentTheme.value === 'dark' ? '#f1f1f1' : '#333'};">Log time for ${text}</h3>
+	// 				<form id="log-time-form" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+	// 					<label for="description" style="margin-bottom: 5px; color: ${currentTheme.value === 'dark' ? '#f1f1f1' : '#333'};">Description:</label>
+	// 					<textarea id="description" name="description" rows="4" cols="40" placeholder="Add a description..." style="padding: 5px; border: 1px solid ${currentTheme.value === 'dark' ? '#555' : '#ccc'}; border-radius: 4px; background-color: ${currentTheme.value === 'dark' ? '#444' : '#fff'}; color: ${currentTheme.value === 'dark' ? '#f1f1f1' : '#333'};"></textarea>
+	
+	// 					<label for="start-time" style="margin-bottom: 5px; color: ${currentTheme.value === 'dark' ? '#f1f1f1' : '#333'};">Start Time:</label>
+	// 					<input type="datetime-local" id="start-time" name="start-time" required style="padding: 5px; border: 1px solid ${currentTheme.value === 'dark' ? '#555' : '#ccc'}; border-radius: 4px; background-color: ${currentTheme.value === 'dark' ? '#444' : '#fff'}; color: ${currentTheme.value === 'dark' ? '#f1f1f1' : '#333'};">
+						
+	// 					<label for="stop-time" style="margin-bottom: 5px; color: ${currentTheme.value === 'dark' ? '#f1f1f1' : '#333'};">Stop Time:</label>
+	// 					<input type="datetime-local" id="stop-time" name="stop-time" required style="padding: 5px; border: 1px solid ${currentTheme.value === 'dark' ? '#555' : '#ccc'}; border-radius: 4px; background-color: ${currentTheme.value === 'dark' ? '#444' : '#fff'}; color: ${currentTheme.value === 'dark' ? '#f1f1f1' : '#333'};">
+						
+	// 					<div style="margin-top: 15px;">
+	// 						<button type="submit" id="log-button" style="padding: 8px 16px; margin-right: 5px; background-color: ${currentTheme.value === 'dark' ? '#007bff' : '#007bff'}; color: white; border: none; border-radius: 4px; cursor: pointer;">Log</button>
+	// 						<button type="button" id="cancel-button" style="padding: 8px 16px; background-color: ${currentTheme.value === 'dark' ? '#dc3545' : '#dc3545'}; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+	// 					</div>
+	// 				</form>
+	// 			</div>
+	// 		</div>
+	// 	`;
+	
+	// 	const form = document.getElementById('log-time-form');
+	// 	const startTimeInput = document.getElementById('start-time');
+	// 	const stopTimeInput = document.getElementById('stop-time');
+	// 	const descriptionInput = document.getElementById('description');
+	// 	const cancelButton = document.getElementById('cancel-button');
+	
+	// 	// Set default values to current datetime
+	// 	const now = new Date();
+	// 	const formatDateTime = (date) => {
+	// 		const pad = (num) => String(num).padStart(2, '0');
+	// 		return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+	// 	};
+	
+	// 	startTimeInput.value = formatDateTime(now);
+	// 	stopTimeInput.value = formatDateTime(now);
+	
+	// 	// Focus on the description input
+	// 	// SOMETHING ELSE IS MAKING THIS NOT WORK
+	// 	// descriptionInput.autofocus = true;
+	// 	// descriptionInput.focus();
+	// 	// console.log('descriptionInput:', descriptionInput);
+	
+	// 	// Handle form submission (Log button)
+	// 	form.addEventListener('submit', (event) => {
+	// 		event.preventDefault();
+	// 		const startTime = startTimeInput.value;
+	// 		const stopTime = stopTimeInput.value;
+	// 		const description = descriptionInput.value;
+	
+	// 		if (!startTime || !stopTime) {
+	// 			alert('Both start time and stop time are required!');
+	// 			return;
+	// 		}
+	
+	// 		console.log(`Logged time for ${text}: Start Time - ${startTime}, Stop Time - ${stopTime}, Description - ${description}`);
+	
+	// 		// THIS IS WHERE WE CALL THE BACKEND TO LOG THE TIME
+	
+	// 		closeSidebar(); // Close sidebar after logging
+	// 	});
+	
+	// 	// Handle cancel button
+	// 	cancelButton.addEventListener('click', () => {
+	// 		closeSidebar(); // Close the sidebar without logging
+	// 	});
+	// };
+		
+
+	// // Function to close the sidebar
+	// const closeSidebar = () => {
+	// 	isOpened.value = false;
+	// 	formWrapper.value.innerHTML = ''; // Clear the form content
+	// };

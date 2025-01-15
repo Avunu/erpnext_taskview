@@ -16,13 +16,9 @@
 						</div>
 					</a>
 					<!-- task or project -->
-					<Task :doc="node" :activeTimer="activeTimer" :sideTimersElement="sideTimersElement" class="mtl-ml" 
-						@task-interaction="handleTaskInteraction(node)"
-						@add-sibling-task="addSiblingTask(node)" 
-						@catch-error="catchError"
-						@catch-success="premount"
-						@open-sidebar="openSidebar"
-					/>
+					<Task :doc="node" :activeTimer="activeTimer" :sideTimersElement="sideTimersElement" :isOpened="isOpened" class="mtl-ml" @task-interaction="handleTaskInteraction(node)"
+						@add-sibling-task="addSiblingTask(node)" @catch-error="catchError" @catch-success="premount"
+						@open-sidebar="openSidebar" />
 				</div>
 			</template>
 		</Draggable>
@@ -30,8 +26,12 @@
 	<div>
 		<VueSidePanel v-model="isOpened" width="80%" panel-color="var(--sidebar-bg-color)">
 			<div class="sidebar">
-					<!-- Form will be inserted here -->
-					<div ref="formWrapper"></div>
+				<!-- Form will be inserted here -->
+				<div v-if="showForm" ref="formWrapper"></div>
+
+				<!-- TimeLogger component, only shown when `showForm` is false -->
+				<TimeLogger v-if="!showForm" :doc="timeLoggerDoc" :currentTheme="currentTheme" :isOpened="isOpened"
+				@close-time-logger="closeTimeLogger"></TimeLogger>
 			</div>
 		</VueSidePanel>
 	</div>
@@ -43,6 +43,7 @@ import { Draggable, dragContext, OpenIcon } from '@he-tree/vue';
 import Task from './components/Task.vue';
 import useTaskview from './assets/js/taskview.js';
 import { VueSidePanel } from "vue3-side-panel";
+import TimeLogger from './components/TimeLogger.vue';
 import "vue3-side-panel/dist/vue3-side-panel.css";
 import '@he-tree/vue/style/default.css';
 import '@he-tree/vue/style/material-design.css';
@@ -53,7 +54,8 @@ export default defineComponent({
 		Draggable,
 		OpenIcon,
 		Task,
-		VueSidePanel
+		VueSidePanel,
+		TimeLogger
 	},
 	props: {
 		docs: {
@@ -79,7 +81,9 @@ export default defineComponent({
 
 		const formWrapper = ref(null); // Reference for the form wrapper
 
+		let showForm = ref(true);
 
+		let timeLoggerDoc = ref({});
 
 		// Dark Mode compatibility
 		const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
@@ -89,9 +93,9 @@ export default defineComponent({
 
 		// make an element to hold the sidetimers (future development)
 		let sideTimersParentElement = document.querySelector('.layout-side-section');
-        let sideTimersElement = document.createElement('div');
-        sideTimersElement.id = 'sidetimers';
-        sideTimersParentElement.appendChild(sideTimersElement);
+		let sideTimersElement = document.createElement('div');
+		sideTimersElement.id = 'sidetimers';
+		sideTimersParentElement.appendChild(sideTimersElement);
 
 		// get the functions from the useTaskview composition
 		const {
@@ -106,8 +110,9 @@ export default defineComponent({
 			addSiblingTask,
 			handleTaskInteraction,
 			handleKeydown,
-			openSidebar
-		} = useTaskview(props, treeData, highlightedProject, dragContext, currentTheme, isOpened, formWrapper);
+			openSidebar,
+			closeTimeLogger,
+		} = useTaskview(props, treeData, highlightedProject, dragContext, currentTheme, isOpened, formWrapper, showForm, timeLoggerDoc);
 
 		// setup the tree data before mounting
 		premount();
@@ -121,7 +126,7 @@ export default defineComponent({
 		// DO WE NEED THIS?
 		onUnmounted(() => {
 			useOnUnmounted();
-        });
+		});
 
 		return {
 			treeData,
@@ -129,6 +134,9 @@ export default defineComponent({
 			sideTimersElement,
 			isOpened,
 			formWrapper,
+			showForm,
+			currentTheme,
+			timeLoggerDoc,
 			catchError,
 			premount,
 			isHighlightedProject,
@@ -139,11 +147,12 @@ export default defineComponent({
 			handleDragEnd,
 			addSiblingTask,
 			openSidebar,
+			closeTimeLogger,
 		};
 	},
 });
 </script>
 
 <style>
-	@import './assets/style/taskview.css';
+@import './assets/style/taskview.css';
 </style>
