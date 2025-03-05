@@ -30,24 +30,24 @@
 			<!-- only render the controls if the doc is not a project and is not blank -->
 			<div v-if="!doc.isProject && !doc.isBlank" class="task-controls">
 				<button v-if="doc.status !== 'Completed'" class="btn task-control" :class="{
-					'btn-info': doc.timerStatus === 'stopped',
-					'btn-warning': doc.timerStatus === 'running',
-					'btn-success': doc.timerStatus === 'paused'
+					'btn-info': timerStatus === 'stopped',
+					'btn-warning': timerStatus === 'running',
+					'btn-success': timerStatus === 'paused'
 				}" @click="toggleTimer">
 					{{
-						doc.timerStatus === 'stopped'
+						timerStatus === 'stopped'
 							? 'Start'
-							: doc.timerStatus === 'paused'
+							: timerStatus === 'paused'
 								? 'Resume'
 								: 'Pause'
 					}}
 				</button>
 
 				<button v-if="doc.status !== 'Completed'" class="btn task-control" :class="{
-					'btn-secondary': doc.timerStatus === 'stopped',
-					'btn-danger': doc.timerStatus !== 'stopped'
+					'btn-secondary': timerStatus === 'stopped',
+					'btn-danger': timerStatus !== 'stopped'
 				}" @click="logOrStopTimer">
-					{{ doc.timerStatus === 'stopped' ? 'Log' : 'Stop' }}
+					{{ timerStatus === 'stopped' ? 'Log' : 'Stop' }}
 				</button>
 			</div>
 		</div>
@@ -55,9 +55,8 @@
 </template>
 
 <script>
-import { defineComponent, ref, watch } from 'vue';
+import { defineComponent, ref, watch, computed } from 'vue';
 import useTask from '../assets/js/task.js';
-
 
 export default defineComponent({
 	name: 'Task',
@@ -89,6 +88,13 @@ export default defineComponent({
 		const editedText = ref('');
 		const cancelTriggered = ref(false);
 
+		 // Simple computed property based on timesheetDetail
+		const timerStatus = computed(() => {
+			if (!props.doc.timesheetDetail) return 'stopped';
+			return props.doc.timesheetDetail.paused ? 'paused' : 'running';
+		});
+
+		// Use original useTask functions directly since they handle state updates
 		const {
 			emitInteraction,
 			toggleComplete,
@@ -122,7 +128,8 @@ export default defineComponent({
 			cancelEdit,
 			handleBlur,
 			emitInteraction,
-			emitSidebar
+			emitSidebar,
+			timerStatus
 		};
 	},
 });

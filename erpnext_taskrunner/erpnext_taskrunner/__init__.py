@@ -9,6 +9,10 @@ from jsonpath_ng import parse
 @frappe.whitelist()
 @frappe.read_only()
 def get():
+	employee = frappe.db.exists('Employee', {'user_id': frappe.session.user})
+	if not employee:
+		frappe.msgprint('Employee not found for current user', indicator='red')
+	
 	args = get_form_params()
 	
 	where_clause = ""
@@ -24,15 +28,22 @@ def get():
 	query = (Path(__file__).parent / "get.sql").read_text()
 	
 	query = query % {
-		"task_filters": where_clause if args.doctype == 'Task' else '',
+		"employee": employee,
+		"order_by": args.order_by or f'`tab{args.doctype}`.creation DESC',
 		"project_filters": where_clause if args.doctype == 'Project' else '',
-		"order_by": args.order_by or f'`tab{args.doctype}`.creation DESC'
+		"task_filters": where_clause if args.doctype == 'Task' else '',
 	}
+ 
+	# debug
+	frappe.log_error('Query', query)
 
 	data = frappe.db.sql(query)
 	root = merge_tree(data)
-	data_tree = get_timesheet_details(root) 
-	return data_tree
+ 
+	# debug
+	frappe.log_error('Root', json.dumps(root, indent=4))
+	# data_tree = get_timesheet_details(root) 
+	return root
 
 
 def merge_tree(rows):
@@ -318,7 +329,6 @@ def node_to_doc(node):
 		"status": "Open",
 		"isProject": True,
 		"isBlank": False,
-		"timerStatus": None,
 		"timesheetDetail": None,
 		"expanded": False,
 		"autoFocus": False,
@@ -339,7 +349,6 @@ def node_to_doc(node):
 		"status": "Open",
 		"isProject": False,
 		"isBlank": 0,
-		"timerStatus": "stopped",
 		"timesheetDetail": None,
 		"expanded": False,
 		"autoFocus": False,
@@ -356,7 +365,6 @@ def node_to_doc(node):
 			useful_object.is_group = 0
 		else:
 			useful_object.is_group = 1
-		useful_object.timer_status = node.get('timerStatus')
 		useful_object.timesheet_detail = node.get('timesheetDetail')
 		useful_object.children = node.get('children')
 

@@ -11754,6 +11754,11 @@ Expected function or array of functions, received type ${typeof value}.`
       const isEditing = ref(false);
       const editedText = ref("");
       const cancelTriggered = ref(false);
+      const timerStatus = computed2(() => {
+        if (!props.doc.timesheetDetail)
+          return "stopped";
+        return props.doc.timesheetDetail.paused ? "paused" : "running";
+      });
       const {
         emitInteraction,
         toggleComplete,
@@ -11784,7 +11789,8 @@ Expected function or array of functions, received type ${typeof value}.`
         cancelEdit,
         handleBlur,
         emitInteraction,
-        emitSidebar
+        emitSidebar,
+        timerStatus
       };
     }
   });
@@ -11857,20 +11863,20 @@ Expected function or array of functions, received type ${typeof value}.`
           _ctx.doc.status !== "Completed" ? (openBlock(), createElementBlock("button", {
             key: 0,
             class: normalizeClass(["btn task-control", {
-              "btn-info": _ctx.doc.timerStatus === "stopped",
-              "btn-warning": _ctx.doc.timerStatus === "running",
-              "btn-success": _ctx.doc.timerStatus === "paused"
+              "btn-info": _ctx.timerStatus === "stopped",
+              "btn-warning": _ctx.timerStatus === "running",
+              "btn-success": _ctx.timerStatus === "paused"
             }]),
             onClick: _cache[7] || (_cache[7] = (...args) => _ctx.toggleTimer && _ctx.toggleTimer(...args))
-          }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Start" : _ctx.doc.timerStatus === "paused" ? "Resume" : "Pause"), 3)) : createCommentVNode("v-if", true),
+          }, toDisplayString(_ctx.timerStatus === "stopped" ? "Start" : _ctx.timerStatus === "paused" ? "Resume" : "Pause"), 3)) : createCommentVNode("v-if", true),
           _ctx.doc.status !== "Completed" ? (openBlock(), createElementBlock("button", {
             key: 1,
             class: normalizeClass(["btn task-control", {
-              "btn-secondary": _ctx.doc.timerStatus === "stopped",
-              "btn-danger": _ctx.doc.timerStatus !== "stopped"
+              "btn-secondary": _ctx.timerStatus === "stopped",
+              "btn-danger": _ctx.timerStatus !== "stopped"
             }]),
             onClick: _cache[8] || (_cache[8] = (...args) => _ctx.logOrStopTimer && _ctx.logOrStopTimer(...args))
-          }, toDisplayString(_ctx.doc.timerStatus === "stopped" ? "Log" : "Stop"), 3)) : createCommentVNode("v-if", true)
+          }, toDisplayString(_ctx.timerStatus === "stopped" ? "Log" : "Stop"), 3)) : createCommentVNode("v-if", true)
         ])) : createCommentVNode("v-if", true)
       ])
     ]);
@@ -13229,4 +13235,4 @@ Expected function or array of functions, received type ${typeof value}.`
 * (c) 2018-present Yuxi (Evan) You and Vue contributors
 * @license MIT
 **/
-//# sourceMappingURL=app.bundle.BQ2HMS4F.js.map
+//# sourceMappingURL=app.bundle.IHR4V6Y5.js.map
