@@ -39,13 +39,13 @@ export default function useTimeLogger(
 
       // call the backend handler to log the time
       try {
-        const r = await callBackendHandler('log_time', {
+        await callBackendHandler('log_time', {
           project: props.doc.project,
           docName: props.doc.docName,
           startTime: startTime.value,
           stopTime: stopTime.value,
           description: description.value || ''
-        }, null);
+        } as any, null);
 
         frappe.show_alert({
           message: `Time logged for ${docText.value}`,

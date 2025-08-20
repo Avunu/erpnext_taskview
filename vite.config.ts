@@ -9,7 +9,7 @@ export default defineConfig({
   build: {
     outDir: '../dist',
     lib: {
-      entry: resolve(__dirname, 'erpnext_taskrunner/public/js/app.bundle.js'),
+      entry: resolve(__dirname, 'erpnext_taskrunner/public/js/app.bundle.ts'),
       name: 'TaskRunner',
       fileName: 'app.bundle',
       formats: ['iife']

@@ -25,7 +25,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, onUnmounted, nextTick, watch, PropType, Ref, ComputedRef } from 'vue';
+import { defineComponent, ref, computed, onMounted, onUnmounted, nextTick, watch, PropType } from 'vue';
 import useTimeLogger, { TimeLoggerProps } from '../assets/js/timelogger.ts';
 
 export default defineComponent({

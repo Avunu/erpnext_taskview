@@ -43,7 +43,7 @@ export default function useTaskRunner(
   descriptionOnly: Ref<boolean>
 ) {
   // this finalizes the tree data by adding a blank project to the end of the list and blank tasks to any expanded project branches
-  const premount: PremountFunction = (newDocs = null) => {
+  const premount: PremountFunction = (newDocs: NodeData[] | null = null) => {
     // add a blank project to the end of the list
     let docs = addBlankProject(newDocs || props.docs);
 
@@ -295,9 +295,9 @@ export default function useTaskRunner(
   const isHighlightedProject = (node: TreeData): boolean => {
     // try to compare the docName fields of the node and the highlighted project
     try {
-      return node.isProject && node.docName === highlightedProject.value?.docName;
+      return !!(node.isProject && node.docName === highlightedProject.value?.docName);
     } catch (error) {
-      return node.isProject && node === highlightedProject.value;
+      return !!(node.isProject && node === highlightedProject.value);
     }
   };
 
@@ -536,7 +536,7 @@ export default function useTaskRunner(
   const openSidebar = (doc: any): void => {
     isOpened.value = true;
     // this is just using the presence of the isProject field to determine if a node sidebar is being opened for the form, or if we want time logging content
-    if (Object.hasOwn(doc, 'isProject')) {
+    if ('isProject' in doc) {
       showForm.value = true;
       loadForm(doc);
     } else {

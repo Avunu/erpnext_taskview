@@ -39,10 +39,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted, PropType, Ref } from 'vue';
+import { defineComponent, ref, onMounted, onUnmounted, PropType } from 'vue';
 import { Draggable, dragContext, OpenIcon } from '@he-tree/vue';
 import Task from './components/Task.vue';
-import useTaskRunner, { TreeData, DragContext, TaskRunnerProps } from './assets/js/taskrunner.ts';
+import useTaskRunner, { TreeData, TaskRunnerProps } from './assets/js/taskrunner.ts';
 import { VueSidePanel } from "vue3-side-panel";
 import TimeLogger from './components/TimeLogger.vue';
 import "vue3-side-panel/dist/vue3-side-panel.css";
@@ -69,8 +69,6 @@ export default defineComponent({
 	setup(props) {
 		// establish the highlighted project
 		const highlightedProject = ref<TreeData | null>(null);
-		// TODO: SETUP CODE FOR HIGHLIGHTING TASKS
-		const highlightedTask = ref<TreeData | null>(null);
 		// instanitate the reactive tree data
 		const treeData = ref<TreeData[]>([]);
 		const activeTimer = ref<TreeData | null>(null);
@@ -111,7 +109,7 @@ export default defineComponent({
 			handleKeydown,
 			openSidebar,
 			closeTimeLogger,
-		} = useTaskRunner(taskRunnerProps, treeData, highlightedProject, dragContext, currentTheme, isOpened, formWrapper, showForm, timeLoggerDoc, descriptionOnly);
+		} = useTaskRunner(taskRunnerProps, treeData, highlightedProject, dragContext as any, currentTheme, isOpened, formWrapper, showForm, timeLoggerDoc, descriptionOnly);
 
 		// setup the tree data before mounting
 		premount();

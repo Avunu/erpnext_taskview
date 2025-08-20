@@ -5,13 +5,13 @@ export interface BackendHandlerResponse {
 export interface NodeData {
   docName?: string;
   text?: string;
-  parent?: string;
-  project?: string;
+  parent?: string | null;
+  project?: string | null;
   status?: string;
   isProject?: boolean;
   isBlank?: boolean;
-  timerStatus?: string;
-  timesheetDetail?: string;
+  timerStatus?: string | null;
+  timesheetDetail?: any;
   expanded?: boolean;
   autoFocus?: boolean;
   children?: NodeData[];
@@ -22,7 +22,7 @@ export interface UpdateObject {
 }
 
 export interface PremountFunction {
-  (newDocs?: NodeData[]): void;
+  (newDocs?: NodeData[] | null): void;
 }
 
 export default function useBackendHandler(premount: PremountFunction | null = null) {

@@ -52,42 +52,45 @@ export default function useTask(
     emitInteraction();
   };
 
-  const startTimer = (): void => {
+  const startTimer = async (): Promise<void> => {
     if (!props) return;
     
     // Pause the previous timer if it is running
     if (props.activeTimer.value && props.activeTimer.value !== props.doc) {
       // update the timesheet detail for the previous task
-      props.activeTimer.value.timesheetDetail = updateTimesheetDetail(
+      const updatedDetail = await updateTimesheetDetail(
         props.activeTimer.value.project || '', 
         props.activeTimer.value.docName || '', 
         'paused', 
         props.activeTimer.value.timesheetDetail
       );
+      props.activeTimer.value.timesheetDetail = updatedDetail;
       props.activeTimer.value.timerStatus = 'paused'; // Pause the previous task
     }
 
     // update or create the timesheet detail for this task
-    props.doc.timesheetDetail = updateTimesheetDetail(
+    const newDetail = await updateTimesheetDetail(
       props.doc.project || '', 
       props.doc.docName || '', 
       'running', 
       props.doc.timesheetDetail
     );
+    props.doc.timesheetDetail = newDetail;
     props.doc.timerStatus = 'running';
     props.activeTimer.value = props.doc;
   };
 
-  const pauseTimer = (): void => {
+  const pauseTimer = async (): Promise<void> => {
     if (!props) return;
     
     // update the timesheet detail for this task
-    props.doc.timesheetDetail = updateTimesheetDetail(
+    const updatedDetail = await updateTimesheetDetail(
       props.doc.project || '', 
       props.doc.docName || '', 
       'paused', 
       props.doc.timesheetDetail
     );
+    props.doc.timesheetDetail = updatedDetail;
     props.doc.timerStatus = 'paused';
     props.activeTimer.value = null;
   };
@@ -110,17 +113,17 @@ export default function useTask(
       props.activeTimer.value = null;
     }
     // once a timer is stopped, we should clear the timesheet detail so a new one can be created if the timer is started again
-    props.doc.timesheetDetail = {};
+    props.doc.timesheetDetail = null;
   };
 
   // Toggle the timer status
-  const toggleTimer = (): void => {
+  const toggleTimer = async (): Promise<void> => {
     if (!props) return;
     
     if (props.doc.timerStatus === 'stopped' || props.doc.timerStatus === 'paused') {
-      startTimer();
+      await startTimer();
     } else if (props.doc.timerStatus === 'running') {
-      pauseTimer();
+      await pauseTimer();
     }
   };
 
@@ -141,7 +144,6 @@ export default function useTask(
     }
   };
 
-  // Update the timesheet detail for the task
   const updateTimesheetDetail = async (
     projectName: string, 
     taskName: string, 
@@ -161,7 +163,7 @@ export default function useTask(
         status: status, 
         timesheetDetail: timesheetDetail, 
         description: description
-      }, null);
+      } as any, null);
       return r.message;
     } catch (error) {
       emit?.('catch-error', error);
@@ -246,7 +248,7 @@ export default function useTask(
           // insert the new task or project
           try {
             const r = await callBackendHandler('insert', {
-              parent: { isProject: parentTask ? true : false }
+              parent: { isProject: parentTask ? true : false } as any
             }, newObject);
             emit('catch-success', r.message);
             // emit('add-sibling-task')

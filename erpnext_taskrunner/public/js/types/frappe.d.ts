@@ -22,6 +22,11 @@ declare global {
     };
     get_doc: (doctype: string, name: string) => any;
     provide: (namespace: string) => void;
+    new_doc: (doctype: string) => any;
+    router: {
+      list_views: string[];
+      list_views_route: Record<string, string>;
+    };
     views: any;
     ui: any;
   };
