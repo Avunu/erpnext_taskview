@@ -54,9 +54,10 @@
 	</div>
 </template>
 
-<script>
-import { defineComponent, ref, watch } from 'vue';
-import useTask from '../assets/js/task.js';
+<script lang="ts">
+import { defineComponent, ref, watch, PropType, Ref } from 'vue';
+import useTask, { TaskProps } from '../assets/js/task.ts';
+import { NodeData } from '../assets/js/script.ts';
 
 
 export default defineComponent({
@@ -64,30 +65,37 @@ export default defineComponent({
 	components: {},
 	props: {
 		doc: {
-			type: Object,
+			type: Object as PropType<NodeData>,
 			required: true,
 			default: () => ({}),
 		},
 		activeTimer: {
-			type: Object,
+			type: Object as PropType<Ref<NodeData | null>>,
 			required: false,
 			default: null,
 		},
 		sideTimersElement: {
-			type: Object,
+			type: Object as PropType<HTMLElement | null>,
 			required: false,
 			default: null,
 		},
 		isOpened: {
-			type: Boolean,
+			type: Object as PropType<Ref<boolean>>,
 			required: false,
 			default: false,
 		},
 	},
 	setup(props, { emit }) {
-		const isEditing = ref(false);
-		const editedText = ref('');
-		const cancelTriggered = ref(false);
+		const isEditing = ref<boolean>(false);
+		const editedText = ref<string>('');
+		const cancelTriggered = ref<boolean>(false);
+
+		const taskProps: TaskProps = {
+			doc: props.doc,
+			activeTimer: props.activeTimer,
+			sideTimersElement: props.sideTimersElement,
+			isOpened: typeof props.isOpened === 'object' ? props.isOpened.value : props.isOpened
+		};
 
 		const {
 			emitInteraction,
@@ -100,11 +108,11 @@ export default defineComponent({
 			cancelEdit,
 			handleBlur,
 			emitSidebar
-		} = useTask(props, emit, isEditing, editedText, cancelTriggered);
+		} = useTask(taskProps, emit, isEditing, editedText, cancelTriggered);
 
-		watch(() => props.doc.autoFocus, (newVal) => {
+		watch(() => props.doc.autoFocus, (newVal: boolean) => {
 			// if (newVal) {
-			if (newVal && !props.isOpened.value) {
+			if (newVal && !(props.isOpened as any)?.value) {
 				editTask();
 				props.doc.autoFocus = false;
 			}
