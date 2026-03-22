@@ -16,7 +16,7 @@
 						</div>
 					</a>
 					<!-- task or project -->
-					<Task :doc="node" :activeTimer="activeTimer" :sideTimersElement="sideTimersElement" :isOpened="isOpened" class="mtl-ml" @task-interaction="handleTaskInteraction(node)"
+					<Task :doc="node" :sideTimersElement="sideTimersElement" :isOpened="isOpened" class="mtl-ml" @task-interaction="handleTaskInteraction(node)"
 						@add-sibling-task="addSiblingTask(node)" @catch-error="catchError" @catch-success="premount"
 						@open-sidebar="openSidebar" />
 				</div>
@@ -39,7 +39,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted, PropType } from 'vue';
+import { defineComponent, ref, provide, onMounted, onUnmounted, PropType } from 'vue';
 import { Draggable, dragContext, OpenIcon } from '@he-tree/vue';
 import Task from './components/Task.vue';
 import useTaskRunner, { TreeData, TaskRunnerProps } from './assets/js/taskrunner.ts';
@@ -89,6 +89,9 @@ export default defineComponent({
 		const sideTimersElement = document.createElement('div');
 		sideTimersElement.id = 'sidetimers';
 		sideTimersParentElement?.appendChild(sideTimersElement);
+
+		// Provide the shared activeTimer ref so all Task instances mutate the same source of truth
+		provide('activeTimer', activeTimer);
 
 		const taskRunnerProps: TaskRunnerProps = {
 			docs: props.docs

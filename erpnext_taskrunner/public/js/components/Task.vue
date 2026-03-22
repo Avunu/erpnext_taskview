@@ -55,7 +55,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch, PropType } from 'vue';
+import { defineComponent, ref, inject, watch, PropType, Ref } from 'vue';
 import useTask, { TaskProps } from '../assets/js/task.ts';
 import { NodeData } from '../assets/js/script.ts';
 
@@ -68,11 +68,6 @@ export default defineComponent({
 			type: Object as PropType<NodeData>,
 			required: true,
 			default: () => ({}),
-		},
-		activeTimer: {
-			type: Object as PropType<NodeData | null>,
-			required: false,
-			default: null,
 		},
 		sideTimersElement: {
 			type: Object as PropType<HTMLElement | null>,
@@ -90,9 +85,13 @@ export default defineComponent({
 		const editedText = ref<string>('');
 		const cancelTriggered = ref<boolean>(false);
 
+		// Inject the shared activeTimer ref provided by TaskRunner so all Task
+		// instances coordinate against the same source of truth.
+		const activeTimer = inject<Ref<NodeData | null>>('activeTimer', ref(null));
+
 		const taskProps: TaskProps = {
 			doc: props.doc,
-			activeTimer: ref(props.activeTimer),
+			activeTimer,
 			sideTimersElement: props.sideTimersElement,
 			isOpened: props.isOpened
 		};
