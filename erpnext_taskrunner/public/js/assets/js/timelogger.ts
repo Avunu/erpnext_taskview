@@ -48,7 +48,7 @@ export default function useTimeLogger(
         } as any, null);
 
         frappe.show_alert({
-          message: `Time logged for ${docText.value}`,
+          message: __(`Time logged for ${docText.value}`),
           indicator: 'green'
         });
       } catch (error) {

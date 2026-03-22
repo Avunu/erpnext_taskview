@@ -34,6 +34,9 @@ declare global {
   var locals: {
     nodes: Record<string, boolean>;
   };
+
+  // Frappe translation helper
+  function __(message: string, replace?: Record<string, string>, context?: string): string;
 }
 
 export {};
