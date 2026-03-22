@@ -11,7 +11,7 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, 'erpnext_taskrunner/public/js/app.bundle.ts'),
       name: 'TaskRunner',
-      fileName: 'app.bundle',
+      fileName: () => 'app.bundle.js',
       formats: ['iife']
     },
     rollupOptions: {
