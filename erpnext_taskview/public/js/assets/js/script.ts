@@ -33,7 +33,7 @@ export default function useBackendHandler(premount: PremountFunction | null = nu
   ): Promise<BackendHandlerResponse> => {
     return new Promise((resolve, reject) => {
       frappe.call({
-        method: "erpnext_taskrunner.erpnext_taskrunner.backend_handler",
+        method: "erpnext_taskview.erpnext_taskview.backend_handler",
         args: {
           action: action,
           node: node,

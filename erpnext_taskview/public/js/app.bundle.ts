@@ -51,7 +51,7 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         this.list_view_settings = {
             fields: null,
         };
-        this.method = "erpnext_taskrunner.erpnext_taskrunner.get"
+        this.method = "erpnext_taskview.erpnext_taskview.get"
 
         // TODO: set Task View as the current view in the dropdown and add list view to the list of views
         // use setup_view_menu() from base_list.js?

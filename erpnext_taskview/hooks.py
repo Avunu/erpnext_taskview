@@ -1,4 +1,4 @@
-app_name = "erpnext_taskrunner"
+app_name = "erpnext_taskview"
 app_title = "ERPNext TaskRunner"
 app_publisher = "Avunu LLC"
 app_description = "task workspace for erpnext"
@@ -10,8 +10,8 @@ app_license = "mit"
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/erpnext_taskrunner/css/erpnext_taskrunner.css"
-# app_include_js = "/assets/erpnext_taskrunner/js/erpnext_taskrunner.js"
+# app_include_css = "/assets/erpnext_taskview/css/erpnext_taskview.css"
+# app_include_js = "/assets/erpnext_taskview/js/erpnext_taskview.js"
 
 app_include_js = "app.bundle.js"
 
@@ -19,11 +19,11 @@ app_include_js = "app.bundle.js"
 # ------- template in frappe public form builder
 
 # include js, css files in header of web template
-# web_include_css = "/assets/erpnext_taskrunner/css/erpnext_taskrunner.css"
-# web_include_js = "/assets/erpnext_taskrunner/js/erpnext_taskrunner.js"
+# web_include_css = "/assets/erpnext_taskview/css/erpnext_taskview.css"
+# web_include_js = "/assets/erpnext_taskview/js/erpnext_taskview.js"
 
 # include custom scss in every website theme (without file extension ".scss")
-# website_theme_scss = "erpnext_taskrunner/public/scss/website"
+# website_theme_scss = "erpnext_taskview/public/scss/website"
 
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
@@ -41,7 +41,7 @@ app_include_js = "app.bundle.js"
 # Svg Icons
 # ------------------
 # include app icons in desk
-# app_include_icons = "erpnext_taskrunner/public/icons.svg"
+# app_include_icons = "erpnext_taskview/public/icons.svg"
 
 # Home Pages
 # ----------
@@ -65,43 +65,43 @@ app_include_js = "app.bundle.js"
 
 # add methods and filters to jinja environment
 # jinja = {
-# 	"methods": "erpnext_taskrunner.utils.jinja_methods",
-# 	"filters": "erpnext_taskrunner.utils.jinja_filters"
+# 	"methods": "erpnext_taskview.utils.jinja_methods",
+# 	"filters": "erpnext_taskview.utils.jinja_filters"
 # }
 
 # Installation
 # ------------
 
-# before_install = "erpnext_taskrunner.install.before_install"
-# after_install = "erpnext_taskrunner.install.after_install"
+# before_install = "erpnext_taskview.install.before_install"
+# after_install = "erpnext_taskview.install.after_install"
 
 # Uninstallation
 # ------------
 
-# before_uninstall = "erpnext_taskrunner.uninstall.before_uninstall"
-# after_uninstall = "erpnext_taskrunner.uninstall.after_uninstall"
+# before_uninstall = "erpnext_taskview.uninstall.before_uninstall"
+# after_uninstall = "erpnext_taskview.uninstall.after_uninstall"
 
 # Integration Setup
 # ------------------
 # To set up dependencies/integrations with other apps
 # Name of the app being installed is passed as an argument
 
-# before_app_install = "erpnext_taskrunner.utils.before_app_install"
-# after_app_install = "erpnext_taskrunner.utils.after_app_install"
+# before_app_install = "erpnext_taskview.utils.before_app_install"
+# after_app_install = "erpnext_taskview.utils.after_app_install"
 
 # Integration Cleanup
 # -------------------
 # To clean up dependencies/integrations with other apps
 # Name of the app being uninstalled is passed as an argument
 
-# before_app_uninstall = "erpnext_taskrunner.utils.before_app_uninstall"
-# after_app_uninstall = "erpnext_taskrunner.utils.after_app_uninstall"
+# before_app_uninstall = "erpnext_taskview.utils.before_app_uninstall"
+# after_app_uninstall = "erpnext_taskview.utils.after_app_uninstall"
 
 # Desk Notifications
 # ------------------
 # See frappe.core.notifications.get_notification_config
 
-# notification_config = "erpnext_taskrunner.notifications.get_notification_config"
+# notification_config = "erpnext_taskview.notifications.get_notification_config"
 
 # Permissions
 # -----------
@@ -140,39 +140,39 @@ app_include_js = "app.bundle.js"
 
 # scheduler_events = {
 # 	"all": [
-# 		"erpnext_taskrunner.tasks.all"
+# 		"erpnext_taskview.tasks.all"
 # 	],
 # 	"daily": [
-# 		"erpnext_taskrunner.tasks.daily"
+# 		"erpnext_taskview.tasks.daily"
 # 	],
 # 	"hourly": [
-# 		"erpnext_taskrunner.tasks.hourly"
+# 		"erpnext_taskview.tasks.hourly"
 # 	],
 # 	"weekly": [
-# 		"erpnext_taskrunner.tasks.weekly"
+# 		"erpnext_taskview.tasks.weekly"
 # 	],
 # 	"monthly": [
-# 		"erpnext_taskrunner.tasks.monthly"
+# 		"erpnext_taskview.tasks.monthly"
 # 	],
 # }
 
 # Testing
 # -------
 
-# before_tests = "erpnext_taskrunner.install.before_tests"
+# before_tests = "erpnext_taskview.install.before_tests"
 
 # Overriding Methods
 # ------------------------------
 #
 # override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "erpnext_taskrunner.event.get_events"
+# 	"frappe.desk.doctype.event.event.get_events": "erpnext_taskview.event.get_events"
 # }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 # override_doctype_dashboards = {
-# 	"Task": "erpnext_taskrunner.task.get_dashboard_data"
+# 	"Task": "erpnext_taskview.task.get_dashboard_data"
 # }
 
 # exempt linked doctypes from being automatically cancelled
@@ -186,13 +186,13 @@ app_include_js = "app.bundle.js"
 
 # Request Events
 # ----------------
-# before_request = ["erpnext_taskrunner.utils.before_request"]
-# after_request = ["erpnext_taskrunner.utils.after_request"]
+# before_request = ["erpnext_taskview.utils.before_request"]
+# after_request = ["erpnext_taskview.utils.after_request"]
 
 # Job Events
 # ----------
-# before_job = ["erpnext_taskrunner.utils.before_job"]
-# after_job = ["erpnext_taskrunner.utils.after_job"]
+# before_job = ["erpnext_taskview.utils.before_job"]
+# after_job = ["erpnext_taskview.utils.after_job"]
 
 # User Data Protection
 # --------------------
@@ -222,7 +222,7 @@ app_include_js = "app.bundle.js"
 # --------------------------------
 
 # auth_hooks = [
-# 	"erpnext_taskrunner.auth.validate"
+# 	"erpnext_taskview.auth.validate"
 # ]
 
 # Automatically update python controller files with type annotations for this app.

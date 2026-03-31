@@ -39,13 +39,13 @@ yarn dev
 - `components/TimeLogger.vue` - Time logging component
 - `assets/js/script.ts` - Backend communication utilities
 - `assets/js/task.ts` - Task management composable
-- `assets/js/taskrunner.ts` - Main app logic composable
+- `assets/js/taskview.ts` - Main app logic composable
 - `assets/js/timelogger.ts` - Time logging composable
 - `types/frappe.d.ts` - TypeScript definitions for Frappe framework
 
 ### Output
-- `erpnext_taskrunner/public/dist/app.bundle.iife.js` - Compiled JavaScript bundle
-- `erpnext_taskrunner/public/dist/style.css` - Compiled CSS
+- `erpnext_taskview/public/dist/app.bundle.iife.js` - Compiled JavaScript bundle
+- `erpnext_taskview/public/dist/style.css` - Compiled CSS
 
 ## Build Configuration
 
