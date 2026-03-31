@@ -42,7 +42,7 @@
 import { defineComponent, ref, provide, onMounted, onUnmounted, PropType } from 'vue';
 import { Draggable, dragContext, OpenIcon } from '@he-tree/vue';
 import Task from './components/Task.vue';
-import useTaskRunner, { TreeData, TaskRunnerProps } from './assets/js/taskrunner.ts';
+import useTaskRunner, { TreeData, TaskRunnerProps } from './assets/js/taskview.ts';
 import { VueSidePanel } from "vue3-side-panel";
 import TimeLogger from './components/TimeLogger.vue';
 import "vue3-side-panel/dist/vue3-side-panel.css";
@@ -155,5 +155,5 @@ export default defineComponent({
 </script>
 
 <style>
-@import './assets/style/taskrunner.css';
+@import './assets/style/taskview.css';
 </style>

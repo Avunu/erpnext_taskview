@@ -23,13 +23,13 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./erpnext_taskrunner/public/js/*"]
+      "@/*": ["./erpnext_taskview/public/js/*"]
     }
   },
   "include": [
-    "erpnext_taskrunner/public/js/**/*.ts",
-    "erpnext_taskrunner/public/js/**/*.vue",
-    "erpnext_taskrunner/public/js/**/*.d.ts"
+    "erpnext_taskview/public/js/**/*.ts",
+    "erpnext_taskview/public/js/**/*.vue",
+    "erpnext_taskview/public/js/**/*.d.ts"
   ],
-  "exclude": ["node_modules", "erpnext_taskrunner/public/dist"]
+  "exclude": ["node_modules", "erpnext_taskview/public/dist"]
 }

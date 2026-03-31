@@ -1,5 +1,5 @@
 [project]
-name = "erpnext_taskrunner"
+name = "erpnext_taskview"
 authors = [
     { name = "Avunu LLC", email = "mail@avu.nu"}
 ]

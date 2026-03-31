@@ -7,12 +7,12 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
   plugins: [vue()],
-  root: './erpnext_taskrunner/public/js',
-  base: '/assets/erpnext_taskrunner/',
+  root: './erpnext_taskview/public/js',
+  base: '/assets/erpnext_taskview/',
   build: {
     outDir: '../dist',
     lib: {
-      entry: resolve(__dirname, 'erpnext_taskrunner/public/js/app.bundle.ts'),
+      entry: resolve(__dirname, 'erpnext_taskview/public/js/app.bundle.ts'),
       name: 'TaskRunner',
       fileName: () => 'app.bundle.js',
       formats: ['iife']
@@ -28,7 +28,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, './erpnext_taskrunner/public/js')
+      '@': resolve(__dirname, './erpnext_taskview/public/js')
     }
   }
 })
