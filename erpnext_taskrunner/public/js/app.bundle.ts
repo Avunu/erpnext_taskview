@@ -1,9 +1,10 @@
-frappe.provide("frappe.views");
-frappe.provide("frappe.ui.toolbar");
-frappe.provide("frappe.ui.form");
+/// <reference path="./types/frappe.d.ts" />
 import { createApp, h } from "vue";
 import TaskRunner from "./TaskRunner.vue";
 
+frappe.provide("frappe.views");
+frappe.provide("frappe.ui.toolbar");
+frappe.provide("frappe.ui.form");
 
 frappe.views.TaskRunnerSelect = class TaskRunnerSelect extends frappe.views.ListViewSelect {
     setup_views() {
@@ -38,13 +39,13 @@ frappe.router.list_views_route["tasks"] = "Tasks";
 
 frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
-    prepare_data(r) {
+    prepare_data(r: any) {
         this.data = r.message;
     }
 
     setup_defaults() {
         super.setup_defaults();
-        this.page_title = __("Task View");
+        this.page_title = "Task View";
         this.page_name = "task-view";
         this.show_hide_filters = false;
         this.list_view_settings = {
@@ -60,24 +61,27 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     setup_page() {
         super.setup_page();
         frappe
-            .call("frappe.desk.listview.get_list_settings", {
-                doctype: this.doctype,
-            })
-            .then((doc) => {
-                this.list_view_settings = doc.message || {};
+            .call({
+                method: "frappe.desk.listview.get_list_settings",
+                args: {
+                    doctype: this.doctype,
+                },
+                callback: (doc: any) => {
+                    this.list_view_settings = doc.message || {};
 
-                // Safely handle undefined fields
-                if (this.list_view_settings.fields === undefined) {
-                    this.list_view_settings.fields = null;
+                    // Safely handle undefined fields
+                    if (this.list_view_settings.fields === undefined) {
+                        this.list_view_settings.fields = null;
+                    }
+
+                    // Primary action setup
+                    this.page.set_primary_action("New Task", () => {
+                        frappe.new_doc("Task");
+                    });
+                },
+                error: (error: any) => {
+                    console.error("Failed to get list settings:", error);
                 }
-
-                // Primary action setup
-                this.page.set_primary_action(__("New Task"), () => {
-                    frappe.new_doc("Task");
-                });
-            })
-            .catch((error) => {
-                console.error("Failed to get list settings:", error);
             });
     }
 
@@ -85,7 +89,7 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     show_skeleton() {}
     hide_skeleton() {}
 
-    render_header(refresh_header = false) {
+    render_header(_refresh_header = false) {
         this.$result.find(".list-row-head").remove();
     }
 

@@ -54,9 +54,10 @@
 	</div>
 </template>
 
-<script>
-import { defineComponent, ref, watch } from 'vue';
-import useTask from '../assets/js/task.js';
+<script lang="ts">
+import { defineComponent, ref, inject, watch, PropType, Ref } from 'vue';
+import useTask, { TaskProps } from '../assets/js/task.ts';
+import { NodeData } from '../assets/js/script.ts';
 
 
 export default defineComponent({
@@ -64,17 +65,12 @@ export default defineComponent({
 	components: {},
 	props: {
 		doc: {
-			type: Object,
+			type: Object as PropType<NodeData>,
 			required: true,
 			default: () => ({}),
 		},
-		activeTimer: {
-			type: Object,
-			required: false,
-			default: null,
-		},
 		sideTimersElement: {
-			type: Object,
+			type: Object as PropType<HTMLElement | null>,
 			required: false,
 			default: null,
 		},
@@ -85,9 +81,20 @@ export default defineComponent({
 		},
 	},
 	setup(props, { emit }) {
-		const isEditing = ref(false);
-		const editedText = ref('');
-		const cancelTriggered = ref(false);
+		const isEditing = ref<boolean>(false);
+		const editedText = ref<string>('');
+		const cancelTriggered = ref<boolean>(false);
+
+		// Inject the shared activeTimer ref provided by TaskRunner so all Task
+		// instances coordinate against the same source of truth.
+		const activeTimer = inject<Ref<NodeData | null>>('activeTimer', ref(null));
+
+		const taskProps: TaskProps = {
+			doc: props.doc,
+			activeTimer,
+			sideTimersElement: props.sideTimersElement,
+			isOpened: props.isOpened
+		};
 
 		const {
 			emitInteraction,
@@ -100,11 +107,11 @@ export default defineComponent({
 			cancelEdit,
 			handleBlur,
 			emitSidebar
-		} = useTask(props, emit, isEditing, editedText, cancelTriggered);
+		} = useTask(taskProps, emit, isEditing, editedText, cancelTriggered);
 
-		watch(() => props.doc.autoFocus, (newVal) => {
+		watch(() => props.doc.autoFocus, (newVal: boolean | undefined) => {
 			// if (newVal) {
-			if (newVal && !props.isOpened.value) {
+			if (newVal && !props.isOpened) {
 				editTask();
 				props.doc.autoFocus = false;
 			}

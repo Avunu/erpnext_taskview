@@ -24,15 +24,29 @@
 	</div>
 </template>
 
-<script>
-import { defineComponent, ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import useTimeLogger from '../assets/js/timelogger.js';
+<script lang="ts">
+import { defineComponent, ref, computed, onMounted, onUnmounted, nextTick, watch, PropType } from 'vue';
+import useTimeLogger, { TimeLoggerProps } from '../assets/js/timelogger.ts';
 
 export default defineComponent({
 	props: {
-		doc: Object,
-		isOpened: Boolean,
-		currentTheme: String,
+		doc: {
+			type: Object as PropType<{
+				project?: string;
+				docName?: string;
+				text?: string;
+				timesheetDetail?: any;
+			}>,
+			required: true
+		},
+		isOpened: {
+			type: Boolean,
+			required: true
+		},
+		currentTheme: {
+			type: String,
+			required: false
+		},
 		descriptionOnly: {
 			type: Boolean,
 			required: false,
@@ -40,18 +54,25 @@ export default defineComponent({
 		}
 	},
 	setup(props, { emit }) {
-		let description = ref('');
-		let startTime = ref(null);
-		let stopTime = ref(null);
+		const description = ref<string>('');
+		const startTime = ref<string | null>(null);
+		const stopTime = ref<string | null>(null);
 
-		const descriptionInput = ref(null); // Ref for the description textarea
-		const docText = computed(() => props.doc.text);
+		const descriptionInput = ref<HTMLTextAreaElement | null>(null); // Ref for the description textarea
+		const docText = computed<string>(() => props.doc.text || '');
+
+		const timeLoggerProps: TimeLoggerProps = {
+			doc: props.doc,
+			isOpened: props.isOpened,
+			currentTheme: props.currentTheme,
+			descriptionOnly: props.descriptionOnly
+		};
 
 		const {
 			logTime,
 			formatDateTime,
 			closeSidebar,
-		} = useTimeLogger(props, emit, description, startTime, stopTime, docText);
+		} = useTimeLogger(timeLoggerProps, emit, description, startTime, stopTime, docText);
 
 		let defaultDate = formatDateTime(new Date());
 		startTime.value = defaultDate;
@@ -77,10 +98,10 @@ export default defineComponent({
 
 		watch(
 			() => props.isOpened,
-			(newVal) => {
+			(newVal: boolean) => {
 				if (newVal && descriptionInput.value) {
 					nextTick(() => {
-						descriptionInput.value.focus();
+						descriptionInput.value?.focus();
 					});
 				}
 			}

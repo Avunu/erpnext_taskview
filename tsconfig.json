@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "preserve",
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Vue specific */
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./erpnext_taskrunner/public/js/*"]
+    }
+  },
+  "include": [
+    "erpnext_taskrunner/public/js/**/*.ts",
+    "erpnext_taskrunner/public/js/**/*.vue",
+    "erpnext_taskrunner/public/js/**/*.d.ts"
+  ],
+  "exclude": ["node_modules", "erpnext_taskrunner/public/dist"]
+}

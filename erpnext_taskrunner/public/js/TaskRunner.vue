@@ -16,7 +16,7 @@
 						</div>
 					</a>
 					<!-- task or project -->
-					<Task :doc="node" :activeTimer="activeTimer" :sideTimersElement="sideTimersElement" :isOpened="isOpened" class="mtl-ml" @task-interaction="handleTaskInteraction(node)"
+					<Task :doc="node" :sideTimersElement="sideTimersElement" :isOpened="isOpened" class="mtl-ml" @task-interaction="handleTaskInteraction(node)"
 						@add-sibling-task="addSiblingTask(node)" @catch-error="catchError" @catch-success="premount"
 						@open-sidebar="openSidebar" />
 				</div>
@@ -38,16 +38,17 @@
 	</div>
 </template>
 
-<script>
-import { defineComponent, ref, onMounted, onUnmounted } from 'vue';
+<script lang="ts">
+import { defineComponent, ref, provide, onMounted, onUnmounted, PropType } from 'vue';
 import { Draggable, dragContext, OpenIcon } from '@he-tree/vue';
 import Task from './components/Task.vue';
-import useTaskRunner from './assets/js/taskrunner.js';
+import useTaskRunner, { TreeData, TaskRunnerProps } from './assets/js/taskrunner.ts';
 import { VueSidePanel } from "vue3-side-panel";
 import TimeLogger from './components/TimeLogger.vue';
 import "vue3-side-panel/dist/vue3-side-panel.css";
 import '@he-tree/vue/style/default.css';
 import '@he-tree/vue/style/material-design.css';
+import { NodeData } from './assets/js/script.ts';
 
 export default defineComponent({
 	name: 'TaskRunner',
@@ -60,37 +61,41 @@ export default defineComponent({
 	},
 	props: {
 		docs: {
-			type: Array,
+			type: Array as PropType<NodeData[]>,
 			required: true,
 			default: () => []
 		},
 	},
 	setup(props) {
-
 		// establish the highlighted project
-		let highlightedProject = ref(null);
-		// TODO: SETUP CODE FOR HIGHLIGHTING TASKS
-		let highlightedTask = ref(null);
+		const highlightedProject = ref<TreeData | null>(null);
 		// instanitate the reactive tree data
-		let treeData = ref([]);
-		let activeTimer = ref({});
-		let isOpened = ref(false);
-		const formWrapper = ref(null); // Reference for the form wrapper
-		let showForm = ref(true);
-		let timeLoggerDoc = ref({});
-		let descriptionOnly = ref(false);
+		const treeData = ref<TreeData[]>([]);
+		const activeTimer = ref<TreeData | null>(null);
+		const isOpened = ref<boolean>(false);
+		const formWrapper = ref<HTMLElement | null>(null); // Reference for the form wrapper
+		const showForm = ref<boolean>(true);
+		const timeLoggerDoc = ref<any>({});
+		const descriptionOnly = ref<boolean>(false);
 
 		// Dark Mode compatibility
-		const currentTheme = ref(document.documentElement.getAttribute("data-theme-mode") || "light");
+		const currentTheme = ref<string>(document.documentElement.getAttribute("data-theme-mode") || "light");
 		if (currentTheme.value === "automatic") {
 			currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 		}
 
 		// make an element to hold the sidetimers (future development)
-		let sideTimersParentElement = document.querySelector('.layout-side-section');
-		let sideTimersElement = document.createElement('div');
+		const sideTimersParentElement = document.querySelector('.layout-side-section');
+		const sideTimersElement = document.createElement('div');
 		sideTimersElement.id = 'sidetimers';
-		sideTimersParentElement.appendChild(sideTimersElement);
+		sideTimersParentElement?.appendChild(sideTimersElement);
+
+		// Provide the shared activeTimer ref so all Task instances mutate the same source of truth
+		provide('activeTimer', activeTimer);
+
+		const taskRunnerProps: TaskRunnerProps = {
+			docs: props.docs
+		};
 
 		// get the functions from the useTaskRunner composition
 		const {
@@ -107,7 +112,7 @@ export default defineComponent({
 			handleKeydown,
 			openSidebar,
 			closeTimeLogger,
-		} = useTaskRunner(props, treeData, highlightedProject, dragContext, currentTheme, isOpened, formWrapper, showForm, timeLoggerDoc, descriptionOnly);
+		} = useTaskRunner(taskRunnerProps, treeData, highlightedProject, dragContext as any, currentTheme, isOpened, formWrapper, showForm, timeLoggerDoc, descriptionOnly);
 
 		// setup the tree data before mounting
 		premount();
