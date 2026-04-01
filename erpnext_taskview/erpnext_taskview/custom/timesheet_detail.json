@@ -7,7 +7,7 @@
             "insert_after": "completed",
             "label": "Paused",
             "read_only": 1,
-            "module": "ERPNext TaskRunner"
+            "module": "ERPNext TaskView"
         },
         {
             "dt": "Timesheet Detail",
@@ -16,7 +16,7 @@
             "insert_after": "paused",
             "label": "Start Time",
             "read_only": 1,
-            "module": "ERPNext TaskRunner"
+            "module": "ERPNext TaskView"
         },
         {
             "allow_on_submit": 1,
@@ -26,7 +26,7 @@
             "insert_after": "start_time",
             "label": "Paused Time",
             "read_only": 1,
-            "module": "ERPNext TaskRunner"
+            "module": "ERPNext TaskView"
         },
         {
             "dt": "Timesheet Detail",
@@ -36,7 +36,7 @@
             "insert_after": "task",
             "label": "Task Subject",
             "read_only": 1,
-            "module": "ERPNext TaskRunner"
+            "module": "ERPNext TaskView"
         }
     ],
     "property_setters": [],

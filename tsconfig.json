@@ -1,10 +1,13 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "skipLibCheck": true,
-
     /* Bundler mode */
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
@@ -12,18 +15,19 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "preserve",
-
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-
     /* Vue specific */
-    "types": ["node"],
-    "baseUrl": ".",
+    "types": [
+      "node"
+    ],
     "paths": {
-      "@/*": ["./erpnext_taskview/public/js/*"]
+      "@/*": [
+        "./erpnext_taskview/public/js/*"
+      ]
     }
   },
   "include": [
@@ -31,5 +35,8 @@
     "erpnext_taskview/public/js/**/*.vue",
     "erpnext_taskview/public/js/**/*.d.ts"
   ],
-  "exclude": ["node_modules", "erpnext_taskview/public/dist"]
+  "exclude": [
+    "node_modules",
+    "erpnext_taskview/public/dist"
+  ]
 }

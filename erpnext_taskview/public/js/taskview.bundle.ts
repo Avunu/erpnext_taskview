@@ -1,12 +1,12 @@
 /// <reference path="./types/frappe.d.ts" />
 import { createApp, h } from "vue";
-import TaskRunner from "./TaskRunner.vue";
+import TaskView from "./TaskView.vue";
 
 frappe.provide("frappe.views");
 frappe.provide("frappe.ui.toolbar");
 frappe.provide("frappe.ui.form");
 
-frappe.views.TaskRunnerSelect = class TaskRunnerSelect extends frappe.views.ListViewSelect {
+frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListViewSelect {
     setup_views() {
         // Start by calling the original setup_views to get the initial views object
         super.setup_views();
@@ -15,7 +15,7 @@ frappe.views.TaskRunnerSelect = class TaskRunnerSelect extends frappe.views.List
             // Add the Task view to the views object
 
             // TODO: change all tasks/Tasks references to Task/Task without breaking the app
-            
+
             this.add_view_to_menu(
                 "Tasks",
                 () => {
@@ -51,7 +51,7 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         this.list_view_settings = {
             fields: null,
         };
-        this.method = "erpnext_taskview.erpnext_taskview.get"
+        this.method = "erpnext_taskview.erpnext_taskview.api.get"
 
         // TODO: set Task View as the current view in the dropdown and add list view to the list of views
         // use setup_view_menu() from base_list.js?
@@ -86,8 +86,8 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     }
 
     // WE DON'T NEED SKELETONS.
-    show_skeleton() {}
-    hide_skeleton() {}
+    show_skeleton() { }
+    hide_skeleton() { }
 
     render_header(_refresh_header = false) {
         this.$result.find(".list-row-head").remove();
@@ -103,12 +103,12 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
         locals.nodes = {};
 
-        // Pass the data to TaskRunner
+        // Pass the data to TaskView
         createApp({
-            render: () => h(TaskRunner, { docs: this.data })
+            render: () => h(TaskView, { docs: this.data })
         }).mount(container);
     }
 };
 
-// Override the global ListViewSelect with TaskRunnerSelect
-frappe.views.ListViewSelect = frappe.views.TaskRunnerSelect;
+// Override the global ListViewSelect with TaskViewSelect
+frappe.views.ListViewSelect = frappe.views.TaskViewSelect;

@@ -11,18 +11,19 @@ export default defineConfig({
   base: '/assets/erpnext_taskview/',
   build: {
     outDir: '../dist',
-    lib: {
-      entry: resolve(__dirname, 'erpnext_taskview/public/js/app.bundle.ts'),
-      name: 'TaskRunner',
-      fileName: () => 'app.bundle.js',
-      formats: ['iife']
-    },
     rollupOptions: {
+      input: {
+        'taskview.bundle': resolve(__dirname, 'erpnext_taskview/public/js/taskview.bundle.ts'),
+        'timerdock.bundle': resolve(__dirname, 'erpnext_taskview/public/js/timerdock.bundle.ts'),
+      },
       external: ['frappe'],
       output: {
+        format: 'iife',
         globals: {
           frappe: 'frappe'
-        }
+        },
+        entryFileNames: '[name].js',
+        assetFileNames: '[name][extname]',
       }
     }
   },

@@ -1,10 +1,65 @@
-import { Ref } from 'vue';
-import useBackendHandler, { NodeData, PremountFunction } from './script.ts';
+/**
+ * @module taskview
+ *
+ * Composable that owns the **tree data model** and all tree-level operations
+ * for the ERPNext Task View.
+ *
+ * ## Responsibilities
+ *
+ * - **Tree assembly** — {@link buildTree} converts the flat
+ *   {@link GetResponse} into a nested {@link TreeData} hierarchy.
+ * - **Timesheet details map** — {@link updateDetailsMap} maintains a
+ *   reactive `Map<taskName, TimesheetDetailDoc>` that is `provide`d to
+ *   child `Task.vue` components so they can derive timer state via
+ *   `inject` + `computed`.
+ * - **Collapse / expand persistence** — node open/close state is persisted
+ *   in `locals.nodes` (Frappe page-local storage) and replayed on every
+ *   rebuild via {@link modifyNodeAndStat}.
+ * - **Drag-and-drop** — {@link handleDragEnd} handles reparenting,
+ *   project reassignment, and descendant project updates.
+ * - **Blank placeholders** — {@link addBlankProject} / {@link addBlankTask}
+ *   insert editable placeholder nodes so the user can create new items
+ *   inline.
+ * - **Sidebar** — {@link openSidebar} / {@link closeTimeLogger} manage
+ *   the side panel for forms and the time logger widget.
+ * - **Ancestor expansion** — {@link expandAncestors} walks up the
+ *   `@he-tree/vue` stat chain to open ancestors of a node that emitted
+ *   a `request-expand` event (e.g. when a timer is running).
+ *
+ * ## Usage
+ *
+ * ```ts
+ * const { premount, handleDragEnd, ... } = useTaskView(props, treeData, ...);
+ * premount();          // build the initial tree
+ * onMounted(useOnMounted);
+ * ```
+ */
 
-export interface TreeData extends NodeData {
+import { Ref } from 'vue';
+import {
+  TreeNode, TaskDoc, ProjectDoc, GetResponse, TimesheetDetailDoc,
+  saveDoc, fetchData,
+} from './script.ts';
+import { getProjectName } from './task.ts';
+import { refreshTimers } from './timerStore.ts';
+
+/**
+ * Concrete tree node used by `@he-tree/vue`'s `<Draggable>`.
+ *
+ * Identical to {@link TreeNode} but with a self-referencing `children`
+ * type so the tree is strictly typed all the way down.
+ */
+export interface TreeData extends TreeNode {
   children: TreeData[];
 }
 
+/**
+ * Shape of the `dragContext` object exposed by `@he-tree/vue` after a
+ * drag-and-drop operation completes.
+ *
+ * @property dragNode.data   - The {@link TreeData} node that was dragged.
+ * @property dragNode.parent - The new parent after the drop.
+ */
 export interface DragContext {
   dragNode: {
     data: TreeData;
@@ -15,8 +70,27 @@ export interface DragContext {
   };
 }
 
+/**
+ * Stat metadata maintained by `@he-tree/vue` for each tree node.
+ *
+ * The library creates one stat per node and keeps them in sync with the
+ * data array.  We extend the base shape with optional drag/drop flags.
+ *
+ * @property open        - Whether the node is expanded in the tree.
+ * @property parent      - Stat of the parent node (null for roots).
+ * @property data        - Back-reference to the {@link TreeData} node.
+ * @property hidden      - Whether the node is hidden (collapsed child).
+ * @property disableDrag - Prevent this node from being dragged.
+ * @property disableDrop - Prevent dropping onto this node.
+ * @property draggable   - Alias used by he-tree drag config.
+ * @property droppable   - Alias used by he-tree drop config.
+ * @property dragOpen    - Auto-open this node when dragging over it.
+ * @property children    - Stats of child nodes.
+ */
 export interface StatObject {
   open: boolean;
+  parent?: StatObject | null;
+  data?: TreeData;
   hidden?: boolean;
   disableDrag?: boolean;
   disableDrop?: boolean;
@@ -26,14 +100,42 @@ export interface StatObject {
   children?: StatObject[];
 }
 
-export interface TaskRunnerProps {
-  docs: NodeData[];
+/**
+ * Props interface for the `TaskView.vue` root component.
+ *
+ * @property docs - Initial {@link GetResponse} data passed from the Frappe
+ *                  list-view's `prepare_data` hook.
+ */
+export interface TaskViewProps {
+  docs: GetResponse;
 }
 
-export default function useTaskRunner(
-  props: TaskRunnerProps,
+/**
+ * Composable that owns the tree data model and all tree-level operations.
+ *
+ * This is the central orchestration point.  It is called once from
+ * `TaskView.vue`'s `setup()` function and returns a bag of functions
+ * that the template binds to events and slots.
+ *
+ * @param props             - Component props (initial {@link GetResponse}).
+ * @param treeData          - Reactive array bound to `<Draggable v-model>`.
+ * @param highlightedProject - Currently highlighted project (visual indicator).
+ * @param timesheetDetails  - Reactive Map provided to child Task components
+ *                            via `provide('timesheetDetails', ...)`.
+ * @param dragContext       - `@he-tree/vue` drag context singleton.
+ * @param currentTheme      - `'light'` or `'dark'` for CSS variable theming.
+ * @param isOpened          - Whether the sidebar panel is open.
+ * @param formWrapper       - DOM ref for mounting Frappe forms in the sidebar.
+ * @param showForm          - Toggle between Frappe form and TimeLogger in sidebar.
+ * @param timeLoggerDoc     - Payload object passed to the TimeLogger component.
+ * @param descriptionOnly   - When `true`, the TimeLogger shows only the
+ *                            description field (stop-timer mode).
+ */
+export default function useTaskView(
+  props: TaskViewProps,
   treeData: Ref<TreeData[]>,
   highlightedProject: Ref<TreeData | null>,
+  timesheetDetails: Ref<Map<string, TimesheetDetailDoc>>,
   dragContext: DragContext,
   currentTheme: Ref<string>,
   isOpened: Ref<boolean>,
@@ -42,37 +144,158 @@ export default function useTaskRunner(
   timeLoggerDoc: Ref<any>,
   descriptionOnly: Ref<boolean>
 ) {
-  // this finalizes the tree data by adding a blank project to the end of the list and blank tasks to any expanded project branches
-  const premount: PremountFunction = (newDocs: NodeData[] | null = null) => {
-    // add a blank project to the end of the list
-    let docs = addBlankProject(newDocs || props.docs);
 
-    // add blank tasks to any expanded project branches
-    docs = addBlankTasks(docs);
-    treeData.value = docs as TreeData[];
+  // ── Build the tree from flat backend data ────────────────
+
+  /**
+   * Assemble a nested {@link TreeData} tree from flat API response lists.
+   *
+   * Creates one node per project and one per task, then wires children
+   * to their parents using `parent_task` (falls back to `project`).
+   * No UI state is attached — components derive that via `computed`.
+   *
+   * @param data - Flat lists from the `get` endpoint.
+   * @returns Root-level tree nodes (one per project).
+   */
+  const buildTree = (data: GetResponse): TreeData[] => {
+    const nodes = new Map<string, TreeData>();
+    const root: TreeData[] = [];
+
+    for (const p of data.projects) {
+      const node: TreeData = { doc: p, children: [] };
+      nodes.set(p.name, node);
+      root.push(node);
+    }
+
+    for (const t of data.tasks) {
+      const node: TreeData = { doc: t, children: [] };
+      nodes.set(t.name, node);
+      const parentKey = t.parent_task || t.project;
+      const parent = nodes.get(parentKey);
+      if (parent) parent.children.push(node);
+    }
+
+    return root;
   };
 
-  // get the backend handler functions
-  const { callBackendHandler, catchError } = useBackendHandler(premount);
+  /**
+   * Rebuild the reactive `timesheetDetails` map from fresh API data.
+   *
+   * Keyed by task name for O(1) lookup.  Every `Task.vue` instance uses
+   * `inject('timesheetDetails')` + a `computed` to derive its own timer
+   * state from this shared map.
+   *
+   * @param data - Fresh {@link GetResponse} from the server.
+   */
+  const updateDetailsMap = (data: GetResponse): void => {
+    const map = new Map<string, TimesheetDetailDoc>();
+    for (const td of data.timesheet_details) {
+      map.set(td.task, td);
+    }
+    timesheetDetails.value = map;
+  };
 
-  // this sets the theme to match frappe, initializes the highlighted project, and initializes the keydown event listener for editing the blank task
+  /**
+   * (Re)build the entire tree from server data.
+   *
+   * Called on initial load (from props), after every successful
+   * `save_doc` call, and on error recovery.  Updates the timesheet
+   * details map, builds the tree, adds blank placeholders, and sets
+   * the reactive `treeData` array.
+   *
+   * @param data - Fresh response, or `null` to use the initial props.
+   */
+  const premount = (data: GetResponse | null = null): void => {
+    const source = data || props.docs;
+    updateDetailsMap(source);
+    let docs = buildTree(source);
+    docs = addBlankProject(docs);
+    docs = addBlankTasks(docs);
+    treeData.value = docs;
+    // Keep the global timer dock in sync after every tree rebuild.
+    refreshTimers();
+  };
+
+  /**
+   * Handle a backend error: log it, show a Frappe message, and attempt
+   * to re-sync the tree by fetching fresh data.
+   *
+   * @param error - The error thrown by {@link saveDoc}.
+   */
+  const catchError = async (error: unknown): Promise<void> => {
+    console.error('Error updating data:', error);
+    frappe.msgprint(`Error updating data: ${error}`);
+    try {
+      const data = await fetchData();
+      premount(data);
+    } catch (fetchErr) {
+      console.error('Error fetching fresh data:', fetchErr);
+    }
+  };
+
+  /**
+   * Save a doc to the backend and rebuild the tree from the response.
+   *
+   * Convenience wrapper around {@link saveDoc} + {@link premount} with
+   * automatic error handling via {@link catchError}.
+   *
+   * @param doc      - Partial doc to persist.
+   * @param children - Optional descendant tasks for drag reparenting.
+   */
+  const saveAndRebuild = async (
+    doc: Partial<ProjectDoc> | Partial<TaskDoc> | Partial<TimesheetDetailDoc>,
+    children?: TaskDoc[]
+  ): Promise<void> => {
+    try {
+      const data = await saveDoc(doc, children);
+      premount(data);
+    } catch (error) {
+      catchError(error);
+    }
+  };
+
+  /**
+   * Walk up the `@he-tree/vue` stat ancestor chain and force each node
+   * open.  Called when a `Task.vue` instance emits `request-expand`
+   * (e.g. because it has an active timer and needs to be visible).
+   *
+   * Also persists the open state in `locals.nodes` so it survives the
+   * next tree rebuild.
+   *
+   * @param stat - The stat object of the node requesting expansion.
+   */
+  const expandAncestors = (stat: StatObject): void => {
+    let current: StatObject | null | undefined = stat;
+    while (current) {
+      current.open = true;
+      if (current.data?.doc?.name) {
+        locals.nodes[current.data.doc.name] = true;
+      }
+      current = current.parent;
+    }
+  };
+
+  /**
+   * Register global event listeners, apply theme CSS variables, and
+   * initialise the highlighted project.  Called from `onMounted`.
+   */
   const useOnMounted = (): void => {
-    // set the theme to match frappe
     setTheme();
-
-    // initialize the highlighted project
     updateHighlightedProject();
-
-    // Listen for keypress events to start editing the blank task
     document.addEventListener('keydown', handleKeydown);
   };
 
+  /**
+   * Remove global event listeners.  Called from `onUnmounted`.
+   */
   const useOnUnmounted = (): void => {
     document.removeEventListener('keydown', handleKeydown);
   };
 
+  /**
+   * Apply light/dark CSS custom properties based on `currentTheme`.
+   */
   const setTheme = (): void => {
-    // set the theme for the drag-and-drop task tree
     document.documentElement.style.setProperty(
       '--task-hover-bg-color',
       currentTheme.value === 'dark' ? '#686868' : '#ededed'
@@ -81,139 +304,116 @@ export default function useTaskRunner(
       '--icon-color',
       currentTheme.value === 'dark' ? '#d3d3d3' : '#000000'
     );
-
-    // set the theme for the sidebar
     document.documentElement.style.setProperty(
       '--sidebar-bg-color',
       currentTheme.value === 'dark' ? '#2f2f2f' : '#f9f9f9'
     );
   };
 
-  // Function to handle the end of a drag-and-drop operation
+  /**
+   * Handle the completion of a drag-and-drop operation.
+   *
+   * Updates the dragged task's `parent_task` and `project` fields based
+   * on the new drop target, collects all non-blank descendants, and
+   * calls {@link saveAndRebuild} to persist the reparenting and refresh
+   * the tree.
+   */
   const handleDragEnd = async (): Promise<void> => {
-    // TODO: setup transition from task to project if a task is dragged to a project. 
-    // tasks aren't draggable if they or a child have a running or paused timer
-    // TODO: don't allow tasks to be dragged below the blank task on each level
-
-    // this gets the dragged node in its new position.
     const draggedNode = dragContext.dragNode;
 
-    // since I am having trouble getting dragOpen to work on the stat object, I am going to manually expand the parent node here
-    draggedNode.parent.data.expanded = true;
     draggedNode.parent.open = true;
-    // TODO: assess whether I need to update locals.nodes here
 
-    let updateObject: any = {};
+    const parentData = draggedNode.parent.data;
+    const taskDoc = draggedNode.data.doc as TaskDoc;
+    const parentIsProject = parentData.doc.doctype === 'Project';
 
-    // update the parent on the node and the update object
-    draggedNode.data.parent = draggedNode.parent.data.docName;
-    updateObject.parent_task = draggedNode.parent.data.isProject ? null : draggedNode.parent.data.docName;
+    taskDoc.parent_task = parentIsProject ? null : parentData.doc.name;
 
-    // update the node here (like parent and project, for this node and any children nodes) THIS IS ONLY FOR MOVING A TASK TO A NEW PROJECT
-    if (draggedNode.data.project !== draggedNode.parent.data.project) {
-      draggedNode.data.project = draggedNode.parent.data.project;
-      updateObject.project = draggedNode.data.project;
+    // Update project if moving between projects
+    const draggedProject = getProjectName(draggedNode.data);
+    const parentProject = getProjectName(parentData);
+    if (draggedProject !== parentProject) {
+      taskDoc.project = parentProject;
     }
 
-    // update the children on the node
-    const essentialNodeChildren = (nodeData: TreeData): any[] => {
-      if (!nodeData.children || nodeData.children.length === 0 || nodeData.isBlank) {
-        return [];
+    // Collect non-blank children for recursive project update
+    const collectChildren = (node: TreeData): TaskDoc[] => {
+      const result: TaskDoc[] = [];
+      for (const child of node.children) {
+        if (!child.doc.name) continue;
+        result.push(child.doc as TaskDoc);
+        result.push(...collectChildren(child));
       }
-      if (nodeData.children.length === 1 && nodeData.children[0].isBlank) {
-        return [];
-      }
-      return nodeData.children.map(child => ({
-        isBlank: child.isBlank,
-        docName: child.docName,
-        children: essentialNodeChildren(child) // Recursively process children
-      }));
+      return result;
     };
 
-    // update the parent on the node
-    const essentialNodeParent = (parent: any): any => {
-      return {
-        isProject: parent.data.isProject,
-        docName: parent.data.docName || null,
-        children: parent.data.children.map((child: TreeData) => ({
-          isBlank: child.isBlank
-        }))
-      };
-    };
+    const children = collectChildren(draggedNode.data);
 
-    // update the node with just the essentials, especially getting rid of circular references between parents and children
-    const essentialNodeProperties = (node: any): any => {
-      return {
-        isProject: node.data.isProject,
-        project: node.data.project,
-        docName: node.data.docName,
-        parent: essentialNodeParent(node.parent),
-        children: essentialNodeChildren(node.data)
-      };
-    };
-
-    const essentialNode = essentialNodeProperties(draggedNode);
-
-    try {
-      const r = await callBackendHandler('update_parent', essentialNode, updateObject);
-      // update the tree data with the new docs
-      premount(r.message);
-      // trigger the task interaction
-      handleTaskInteraction(draggedNode.data);
-    } catch (error) {
-      catchError(error);
-    }
+    await saveAndRebuild(taskDoc, children.length > 0 ? children : undefined);
+    handleTaskInteraction(draggedNode.data);
   };
 
+  /**
+   * Per-node render hook called by the `<Draggable>` slot.
+   *
+   * Responsible for:
+   * 1. Replaying persisted expand/collapse state from `locals.nodes`.
+   * 2. Handling the blank-project-name transition (project_name → name
+   *    swap in `locals.nodes` after the server assigns a name).
+   * 3. Setting drag/drop permission flags based on node type and timer
+   *    state (projects, blanks, and timed nodes are not draggable).
+   *
+   * Always returns a truthy value so the `v-if` in the template
+   * renders the row.
+   *
+   * @param node - The tree data node.
+   * @param stat - The `@he-tree/vue` stat for this node.
+   * @returns The `{node, stat}` pair (always truthy).
+   */
   const modifyNodeAndStat = (node: TreeData, stat: StatObject): { node: TreeData; stat: StatObject } => {
-    // this is a workaround for when the blank project node gets turned into a project node. There's no docname to use as a key in locals.nodes, so we need to use the text instead, and then switch it to the docname when we get the new docname from the backend
-    let splitText = '';
+    const isProject = node.doc.doctype === 'Project';
+    const isBlank = !node.doc.name;
+    const detail = timesheetDetails.value.get(node.doc.name);
+    const hasActiveTimer = !!detail;
+
+    // Handle blank project transition: text was stored as key before docName was known
     let pleaseExpandMe = false;
-    
-    // if node.text starts with PROJ-
-    if (node.text?.startsWith('PROJ-')) {
-      const splitArray = node.text.split(':', 2);
-      splitText = splitArray[1].trim();
-    }
-    
-    if (splitText !== '' && splitText in locals.nodes) { // Check if the key exists
-      const value = locals.nodes[splitText]; // Retrieve the value
-      stat.open = value; // Update stat.open
-      node.expanded = value; // Update node.expanded
-      if (node.docName) {
-        locals.nodes[node.docName] = value; // Add new key-value pair
+
+    if (isProject && node.doc.name) {
+      const projectDoc = node.doc as ProjectDoc;
+      if (projectDoc.project_name in locals.nodes) {
+        const value = locals.nodes[projectDoc.project_name];
+        stat.open = value;
+        locals.nodes[node.doc.name] = value;
+        delete locals.nodes[projectDoc.project_name];
+        pleaseExpandMe = value;
       }
-      delete locals.nodes[splitText]; // Remove old key
-      pleaseExpandMe = value;
     }
 
-    if (locals.nodes?.[node.docName || ''] === false || !node.expanded) {
+    if (locals.nodes?.[node.doc.name || ''] === false) {
       stat.open = false;
-      node.expanded = false;
     }
-    
-    if (locals.nodes?.[node.docName || ''] === true || node.expanded || pleaseExpandMe) {
+
+    if (locals.nodes?.[node.doc.name || ''] === true || pleaseExpandMe) {
       stat.open = true;
-      node.expanded = true;
-      // make sure there are blank tasks under this expanded project
       addBlankTask(node);
       updateHighlightedProject();
     }
-    
+
+    // Check for children with active timers (for drag/drop rules)
     let runningChildren = false;
-    // check if this node has any children with a timer running or paused
-    if (node.children && node.children.length > 0) {
-      runningChildren = node.children.some(child => child.timerStatus === 'running' || child.timerStatus === 'paused');
+    if (node.children?.length > 0) {
+      runningChildren = node.children.some(child =>
+        timesheetDetails.value.has(child.doc.name)
+      );
     }
 
-    // dragOpen is also not working...
-    // Disable drag and drop for blank tasks and projects, and for tasks with running or paused timers, or if any children have running or paused timers
-    if (node.isBlank || node.isProject || node.timerStatus === 'running' || node.timerStatus === 'paused' || runningChildren) {
+    if (isBlank || isProject || hasActiveTimer || runningChildren) {
       stat.disableDrag = true;
-      stat.disableDrop = node.isBlank;
+      stat.disableDrop = isBlank;
       stat.draggable = false;
-      stat.droppable = !node.isBlank;
-      stat.dragOpen = !node.isBlank;
+      stat.droppable = !isBlank;
+      stat.dragOpen = !isBlank;
     } else {
       stat.disableDrag = false;
       stat.disableDrop = false;
@@ -221,125 +421,112 @@ export default function useTaskRunner(
       stat.droppable = true;
       stat.dragOpen = true;
     }
-    
+
     return { node, stat };
   };
 
-  // Helper function to create a new node
-  const createNode = (options: {
-    text: string;
-    children?: TreeData[];
-    isBlank?: boolean;
-    isProject?: boolean;
-    project?: string | null;
-    docName?: string;
-    autoFocus?: boolean;
-    expanded?: boolean;
-    parent?: string | null;
-    timerStatus?: string | null;
-    status?: string;
-  }): TreeData => {
-    const {
-      text,
-      children = [],
-      isBlank = false,
-      isProject = false,
-      project = null,
-      docName = '',
-      autoFocus = false,
-      expanded = true,
-      parent = null,
-      timerStatus = null,
-      status = 'Open'
-    } = options;
-
-    return {
-      text,
-      children,
-      isBlank,
-      isProject,
-      project,
-      docName,
-      autoFocus,
-      expanded,
-      parent,
-      timerStatus,
-      status
-    };
+  /**
+   * Factory for minimal tree nodes.
+   *
+   * Ensures `doctype`, `name`, and `status` have sensible defaults.
+   * Used to create blank placeholder nodes for inline creation.
+   *
+   * @param doc - Partial doc fields for the new node.
+   * @returns A {@link TreeData} node with an empty children array.
+   */
+  const createNode = (doc: Partial<ProjectDoc> | Partial<TaskDoc>): TreeData => {
+    if (!doc.doctype) doc.doctype = 'Task';
+    if (!doc.name) doc.name = '';
+    if (!doc.status) doc.status = 'Open';
+    return { doc: doc as ProjectDoc | TaskDoc, children: [] };
   };
 
-  const addBlankProject = (docs: NodeData[]): NodeData[] => {
-    // add a blank project to the end of the list
-    const newProject = createNode({ 
-      text: 'Add project...', 
-      isBlank: true, 
-      isProject: true, 
-      expanded: false 
-    });
+  /**
+   * Append a blank "Add project..." placeholder to the root of the tree.
+   *
+   * @param docs - Current root-level tree nodes.
+   * @returns The same array with the blank project appended.
+   */
+  const addBlankProject = (docs: TreeData[]): TreeData[] => {
+    const newProject = createNode({
+      doctype: 'Project', name: '', project_name: 'Add project...', status: 'Open',
+    } as ProjectDoc);
     docs.push(newProject);
     return docs;
   };
 
-  // if any of the projects are expanded due to running or paused timers, go ahead and add the blank tasks to the project and tasks now, since otherwise blank tasks are only being added when the project is expanded
-  const addBlankTasks = (docs: NodeData[]): NodeData[] => {
-    // add blank tasks to any expanded project branches
+  /**
+   * Add blank "Add task..." placeholders to all expanded, non-blank projects.
+   *
+   * Called once during {@link premount} to seed the initial tree.
+   *
+   * @param docs - Root-level tree nodes.
+   * @returns The same array (mutated in place).
+   */
+  const addBlankTasks = (docs: TreeData[]): TreeData[] => {
     docs.forEach(project => {
-      if (project.expanded && !project.isBlank) {
-        addBlankTask(project as TreeData);
+      // Add blank tasks to non-blank projects that are remembered as open
+      if (project.doc.name && locals.nodes?.[project.doc.name] !== false) {
+        addBlankTask(project);
       }
     });
     return docs;
   };
 
-  // Function to determine if a node is the highlighted project
+  /**
+   * Check whether the given node is the currently highlighted project.
+   *
+   * Used by the template to apply the `highlighted-project` CSS class.
+   *
+   * @param node - The tree data node to test.
+   * @returns `true` if this node is the highlighted project.
+   */
   const isHighlightedProject = (node: TreeData): boolean => {
-    // try to compare the docName fields of the node and the highlighted project
     try {
-      return !!(node.isProject && node.docName === highlightedProject.value?.docName);
-    } catch (error) {
-      return !!(node.isProject && node === highlightedProject.value);
+      return !!(node.doc.doctype === 'Project' && node.doc.name === highlightedProject.value?.doc.name);
+    } catch {
+      return !!(node.doc.doctype === 'Project' && node === highlightedProject.value);
     }
   };
 
+  /**
+   * Toggle a node's expanded/collapsed state and persist it.
+   *
+   * When opening a node, ensures blank task placeholders are added to
+   * its children.  Also updates the highlighted project when expanding
+   * or collapsing project-level nodes.
+   *
+   * @param node - The tree node to toggle.
+   * @param stat - The `@he-tree/vue` stat for the node.
+   */
   const toggleNode = (node: TreeData, stat: StatObject): void => {
-    if (node.isBlank) {
-      return;
-    }
-    
-    stat.open = !stat.open;
-    if (node.docName) {
-      locals.nodes[node.docName] = stat.open;
-    }
-    node.expanded = stat.open;
+    if (!node.doc.name) return;
 
-    // open the children if the node is being opened
+    stat.open = !stat.open;
+    locals.nodes[node.doc.name] = stat.open;
+
     if (stat.open) {
-      // look in the children. if there is not a blank task, add one
-      if (node.children.length === 0 || !node.children.some(child => child.isBlank)) {
+      if (node.children.length === 0 || !node.children.some(child => !child.doc.name)) {
         addBlankTask(node);
-        // Trigger reactivity update for treeData
         treeData.value = [...treeData.value];
       }
-      // change the hidden property of all open children
       stat.children?.forEach(child => {
         child.hidden = !stat.open;
       });
     }
 
-    // if the node is a task, highlight the parent project
-    if (!node.isProject) {
-      // Find the parent project of this task
+    const isProject = node.doc.doctype === 'Project';
+    if (!isProject) {
       const parentProject = findParentProject(node);
       if (parentProject) {
         highlightedProject.value = parentProject;
       }
-      // if node is a project and is open, highlight this project
-    } else if (node.isProject && stat.open) {
+    } else if (stat.open) {
       highlightedProject.value = node;
-      // if node is a project and is closed, highlight the first open project
     } else {
-      // look through the root level of tree data for a project with expanded: true, get the first one, highlight it (don't get the blank project :)
-      const nextExpandedProject = treeData.value.find(project => project.isProject && project.expanded && !project.isBlank);
+      const nextExpandedProject = treeData.value.find(project =>
+        project.doc.doctype === 'Project' && project.doc.name && locals.nodes?.[project.doc.name]
+      );
       if (nextExpandedProject) {
         highlightedProject.value = nextExpandedProject;
       } else {
@@ -348,35 +535,42 @@ export default function useTaskRunner(
     }
   };
 
+  /**
+   * Recursively add blank "Add task..." placeholders to a node and its
+   * descendants.
+   *
+   * Skips completed nodes and nodes that already have a blank child.
+   * Triggers a reactive `treeData` update when a new blank is added.
+   *
+   * @param node - The parent node to seed with a blank child.
+   */
   const addBlankTask = (node: TreeData): void => {
-    if (node.status === 'Completed') {
-      return;
-    }
-    
+    if (node.doc.status === 'Completed') return;
+    if (!node.children) node.children = [];
+
     let blankNodeAdded = false;
-    // Add a blank task to the current node's children
-    // If the node doesn't have children, create an empty array, otherwise .some() will throw an error
-    if (!node.children) {
-      node.children = [];
-    }
-    
-    // check first to make sure there isn't already a blank task
-    if (!node.children.some(child => child.isBlank)) {
-      const blankTask = createNode({ 
-        text: 'Add task...', 
-        isBlank: true, 
-        project: node.project || '', 
-        parent: node.docName || '', 
-        timerStatus: 'stopped', 
-        expanded: false 
-      });
+
+    if (!node.children.some(child => !child.doc.name)) {
+      const isProject = node.doc.doctype === 'Project';
+      const projectName = getProjectName(node);
+      const parentTask = isProject ? null : node.doc.name;
+
+      const blankTask = createNode({
+        doctype: 'Task',
+        name: '',
+        subject: 'Add task...',
+        project: projectName,
+        parent_task: parentTask,
+        status: 'Open',
+        is_group: 0,
+        priority: 'Medium',
+      } as TaskDoc);
       node.children = [...node.children, blankTask];
       blankNodeAdded = true;
     }
 
-    // Recursively add a blank task to each child node's children
     node.children.forEach(child => {
-      if (!child.isBlank) {
+      if (child.doc.name) {
         addBlankTask(child);
       }
     });
@@ -386,59 +580,90 @@ export default function useTaskRunner(
     }
   };
 
+  /**
+   * Find the root-level project node for a given tree node.
+   *
+   * @param node - Any tree node (project or task).
+   * @returns The project node, or `undefined` if not found.
+   */
   const findParentProject = (node: TreeData): TreeData | undefined => {
-    return treeData.value.find(project => project.docName === node.project);
+    const projectName = getProjectName(node);
+    return treeData.value.find(project => project.doc.name === projectName);
   };
 
-  // we need to add the new node as a sibling to the node. If the node is a project, add it to the root level
+  /**
+   * Recursively search the tree for a node with the given doc name.
+   *
+   * @param nodes         - Subtree to search.
+   * @param parentDocName - The `doc.name` to find.
+   * @returns The matching node, or `null` if not found.
+   */
   const findParentNode = (nodes: TreeData[], parentDocName: string): TreeData | null => {
     for (const node of nodes) {
-      if (node.docName === parentDocName) {
+      if (node.doc.name === parentDocName) {
         return node;
-      } else if (node.children && node.children.length > 0) {
+      } else if (node.children?.length > 0) {
         const foundNode = findParentNode(node.children, parentDocName);
-        if (foundNode) {
-          return foundNode;
-        }
+        if (foundNode) return foundNode;
       }
     }
-    return null; // If the parent node is not found
+    return null;
   };
 
-  // This adds a new blank task to the tree when a blank task is edited into a new task or project
-  // IF THE NEW NODE IS A PROJECT, WE NEED TO ADD A BLANK TASK TO THE NEW PROJECT AS WELL? NO. Blank projects don't have children.
+  /**
+   * Insert a blank sibling node next to the given node.
+   *
+   * The new blank inherits the same parent and project as the reference
+   * node.  Triggers a reactive `treeData` update.
+   *
+   * @param node - The node whose sibling list should receive a blank.
+   */
   const addSiblingTask = (node: TreeData): void => {
-    // we do need to add a blank task to the node children.
     addBlankTask(node);
-    // and we should expand the node if it's a project
-    node.expanded = node.isProject ? true : false;
 
-    // Create a new task object
-    const newBlankNode = createNode({ 
-      text: node.isProject ? 'Add project...' : 'Add task...', 
-      isBlank: true, 
-      project: node.project || '', 
-      isProject: node.isProject, 
-      parent: node.parent, 
-      timerStatus: 'stopped' 
-    });
+    const isProject = node.doc.doctype === 'Project';
+    const parentDocName = isProject
+      ? ''
+      : ((node.doc as TaskDoc).parent_task || (node.doc as TaskDoc).project);
 
-    const parentNode = findParentNode(treeData.value, node.parent || '');
+    const projectName = getProjectName(node);
+    const parentTask = isProject ? null : (node.doc as TaskDoc).parent_task;
+
+    const newBlankNode = createNode(
+      isProject
+        ? { doctype: 'Project', name: '', project_name: 'Add project...', status: 'Open' } as ProjectDoc
+        : {
+          doctype: 'Task', name: '', subject: 'Add task...',
+          project: projectName, parent_task: parentTask,
+          status: 'Open', is_group: 0, priority: 'Medium',
+        } as TaskDoc
+    );
+
+    const parentNode = findParentNode(treeData.value, parentDocName);
 
     if (parentNode) {
-      const updatedChildren = [...parentNode.children, newBlankNode];
-      parentNode.children = updatedChildren;
+      parentNode.children = [...parentNode.children, newBlankNode];
       treeData.value = [...treeData.value];
     } else {
-      // Add the new node to the root level
       treeData.value = [...treeData.value, newBlankNode];
     }
   };
 
-  // Function to highlight projects based on task interactions
+  /**
+   * Update the highlighted project after a user interaction.
+   *
+   * For project nodes: sets the highlight to the interacted project.
+   * For task nodes: highlights the task's parent project.
+   * Also opens the project and adds blank tasks.
+   *
+   * @param node - The node that was interacted with.
+   */
   const handleTaskInteraction = (node: TreeData): void => {
-    if (node.isProject) {
-      if (node.expanded && !node.isBlank && node.status !== 'Completed') {
+    const isProject = node.doc.doctype === 'Project';
+    const isBlank = !node.doc.name;
+
+    if (isProject) {
+      if (!isBlank && node.doc.status !== 'Completed') {
         highlightedProject.value = node;
       } else {
         return;
@@ -449,83 +674,96 @@ export default function useTaskRunner(
         highlightedProject.value = parentProject;
       }
     }
-    
-    // make sure the highlighted project is expanded and the interacted task is expanded
-    if (highlightedProject.value && !highlightedProject.value.isBlank) {
-      // make sure there are blank tasks under this expanded project
-      if (highlightedProject.value.docName !== "") {
-        locals.nodes[highlightedProject.value.docName || ''] = true;
-        addBlankTask(highlightedProject.value);
-      }
+
+    if (highlightedProject.value && highlightedProject.value.doc.name) {
+      locals.nodes[highlightedProject.value.doc.name] = true;
+      addBlankTask(highlightedProject.value);
     }
   };
 
-  // Function to update the highlighted project
+  /**
+   * Re-derive the highlighted project from the current tree state.
+   *
+   * Picks the first expanded non-blank project, or falls back to the
+   * blank placeholder project.  Called on mount and after collapses.
+   */
   const updateHighlightedProject = (): void => {
     if (!treeData.value || !Array.isArray(treeData.value)) {
       console.warn('Tree data is not initialized or not an array');
       return;
     }
-    
+
     const expandedProjects = treeData.value.filter(
-      (node) => node.isProject && node.expanded && !node.isBlank
+      (node) => node.doc.doctype === 'Project' && node.doc.name && locals.nodes?.[node.doc.name] !== false
     );
-    
+
     if (expandedProjects.length > 0) {
       highlightedProject.value = expandedProjects[0];
     } else {
-      const blankProject = treeData.value.find((node) => node.isBlank);
+      const blankProject = treeData.value.find((node) => !node.doc.name);
       if (blankProject) {
         highlightedProject.value = blankProject;
       }
     }
   };
 
-  // Function to find and edit the root-level blank task under the highlighted project
-  // if all projects are collapsed, or if there are no open projects, edit the blank project
+  /**
+   * Focus the blank task (or blank project) of the highlighted project.
+   *
+   * Sets the `_autoFocus` flag which `Task.vue` watches to trigger
+   * edit mode.  Called from {@link handleKeydown} when the user starts
+   * typing while no input is focused.
+   */
   const editRootBlankTask = (): void => {
     const project = highlightedProject.value;
     if (project) {
-      if (project.isBlank) {
-        project.autoFocus = true; // Set a flag to trigger auto-focus
+      if (!project.doc.name) {
+        project._autoFocus = true;
       } else {
-        const blankTask = project.children.find(task => task.isBlank);
+        const blankTask = project.children.find(task => !task.doc.name);
         if (blankTask) {
-          blankTask.autoFocus = true; // Set a flag to trigger auto-focus
+          blankTask._autoFocus = true;
         }
       }
     }
   };
 
+  /**
+   * Global keydown handler: redirect typing to the blank task input
+   * when no other input is focused and the sidebar is closed.
+   *
+   * @param event - The keyboard event.
+   */
   const handleKeydown = (event: KeyboardEvent): void => {
-    // check if the key pressed is a character key (a-z, A-Z, 0-9, special characters) and no input is focused
     const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;'",.<>?/`~\- ]$/;
-    
+
     if (document.activeElement?.tagName !== 'INPUT' && allowedKeys.test(event.key) && !isOpened.value) {
-      // If no input is focused, start editing the root blank task
       editRootBlankTask();
     }
   };
 
-  const loadForm = async (doc: TreeData): Promise<void> => {
-    let formInstance: any = null; // Store the form instance
-    const doctype = doc.isProject ? "Project" : "Task";
-    const docName = doc.docName;
+  /**
+   * Load a Frappe form into the sidebar's form wrapper element.
+   *
+   * Uses the Frappe client-side form API to render a full form for the
+   * document.  The form is mounted inside the `formWrapper` ref.
+   *
+   * @param payload - Contains the doc to load and an `isProject` flag
+   *                  to determine the doctype.
+   */
+  const loadForm = async (payload: { doc: ProjectDoc | TaskDoc; isProject: boolean }): Promise<void> => {
+    const doctype = payload.isProject ? "Project" : "Task";
+    const docName = payload.doc.name;
 
     try {
-      // Ensure the wrapper is attached to the DOM
       if (!formWrapper.value || !document.body.contains(formWrapper.value)) {
         console.error("formWrapper is not attached to the DOM");
         return;
       }
 
-      // Ensure doctype metadata is loaded
       await (frappe as any).model.with_doctype(doctype);
 
-      // Create and load the Frappe form
-      formInstance = new (frappe as any).ui.form.Form(doctype, formWrapper.value, true, '');
-
-      // Load the form with the docName
+      const formInstance = new (frappe as any).ui.form.Form(doctype, formWrapper.value, true, '');
       await (frappe as any).model.with_doc(doctype, docName);
       formInstance.refresh(docName);
     } catch (err) {
@@ -533,24 +771,37 @@ export default function useTaskRunner(
     }
   };
 
-  const openSidebar = (doc: any): void => {
+  /**
+   * Open the sidebar panel.
+   *
+   * Discriminates between two payload shapes:
+   * - **Form payload** (`{ doc, isProject }`) → renders a Frappe form.
+   * - **Time logger payload** (`{ doc, timesheetDetail, descriptionOnly }`) →
+   *   renders the TimeLogger component for manual time entry or stop.
+   *
+   * @param payload - Either a form payload or a time-logger payload.
+   */
+  const openSidebar = (payload: any): void => {
     isOpened.value = true;
-    // this is just using the presence of the isProject field to determine if a node sidebar is being opened for the form, or if we want time logging content
-    if ('isProject' in doc) {
+
+    if ('isProject' in payload && !('descriptionOnly' in payload)) {
+      // Open doc form in sidebar
       showForm.value = true;
-      loadForm(doc);
+      loadForm(payload);
     } else {
-      timeLoggerDoc.value = doc;
+      // Time logger payload: { doc, timesheetDetail, descriptionOnly }
+      timeLoggerDoc.value = payload;
       showForm.value = false;
-      // description only determines if we need to set start and stop times, or just a description
-      if (doc.status && doc.status === 'stopped') {
-        descriptionOnly.value = true;
-      } else {
-        descriptionOnly.value = false;
-      }
+      descriptionOnly.value = payload.descriptionOnly ?? false;
     }
   };
 
+  /**
+   * Close the time logger sidebar and reset its state.
+   *
+   * Clears the time logger doc, switches back to form mode, and closes
+   * the panel.
+   */
   const closeTimeLogger = (): void => {
     timeLoggerDoc.value = null;
     showForm.value = true;
@@ -561,6 +812,8 @@ export default function useTaskRunner(
   return {
     catchError,
     premount,
+    saveAndRebuild,
+    expandAncestors,
     useOnMounted,
     useOnUnmounted,
     handleDragEnd,

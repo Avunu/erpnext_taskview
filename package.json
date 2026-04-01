@@ -4,22 +4,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite build --watch",
-    "build": "vue-tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@he-tree/vue": "^2.8.3",
+    "@he-tree/vue": "^2.10.2",
     "frappe-ui": "^0.1",
     "vue": "^3",
     "vue-demi": "^0.14.10",
     "vue3-side-panel": "^1.3.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@vitejs/plugin-vue": "^5.0.0",
-    "typescript": "^5.0.0",
-    "vite": "^5.0.0",
-    "vue-tsc": "^2.0.0"
+    "@types/node": "^25.5.0",
+    "@vitejs/plugin-vue": "^6.0.5",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.3",
+    "vue-tsc": "^3.2.6"
   }
 }

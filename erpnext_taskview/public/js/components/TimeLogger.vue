@@ -28,25 +28,46 @@
 import { defineComponent, ref, computed, onMounted, onUnmounted, nextTick, watch, PropType } from 'vue';
 import useTimeLogger, { TimeLoggerProps } from '../assets/js/timelogger.ts';
 
+/**
+ * TimeLogger sidebar component.
+ *
+ * Renders in two modes based on the `descriptionOnly` prop:
+ *
+ * - **Stop mode** (`descriptionOnly = true`): shows only a description
+ *   textarea.  On submit, the composable sends a stop signal (Timesheet
+ *   Detail with `to_time`).
+ * - **Manual log mode** (`descriptionOnly = false`): shows start/stop
+ *   datetime pickers and a description textarea.  On submit, creates
+ *   a new Timesheet Detail with the provided time range.
+ *
+ * @emits close-time-logger — When the sidebar should close.
+ * @emits catch-error       — When a backend call fails.
+ */
 export default defineComponent({
 	props: {
+		/**
+		 * Payload object containing:
+		 * - `doc` — the underlying ProjectDoc or TaskDoc
+		 * - `timesheetDetail` — the active Timesheet Detail, or `null`
+		 */
 		doc: {
-			type: Object as PropType<{
-				project?: string;
-				docName?: string;
-				text?: string;
-				timesheetDetail?: any;
-			}>,
+			type: Object as PropType<any>,
 			required: true
 		},
+		/** Whether the sidebar panel is currently visible. */
 		isOpened: {
 			type: Boolean,
 			required: true
 		},
+		/** Current theme for CSS variable theming. */
 		currentTheme: {
 			type: String,
 			required: false
 		},
+		/**
+		 * When `true`, hide datetime pickers and show only the
+		 * description field (stop-timer mode).
+		 */
 		descriptionOnly: {
 			type: Boolean,
 			required: false,
@@ -58,14 +79,20 @@ export default defineComponent({
 		const startTime = ref<string | null>(null);
 		const stopTime = ref<string | null>(null);
 
-		const descriptionInput = ref<HTMLTextAreaElement | null>(null); // Ref for the description textarea
-		const docText = computed<string>(() => props.doc.text || '');
+		const descriptionInput = ref<HTMLTextAreaElement | null>(null);
+
+		// Compute display text from the doc
+		const docText = computed<string>(() => {
+			if (!props.doc?.doc) return '';
+			return props.doc.doc.subject || props.doc.doc.project_name || props.doc.doc.name || '';
+		});
 
 		const timeLoggerProps: TimeLoggerProps = {
-			doc: props.doc,
+			doc: props.doc.doc,
+			timesheetDetail: props.doc.timesheetDetail ?? null,
+			descriptionOnly: props.descriptionOnly,
 			isOpened: props.isOpened,
 			currentTheme: props.currentTheme,
-			descriptionOnly: props.descriptionOnly
 		};
 
 		const {
@@ -78,7 +105,6 @@ export default defineComponent({
 		startTime.value = defaultDate;
 		stopTime.value = defaultDate;
 
-		// Focus the description input when the sidebar is opened
 		onMounted(() => {
 			nextTick(() => {
 				if (props.isOpened && descriptionInput.value) {
@@ -87,11 +113,9 @@ export default defineComponent({
 			});
 		});
 
-		// Clear the description when the sidebar is closed
 		onUnmounted(() => {
 			if (descriptionInput.value) {
 				description.value = '';
-				// unfocus the description input
 				descriptionInput.value.blur();
 			}
 		});
