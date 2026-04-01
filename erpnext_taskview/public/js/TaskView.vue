@@ -1,6 +1,6 @@
 <template>
 	<div class="tree-container">
-		<Draggable class="mtl-tree" v-model="treeData" treeLine @after-drop="handleDragEnd">
+		<Draggable class="mtl-tree" v-model="treeData" treeLine :rootDroppable="false" @after-drop="handleDragEnd">
 			<template #default="{ node, stat }">
 				<!-- modify node and stat to perpetuate collapse node states -->
 				<div v-if="modifyNodeAndStat(node, stat)" class="outer-task"
@@ -208,16 +208,30 @@ export default defineComponent({
 		// ── Drag and drop ─────────────────────────────────────
 
 		async handleDragEnd(): Promise<void> {
-			const draggedNode = (dragContext as any).dragNode;
-			draggedNode.parent.open = true;
+			const draggedStat = (dragContext as any).dragNode;
+			if (!draggedStat?.parent?.data?.doc) {
+				// Dropped at root level or into an invalid target — reload and bail
+				await this.catchError(new Error('Invalid drop target'));
+				return;
+			}
 
-			const parentData = draggedNode.parent.data;
-			const taskDoc = draggedNode.data.doc as TaskDoc;
-			const parentIsProject = parentData.doc.doctype === 'Project';
+			const parentData = draggedStat.parent.data as TreeData;
+			const parentDoc = parentData.doc;
 
-			taskDoc.parent_task = parentIsProject ? null : parentData.doc.name;
+			// Don't allow dropping onto blank placeholder nodes
+			if (!parentDoc.name) {
+				await this.catchError(new Error('Cannot drop onto a blank node'));
+				return;
+			}
 
-			const draggedProject = getProjectName(draggedNode.data);
+			draggedStat.parent.open = true;
+
+			const taskDoc = draggedStat.data.doc as TaskDoc;
+			const parentIsProject = parentDoc.doctype === 'Project';
+
+			taskDoc.parent_task = parentIsProject ? null : parentDoc.name;
+
+			const draggedProject = getProjectName(draggedStat.data);
 			const parentProject = getProjectName(parentData);
 			if (draggedProject !== parentProject) {
 				taskDoc.project = parentProject;
@@ -233,9 +247,9 @@ export default defineComponent({
 				return result;
 			};
 
-			const children = collectChildren(draggedNode.data);
+			const children = collectChildren(draggedStat.data);
 			await this.saveAndRebuild(taskDoc, children.length > 0 ? children : undefined);
-			this.handleTaskInteraction(draggedNode.data);
+			this.handleTaskInteraction(draggedStat.data);
 		},
 
 		// ── Per-node render hook ──────────────────────────────
@@ -275,12 +289,17 @@ export default defineComponent({
 				);
 			}
 
-			if (isBlank || isProject || hasActiveTimer || runningChildren) {
+			if (isBlank) {
 				stat.disableDrag = true;
-				stat.disableDrop = isBlank;
+				stat.disableDrop = true;
 				stat.draggable = false;
-				stat.droppable = !isBlank;
-				stat.dragOpen = !isBlank;
+				stat.droppable = false;
+				stat.dragOpen = false;
+			} else if (isProject || hasActiveTimer || runningChildren) {
+				stat.disableDrag = true;
+				stat.draggable = false;
+				stat.droppable = true;
+				stat.dragOpen = true;
 			} else {
 				stat.disableDrag = false;
 				stat.disableDrop = false;

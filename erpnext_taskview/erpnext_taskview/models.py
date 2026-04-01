@@ -44,7 +44,7 @@ class ProjectDoc(BaseModel):
 	name: str = ""
 	project_name: str = ""
 	status: str = "Open"
-	customer: str = ""
+	customer: str | None = ""
 
 
 class TaskDoc(BaseModel):
