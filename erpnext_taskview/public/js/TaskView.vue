@@ -89,6 +89,7 @@ export default defineComponent({
 		return {
 			treeData: [] as TreeData[],
 			highlightedProject: null as TreeData | null,
+			activeNode: null as TreeData | null,
 			isOpened: false,
 			showForm: true,
 			timeLoggerDoc: {} as any,
@@ -264,7 +265,6 @@ export default defineComponent({
 
 			if (locals.nodes?.[node.doc.name || ''] === true || pleaseExpandMe) {
 				stat.open = true;
-				this.addBlankTask(node);
 				this.updateHighlightedProject();
 			}
 
@@ -308,44 +308,58 @@ export default defineComponent({
 			return docs;
 		},
 
-		addBlankTasks(docs: TreeData[]): TreeData[] {
-			docs.forEach(project => {
-				if (project.doc.name && locals.nodes?.[project.doc.name] !== false) {
-					this.addBlankTask(project);
+		/** Remove all blank task nodes from the tree. */
+		stripBlanks(nodes: TreeData[]): void {
+			for (const node of nodes) {
+				if (node.children) {
+					node.children = node.children.filter(c => !!c.doc.name);
+					this.stripBlanks(node.children);
 				}
-			});
+			}
+		},
+
+		addBlankTasks(docs: TreeData[]): TreeData[] {
+			this.stripBlanks(docs);
+
+			// Determine which parent should get the blank node.
+			let targetParent: TreeData | null = null;
+
+			if (this.activeNode) {
+				const isProject = this.activeNode.doc.doctype === 'Project';
+				if (isProject) {
+					// Active node is a project → blank as its immediate child
+					targetParent = docs.find(p => p.doc.name === this.activeNode!.doc.name) || null;
+				} else {
+					// Active node is a task → blank as its child
+					targetParent = this.findParentNode(docs, this.activeNode.doc.name);
+				}
+			} else if (this.highlightedProject?.doc.name) {
+				targetParent = docs.find(p => p.doc.name === this.highlightedProject!.doc.name) || null;
+			}
+
+			if (targetParent) {
+				this.ensureBlankChild(targetParent);
+			}
 			return docs;
 		},
 
-		addBlankTask(node: TreeData): void {
+		/** Add a single blank "Add task..." child to `node` if not already present. Non-recursive. */
+		ensureBlankChild(node: TreeData): void {
 			if (node.doc.status === 'Completed') return;
 			if (!node.children) node.children = [];
+			if (node.children.some(child => !child.doc.name)) return;
 
-			let blankNodeAdded = false;
+			const isProject = node.doc.doctype === 'Project';
+			const projectName = getProjectName(node);
+			const parentTask = isProject ? null : node.doc.name;
 
-			if (!node.children.some(child => !child.doc.name)) {
-				const isProject = node.doc.doctype === 'Project';
-				const projectName = getProjectName(node);
-				const parentTask = isProject ? null : node.doc.name;
-
-				const blankTask = this.createNode({
-					doctype: 'Task', name: '', subject: 'Add task...',
-					project: projectName, parent_task: parentTask,
-					status: 'Open', is_group: 0, priority: 'Medium',
-				} as TaskDoc);
-				node.children = [...node.children, blankTask];
-				blankNodeAdded = true;
-			}
-
-			node.children.forEach(child => {
-				if (child.doc.name) {
-					this.addBlankTask(child);
-				}
-			});
-
-			if (blankNodeAdded) {
-				this.treeData = [...this.treeData];
-			}
+			const blankTask = this.createNode({
+				doctype: 'Task', name: '', subject: 'Add task...',
+				project: projectName, parent_task: parentTask,
+				status: 'Open', is_group: 0, priority: 'Medium',
+			} as TaskDoc);
+			node.children = [...node.children, blankTask];
+			this.treeData = [...this.treeData];
 		},
 
 		// ── Highlight and navigation ──────────────────────────
@@ -365,10 +379,6 @@ export default defineComponent({
 			locals.nodes[node.doc.name] = stat.open;
 
 			if (stat.open) {
-				if (node.children.length === 0 || !node.children.some(child => !child.doc.name)) {
-					this.addBlankTask(node);
-					this.treeData = [...this.treeData];
-				}
 				stat.children?.forEach(child => {
 					child.hidden = !stat.open;
 				});
@@ -412,7 +422,6 @@ export default defineComponent({
 		},
 
 		addSiblingTask(node: TreeData): void {
-			this.addBlankTask(node);
 
 			const isProject = node.doc.doctype === 'Project';
 			const parentDocName = isProject
@@ -459,9 +468,21 @@ export default defineComponent({
 				}
 			}
 
-			if (this.highlightedProject && this.highlightedProject.doc.name) {
-				locals.nodes[this.highlightedProject.doc.name] = true;
-				this.addBlankTask(this.highlightedProject);
+			// Track the active node and re-place the blank at the right level
+			this.activeNode = isBlank ? null : node;
+			this.stripBlanks(this.treeData);
+
+			let targetParent: TreeData | null = null;
+			if (!isBlank && !isProject) {
+				// Task selected → blank as its child
+				targetParent = this.findParentNode(this.treeData, node.doc.name);
+			} else if (this.highlightedProject?.doc.name) {
+				targetParent = this.highlightedProject;
+			}
+
+			if (targetParent) {
+				locals.nodes[targetParent.doc.name] = true;
+				this.ensureBlankChild(targetParent);
 			}
 		},
 
@@ -493,6 +514,8 @@ export default defineComponent({
 				if (!project.doc.name) {
 					project._autoFocus = true;
 				} else {
+					// Ensure there's a blank to focus
+					this.ensureBlankChild(project);
 					const blankTask = project.children.find(task => !task.doc.name);
 					if (blankTask) {
 						blankTask._autoFocus = true;
@@ -502,8 +525,10 @@ export default defineComponent({
 		},
 
 		handleKeydown(event: KeyboardEvent): void {
+			const tag = document.activeElement?.tagName;
+			if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 			const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;'",.<>?/`~\- ]$/;
-			if (document.activeElement?.tagName !== 'INPUT' && allowedKeys.test(event.key) && !this.isOpened) {
+			if (allowedKeys.test(event.key) && !this.isOpened) {
 				this.editRootBlankTask();
 			}
 		},
@@ -522,6 +547,7 @@ export default defineComponent({
 				}
 
 				await (frappe as any).model.with_doctype(doctype);
+				formWrapper.innerHTML = '';
 				const formInstance = new (frappe as any).ui.form.Form(doctype, formWrapper, true, '');
 				await (frappe as any).model.with_doc(doctype, docName);
 				formInstance.refresh(docName);

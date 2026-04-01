@@ -96,6 +96,10 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     show_skeleton() { }
     hide_skeleton() { }
 
+    // Disable ListView's keyboard shortcuts (space, enter, arrows) which
+    // conflict with the Vue tree's inline text editors.
+    setup_keyboard_navigation() { }
+
     render_header(_refresh_header = false) {
         this.$result.find(".list-row-head").remove();
     }

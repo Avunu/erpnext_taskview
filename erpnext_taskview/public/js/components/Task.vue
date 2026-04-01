@@ -9,32 +9,38 @@
 				</label>
 			</div>
 
-			<!-- button to expand sidebar with this node (only for non-blank projects and tasks) -->
-			<div class="expand-sidebar-container">
-				<button v-if="!isBlank" class="expand-sidebar" @click="emitSidebar">
-					<span class="expand-icon">⤢</span>
-				</button>
-			</div>
-
 			<!-- Task Subject -->
 			<div class="task-subject-container">
 				<p v-if="!isEditing" class="task-subject" @click="editTask">
 					{{ displayText }}
+					<span v-if="customerName" class="task-customer">{{ customerName }}</span>
 				</p>
 				<input v-if="isEditing" type="text" v-model="editedText" @blur="handleBlur" @keyup.enter="unfocusInput"
-					@keydown.esc="cancelEdit" class="task-subject-edit" />
+					@keydown.stop @keydown.esc="cancelEdit" class="task-subject-edit" />
 			</div>
 
-			<!-- only render the controls if the doc is not a project and is not blank -->
+			<!-- action buttons for non-blank, non-completed tasks -->
 			<div v-if="!isProject && !isBlank && node.doc.status !== 'Completed'" class="task-controls">
-				<button class="timer-btn" :class="timerStatus === 'running' ? 'timer-btn--pause' : 'timer-btn--resume'"
+				<button class="task-btn" :class="timerStatus === 'running' ? 'task-btn--pause' : 'task-btn--resume'"
 					@click="toggleTimer"
 					:title="timerStatus === 'stopped' ? 'Start' : timerStatus === 'paused' ? 'Resume' : 'Pause'">
 					{{ timerStatus === 'running' ? '⏸' : '▶' }}
 				</button>
-				<button class="timer-btn timer-btn--stop" @click="logOrStopTimer"
-					:title="timerStatus === 'stopped' ? 'Log time' : 'Stop'">
+				<button class="task-btn task-btn--stop" v-if="timerStatus !== 'stopped'" @click="logOrStopTimer"
+					title="Stop">
 					⏹
+				</button>
+				<button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
+					⤢
+				</button>
+				<button class="task-btn task-btn--delete" @click="deleteTask" title="Delete task">
+					🗑
+				</button>
+			</div>
+			<!-- expand sidebar for projects (no timer/delete controls) -->
+			<div v-else-if="!isBlank" class="task-controls">
+				<button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
+					⤢
 				</button>
 			</div>
 		</div>
@@ -43,9 +49,9 @@
 
 <script lang="ts">
 import { defineComponent, nextTick, type PropType } from 'vue';
-import { saveDoc, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc, getDisplayText, getProjectName } from '../types';
+import { saveDoc, fetchData, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc, getDisplayText, getProjectName } from '../types';
 import { timersByTask, getRunningTimer, type ActiveTimer } from '../timerStore';
-import '../timer-controls.css';
+import '../task-controls.css';
 
 /**
  * Task / Project tree row component.
@@ -166,6 +172,13 @@ export default defineComponent({
 		/** Human-readable display text for the tree row label. */
 		displayText(): string {
 			return getDisplayText(this.node);
+		},
+		/** Customer name from the project, shown on project rows. */
+		customerName(): string {
+			if (this.isProject) {
+				return (this.node.doc as ProjectDoc).customer || '';
+			}
+			return '';
 		},
 		/**
 		 * The currently-running (non-paused) timer detail across all tasks.
@@ -409,6 +422,25 @@ export default defineComponent({
 		emitSidebar(): void {
 			this.$emit('open-sidebar', { doc: this.node.doc, isProject: this.isProject });
 		},
+
+		deleteTask(): void {
+			const doc = this.node.doc;
+			const label = this.isProject
+				? (doc as ProjectDoc).project_name
+				: (doc as TaskDoc).subject;
+			frappe.confirm(
+				`Delete <b>${frappe.utils.escape_html(label)}</b>?`,
+				async () => {
+					try {
+						await frappe.db.delete_doc(doc.doctype, doc.name);
+						const data = await fetchData();
+						this.$emit('catch-success', data);
+					} catch (error) {
+						this.$emit('catch-error', error);
+					}
+				},
+			);
+		},
 	},
 
 	/**
@@ -467,6 +499,14 @@ export default defineComponent({
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+}
+
+.task-customer {
+	margin-left: 8px;
+	font-size: 0.85em;
+	font-weight: normal;
+	color: var(--gray-600, #6c757d);
+	opacity: 0.8;
 }
 
 .task-subject-edit {
@@ -534,37 +574,5 @@ export default defineComponent({
 	border: solid white;
 	border-width: 0 3px 3px 0;
 	transform: rotate(45deg);
-}
-
-/* expand button style */
-
-.expand-sidebar {
-	height: 20px;
-	width: 20px;
-	background-color: #d8dfed;
-	border-radius: 4px;
-	border: none;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	cursor: pointer;
-	transition: color 0.3s ease;
-	outline: none;
-	position: relative;
-}
-
-.expand-sidebar .expand-icon {
-	font-size: 16px;
-	color: #1976D2;
-	font-weight: bold;
-	pointer-events: none;
-}
-
-.expand-sidebar:hover .expand-icon {
-	color: #0D47A1;
-}
-
-.expand-sidebar:active .expand-icon {
-	color: #0A3C8A;
 }
 </style>

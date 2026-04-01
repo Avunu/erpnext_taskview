@@ -93,6 +93,7 @@ def get() -> GetResponse:
 			Projects.name,
 			Projects.project_name,
 			Projects.status,
+			Projects.customer,
 		)
 		.where(Projects.docstatus == 0)
 		.orderby(Projects.name)
@@ -129,6 +130,14 @@ def get() -> GetResponse:
 	if args.doctype == "Task" and args.filters:
 		for f in args.filters:
 			tq = _apply_filter(tq, Tasks, f)
+
+	# Hide closed tasks unless the user explicitly filters by status
+	has_status_filter = args.doctype == "Task" and any(
+		(f[1] if isinstance(f, (list, tuple)) else f.get("fieldname", "")) == "status"
+		for f in (args.filters or [])
+	)
+	if not has_status_filter:
+		tq = tq.where(Tasks.status.notin(["Completed", "Cancelled"]))
 
 	tasks = [TaskDoc(**r) for r in tq.run(as_dict=True)]
 

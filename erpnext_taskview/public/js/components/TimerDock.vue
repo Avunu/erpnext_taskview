@@ -319,7 +319,7 @@ export default defineComponent({
 	gap: 4px;
 }
 
-/* Timer button styles imported via timer-controls.css */
+/* Timer button styles imported via task-controls.css */
 
 /* ── Expanded detail ── */
 
