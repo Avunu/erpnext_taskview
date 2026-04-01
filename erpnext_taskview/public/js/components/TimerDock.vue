@@ -319,49 +319,7 @@ export default defineComponent({
 	gap: 4px;
 }
 
-.timer-widget__btn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 28px;
-	height: 28px;
-	border: none;
-	border-radius: 4px;
-	cursor: pointer;
-	font-size: 12px;
-	transition: background 0.15s, transform 0.1s;
-}
-
-.timer-widget__btn:active {
-	transform: scale(0.92);
-}
-
-.timer-widget__btn--pause {
-	background: var(--yellow-100, #fff3cd);
-	color: var(--yellow-600, #d4a017);
-}
-
-.timer-widget__btn--pause:hover {
-	background: var(--yellow-200, #ffe69c);
-}
-
-.timer-widget__btn--resume {
-	background: var(--blue-100, #cfe2ff);
-	color: var(--blue-600, #0d6efd);
-}
-
-.timer-widget__btn--resume:hover {
-	background: var(--blue-200, #9ec5fe);
-}
-
-.timer-widget__btn--stop {
-	background: var(--red-100, #f8d7da);
-	color: var(--red-600, #dc3545);
-}
-
-.timer-widget__btn--stop:hover {
-	background: var(--red-200, #f1aeb5);
-}
+/* Timer button styles imported via timer-controls.css */
 
 /* ── Expanded detail ── */
 

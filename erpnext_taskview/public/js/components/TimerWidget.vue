@@ -10,12 +10,12 @@
 				{{ elapsedDisplay }}
 			</div>
 			<div class="timer-widget__controls" @click.stop>
-				<button class="timer-widget__btn"
-					:class="timer.paused ? 'timer-widget__btn--resume' : 'timer-widget__btn--pause'"
+				<button class="timer-btn"
+					:class="timer.paused ? 'timer-btn--resume' : 'timer-btn--pause'"
 					@click="togglePause" :title="timer.paused ? 'Resume' : 'Pause'">
 					{{ timer.paused ? '▶' : '⏸' }}
 				</button>
-				<button class="timer-widget__btn timer-widget__btn--stop" @click="stopTimer" title="Stop">
+				<button class="timer-btn timer-btn--stop" @click="stopTimer" title="Stop">
 					⏹
 				</button>
 			</div>
@@ -30,6 +30,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 import { type ActiveTimer, sendTimerAction, getRunningTimer } from '../timerStore';
+import '../timer-controls.css';
 
 /**
  * Individual timer card within the {@link TimerDock}.

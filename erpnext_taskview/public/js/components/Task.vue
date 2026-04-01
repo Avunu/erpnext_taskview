@@ -26,26 +26,15 @@
 			</div>
 
 			<!-- only render the controls if the doc is not a project and is not blank -->
-			<div v-if="!isProject && !isBlank" class="task-controls">
-				<button v-if="node.doc.status !== 'Completed'" class="btn task-control" :class="{
-					'btn-info': timerStatus === 'stopped',
-					'btn-warning': timerStatus === 'running',
-					'btn-success': timerStatus === 'paused'
-				}" @click="toggleTimer">
-					{{
-						timerStatus === 'stopped'
-							? 'Start'
-							: timerStatus === 'paused'
-								? 'Resume'
-								: 'Pause'
-					}}
+			<div v-if="!isProject && !isBlank && node.doc.status !== 'Completed'" class="task-controls">
+				<button class="timer-btn" :class="timerStatus === 'running' ? 'timer-btn--pause' : 'timer-btn--resume'"
+					@click="toggleTimer"
+					:title="timerStatus === 'stopped' ? 'Start' : timerStatus === 'paused' ? 'Resume' : 'Pause'">
+					{{ timerStatus === 'running' ? '⏸' : '▶' }}
 				</button>
-
-				<button v-if="node.doc.status !== 'Completed'" class="btn task-control" :class="{
-					'btn-secondary': timerStatus === 'stopped',
-					'btn-danger': timerStatus !== 'stopped'
-				}" @click="logOrStopTimer">
-					{{ timerStatus === 'stopped' ? 'Log' : 'Stop' }}
+				<button class="timer-btn timer-btn--stop" @click="logOrStopTimer"
+					:title="timerStatus === 'stopped' ? 'Log time' : 'Stop'">
+					⏹
 				</button>
 			</div>
 		</div>
@@ -56,6 +45,7 @@
 import { defineComponent, nextTick, type PropType } from 'vue';
 import { saveDoc, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc, getDisplayText, getProjectName } from '../types';
 import { timersByTask, getRunningTimer, type ActiveTimer } from '../timerStore';
+import '../timer-controls.css';
 
 /**
  * Task / Project tree row component.
@@ -464,10 +454,8 @@ export default defineComponent({
 
 .task-subject-container {
 	flex-grow: 1;
-	/* Allows the subject container to take up available space */
 	margin-right: 10px;
 	margin-left: 10px;
-	/* Add some space between the subject and controls */
 	border-bottom: 1px dashed darkgrey;
 }
 
@@ -477,10 +465,8 @@ export default defineComponent({
 	cursor: text;
 	width: 100%;
 	white-space: nowrap;
-	/* Prevents text from wrapping */
 	overflow: hidden;
 	text-overflow: ellipsis;
-	/* Adds ellipsis if the text overflows */
 }
 
 .task-subject-edit {
@@ -490,23 +476,15 @@ export default defineComponent({
 	font-size: 14px;
 	width: 100%;
 	white-space: nowrap;
-	/* Prevents text from wrapping in edit mode */
 	overflow: hidden;
 	text-overflow: ellipsis;
-	/* Adds ellipsis if the text overflows */
 }
 
 .task-controls {
 	display: flex;
 	align-items: center;
 	flex-shrink: 0;
-	/* Prevents controls from shrinking */
-}
-
-.task-control {
-	margin-right: 10px;
-	display: flex;
-	align-items: center;
+	gap: 4px;
 }
 
 /* custom checkbox styles */
@@ -534,7 +512,6 @@ export default defineComponent({
 	width: 20px;
 	background-color: #d8dfed;
 	border-radius: 4px;
-	/* margin-right: 10px; */
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -565,7 +542,6 @@ export default defineComponent({
 	height: 20px;
 	width: 20px;
 	background-color: #d8dfed;
-	/* Same as complete button background */
 	border-radius: 4px;
 	border: none;
 	display: flex;
@@ -573,28 +549,22 @@ export default defineComponent({
 	justify-content: center;
 	cursor: pointer;
 	transition: color 0.3s ease;
-	/* Smooth color transition for text */
 	outline: none;
 	position: relative;
 }
 
 .expand-sidebar .expand-icon {
 	font-size: 16px;
-	/* Slightly larger for emphasis */
 	color: #1976D2;
-	/* Dark blue text for contrast */
 	font-weight: bold;
 	pointer-events: none;
-	/* Prevent pointer events on the icon */
 }
 
 .expand-sidebar:hover .expand-icon {
 	color: #0D47A1;
-	/* Even darker blue on hover for better feedback */
 }
 
 .expand-sidebar:active .expand-icon {
 	color: #0A3C8A;
-	/* Darker shade when active */
 }
 </style>
