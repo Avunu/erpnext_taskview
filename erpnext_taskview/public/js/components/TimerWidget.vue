@@ -29,7 +29,7 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
-import { type ActiveTimer, sendTimerAction, getRunningTimer } from '../assets/js/timerStore';
+import { type ActiveTimer, sendTimerAction, getRunningTimer } from '../timerStore';
 
 /**
  * Individual timer card within the {@link TimerDock}.

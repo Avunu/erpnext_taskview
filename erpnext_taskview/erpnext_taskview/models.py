@@ -135,21 +135,18 @@ instantiate when deserialising ``save_doc`` payloads.
 class GetResponse(BaseModel):
 	"""Shape returned by the ``get`` endpoint.
 
-	Contains three flat lists — projects, tasks, and open timesheet details
-	for the current user.  The frontend is responsible for assembling the
-	tree hierarchy and deriving all UI state from these raw docs.
+	Contains two flat lists — projects and tasks.  Timer state is served
+	separately by ``get_active_timers`` and managed by the global timer
+	store on the frontend.
 
 	Attributes:
 		projects: All projects matching the current filters.
 		tasks: All tasks belonging to the returned projects, ordered by
 			nested-set ``lft``.
-		timesheet_details: Open (``to_time IS NULL``) timesheet detail rows
-			owned by the current user.
 	"""
 
 	projects: list[ProjectDoc]
 	tasks: list[TaskDoc]
-	timesheet_details: list[TimesheetDetailDoc]
 
 
 # ---------------------------------------------------------------------------

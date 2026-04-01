@@ -39,8 +39,15 @@ frappe.router.list_views_route["tasks"] = "Tasks";
 
 frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
+    /** Structured response consumed by the Vue TaskView component. */
+    taskViewData: any;
+
     prepare_data(r: any) {
-        this.data = r.message;
+        // Store the structured {projects, tasks} response for the Vue app.
+        this.taskViewData = r.message;
+        // ListView base class expects this.data to be a flat array (for
+        // get_count_str, render_count, etc.).  Feed it the tasks list.
+        this.data = r.message.tasks || [];
     }
 
     setup_defaults() {
@@ -105,7 +112,7 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
         // Pass the data to TaskView
         createApp({
-            render: () => h(TaskView, { docs: this.data })
+            render: () => h(TaskView, { docs: this.taskViewData })
         }).mount(container);
     }
 };

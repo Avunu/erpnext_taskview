@@ -39,161 +39,555 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, provide, onMounted, onUnmounted, PropType } from 'vue';
-import { Draggable, dragContext, OpenIcon } from '@he-tree/vue';
+import { defineComponent, type PropType } from 'vue';
+import { Draggable, dragContext } from '@he-tree/vue';
 import Task from './components/Task.vue';
-import useTaskView, { TreeData, TaskViewProps } from './assets/js/taskview.ts';
-import { VueSidePanel } from "vue3-side-panel";
 import TimeLogger from './components/TimeLogger.vue';
-import "vue3-side-panel/dist/vue3-side-panel.css";
+import { VueSidePanel } from 'vue3-side-panel';
+import 'vue3-side-panel/dist/vue3-side-panel.css';
 import '@he-tree/vue/style/default.css';
 import '@he-tree/vue/style/material-design.css';
-import { GetResponse, TimesheetDetailDoc } from './assets/js/script.ts';
+import {
+	type GetResponse, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc,
+	type TreeNode, saveDoc, fetchData, getProjectName,
+} from './types';
+import { refreshTimers, timersByTask } from './timerStore';
 
-/**
- * Root component for the ERPNext Task View.
- *
- * Mounts inside the Frappe list-view result area via `TasksView.render_list()`.
- * Receives flat {@link GetResponse} data as a prop and orchestrates:
- *
- * - **Tree rendering** via `@he-tree/vue`'s `<Draggable>` component.
- * - **State management** via the {@link useTaskView} composable.
- * - **Dependency injection**: provides a reactive `timesheetDetails` map
- *   to all descendant `Task.vue` instances so they can derive timer state.
- * - **Sidebar**: hosts a `<VueSidePanel>` that alternates between a
- *   Frappe form (for project/task editing) and the `<TimeLogger>`
- *   component (for manual time entry and timer stop).
- *
- * ### Event flow
- *
- * ```
- * Task.vue  —— catch-success → premount(data) —— rebuilds tree
- * Task.vue  —— catch-error   → catchError()   —— re-fetches data
- * Task.vue  —— request-expand → expandAncestors(stat)
- * Task.vue  —— open-sidebar  → openSidebar(payload)
- * ```
- */
+// ── Types used only by this component ────────────────────────
+
+export interface TreeData extends TreeNode {
+	children: TreeData[];
+}
+
+interface StatObject {
+	open: boolean;
+	parent?: StatObject | null;
+	data?: TreeData;
+	hidden?: boolean;
+	disableDrag?: boolean;
+	disableDrop?: boolean;
+	draggable?: boolean;
+	droppable?: boolean;
+	dragOpen?: boolean;
+	children?: StatObject[];
+}
+
 export default defineComponent({
 	name: 'TaskView',
-	components: {
-		Draggable,
-		OpenIcon,
-		Task,
-		VueSidePanel,
-		TimeLogger
-	},
+	components: { Draggable, Task, VueSidePanel, TimeLogger },
+
 	props: {
-		/**
-		 * Initial data from the Frappe list-view's `prepare_data` hook.
-		 *
-		 * Contains flat lists of projects, tasks, and timesheet details.
-		 * The tree is assembled client-side by {@link buildTree}.
-		 */
 		docs: {
 			type: Object as PropType<GetResponse>,
 			required: true,
-			default: () => ({ projects: [], tasks: [], timesheet_details: [] })
+			default: () => ({ projects: [], tasks: [] }),
 		},
 	},
-	setup(props) {
-		/** The project node that is visually highlighted in the tree. */
-		const highlightedProject = ref<TreeData | null>(null);
-		/** Reactive tree data array bound to `<Draggable v-model>`. */
-		const treeData = ref<TreeData[]>([]);
-		/** Whether the sidebar slide-over panel is open. */
-		const isOpened = ref<boolean>(false);
-		/** DOM ref for mounting Frappe forms inside the sidebar. */
-		const formWrapper = ref<HTMLElement | null>(null);
-		/** Toggle: `true` = show Frappe form, `false` = show TimeLogger. */
-		const showForm = ref<boolean>(true);
-		/** Payload object passed to the `<TimeLogger>` component. */
-		const timeLoggerDoc = ref<any>({});
-		/** When `true`, TimeLogger shows only the description field (stop mode). */
-		const descriptionOnly = ref<boolean>(false);
 
-		/**
-		 * Shared map of open timesheet details, keyed by task name.
-		 *
-		 * Provided to all descendant `Task.vue` components via
-		 * `provide('timesheetDetails', ...)`.  Updated by `premount()`
-		 * every time fresh data arrives from the server.
-		 */
-		const timesheetDetails = ref(new Map<string, TimesheetDetailDoc>());
-		provide('timesheetDetails', timesheetDetails);
-
-		// Dark Mode compatibility
-		const currentTheme = ref<string>(document.documentElement.getAttribute("data-theme-mode") || "light");
-		if (currentTheme.value === "automatic") {
-			currentTheme.value = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-		}
-
-		// make an element to hold the sidetimers (future development)
-		const sideTimersParentElement = document.querySelector('.layout-side-section');
-		const sideTimersElement = document.createElement('div');
-		sideTimersElement.id = 'sidetimers';
-		sideTimersParentElement?.appendChild(sideTimersElement);
-
-		const taskRunnerProps: TaskViewProps = {
-			docs: props.docs
-		};
-
-		// get the functions from the useTaskView composition
-		const {
-			catchError,
-			premount,
-			expandAncestors,
-			useOnMounted,
-			useOnUnmounted,
-			handleDragEnd,
-			modifyNodeAndStat,
-			isHighlightedProject,
-			toggleNode,
-			addSiblingTask,
-			handleTaskInteraction,
-			handleKeydown,
-			openSidebar,
-			closeTimeLogger,
-		} = useTaskView(taskRunnerProps, treeData, highlightedProject, timesheetDetails, dragContext as any, currentTheme, isOpened, formWrapper, showForm, timeLoggerDoc, descriptionOnly);
-
-		// setup the tree data before mounting
-		premount();
-
-		// setup the event listener, finalize theme, initialize the highlighted project, and set the tree data
-		onMounted(() => {
-			useOnMounted()
-		});
-
-		// cleanup the event listener
-		onUnmounted(() => {
-			useOnUnmounted();
-		});
-
+	data() {
+		const theme = document.documentElement.getAttribute('data-theme-mode') || 'light';
 		return {
-			treeData,
-			sideTimersElement,
-			isOpened,
-			formWrapper,
-			showForm,
-			currentTheme,
-			timeLoggerDoc,
-			descriptionOnly,
-			catchError,
-			premount,
-			expandAncestors,
-			isHighlightedProject,
-			modifyNodeAndStat,
-			toggleNode,
-			handleTaskInteraction,
-			handleKeydown,
-			handleDragEnd,
-			addSiblingTask,
-			openSidebar,
-			closeTimeLogger,
+			treeData: [] as TreeData[],
+			highlightedProject: null as TreeData | null,
+			isOpened: false,
+			showForm: true,
+			timeLoggerDoc: {} as any,
+			descriptionOnly: false,
+			currentTheme: theme === 'automatic'
+				? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+				: theme,
+			sideTimersElement: null as HTMLElement | null,
 		};
+	},
+
+	created() {
+		const parent = document.querySelector('.layout-side-section');
+		if (parent) {
+			const el = document.createElement('div');
+			el.id = 'sidetimers';
+			parent.appendChild(el);
+			this.sideTimersElement = el;
+		}
+		this.premount();
+	},
+
+	mounted() {
+		this.setTheme();
+		this.updateHighlightedProject();
+		document.addEventListener('keydown', this.handleKeydown);
+	},
+
+	beforeUnmount() {
+		document.removeEventListener('keydown', this.handleKeydown);
+	},
+
+	methods: {
+		// ── Tree assembly ─────────────────────────────────────
+
+		buildTree(data: GetResponse): TreeData[] {
+			const nodes = new Map<string, TreeData>();
+			const root: TreeData[] = [];
+			for (const p of data.projects) {
+				const node: TreeData = { doc: p, children: [] };
+				nodes.set(p.name, node);
+				root.push(node);
+			}
+			for (const t of data.tasks) {
+				const node: TreeData = { doc: t, children: [] };
+				nodes.set(t.name, node);
+				const parentKey = t.parent_task || t.project;
+				const parent = nodes.get(parentKey);
+				if (parent) parent.children.push(node);
+			}
+			return root;
+		},
+
+		premount(data: GetResponse | null = null): void {
+			const source = data || this.docs;
+			let docs = this.buildTree(source);
+			docs = this.addBlankProject(docs);
+			docs = this.addBlankTasks(docs);
+			this.treeData = docs;
+			refreshTimers();
+		},
+
+		async catchError(error: unknown): Promise<void> {
+			console.error('Error updating data:', error);
+			frappe.msgprint(`Error updating data: ${error}`);
+			try {
+				const data = await fetchData();
+				this.premount(data);
+			} catch (fetchErr) {
+				console.error('Error fetching fresh data:', fetchErr);
+			}
+		},
+
+		async saveAndRebuild(
+			doc: Partial<ProjectDoc> | Partial<TaskDoc> | Partial<TimesheetDetailDoc>,
+			children?: TaskDoc[],
+		): Promise<void> {
+			try {
+				const data = await saveDoc(doc, children);
+				this.premount(data);
+			} catch (error) {
+				this.catchError(error);
+			}
+		},
+
+		// ── Ancestor expansion ────────────────────────────────
+
+		expandAncestors(stat: StatObject): void {
+			let current: StatObject | null | undefined = stat;
+			while (current) {
+				current.open = true;
+				if (current.data?.doc?.name) {
+					locals.nodes[current.data.doc.name] = true;
+				}
+				current = current.parent;
+			}
+		},
+
+		// ── Theme ─────────────────────────────────────────────
+
+		setTheme(): void {
+			document.documentElement.style.setProperty(
+				'--task-hover-bg-color',
+				this.currentTheme === 'dark' ? '#686868' : '#ededed',
+			);
+			document.documentElement.style.setProperty(
+				'--icon-color',
+				this.currentTheme === 'dark' ? '#d3d3d3' : '#000000',
+			);
+			document.documentElement.style.setProperty(
+				'--sidebar-bg-color',
+				this.currentTheme === 'dark' ? '#2f2f2f' : '#f9f9f9',
+			);
+		},
+
+		// ── Drag and drop ─────────────────────────────────────
+
+		async handleDragEnd(): Promise<void> {
+			const draggedNode = (dragContext as any).dragNode;
+			draggedNode.parent.open = true;
+
+			const parentData = draggedNode.parent.data;
+			const taskDoc = draggedNode.data.doc as TaskDoc;
+			const parentIsProject = parentData.doc.doctype === 'Project';
+
+			taskDoc.parent_task = parentIsProject ? null : parentData.doc.name;
+
+			const draggedProject = getProjectName(draggedNode.data);
+			const parentProject = getProjectName(parentData);
+			if (draggedProject !== parentProject) {
+				taskDoc.project = parentProject;
+			}
+
+			const collectChildren = (node: TreeData): TaskDoc[] => {
+				const result: TaskDoc[] = [];
+				for (const child of node.children) {
+					if (!child.doc.name) continue;
+					result.push(child.doc as TaskDoc);
+					result.push(...collectChildren(child));
+				}
+				return result;
+			};
+
+			const children = collectChildren(draggedNode.data);
+			await this.saveAndRebuild(taskDoc, children.length > 0 ? children : undefined);
+			this.handleTaskInteraction(draggedNode.data);
+		},
+
+		// ── Per-node render hook ──────────────────────────────
+
+		modifyNodeAndStat(node: TreeData, stat: StatObject): { node: TreeData; stat: StatObject } {
+			const isProject = node.doc.doctype === 'Project';
+			const isBlank = !node.doc.name;
+			const detail = timersByTask.value.get(node.doc.name);
+			const hasActiveTimer = !!detail;
+
+			let pleaseExpandMe = false;
+
+			if (isProject && node.doc.name) {
+				const projectDoc = node.doc as ProjectDoc;
+				if (projectDoc.project_name in locals.nodes) {
+					const value = locals.nodes[projectDoc.project_name];
+					stat.open = value;
+					locals.nodes[node.doc.name] = value;
+					delete locals.nodes[projectDoc.project_name];
+					pleaseExpandMe = value;
+				}
+			}
+
+			if (locals.nodes?.[node.doc.name || ''] === false) {
+				stat.open = false;
+			}
+
+			if (locals.nodes?.[node.doc.name || ''] === true || pleaseExpandMe) {
+				stat.open = true;
+				this.addBlankTask(node);
+				this.updateHighlightedProject();
+			}
+
+			let runningChildren = false;
+			if (node.children?.length > 0) {
+				runningChildren = node.children.some(child =>
+					timersByTask.value.has(child.doc.name),
+				);
+			}
+
+			if (isBlank || isProject || hasActiveTimer || runningChildren) {
+				stat.disableDrag = true;
+				stat.disableDrop = isBlank;
+				stat.draggable = false;
+				stat.droppable = !isBlank;
+				stat.dragOpen = !isBlank;
+			} else {
+				stat.disableDrag = false;
+				stat.disableDrop = false;
+				stat.draggable = true;
+				stat.droppable = true;
+				stat.dragOpen = true;
+			}
+
+			return { node, stat };
+		},
+
+		// ── Node factories and blank placeholders ─────────────
+
+		createNode(doc: Partial<ProjectDoc> | Partial<TaskDoc>): TreeData {
+			if (!doc.doctype) doc.doctype = 'Task';
+			if (!doc.name) doc.name = '';
+			if (!doc.status) doc.status = 'Open';
+			return { doc: doc as ProjectDoc | TaskDoc, children: [] };
+		},
+
+		addBlankProject(docs: TreeData[]): TreeData[] {
+			docs.push(this.createNode({
+				doctype: 'Project', name: '', project_name: 'Add project...', status: 'Open',
+			} as ProjectDoc));
+			return docs;
+		},
+
+		addBlankTasks(docs: TreeData[]): TreeData[] {
+			docs.forEach(project => {
+				if (project.doc.name && locals.nodes?.[project.doc.name] !== false) {
+					this.addBlankTask(project);
+				}
+			});
+			return docs;
+		},
+
+		addBlankTask(node: TreeData): void {
+			if (node.doc.status === 'Completed') return;
+			if (!node.children) node.children = [];
+
+			let blankNodeAdded = false;
+
+			if (!node.children.some(child => !child.doc.name)) {
+				const isProject = node.doc.doctype === 'Project';
+				const projectName = getProjectName(node);
+				const parentTask = isProject ? null : node.doc.name;
+
+				const blankTask = this.createNode({
+					doctype: 'Task', name: '', subject: 'Add task...',
+					project: projectName, parent_task: parentTask,
+					status: 'Open', is_group: 0, priority: 'Medium',
+				} as TaskDoc);
+				node.children = [...node.children, blankTask];
+				blankNodeAdded = true;
+			}
+
+			node.children.forEach(child => {
+				if (child.doc.name) {
+					this.addBlankTask(child);
+				}
+			});
+
+			if (blankNodeAdded) {
+				this.treeData = [...this.treeData];
+			}
+		},
+
+		// ── Highlight and navigation ──────────────────────────
+
+		isHighlightedProject(node: TreeData): boolean {
+			try {
+				return !!(node.doc.doctype === 'Project' && node.doc.name === this.highlightedProject?.doc.name);
+			} catch {
+				return !!(node.doc.doctype === 'Project' && node === this.highlightedProject);
+			}
+		},
+
+		toggleNode(node: TreeData, stat: StatObject): void {
+			if (!node.doc.name) return;
+
+			stat.open = !stat.open;
+			locals.nodes[node.doc.name] = stat.open;
+
+			if (stat.open) {
+				if (node.children.length === 0 || !node.children.some(child => !child.doc.name)) {
+					this.addBlankTask(node);
+					this.treeData = [...this.treeData];
+				}
+				stat.children?.forEach(child => {
+					child.hidden = !stat.open;
+				});
+			}
+
+			const isProject = node.doc.doctype === 'Project';
+			if (!isProject) {
+				const parentProject = this.findParentProject(node);
+				if (parentProject) {
+					this.highlightedProject = parentProject;
+				}
+			} else if (stat.open) {
+				this.highlightedProject = node;
+			} else {
+				const nextExpandedProject = this.treeData.find(project =>
+					project.doc.doctype === 'Project' && project.doc.name && locals.nodes?.[project.doc.name],
+				);
+				if (nextExpandedProject) {
+					this.highlightedProject = nextExpandedProject;
+				} else {
+					this.updateHighlightedProject();
+				}
+			}
+		},
+
+		findParentProject(node: TreeData): TreeData | undefined {
+			const projectName = getProjectName(node);
+			return this.treeData.find(project => project.doc.name === projectName);
+		},
+
+		findParentNode(nodes: TreeData[], parentDocName: string): TreeData | null {
+			for (const node of nodes) {
+				if (node.doc.name === parentDocName) {
+					return node;
+				} else if (node.children?.length > 0) {
+					const foundNode = this.findParentNode(node.children, parentDocName);
+					if (foundNode) return foundNode;
+				}
+			}
+			return null;
+		},
+
+		addSiblingTask(node: TreeData): void {
+			this.addBlankTask(node);
+
+			const isProject = node.doc.doctype === 'Project';
+			const parentDocName = isProject
+				? ''
+				: ((node.doc as TaskDoc).parent_task || (node.doc as TaskDoc).project);
+
+			const projectName = getProjectName(node);
+			const parentTask = isProject ? null : (node.doc as TaskDoc).parent_task;
+
+			const newBlankNode = this.createNode(
+				isProject
+					? { doctype: 'Project', name: '', project_name: 'Add project...', status: 'Open' } as ProjectDoc
+					: {
+						doctype: 'Task', name: '', subject: 'Add task...',
+						project: projectName, parent_task: parentTask,
+						status: 'Open', is_group: 0, priority: 'Medium',
+					} as TaskDoc,
+			);
+
+			const parentNode = this.findParentNode(this.treeData, parentDocName);
+
+			if (parentNode) {
+				parentNode.children = [...parentNode.children, newBlankNode];
+				this.treeData = [...this.treeData];
+			} else {
+				this.treeData = [...this.treeData, newBlankNode];
+			}
+		},
+
+		handleTaskInteraction(node: TreeData): void {
+			const isProject = node.doc.doctype === 'Project';
+			const isBlank = !node.doc.name;
+
+			if (isProject) {
+				if (!isBlank && node.doc.status !== 'Completed') {
+					this.highlightedProject = node;
+				} else {
+					return;
+				}
+			} else {
+				const parentProject = this.findParentProject(node);
+				if (parentProject) {
+					this.highlightedProject = parentProject;
+				}
+			}
+
+			if (this.highlightedProject && this.highlightedProject.doc.name) {
+				locals.nodes[this.highlightedProject.doc.name] = true;
+				this.addBlankTask(this.highlightedProject);
+			}
+		},
+
+		updateHighlightedProject(): void {
+			if (!this.treeData || !Array.isArray(this.treeData)) {
+				console.warn('Tree data is not initialized or not an array');
+				return;
+			}
+
+			const expandedProjects = this.treeData.filter(
+				(node) => node.doc.doctype === 'Project' && node.doc.name && locals.nodes?.[node.doc.name] !== false,
+			);
+
+			if (expandedProjects.length > 0) {
+				this.highlightedProject = expandedProjects[0];
+			} else {
+				const blankProject = this.treeData.find((node) => !node.doc.name);
+				if (blankProject) {
+					this.highlightedProject = blankProject;
+				}
+			}
+		},
+
+		// ── Keyboard shortcuts ────────────────────────────────
+
+		editRootBlankTask(): void {
+			const project = this.highlightedProject;
+			if (project) {
+				if (!project.doc.name) {
+					project._autoFocus = true;
+				} else {
+					const blankTask = project.children.find(task => !task.doc.name);
+					if (blankTask) {
+						blankTask._autoFocus = true;
+					}
+				}
+			}
+		},
+
+		handleKeydown(event: KeyboardEvent): void {
+			const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}\[\]|\\:;'",.<>?/`~\- ]$/;
+			if (document.activeElement?.tagName !== 'INPUT' && allowedKeys.test(event.key) && !this.isOpened) {
+				this.editRootBlankTask();
+			}
+		},
+
+		// ── Sidebar ───────────────────────────────────────────
+
+		async loadForm(payload: { doc: ProjectDoc | TaskDoc; isProject: boolean }): Promise<void> {
+			const doctype = payload.isProject ? 'Project' : 'Task';
+			const docName = payload.doc.name;
+
+			try {
+				const formWrapper = this.$refs.formWrapper as HTMLElement;
+				if (!formWrapper || !document.body.contains(formWrapper)) {
+					console.error('formWrapper is not attached to the DOM');
+					return;
+				}
+
+				await (frappe as any).model.with_doctype(doctype);
+				const formInstance = new (frappe as any).ui.form.Form(doctype, formWrapper, true, '');
+				await (frappe as any).model.with_doc(doctype, docName);
+				formInstance.refresh(docName);
+			} catch (err) {
+				console.error('Error loading form:', err);
+			}
+		},
+
+		openSidebar(payload: any): void {
+			this.isOpened = true;
+
+			if ('isProject' in payload && !('descriptionOnly' in payload)) {
+				this.showForm = true;
+				this.loadForm(payload);
+			} else {
+				this.timeLoggerDoc = payload;
+				this.showForm = false;
+				this.descriptionOnly = payload.descriptionOnly ?? false;
+			}
+		},
+
+		closeTimeLogger(): void {
+			this.timeLoggerDoc = null;
+			this.showForm = true;
+			this.descriptionOnly = false;
+			this.isOpened = false;
+		},
 	},
 });
 </script>
 
 <style>
-@import './assets/style/taskview.css';
+.tree-container {
+	/* Adjusts overall tree font size */
+	font-size: 14px;
+}
+
+.small-icon {
+	/* Scales down the icon size */
+	font-size: 1.5em;
+}
+
+.outer-task {
+	/* align center */
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	width: 100%;
+}
+
+.mtl-tree .tree-node:hover {
+	background-color: var(--task-hover-bg-color);
+}
+
+.he-tree__open-icon svg path {
+	fill: var(--icon-color);
+}
+
+/* sidebar */
+
+.sidebar {
+	/* background-color: var(--sidebar-bg-color); */
+	/* height: 100%; */
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-bottom: 20px;
+	padding-top: 65px;
+}
 </style>

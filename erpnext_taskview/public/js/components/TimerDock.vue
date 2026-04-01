@@ -13,15 +13,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, onBeforeUnmount } from 'vue';
+import { defineComponent } from 'vue';
 import TimerWidget from './TimerWidget.vue';
 import {
 	timers,
 	loaded,
-	loading,
 	fetchTimers,
 	type ActiveTimer,
-} from '../assets/js/timerStore';
+} from '../timerStore';
 
 /**
  * Floating, draggable timer dock — persistent global overlay.
@@ -166,3 +165,245 @@ export default defineComponent({
 	},
 });
 </script>
+
+<style>
+/* ─────────────────────────────────────────────
+   Timer Dock — floating global overlay
+   ───────────────────────────────────────────── */
+
+.timer-dock {
+	position: fixed;
+	z-index: 1060;
+	/* above Frappe modals (1050) */
+	width: 320px;
+	max-height: 80vh;
+	overflow-y: auto;
+	border-radius: 8px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+	background: var(--fg-color, #fff);
+	border: 1px solid var(--border-color, #d1d8dd);
+	font-family: var(--font-stack, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+	font-size: 13px;
+	user-select: none;
+	transition: box-shadow 0.2s;
+}
+
+.timer-dock:hover {
+	box-shadow: 0 6px 28px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Drag handle / header ── */
+
+.timer-dock__handle {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 12px;
+	cursor: grab;
+	background: var(--heading-color, #333);
+	color: #fff;
+	border-radius: 8px 8px 0 0;
+	touch-action: none;
+}
+
+.timer-dock__handle:active {
+	cursor: grabbing;
+}
+
+.timer-dock__title {
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.timer-dock__toggle {
+	background: none;
+	border: none;
+	color: #fff;
+	cursor: pointer;
+	font-size: 12px;
+	padding: 2px 6px;
+	opacity: 0.8;
+}
+
+.timer-dock__toggle:hover {
+	opacity: 1;
+}
+
+/* ── Body / widget stack ── */
+
+.timer-dock__body {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	background: var(--border-color, #d1d8dd);
+}
+
+/* ─────────────────────────────────────────────
+   Timer Widget — individual timer card
+   ───────────────────────────────────────────── */
+
+.timer-widget {
+	background: var(--fg-color, #fff);
+	transition: background 0.15s;
+}
+
+.timer-widget--running {
+	border-left: 3px solid var(--blue-500, #2490ef);
+}
+
+.timer-widget--paused {
+	border-left: 3px solid var(--yellow-500, #ffc107);
+}
+
+.timer-widget__header {
+	display: flex;
+	align-items: center;
+	padding: 8px 10px;
+	cursor: pointer;
+	gap: 8px;
+}
+
+.timer-widget__header:hover {
+	background: var(--control-bg, #f4f5f6);
+}
+
+.timer-widget__info {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.timer-widget__project {
+	font-size: 10px;
+	color: var(--text-light, #8d99a6);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.timer-widget__task {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--text-color, #333);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.timer-widget__time {
+	font-family: 'SF Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text-color, #333);
+	white-space: nowrap;
+	min-width: 70px;
+	text-align: right;
+}
+
+.timer-widget--running .timer-widget__time {
+	color: var(--blue-500, #2490ef);
+}
+
+.timer-widget--paused .timer-widget__time {
+	color: var(--yellow-600, #d4a017);
+}
+
+/* ── Controls ── */
+
+.timer-widget__controls {
+	display: flex;
+	gap: 4px;
+}
+
+.timer-widget__btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 12px;
+	transition: background 0.15s, transform 0.1s;
+}
+
+.timer-widget__btn:active {
+	transform: scale(0.92);
+}
+
+.timer-widget__btn--pause {
+	background: var(--yellow-100, #fff3cd);
+	color: var(--yellow-600, #d4a017);
+}
+
+.timer-widget__btn--pause:hover {
+	background: var(--yellow-200, #ffe69c);
+}
+
+.timer-widget__btn--resume {
+	background: var(--blue-100, #cfe2ff);
+	color: var(--blue-600, #0d6efd);
+}
+
+.timer-widget__btn--resume:hover {
+	background: var(--blue-200, #9ec5fe);
+}
+
+.timer-widget__btn--stop {
+	background: var(--red-100, #f8d7da);
+	color: var(--red-600, #dc3545);
+}
+
+.timer-widget__btn--stop:hover {
+	background: var(--red-200, #f1aeb5);
+}
+
+/* ── Expanded detail ── */
+
+.timer-widget__detail {
+	padding: 6px 10px 10px;
+	border-top: 1px solid var(--border-color, #d1d8dd);
+}
+
+.timer-widget__description {
+	width: 100%;
+	border: 1px solid var(--border-color, #d1d8dd);
+	border-radius: 4px;
+	padding: 6px 8px;
+	font-size: 12px;
+	font-family: inherit;
+	resize: vertical;
+	min-height: 40px;
+	color: var(--text-color, #333);
+	background: var(--control-bg, #f4f5f6);
+}
+
+.timer-widget__description:focus {
+	outline: none;
+	border-color: var(--blue-500, #2490ef);
+	background: var(--fg-color, #fff);
+}
+
+/* ── Dark theme overrides ── */
+
+[data-theme="dark"] .timer-dock {
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .timer-widget__btn--pause {
+	background: rgba(255, 193, 7, 0.15);
+}
+
+[data-theme="dark"] .timer-widget__btn--resume {
+	background: rgba(13, 110, 253, 0.15);
+}
+
+[data-theme="dark"] .timer-widget__btn--stop {
+	background: rgba(220, 53, 69, 0.15);
+}
+</style>

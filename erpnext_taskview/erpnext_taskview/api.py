@@ -4,7 +4,7 @@ This module exposes **three** whitelisted endpoints consumed by the Vue
 frontend:
 
 ``get()``
-    Returns flat lists of projects, tasks, and open timesheet details.
+    Returns flat lists of projects and tasks.
     Accepts optional Frappe report-view filters via ``get_form_params()``.
 
 ``get_active_timers()``
@@ -65,29 +65,26 @@ from .models import (
 @frappe.whitelist()
 @frappe.read_only()
 def get() -> GetResponse:
-	"""Fetch projects, tasks, and open timesheet details as flat lists.
+	"""Fetch projects and tasks as flat lists.
 
-	Executes three PyPika queries:
+	Executes two PyPika queries:
 
 	1. **Projects** — all non-cancelled projects, optionally filtered by
-	   ``get_form_params()`` when the list-view doctype is ``"Project"``.
+		``get_form_params()`` when the list-view doctype is ``"Project"``.
 	2. **Tasks** — all non-cancelled tasks belonging to the matched
-	   projects, ordered by nested-set ``lft`` so the tree can be
-	   reconstructed via a single parent-key pass.
-	3. **Timesheet Details** — open rows (``to_time IS NULL``) owned by
-	   the current user, scoped to the matched projects.
+		projects, ordered by nested-set ``lft`` so the tree can be
+		reconstructed via a single parent-key pass.
 
-	The frontend is responsible for assembling the tree and deriving
-	all UI state (expanded, timerStatus, etc.) from these raw docs.
+	Timer state is served separately by :func:`get_active_timers` and
+	managed by the global timer store on the frontend.
 
 	Returns:
-		A :class:`GetResponse` with three flat lists.
+		A :class:`GetResponse` with two flat lists.
 	"""
 	args = get_form_params()
 
 	Projects = cast(Table, DocType("Project"))
 	Tasks = cast(Table, DocType("Task"))
-	TD = cast(Table, DocType("Timesheet Detail"))
 
 	# ── Projects ──────────────────────────────────────────────
 	pq = (
@@ -107,7 +104,7 @@ def get() -> GetResponse:
 
 	projects_raw = pq.run(as_dict=True)
 	if not projects_raw:
-		return GetResponse(projects=[], tasks=[], timesheet_details=[])
+		return GetResponse(projects=[], tasks=[]).model_dump()
 
 	project_names = [r["name"] for r in projects_raw]
 	projects = [ProjectDoc(**r) for r in projects_raw]
@@ -135,34 +132,10 @@ def get() -> GetResponse:
 
 	tasks = [TaskDoc(**r) for r in tq.run(as_dict=True)]
 
-	# ── Open timesheet details for current user ───────────────
-	tdq = (
-		frappe.qb.from_(TD)
-		.select(
-			TD.name,
-			TD.parent,
-			TD.project,
-			TD.task,
-			TD.from_time,
-			TD.to_time,
-			TD.hours,
-			TD.paused,
-			TD.start_time,
-			TD.paused_time_in_seconds,
-			TD.description,
-		)
-		.where(TD.owner == frappe.session.user)
-		.where(TD.to_time.isnull())
-		.where(TD.project.isin(project_names))
-	)
-
-	timesheet_details = [TimesheetDetailDoc(**r) for r in tdq.run(as_dict=True)]
-
 	return GetResponse(
 		projects=projects,
 		tasks=tasks,
-		timesheet_details=timesheet_details,
-	)
+	).model_dump()
 
 
 # ─────────────────────────────────────────────────────────────
@@ -215,7 +188,7 @@ def get_active_timers() -> ActiveTimersResponse:
 	)
 
 	timers = [ActiveTimerDoc(**r) for r in rows]
-	return ActiveTimersResponse(timers=timers)
+	return ActiveTimersResponse(timers=timers).model_dump()
 
 
 # ─────────────────────────────────────────────────────────────
@@ -229,7 +202,7 @@ def save_doc(payload: str) -> GetResponse:
 
 	Accepts a JSON string conforming to :class:`SaveDocRequest`::
 
-	    {"doc": {"doctype": "...", ...}, "children": [...]}
+	{"doc": {"doctype": "...", ...}, "children": [...]}
 
 	The ``doctype`` field on ``doc`` determines which handler is called:
 
@@ -269,7 +242,7 @@ def _save_project(doc: ProjectDoc) -> None:
 	Insert/update is determined by the presence of ``doc.name``:
 
 	- **Has name** → update ``project_name`` and ``status`` via
-	  ``frappe.db.set_value``.
+		``frappe.db.set_value``.
 	- **No name** → insert a new Project document.
 
 	Args:
@@ -308,9 +281,9 @@ def _save_task(doc: TaskDoc, children: list[TaskDoc] | None = None) -> None:
 
 	Side effects:
 		- If the Task has a ``parent_task``, that parent's ``is_group``
-		  flag is set to ``1``.
+			flag is set to ``1``.
 		- Descendant tasks have their ``project`` field updated when
-		  ``children`` is provided and the project has changed.
+			``children`` is provided and the project has changed.
 
 	Args:
 		doc: Validated :class:`TaskDoc` from the request payload.
@@ -517,7 +490,7 @@ def _apply_filter(query: Any, table: Table, filter_tuple: list) -> Any:
 
 	Frappe list-view filters arrive as four-element tuples::
 
-	    [doctype, fieldname, operator, value]
+	[doctype, fieldname, operator, value]
 
 	This function translates the operator string into the corresponding
 	PyPika criterion and appends it to the query's ``WHERE`` clause.

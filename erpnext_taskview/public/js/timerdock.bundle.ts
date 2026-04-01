@@ -14,7 +14,7 @@
 /// <reference path="./types/frappe.d.ts" />
 import { createApp } from 'vue';
 import TimerDock from './components/TimerDock.vue';
-import './assets/style/timerdock.css';
+// import './assets/style/timerdock.css';
 
 // Mount the dock once the DOM is ready
 document.addEventListener('DOMContentLoaded', () => {

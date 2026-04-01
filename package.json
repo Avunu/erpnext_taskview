@@ -4,7 +4,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite build --watch",
-    "build": "vite build",
+    "dev:dock": "BUNDLE=timerdock vite build --watch",
+    "build": "vite build && BUNDLE=timerdock vite build && node update-assets.mjs",
+    "build:taskview": "vite build",
+    "build:timerdock": "BUNDLE=timerdock vite build",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit"
   },

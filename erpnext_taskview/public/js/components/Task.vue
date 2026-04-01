@@ -53,9 +53,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, inject, nextTick, type PropType, type Ref } from 'vue';
-import { saveDoc, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc } from '../assets/js/script.ts';
-import { getDisplayText, getProjectName } from '../assets/js/task.ts';
+import { defineComponent, nextTick, type PropType } from 'vue';
+import { saveDoc, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc, getDisplayText, getProjectName } from '../types';
+import { timersByTask, getRunningTimer, type ActiveTimer } from '../timerStore';
 
 /**
  * Task / Project tree row component.
@@ -70,10 +70,10 @@ import { getDisplayText, getProjectName } from '../assets/js/task.ts';
  * |---------------------|-----------------------------------------------------|
  * | `isProject`         | `doc.doctype === 'Project'`                         |
  * | `isBlank`           | `!doc.name` (placeholder for inline creation)       |
- * | `timesheetDetail`   | Looked up from the injected `timesheetDetails` map  |
+ * | `timesheetDetail`   | Looked up from the global `timersByTask` store    |
  * | `timerStatus`       | Derived from `timesheetDetail.paused`               |
  * | `displayText`       | `getDisplayText(node)` helper                       |
- * | `activeTimerDetail` | Scans the details map for the running timer          |
+ * | `activeTimerDetail` | `getRunningTimer()` from the global timer store     |
  *
  * ## Events emitted
  *
@@ -86,10 +86,11 @@ import { getDisplayText, getProjectName } from '../assets/js/task.ts';
  * | `open-sidebar`      | `{doc, ...}`         | Open form or time-logger in sidebar    |
  * | `request-expand`    | —                    | Timer is active; parent should expand  |
  *
- * ## Inject
+ * ## Global state
  *
- * - `timesheetDetails` — `Ref<Map<string, TimesheetDetailDoc>>`,
- *   provided by `TaskView.vue` and updated by `premount()`.
+ * - `timersByTask` — `ComputedRef<Map<string, ActiveTimer>>` from the
+ *   global `timerStore` singleton.  Keyed by task name.
+ * - `getRunningTimer()` — returns the currently running timer, if any.
  */
 export default defineComponent({
 	name: 'Task',
@@ -123,9 +124,7 @@ export default defineComponent({
 	],
 
 	setup() {
-		/** Injected from TaskView — shared map of open timesheet details keyed by task name. */
-		const timesheetDetails = inject<Ref<Map<string, TimesheetDetailDoc>>>('timesheetDetails');
-		return { timesheetDetails };
+		return {};
 	},
 
 	data(): {
@@ -153,14 +152,14 @@ export default defineComponent({
 			return !this.node.doc.name;
 		},
 		/**
-		 * The open Timesheet Detail for this task, or `null`.
+		 * The open timer for this task, or `null`.
 		 *
-		 * Looked up from the injected `timesheetDetails` map by task name.
+		 * Looked up from the global `timersByTask` store by task name.
 		 * Projects and blanks always return `null`.
 		 */
-		timesheetDetail(): TimesheetDetailDoc | null {
-			if (this.isProject || this.isBlank || !this.timesheetDetails) return null;
-			return this.timesheetDetails.get(this.node.doc.name) ?? null;
+		timesheetDetail(): ActiveTimer | null {
+			if (this.isProject || this.isBlank) return null;
+			return timersByTask.value.get(this.node.doc.name) ?? null;
 		},
 		/**
 		 * Derived timer status based on the presence and state of the
@@ -184,12 +183,8 @@ export default defineComponent({
 		 * Used when starting a new timer to auto-pause the previously
 		 * active one.  Returns `null` if no timer is running.
 		 */
-		activeTimerDetail(): TimesheetDetailDoc | null {
-			if (!this.timesheetDetails) return null;
-			for (const [, td] of this.timesheetDetails) {
-				if (!td.paused) return td;
-			}
-			return null;
+		activeTimerDetail(): ActiveTimer | null {
+			return getRunningTimer();
 		},
 	},
 
@@ -456,5 +451,150 @@ export default defineComponent({
 </script>
 
 <style scoped>
-@import '../assets/style/task.css';
+.highlighted-project div .task-subject-container {
+	font-weight: bold;
+}
+
+.task {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	width: 100%;
+}
+
+.task-subject-container {
+	flex-grow: 1;
+	/* Allows the subject container to take up available space */
+	margin-right: 10px;
+	margin-left: 10px;
+	/* Add some space between the subject and controls */
+	border-bottom: 1px dashed darkgrey;
+}
+
+.task-subject {
+	padding: 0;
+	margin: 0;
+	cursor: text;
+	width: 100%;
+	white-space: nowrap;
+	/* Prevents text from wrapping */
+	overflow: hidden;
+	text-overflow: ellipsis;
+	/* Adds ellipsis if the text overflows */
+}
+
+.task-subject-edit {
+	padding: 5px;
+	border: 1px solid #ddd;
+	border-radius: 4px;
+	font-size: 14px;
+	width: 100%;
+	white-space: nowrap;
+	/* Prevents text from wrapping in edit mode */
+	overflow: hidden;
+	text-overflow: ellipsis;
+	/* Adds ellipsis if the text overflows */
+}
+
+.task-controls {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	/* Prevents controls from shrinking */
+}
+
+.task-control {
+	margin-right: 10px;
+	display: flex;
+	align-items: center;
+}
+
+/* custom checkbox styles */
+.custom-checkbox {
+	display: flex;
+	align-items: center;
+	position: relative;
+}
+
+.custom-checkbox label {
+	display: flex;
+	align-items: center;
+	cursor: pointer;
+	margin: 0;
+}
+
+.custom-checkbox input {
+	position: absolute;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.custom-checkbox .checkmark {
+	height: 20px;
+	width: 20px;
+	background-color: #d8dfed;
+	border-radius: 4px;
+	/* margin-right: 10px; */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.custom-checkbox input:checked~.checkmark {
+	background-color: #2196F3;
+}
+
+.custom-checkbox .checkmark:after {
+	content: "";
+	position: absolute;
+	display: none;
+}
+
+.custom-checkbox input:checked~.checkmark:after {
+	display: block;
+	width: 5px;
+	height: 10px;
+	border: solid white;
+	border-width: 0 3px 3px 0;
+	transform: rotate(45deg);
+}
+
+/* expand button style */
+
+.expand-sidebar {
+	height: 20px;
+	width: 20px;
+	background-color: #d8dfed;
+	/* Same as complete button background */
+	border-radius: 4px;
+	border: none;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: color 0.3s ease;
+	/* Smooth color transition for text */
+	outline: none;
+	position: relative;
+}
+
+.expand-sidebar .expand-icon {
+	font-size: 16px;
+	/* Slightly larger for emphasis */
+	color: #1976D2;
+	/* Dark blue text for contrast */
+	font-weight: bold;
+	pointer-events: none;
+	/* Prevent pointer events on the icon */
+}
+
+.expand-sidebar:hover .expand-icon {
+	color: #0D47A1;
+	/* Even darker blue on hover for better feedback */
+}
+
+.expand-sidebar:active .expand-icon {
+	color: #0A3C8A;
+	/* Darker shade when active */
+}
 </style>
