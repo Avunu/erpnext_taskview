@@ -345,6 +345,60 @@ def _update_children_project(children: list[TaskDoc], project: str) -> None:
 			frappe.db.set_value("Task", child.name, {"project": project})
 
 
+# ─────────────────────────────────────────────────────────────
+#  BULK CREATE — quick-entry of multiple tasks at once
+# ─────────────────────────────────────────────────────────────
+
+
+@frappe.whitelist()
+def bulk_create_tasks(payload: str) -> GetResponse:
+	"""Create multiple tasks at once from a list of subjects.
+
+	Accepts a JSON string::
+
+		{"subjects": ["Task A", "Task B"], "project": "PROJ-001", "parent_task": "TASK-001"}
+
+	Each non-empty subject becomes a new Task under the given project
+	and optional parent_task.  If a parent_task is provided its
+	``is_group`` flag is set to ``1``.
+
+	Args:
+		payload: JSON string with ``subjects``, ``project``, and
+			optional ``parent_task``.
+
+	Returns:
+		A fresh :class:`GetResponse` reflecting the post-mutation state.
+	"""
+	data = json.loads(payload)
+	subjects: list[str] = data.get("subjects", [])
+	project: str = data.get("project", "")
+	parent_task: str | None = data.get("parent_task") or None
+
+	if not subjects or not project:
+		frappe.throw("subjects and project are required")
+
+	if parent_task:
+		frappe.db.set_value("Task", parent_task, {"is_group": 1})
+
+	for subject in subjects:
+		subject = subject.strip()
+		if not subject:
+			continue
+		new_doc: dict[str, Any] = {
+			"doctype": "Task",
+			"subject": subject,
+			"project": project,
+			"status": "Open",
+			"priority": "Medium",
+		}
+		if parent_task:
+			new_doc["parent_task"] = parent_task
+		frappe.get_doc(new_doc).insert()
+
+	frappe.db.commit()
+	return get()
+
+
 # ── Timesheet Detail ─────────────────────────────────────────
 
 

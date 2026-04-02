@@ -23,6 +23,19 @@ declare global {
       onno?: () => void,
     ) => void;
 
+    prompt: (
+      fields: Array<{
+        label: string;
+        fieldname: string;
+        fieldtype: string;
+        reqd?: boolean;
+        default?: string;
+      }>,
+      callback: (values: Record<string, any>) => void,
+      title?: string,
+      primary_label?: string,
+    ) => void;
+
     msgprint: (message: string | { message: string; title?: string; indicator?: string }) => void;
     show_alert: (options: { message: string; indicator?: string }, duration?: number) => void;
 

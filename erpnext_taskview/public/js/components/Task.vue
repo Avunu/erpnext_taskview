@@ -33,12 +33,18 @@
 				<button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
 					⤢
 				</button>
+				<button class="task-btn task-btn--quick-entry" @click="quickEntry" title="Quick add subtasks">
+					📋
+				</button>
 				<button class="task-btn task-btn--delete" @click="deleteTask" title="Delete task">
 					🗑
 				</button>
 			</div>
 			<!-- expand sidebar for projects (no timer/delete controls) -->
 			<div v-else-if="!isBlank" class="task-controls">
+				<button class="task-btn task-btn--quick-entry" @click="quickEntry" title="Quick add subtasks">
+					📋
+				</button>
 				<button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
 					⤢
 				</button>
@@ -49,7 +55,7 @@
 
 <script lang="ts">
 import { defineComponent, nextTick, type PropType } from 'vue';
-import { saveDoc, fetchData, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc, getDisplayText, getProjectName } from '../types';
+import { saveDoc, fetchData, bulkCreateTasks, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc, getDisplayText, getProjectName } from '../types';
 import { timersByTask, getRunningTimer, type ActiveTimer } from '../timerStore';
 import '../task-controls.css';
 
@@ -117,6 +123,7 @@ export default defineComponent({
 		'catch-success',
 		'open-sidebar',
 		'request-expand',
+		'quick-entry',
 	],
 
 	setup() {
@@ -421,6 +428,38 @@ export default defineComponent({
 		/** Open the full Frappe form for this doc in the sidebar. */
 		emitSidebar(): void {
 			this.$emit('open-sidebar', { doc: this.node.doc, isProject: this.isProject });
+		},
+
+		quickEntry(): void {
+			const project = getProjectName(this.node);
+			const parentTask = this.isProject ? null : this.node.doc.name;
+			const label = this.isProject
+				? (this.node.doc as ProjectDoc).project_name
+				: (this.node.doc as TaskDoc).subject;
+
+			frappe.prompt(
+				[{
+					label: 'Tasks (one per line)',
+					fieldname: 'tasks',
+					fieldtype: 'Small Text',
+					reqd: true,
+				}],
+				async (values) => {
+					const subjects = (values.tasks as string)
+						.split('\n')
+						.map(s => s.trim())
+						.filter(Boolean);
+					if (!subjects.length) return;
+					try {
+						const data = await bulkCreateTasks(subjects, project, parentTask);
+						this.$emit('catch-success', data);
+					} catch (error) {
+						this.$emit('catch-error', error);
+					}
+				},
+				`Quick add subtasks to ${frappe.utils.escape_html(label)}`,
+				'Add Tasks',
+			);
 		},
 
 		deleteTask(): void {

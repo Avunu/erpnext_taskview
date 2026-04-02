@@ -123,3 +123,21 @@ export function fetchData(): Promise<GetResponse> {
 		});
 	});
 }
+
+export function bulkCreateTasks(
+	subjects: string[],
+	project: string,
+	parentTask?: string | null,
+): Promise<GetResponse> {
+	const payload: Record<string, unknown> = { subjects, project };
+	if (parentTask) payload.parent_task = parentTask;
+
+	return new Promise((resolve, reject) => {
+		frappe.call({
+			method: "erpnext_taskview.erpnext_taskview.api.bulk_create_tasks",
+			args: { payload: JSON.stringify(payload) },
+			callback: (r: { message: GetResponse }) => resolve(r.message),
+			error: (err: unknown) => reject(err),
+		});
+	});
+}

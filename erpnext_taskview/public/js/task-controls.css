@@ -66,3 +66,13 @@
 	background: var(--red-100, #f8d7da);
 	color: var(--red-600, #dc3545);
 }
+
+.task-btn--quick-entry {
+	background: var(--green-100, #d1e7dd);
+	color: var(--green-600, #198754);
+	font-size: 14px;
+}
+
+.task-btn--quick-entry:hover {
+	background: var(--green-200, #a3cfbb);
+}
