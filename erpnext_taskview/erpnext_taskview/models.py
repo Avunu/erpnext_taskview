@@ -115,6 +115,7 @@ class TimesheetDetailDoc(BaseModel):
 	start_time: datetime | None = None
 	paused_time_in_seconds: int = 0
 	description: str = ""
+	delete: int = 0
 
 
 FrappeDoc = Annotated[

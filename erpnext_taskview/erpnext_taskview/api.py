@@ -408,6 +408,16 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> None:
 	# Existing detail — load and apply state transition
 	detail = cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", doc.name))
 
+	if doc.delete:
+		# Discard — remove the detail row and clean up empty parent
+		parent_name = detail.parent
+		detail.delete(ignore_permissions=True)
+		if parent_name:
+			parent_ts = frappe.get_doc("Timesheet", parent_name)
+			if not parent_ts.get("time_logs"):
+				parent_ts.delete(ignore_permissions=True)
+		return
+
 	if doc.to_time:
 		# Stop — calculate final hours
 		from_time = get_datetime(detail.from_time)

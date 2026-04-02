@@ -17,6 +17,9 @@
 				<button class="task-btn task-btn--stop" @click="stopTimer" title="Stop">
 					⏹
 				</button>
+				<button class="task-btn task-btn--delete" @click="discardTimer" title="Discard timer">
+					🗑
+				</button>
 			</div>
 		</div>
 		<div v-if="expanded" class="timer-widget__detail">
@@ -172,6 +175,15 @@ export default defineComponent({
 		saveDescription(): void {
 			// Description is held locally and sent with stop action.
 			// No intermediate persist to avoid noise.
+		},
+
+		/** Discard the timer entirely (delete the Timesheet Detail row). */
+		async discardTimer(): Promise<void> {
+			try {
+				await sendTimerAction({ name: this.timer.name, delete: 1 });
+			} catch (err) {
+				this.$emit('error', err);
+			}
 		},
 	},
 });
