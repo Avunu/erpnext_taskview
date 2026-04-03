@@ -105,7 +105,7 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     mountModeSwitcher() {
         const el = document.createElement('div');
         // page_form is a jQuery object; access underlying DOM node
-        (this.page.page_form[0] as HTMLElement).appendChild(el);
+        (this.page.$title_area[0] as HTMLElement).appendChild(el);
 
         const app = createApp(ViewModeSwitcher, {
             'onUpdate:mode': (mode: ViewMode) => {

@@ -12,7 +12,7 @@
 		<!-- Pin button -->
 		<button class="task-btn assign-btn--pin" :class="{ 'assign-btn--pinned': isPinned }" @click="togglePin"
 			:title="isPinned ? 'Unpin task' : 'Pin task'">
-			📌
+			<Pin :size="14" :fill="isPinned ? 'currentColor' : 'none'" />
 		</button>
 
 		<!-- Dropdown trigger -->
@@ -42,6 +42,7 @@
 
 <script lang="ts">
 import { defineComponent, nextTick, type PropType } from 'vue';
+import { Pin } from 'lucide-vue-next';
 
 interface UserOption {
 	value: string;
@@ -50,6 +51,7 @@ interface UserOption {
 
 export default defineComponent({
 	name: 'AssignTo',
+	components: { Pin },
 
 	props: {
 		assignedTo: {

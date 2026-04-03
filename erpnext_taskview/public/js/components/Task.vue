@@ -2,7 +2,7 @@
 	<div class="task" @click="emitInteraction">
 		<div class="task">
 			<!-- Drag handle in pinned mode -->
-			<span v-if="pinned" class="pinned-drag-handle">⠿</span>
+			<span v-if="pinned" class="pinned-drag-handle"><GripVertical :size="16" /></span>
 
 			<!-- Spiced-up Checkbox -->
 			<div v-if="!isBlank" class="custom-checkbox task-control">
@@ -31,29 +31,30 @@
 				<button class="task-btn" :class="timerStatus === 'running' ? 'task-btn--pause' : 'task-btn--resume'"
 					@click="toggleTimer"
 					:title="timerStatus === 'stopped' ? 'Start' : timerStatus === 'paused' ? 'Resume' : 'Pause'">
-					{{ timerStatus === 'running' ? '⏸' : '▶' }}
+					<Pause v-if="timerStatus === 'running'" :size="14" />
+					<Play v-else :size="14" />
 				</button>
 				<button class="task-btn task-btn--stop" v-if="timerStatus !== 'stopped'" @click="logOrStopTimer"
 					title="Stop">
-					⏹
+					<Square :size="14" />
 				</button>
 				<button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
-					⤢
+					<PanelRightOpen :size="14" />
 				</button>
 				<button class="task-btn task-btn--quick-entry" @click="quickEntry" title="Quick add subtasks">
-					📋
+					<ClipboardList :size="14" />
 				</button>
 				<button class="task-btn task-btn--delete" @click="deleteTask" title="Delete task">
-					🗑
+					<Trash2 :size="14" />
 				</button>
 			</div>
 			<!-- expand sidebar for projects (no timer/delete controls) -->
 			<div v-else-if="!isBlank" class="task-controls">
 				<button class="task-btn task-btn--quick-entry" @click="quickEntry" title="Quick add subtasks">
-					📋
+					<ClipboardList :size="14" />
 				</button>
 				<button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
-					⤢
+					<PanelRightOpen :size="14" />
 				</button>
 			</div>
 		</div>
@@ -65,6 +66,7 @@ import { defineComponent, nextTick, type PropType } from 'vue';
 import { saveDoc, fetchData, bulkCreateTasks, assignTask, unassignTask, pinTask, unpinTask, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc, getDisplayText, getProjectName } from '../types';
 import { timersByTask, getRunningTimer, type ActiveTimer } from '../timerStore';
 import AssignTo from './AssignTo.vue';
+import { GripVertical, Play, Pause, Square, PanelRightOpen, ClipboardList, Trash2 } from 'lucide-vue-next';
 import '../task-controls.css';
 
 /**
@@ -104,7 +106,7 @@ import '../task-controls.css';
  */
 export default defineComponent({
 	name: 'Task',
-	components: { AssignTo },
+	components: { AssignTo, GripVertical, Play, Pause, Square, PanelRightOpen, ClipboardList, Trash2 },
 	props: {
 		/** The tree node containing the doc (ProjectDoc or TaskDoc). */
 		node: {
