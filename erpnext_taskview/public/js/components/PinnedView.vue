@@ -12,7 +12,7 @@
       </template>
     </Draggable>
     <div v-if="items.length === 0" class="pinned-empty">
-      No pinned tasks. Click 📌 on any task to pin it.
+      No pinned tasks. Click the <Pin :size="14" /> icon on any task to pin it.
     </div>
   </div>
 </template>
@@ -23,10 +23,11 @@ import { Draggable } from "@he-tree/vue";
 import "@he-tree/vue/style/default.css";
 import { type TaskDoc, type TreeNode, reorderPinnedTasks } from "../types";
 import Task from "./Task.vue";
+import { Pin } from "lucide-vue-next";
 
 export default defineComponent({
   name: "PinnedView",
-  components: { Draggable, Task },
+  components: { Draggable, Task, Pin },
 
   props: {
     pinnedTasks: {

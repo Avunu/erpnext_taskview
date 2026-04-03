@@ -1,9 +1,10 @@
 <template>
   <div v-if="visible" ref="dockEl" class="timer-dock" :style="dockStyle">
     <div class="timer-dock__handle" @pointerdown="startDrag">
-      <span class="timer-dock__title">⏱ Timers ({{ timerCount }})</span>
+      <span class="timer-dock__title"><Timer :size="14" /> Timers ({{ timerCount }})</span>
       <button class="timer-dock__toggle" @click="collapsed = !collapsed">
-        {{ collapsed ? "▼" : "▲" }}
+        <ChevronDown v-if="collapsed" :size="14" />
+        <ChevronUp v-else :size="14" />
       </button>
     </div>
     <div v-if="!collapsed" class="timer-dock__body">
@@ -20,6 +21,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import TimerWidget from "./TimerWidget.vue";
+import { Timer, ChevronDown, ChevronUp } from "lucide-vue-next";
 import { timers, loaded, fetchTimers, type ActiveTimer } from "../timerStore";
 
 /**
@@ -47,7 +49,7 @@ import { timers, loaded, fetchTimers, type ActiveTimer } from "../timerStore";
  */
 export default defineComponent({
   name: "TimerDock",
-  components: { TimerWidget },
+  components: { TimerWidget, Timer, ChevronDown, ChevronUp },
 
   data() {
     return {

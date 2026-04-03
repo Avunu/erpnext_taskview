@@ -22,11 +22,14 @@
           @click="togglePause"
           :title="timer.paused ? 'Resume' : 'Pause'"
         >
-          {{ timer.paused ? "▶" : "⏸" }}
+          <Pause v-if="!timer.paused" :size="14" />
+          <Play v-else :size="14" />
         </button>
-        <button class="task-btn task-btn--stop" @click="stopTimer" title="Stop">⏹</button>
+        <button class="task-btn task-btn--stop" @click="stopTimer" title="Stop">
+          <Square :size="14" />
+        </button>
         <button class="task-btn task-btn--delete" @click="discardTimer" title="Discard timer">
-          🗑
+          <Trash2 :size="14" />
         </button>
       </div>
     </div>
@@ -51,6 +54,7 @@ import {
   getRunningTimer,
   saveTimerDescription,
 } from "../timerStore";
+import { Play, Pause, Square, Trash2 } from "lucide-vue-next";
 import "../task-controls.css";
 
 /**
@@ -64,6 +68,7 @@ import "../task-controls.css";
  */
 export default defineComponent({
   name: "TimerWidget",
+  components: { Play, Pause, Square, Trash2 },
   props: {
     /** The enriched active timer record from the global store. */
     timer: {
