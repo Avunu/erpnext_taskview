@@ -1,0 +1,16 @@
+{
+    "custom_fields": [
+        {
+            "dt": "ToDo",
+            "fieldname": "pin",
+            "fieldtype": "Check",
+            "insert_after": "priority",
+            "label": "Pinned",
+            "read_only": 1,
+            "module": "ERPNext TaskView"
+        }
+    ],
+    "property_setters": [],
+    "sync_on_migrate": 1,
+    "doctype": "ToDo"
+}

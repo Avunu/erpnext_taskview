@@ -9,9 +9,9 @@
 			</span>
 		</div>
 
-		<!-- Pin (assign to me) button -->
-		<button class="task-btn assign-btn--pin" :class="{ 'assign-btn--pinned': isAssignedToMe }"
-			@click="toggleAssignToMe" :title="isAssignedToMe ? 'Unassign myself' : 'Assign to me'">
+		<!-- Pin button -->
+		<button class="task-btn assign-btn--pin" :class="{ 'assign-btn--pinned': isPinned }" @click="togglePin"
+			:title="isPinned ? 'Unpin task' : 'Pin task'">
 			📌
 		</button>
 
@@ -60,9 +60,13 @@ export default defineComponent({
 			type: String,
 			required: true,
 		},
+		isPinned: {
+			type: Boolean,
+			default: false,
+		},
 	},
 
-	emits: ['assign', 'unassign'],
+	emits: ['assign', 'unassign', 'pin', 'unpin'],
 
 	data() {
 		return {
@@ -145,11 +149,11 @@ export default defineComponent({
 			return (parts[0]?.[0] || '?').toUpperCase();
 		},
 
-		toggleAssignToMe(): void {
-			if (this.isAssignedToMe) {
-				this.$emit('unassign', frappe.session.user);
+		togglePin(): void {
+			if (this.isPinned) {
+				this.$emit('unpin');
 			} else {
-				this.$emit('assign', frappe.session.user);
+				this.$emit('pin');
 			}
 		},
 

@@ -1,5 +1,5 @@
 /// <reference path="./types/frappe.d.ts" />
-import { createApp, h } from "vue";
+import { createApp } from "vue";
 import TaskView from "./TaskView.vue";
 
 frappe.provide("frappe.views");
@@ -41,6 +41,10 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
     /** Structured response consumed by the Vue TaskView component. */
     taskViewData: any;
+    /** Reference to the mounted Vue TaskView instance for view mode switching. */
+    taskViewInstance: any;
+    /** Currently active view mode. */
+    activeViewMode: string;
 
     prepare_data(r: any) {
         // Store the structured {projects, tasks} response for the Vue app.
@@ -67,6 +71,8 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
     setup_page() {
         super.setup_page();
+        this.activeViewMode = 'all';
+
         frappe
             .call({
                 method: "frappe.desk.listview.get_list_settings",
@@ -90,6 +96,44 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
                     console.error("Failed to get list settings:", error);
                 }
             });
+
+        // ── View mode toggle buttons ─────────────────────────
+        this.setupViewModeButtons();
+    }
+
+    setupViewModeButtons() {
+        const modes = [
+            { key: 'all', label: 'All Tasks', icon: 'list' },
+            { key: 'my_tasks', label: 'My Tasks', icon: 'user' },
+            { key: 'pinned', label: 'Pinned', icon: 'pin' },
+        ];
+
+        const $container = $('<div class="taskview-mode-buttons btn-group btn-group-sm"></div>');
+
+        for (const mode of modes) {
+            const $btn = $(`<button class="btn btn-default btn-sm taskview-mode-btn" data-mode="${mode.key}">${mode.label}</button>`);
+            if (mode.key === 'all') $btn.addClass('btn-primary-dark');
+            $btn.on('click', () => {
+                this.setViewMode(mode.key);
+            });
+            $container.append($btn);
+        }
+
+        // Insert after .sort-selector in page actions
+        this.page.page_form.append($container);
+    }
+
+    setViewMode(mode: string) {
+        this.activeViewMode = mode;
+
+        // Update button active states
+        this.page.page_form.find('.taskview-mode-btn').removeClass('btn-primary-dark');
+        this.page.page_form.find(`.taskview-mode-btn[data-mode="${mode}"]`).addClass('btn-primary-dark');
+
+        // Tell the Vue instance to switch
+        if (this.taskViewInstance?.setViewMode) {
+            this.taskViewInstance.setViewMode(mode);
+        }
     }
 
     // WE DON'T NEED SKELETONS.
@@ -117,10 +161,9 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
         locals.nodes = {};
 
-        // Pass the data to TaskView
-        createApp({
-            render: () => h(TaskView, { docs: this.taskViewData })
-        }).mount(container);
+        // Mount TaskView directly as the root component
+        const app = createApp(TaskView, { docs: this.taskViewData });
+        this.taskViewInstance = app.mount(container);
     }
 };
 

@@ -1,5 +1,5 @@
 <template>
-	<div class="tree-container">
+	<div class="tree-container" v-if="viewMode !== 'pinned'">
 		<Draggable class="mtl-tree" v-model="treeData" treeLine :rootDroppable="false" @after-drop="handleDragEnd">
 			<template #default="{ node, stat }">
 				<!-- modify node and stat to perpetuate collapse node states -->
@@ -24,6 +24,10 @@
 			</template>
 		</Draggable>
 	</div>
+	<div v-else class="pinned-container">
+		<PinnedView :pinnedTasks="pinnedTasks" @catch-success="premount" @catch-error="catchError"
+			@open-sidebar="openSidebar" />
+	</div>
 	<div>
 		<VueSidePanel v-model="isOpened" width="80%" panel-color="var(--sidebar-bg-color)">
 			<div class="sidebar">
@@ -42,6 +46,7 @@
 import { defineComponent, type PropType } from 'vue';
 import { Draggable, dragContext } from '@he-tree/vue';
 import Task from './components/Task.vue';
+import PinnedView from './components/PinnedView.vue';
 import TimeLogger from './components/TimeLogger.vue';
 import { VueSidePanel } from 'vue3-side-panel';
 import 'vue3-side-panel/dist/vue3-side-panel.css';
@@ -74,7 +79,7 @@ interface StatObject {
 
 export default defineComponent({
 	name: 'TaskView',
-	components: { Draggable, Task, VueSidePanel, TimeLogger },
+	components: { Draggable, Task, PinnedView, VueSidePanel, TimeLogger },
 
 	props: {
 		docs: {
@@ -88,6 +93,9 @@ export default defineComponent({
 		const theme = document.documentElement.getAttribute('data-theme-mode') || 'light';
 		return {
 			treeData: [] as TreeData[],
+			pinnedTasks: [] as TaskDoc[],
+			viewMode: 'all' as 'all' | 'my_tasks' | 'pinned',
+			lastResponse: null as GetResponse | null,
 			highlightedProject: null as TreeData | null,
 			activeNode: null as TreeData | null,
 			isOpened: false,
@@ -145,11 +153,61 @@ export default defineComponent({
 
 		premount(data: GetResponse | null = null): void {
 			const source = data || this.docs;
-			let docs = this.buildTree(source);
+			this.lastResponse = source;
+			this.pinnedTasks = source.tasks
+				.filter(t => t.todo_name)
+				.sort((a, b) => (a.pin_idx ?? 0) - (b.pin_idx ?? 0));
+
+			let filtered = source;
+			if (this.viewMode === 'my_tasks') {
+				filtered = this.filterMyTasks(source);
+			}
+
+			let docs = this.buildTree(filtered);
 			docs = this.addBlankProject(docs);
 			docs = this.addBlankTasks(docs);
 			this.treeData = docs;
 			refreshTimers();
+		},
+
+		/** Filter response to only show tasks assigned to the current user and their ancestor chain. */
+		filterMyTasks(data: GetResponse): GetResponse {
+			const user = frappe.session.user;
+			// Find tasks assigned to me
+			const myTaskNames = new Set<string>();
+			for (const t of data.tasks) {
+				if (t.assigned_to?.includes(user)) {
+					myTaskNames.add(t.name);
+				}
+			}
+			// Walk up parent_task chain to include ancestors
+			const taskMap = new Map(data.tasks.map(t => [t.name, t]));
+			const includedTasks = new Set<string>();
+			for (const name of myTaskNames) {
+				let current: string | null = name;
+				while (current && !includedTasks.has(current)) {
+					includedTasks.add(current);
+					const task = taskMap.get(current);
+					current = task?.parent_task || null;
+				}
+			}
+			// Include projects that have at least one included task
+			const includedProjects = new Set<string>();
+			for (const name of includedTasks) {
+				const task = taskMap.get(name);
+				if (task) includedProjects.add(task.project);
+			}
+			return {
+				projects: data.projects.filter(p => includedProjects.has(p.name)),
+				tasks: data.tasks.filter(t => includedTasks.has(t.name)),
+			};
+		},
+
+		setViewMode(mode: 'all' | 'my_tasks' | 'pinned'): void {
+			this.viewMode = mode;
+			if (this.lastResponse) {
+				this.premount(this.lastResponse);
+			}
 		},
 
 		async catchError(error: unknown): Promise<void> {

@@ -1,6 +1,9 @@
 <template>
 	<div class="task" @click="emitInteraction">
 		<div class="task">
+			<!-- Drag handle in pinned mode -->
+			<span v-if="pinned" class="pinned-drag-handle">⠿</span>
+
 			<!-- Spiced-up Checkbox -->
 			<div v-if="!isBlank" class="custom-checkbox task-control">
 				<label>
@@ -17,12 +20,14 @@
 				</p>
 				<input v-if="isEditing" type="text" v-model="editedText" @blur="handleBlur" @keyup.enter="unfocusInput"
 					@keydown.stop @keydown.esc="cancelEdit" class="task-subject-edit" />
+				<!-- Breadcrumb metadata shown in pinned view -->
+				<span v-if="pinned && pinnedMeta" class="task-pinned-meta">{{ pinnedMeta }}</span>
 			</div>
 
 			<!-- action buttons for non-blank, non-completed tasks -->
 			<div v-if="!isProject && !isBlank && node.doc.status !== 'Completed'" class="task-controls">
-				<AssignTo :assignedTo="taskAssignedTo" :taskName="node.doc.name" @assign="handleAssign"
-					@unassign="handleUnassign" />
+				<AssignTo :assignedTo="taskAssignedTo" :taskName="node.doc.name" :isPinned="taskIsPinned"
+					@assign="handleAssign" @unassign="handleUnassign" @pin="handlePin" @unpin="handleUnpin" />
 				<button class="task-btn" :class="timerStatus === 'running' ? 'task-btn--pause' : 'task-btn--resume'"
 					@click="toggleTimer"
 					:title="timerStatus === 'stopped' ? 'Start' : timerStatus === 'paused' ? 'Resume' : 'Pause'">
@@ -57,7 +62,7 @@
 
 <script lang="ts">
 import { defineComponent, nextTick, type PropType } from 'vue';
-import { saveDoc, fetchData, bulkCreateTasks, assignTask, unassignTask, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc, getDisplayText, getProjectName } from '../types';
+import { saveDoc, fetchData, bulkCreateTasks, assignTask, unassignTask, pinTask, unpinTask, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc, getDisplayText, getProjectName } from '../types';
 import { timersByTask, getRunningTimer, type ActiveTimer } from '../timerStore';
 import AssignTo from './AssignTo.vue';
 import '../task-controls.css';
@@ -115,6 +120,12 @@ export default defineComponent({
 		},
 		/** Whether the sidebar panel is currently open. */
 		isOpened: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
+		/** Whether this task is rendered inside PinnedView (flat list mode). */
+		pinned: {
 			type: Boolean,
 			required: false,
 			default: false,
@@ -195,6 +206,20 @@ export default defineComponent({
 		taskAssignedTo(): string[] {
 			if (this.isProject || this.isBlank) return [];
 			return (this.node.doc as TaskDoc).assigned_to || [];
+		},
+		/** Whether the current user has pinned this task. */
+		taskIsPinned(): boolean {
+			if (this.isProject || this.isBlank) return false;
+			return !!(this.node.doc as TaskDoc).todo_name;
+		},
+		/** Breadcrumb text for pinned view: "Project / Parent Task" or just "Project". */
+		pinnedMeta(): string {
+			if (this.isProject || this.isBlank) return '';
+			const doc = this.node.doc as TaskDoc;
+			const parts: string[] = [];
+			if (doc.project) parts.push(doc.project);
+			if (doc.parent_task) parts.push(doc.parent_task);
+			return parts.join(' / ');
 		},
 		/**
 		 * The currently-running (non-paused) timer detail across all tasks.
@@ -507,6 +532,24 @@ export default defineComponent({
 				this.$emit('catch-error', error);
 			}
 		},
+
+		async handlePin(): Promise<void> {
+			try {
+				const data = await pinTask(this.node.doc.name);
+				this.$emit('catch-success', data);
+			} catch (error) {
+				this.$emit('catch-error', error);
+			}
+		},
+
+		async handleUnpin(): Promise<void> {
+			try {
+				const data = await unpinTask(this.node.doc.name);
+				this.$emit('catch-success', data);
+			} catch (error) {
+				this.$emit('catch-error', error);
+			}
+		},
 	},
 
 	/**
@@ -573,6 +616,28 @@ export default defineComponent({
 	font-weight: normal;
 	color: var(--gray-600, #6c757d);
 	opacity: 0.8;
+}
+
+.pinned-drag-handle {
+	cursor: grab;
+	color: var(--gray-400, #ced4da);
+	font-size: 16px;
+	user-select: none;
+	flex-shrink: 0;
+}
+
+.pinned-drag-handle:active {
+	cursor: grabbing;
+}
+
+.task-pinned-meta {
+	display: block;
+	font-size: 0.8em;
+	color: var(--gray-600, #6c757d);
+	font-style: italic;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .task-subject-edit {

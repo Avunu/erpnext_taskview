@@ -75,6 +75,8 @@ class TaskDoc(BaseModel):
 	is_group: int = 0
 	priority: str = "Medium"
 	assigned_to: list[str] = Field(default_factory=list, alias="_assign")
+	todo_name: str | None = None
+	pin_idx: int | None = None
 
 	model_config = {"populate_by_name": True}
 
@@ -157,7 +159,8 @@ class GetResponse(BaseModel):
 	Attributes:
 		projects: All projects matching the current filters.
 		tasks: All tasks belonging to the returned projects, ordered by
-			nested-set ``lft``.
+			nested-set ``lft``.  Tasks pinned by the current user carry
+			``todo_name`` and ``pin_idx`` from the joined ToDo row.
 	"""
 
 	projects: list[ProjectDoc]

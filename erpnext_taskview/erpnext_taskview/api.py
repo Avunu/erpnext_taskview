@@ -93,6 +93,7 @@ def get(args: str | dict | None = None) -> GetResponse:
 
 	Projects = cast(Table, DocType("Project"))
 	Tasks = cast(Table, DocType("Task"))
+	TD = cast(Table, DocType("ToDo"))
 
 	# ── Projects ──────────────────────────────────────────────
 	pq = (
@@ -119,8 +120,18 @@ def get(args: str | dict | None = None) -> GetResponse:
 	projects = [ProjectDoc(**r) for r in projects_raw]
 
 	# ── Tasks ─────────────────────────────────────────────────
+	# Left-join ToDo to get per-user pin state in a single query.
+	# The join is scoped to the current user's open pinned ToDos.
 	tq = (
 		frappe.qb.from_(Tasks)
+		.left_join(TD)
+		.on(
+			(TD.reference_type == "Task")
+			& (TD.reference_name == Tasks.name)
+			& (TD.allocated_to == frappe.session.user)
+			& (TD.status == "Open")
+			& (TD.pin == 1)
+		)
 		.select(
 			Tasks.name,
 			Tasks.subject,
@@ -130,6 +141,8 @@ def get(args: str | dict | None = None) -> GetResponse:
 			Tasks.is_group,
 			Tasks.priority,
 			Tasks._assign,
+			TD.name.as_("todo_name"),
+			TD.idx.as_("pin_idx"),
 		)
 		.where(Tasks.docstatus == 0)
 		.where(Tasks.project.isin(project_names))
@@ -433,11 +446,13 @@ def assign_task(task: str, user: str, form_params: str | None = None) -> GetResp
 	"""
 	from frappe.desk.form.assign_to import add as assign_add
 
-	assign_add({
-		"doctype": "Task",
-		"name": task,
-		"assign_to": json.dumps([user]),
-	})
+	assign_add(
+		{
+			"doctype": "Task",
+			"name": task,
+			"assign_to": json.dumps([user]),
+		}
+	)
 	frappe.db.commit()
 	return get(form_params)
 
@@ -460,6 +475,128 @@ def unassign_task(task: str, user: str, form_params: str | None = None) -> GetRe
 	from frappe.desk.form.assign_to import remove as assign_remove
 
 	assign_remove("Task", task, user)
+	frappe.db.commit()
+	return get(form_params)
+
+
+# ─────────────────────────────────────────────────────────────
+#  PIN / UNPIN — manage pinned tasks via ToDo with pin=1
+# ─────────────────────────────────────────────────────────────
+
+
+@frappe.whitelist()
+def pin_task(task: str, form_params: str | None = None) -> GetResponse:
+	"""Pin a task for the current user.
+
+	Creates (or reuses) a ToDo with ``pin=1`` for the current user.
+	Pinning implies self-assignment — if no open ToDo exists for this
+	user+task, one is created.  If an existing open ToDo exists, its
+	``pin`` flag is set to ``1``.
+
+	The new pin gets ``idx`` = max existing idx + 1 so it appears at
+	the bottom of the user's pinned list.
+
+	Args:
+		task: Task document name.
+		form_params: Optional list-view form params forwarded to ``get()``.
+
+	Returns:
+		A fresh :class:`GetResponse`.
+	"""
+	user = frappe.session.user
+
+	# Check for existing open ToDo for this user+task
+	existing = frappe.db.get_value(
+		"ToDo",
+		{"reference_type": "Task", "reference_name": task, "allocated_to": user, "status": "Open"},
+		"name",
+	)
+
+	if existing:
+		frappe.db.set_value("ToDo", existing, {"pin": 1})
+	else:
+		# Create via assign_to so _assign is properly maintained
+		from frappe.desk.form.assign_to import add as assign_add
+
+		assign_add(
+			{
+				"doctype": "Task",
+				"name": task,
+				"assign_to": json.dumps([user]),
+			}
+		)
+		# Now set pin on the new ToDo
+		new_todo = frappe.db.get_value(
+			"ToDo",
+			{"reference_type": "Task", "reference_name": task, "allocated_to": user, "status": "Open"},
+			"name",
+		)
+		if new_todo:
+			# Set idx to max + 1
+			max_idx = (
+				frappe.db.get_value(
+					doctype="ToDo",
+					filters={"allocated_to": user, "pin": 1, "status": "Open"},
+					fieldname=[{"MAX": "idx", "as": "max_idx"}],
+				)
+				or 0
+			)
+			frappe.db.set_value("ToDo", new_todo, {"pin": 1, "idx": int(max_idx) + 1})
+
+	frappe.db.commit()
+	return get(form_params)
+
+
+@frappe.whitelist()
+def unpin_task(task: str, form_params: str | None = None) -> GetResponse:
+	"""Unpin a task for the current user.
+
+	Sets ``pin=0`` on the user's open ToDo for this task.  Does **not**
+	remove the assignment — the user remains assigned.
+
+	Args:
+		task: Task document name.
+		form_params: Optional list-view form params forwarded to ``get()``.
+
+	Returns:
+		A fresh :class:`GetResponse`.
+	"""
+	user = frappe.session.user
+	existing = frappe.db.get_value(
+		"ToDo",
+		{"reference_type": "Task", "reference_name": task, "allocated_to": user, "status": "Open", "pin": 1},
+		"name",
+	)
+	if existing:
+		frappe.db.set_value("ToDo", existing, {"pin": 0})
+
+	frappe.db.commit()
+	return get(form_params)
+
+
+@frappe.whitelist()
+def reorder_pinned_tasks(order: str, form_params: str | None = None) -> GetResponse:
+	"""Update the sort order of pinned tasks for the current user.
+
+	Accepts a JSON array of ToDo names in the desired order.  Each
+	ToDo's ``idx`` field is set to its position in the array (1-based).
+
+	Args:
+		order: JSON array of ToDo document names, e.g. ``'["TD-001","TD-002"]'``.
+		form_params: Optional list-view form params forwarded to ``get()``.
+
+	Returns:
+		A fresh :class:`GetResponse`.
+	"""
+	user = frappe.session.user
+	todo_names: list[str] = json.loads(order)
+
+	for idx, todo_name in enumerate(todo_names, start=1):
+		# Verify ownership before updating
+		owner = frappe.db.get_value("ToDo", todo_name, "allocated_to")
+		if owner == user:
+			frappe.db.set_value("ToDo", todo_name, {"idx": idx})
+
 	frappe.db.commit()
 	return get(form_params)
 

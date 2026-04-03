@@ -35,6 +35,8 @@ export interface TaskDoc {
 	is_group: number;
 	priority: string;
 	assigned_to: string[];
+	todo_name: string | null;
+	pin_idx: number | null;
 }
 
 export interface TimesheetDetailDoc {
@@ -188,6 +190,51 @@ export function unassignTask(task: string, user: string): Promise<GetResponse> {
 	return new Promise((resolve, reject) => {
 		frappe.call({
 			method: "erpnext_taskview.erpnext_taskview.api.unassign_task",
+			args,
+			callback: (r: { message: GetResponse }) => resolve(r.message),
+			error: (err: unknown) => reject(err),
+		});
+	});
+}
+
+export function pinTask(task: string): Promise<GetResponse> {
+	const args: Record<string, string> = { task };
+	const fp = getFormParams();
+	if (fp) args.form_params = fp;
+
+	return new Promise((resolve, reject) => {
+		frappe.call({
+			method: "erpnext_taskview.erpnext_taskview.api.pin_task",
+			args,
+			callback: (r: { message: GetResponse }) => resolve(r.message),
+			error: (err: unknown) => reject(err),
+		});
+	});
+}
+
+export function unpinTask(task: string): Promise<GetResponse> {
+	const args: Record<string, string> = { task };
+	const fp = getFormParams();
+	if (fp) args.form_params = fp;
+
+	return new Promise((resolve, reject) => {
+		frappe.call({
+			method: "erpnext_taskview.erpnext_taskview.api.unpin_task",
+			args,
+			callback: (r: { message: GetResponse }) => resolve(r.message),
+			error: (err: unknown) => reject(err),
+		});
+	});
+}
+
+export function reorderPinnedTasks(order: string[]): Promise<GetResponse> {
+	const args: Record<string, string> = { order: JSON.stringify(order) };
+	const fp = getFormParams();
+	if (fp) args.form_params = fp;
+
+	return new Promise((resolve, reject) => {
+		frappe.call({
+			method: "erpnext_taskview.erpnext_taskview.api.reorder_pinned_tasks",
 			args,
 			callback: (r: { message: GetResponse }) => resolve(r.message),
 			error: (err: unknown) => reject(err),
