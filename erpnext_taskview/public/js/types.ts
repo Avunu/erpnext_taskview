@@ -34,6 +34,7 @@ export interface TaskDoc {
 	status: string;
 	is_group: number;
 	priority: string;
+	assigned_to: string[];
 }
 
 export interface TimesheetDetailDoc {
@@ -97,6 +98,20 @@ export function getProjectName(node: TreeNode): string {
 // Backend communication
 // ---------------------------------------------------------------------------
 
+/**
+ * Capture the current list-view's form params (doctype, filters, etc.)
+ * so mutation endpoints can forward them to `get()` on the backend.
+ */
+function getFormParams(): string | undefined {
+	const list = (window as any).cur_list;
+	if (!list) return undefined;
+	const params: Record<string, unknown> = {};
+	if (list.doctype) params.doctype = list.doctype;
+	if (list.filters) params.filters = list.get_filters_for_args?.() ?? list.filters;
+	if (list.or_filters) params.or_filters = list.or_filters;
+	return JSON.stringify(params);
+}
+
 export function saveDoc(
 	doc: Partial<FrappeDoc>,
 	children?: TaskDoc[]
@@ -104,10 +119,14 @@ export function saveDoc(
 	const payload: Record<string, unknown> = { doc };
 	if (children) payload.children = children;
 
+	const args: Record<string, string> = { payload: JSON.stringify(payload) };
+	const fp = getFormParams();
+	if (fp) args.form_params = fp;
+
 	return new Promise((resolve, reject) => {
 		frappe.call({
 			method: "erpnext_taskview.erpnext_taskview.api.save_doc",
-			args: { payload: JSON.stringify(payload) },
+			args,
 			callback: (r: { message: GetResponse }) => resolve(r.message),
 			error: (err: unknown) => reject(err),
 		});
@@ -132,10 +151,44 @@ export function bulkCreateTasks(
 	const payload: Record<string, unknown> = { subjects, project };
 	if (parentTask) payload.parent_task = parentTask;
 
+	const args: Record<string, string> = { payload: JSON.stringify(payload) };
+	const fp = getFormParams();
+	if (fp) args.form_params = fp;
+
 	return new Promise((resolve, reject) => {
 		frappe.call({
 			method: "erpnext_taskview.erpnext_taskview.api.bulk_create_tasks",
-			args: { payload: JSON.stringify(payload) },
+			args,
+			callback: (r: { message: GetResponse }) => resolve(r.message),
+			error: (err: unknown) => reject(err),
+		});
+	});
+}
+
+export function assignTask(task: string, user: string): Promise<GetResponse> {
+	const args: Record<string, string> = { task, user };
+	const fp = getFormParams();
+	if (fp) args.form_params = fp;
+
+	return new Promise((resolve, reject) => {
+		frappe.call({
+			method: "erpnext_taskview.erpnext_taskview.api.assign_task",
+			args,
+			callback: (r: { message: GetResponse }) => resolve(r.message),
+			error: (err: unknown) => reject(err),
+		});
+	});
+}
+
+export function unassignTask(task: string, user: string): Promise<GetResponse> {
+	const args: Record<string, string> = { task, user };
+	const fp = getFormParams();
+	if (fp) args.form_params = fp;
+
+	return new Promise((resolve, reject) => {
+		frappe.call({
+			method: "erpnext_taskview.erpnext_taskview.api.unassign_task",
+			args,
 			callback: (r: { message: GetResponse }) => resolve(r.message),
 			error: (err: unknown) => reject(err),
 		});

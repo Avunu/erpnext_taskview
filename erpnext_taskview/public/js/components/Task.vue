@@ -21,6 +21,8 @@
 
 			<!-- action buttons for non-blank, non-completed tasks -->
 			<div v-if="!isProject && !isBlank && node.doc.status !== 'Completed'" class="task-controls">
+				<AssignTo :assignedTo="taskAssignedTo" :taskName="node.doc.name" @assign="handleAssign"
+					@unassign="handleUnassign" />
 				<button class="task-btn" :class="timerStatus === 'running' ? 'task-btn--pause' : 'task-btn--resume'"
 					@click="toggleTimer"
 					:title="timerStatus === 'stopped' ? 'Start' : timerStatus === 'paused' ? 'Resume' : 'Pause'">
@@ -55,8 +57,9 @@
 
 <script lang="ts">
 import { defineComponent, nextTick, type PropType } from 'vue';
-import { saveDoc, fetchData, bulkCreateTasks, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc, getDisplayText, getProjectName } from '../types';
+import { saveDoc, fetchData, bulkCreateTasks, assignTask, unassignTask, type TreeNode, type ProjectDoc, type TaskDoc, type TimesheetDetailDoc, getDisplayText, getProjectName } from '../types';
 import { timersByTask, getRunningTimer, type ActiveTimer } from '../timerStore';
+import AssignTo from './AssignTo.vue';
 import '../task-controls.css';
 
 /**
@@ -96,6 +99,7 @@ import '../task-controls.css';
  */
 export default defineComponent({
 	name: 'Task',
+	components: { AssignTo },
 	props: {
 		/** The tree node containing the doc (ProjectDoc or TaskDoc). */
 		node: {
@@ -186,6 +190,11 @@ export default defineComponent({
 				return (this.node.doc as ProjectDoc).customer || '';
 			}
 			return '';
+		},
+		/** List of assigned user emails for this task. */
+		taskAssignedTo(): string[] {
+			if (this.isProject || this.isBlank) return [];
+			return (this.node.doc as TaskDoc).assigned_to || [];
 		},
 		/**
 		 * The currently-running (non-paused) timer detail across all tasks.
@@ -479,6 +488,24 @@ export default defineComponent({
 					}
 				},
 			);
+		},
+
+		async handleAssign(user: string): Promise<void> {
+			try {
+				const data = await assignTask(this.node.doc.name, user);
+				this.$emit('catch-success', data);
+			} catch (error) {
+				this.$emit('catch-error', error);
+			}
+		},
+
+		async handleUnassign(user: string): Promise<void> {
+			try {
+				const data = await unassignTask(this.node.doc.name, user);
+				this.$emit('catch-success', data);
+			} catch (error) {
+				this.$emit('catch-error', error);
+			}
 		},
 	},
 

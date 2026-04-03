@@ -44,6 +44,7 @@ import frappe
 from erpnext.projects.doctype.timesheet.timesheet import Timesheet
 from frappe.desk.reportview import get_form_params
 from frappe.query_builder import DocType, Table
+from frappe.types.frappedict import _dict
 from frappe.utils.data import get_datetime
 
 from .custom.timesheet_detail import TimesheetDetail
@@ -64,7 +65,7 @@ from .models import (
 
 @frappe.whitelist()
 @frappe.read_only()
-def get() -> GetResponse:
+def get(args: str | dict | None = None) -> GetResponse:
 	"""Fetch projects and tasks as flat lists.
 
 	Executes two PyPika queries:
@@ -81,7 +82,14 @@ def get() -> GetResponse:
 	Returns:
 		A :class:`GetResponse` with two flat lists.
 	"""
-	args = get_form_params()
+	if not args:
+		args = get_form_params()
+	if isinstance(args, str):
+		args = json.loads(args)
+	if isinstance(args, dict):
+		args = _dict(args)
+
+	assert isinstance(args, _dict), "Invalid arguments"
 
 	Projects = cast(Table, DocType("Project"))
 	Tasks = cast(Table, DocType("Task"))
@@ -121,6 +129,7 @@ def get() -> GetResponse:
 			Tasks.status,
 			Tasks.is_group,
 			Tasks.priority,
+			Tasks._assign,
 		)
 		.where(Tasks.docstatus == 0)
 		.where(Tasks.project.isin(project_names))
@@ -206,7 +215,7 @@ def get_active_timers() -> ActiveTimersResponse:
 
 
 @frappe.whitelist()
-def save_doc(payload: str) -> GetResponse:
+def save_doc(payload: str, form_params: str | None = None) -> GetResponse:
 	"""Save a document (Project, Task, or Timesheet Detail).
 
 	Accepts a JSON string conforming to :class:`SaveDocRequest`::
@@ -224,6 +233,9 @@ def save_doc(payload: str) -> GetResponse:
 
 	Args:
 		payload: JSON-serialised :class:`SaveDocRequest`.
+		form_params: Optional JSON-serialised dict of list-view form
+			params (doctype, filters, etc.) so the subsequent :func:`get`
+			call can apply the user's current filters.
 
 	Returns:
 		A fresh :class:`GetResponse` reflecting the post-mutation state.
@@ -239,7 +251,7 @@ def save_doc(payload: str) -> GetResponse:
 			_save_timesheet_detail(cast(TimesheetDetailDoc, req.doc))
 
 	frappe.db.commit()
-	return get()
+	return get(form_params)
 
 
 # ── Project ───────────────────────────────────────────────────
@@ -351,12 +363,12 @@ def _update_children_project(children: list[TaskDoc], project: str) -> None:
 
 
 @frappe.whitelist()
-def bulk_create_tasks(payload: str) -> GetResponse:
+def bulk_create_tasks(payload: str, form_params: str | None = None) -> GetResponse:
 	"""Create multiple tasks at once from a list of subjects.
 
 	Accepts a JSON string::
 
-		{"subjects": ["Task A", "Task B"], "project": "PROJ-001", "parent_task": "TASK-001"}
+	        {"subjects": ["Task A", "Task B"], "project": "PROJ-001", "parent_task": "TASK-001"}
 
 	Each non-empty subject becomes a new Task under the given project
 	and optional parent_task.  If a parent_task is provided its
@@ -396,7 +408,60 @@ def bulk_create_tasks(payload: str) -> GetResponse:
 		frappe.get_doc(new_doc).insert()
 
 	frappe.db.commit()
-	return get()
+	return get(form_params)
+
+
+# ─────────────────────────────────────────────────────────────
+#  ASSIGN / UNASSIGN — manage task assignments via ToDo
+# ─────────────────────────────────────────────────────────────
+
+
+@frappe.whitelist()
+def assign_task(task: str, user: str, form_params: str | None = None) -> GetResponse:
+	"""Assign a user to a Task via Frappe's ToDo mechanism.
+
+	Uses ``frappe.desk.form.assign_to.add`` which creates a ToDo and
+	updates the Task's ``_assign`` field.
+
+	Args:
+		task: Task document name.
+		user: Email of the user to assign.
+		form_params: Optional list-view form params forwarded to ``get()``.
+
+	Returns:
+		A fresh :class:`GetResponse`.
+	"""
+	from frappe.desk.form.assign_to import add as assign_add
+
+	assign_add({
+		"doctype": "Task",
+		"name": task,
+		"assign_to": json.dumps([user]),
+	})
+	frappe.db.commit()
+	return get(form_params)
+
+
+@frappe.whitelist()
+def unassign_task(task: str, user: str, form_params: str | None = None) -> GetResponse:
+	"""Remove a user's assignment from a Task.
+
+	Uses ``frappe.desk.form.assign_to.remove`` which cancels the ToDo
+	and updates the Task's ``_assign`` field.
+
+	Args:
+		task: Task document name.
+		user: Email of the user to unassign.
+		form_params: Optional list-view form params forwarded to ``get()``.
+
+	Returns:
+		A fresh :class:`GetResponse`.
+	"""
+	from frappe.desk.form.assign_to import remove as assign_remove
+
+	assign_remove("Task", task, user)
+	frappe.db.commit()
+	return get(form_params)
 
 
 # ── Timesheet Detail ─────────────────────────────────────────

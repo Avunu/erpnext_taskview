@@ -108,6 +108,9 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         // Clear everything out of the result area
         this.$result.empty();
 
+        // Enable Frappe's scrolling container CSS (fixed-height .result-container)
+        this.parent.page.main.parent().addClass("list-view");
+
         // Make a new Vue container to hold the header and rows
         const container = document.createElement('div');
         this.$result.append(container);

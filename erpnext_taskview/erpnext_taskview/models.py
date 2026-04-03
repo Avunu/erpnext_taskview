@@ -20,10 +20,11 @@ Design principles
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # ---------------------------------------------------------------------------
 # Doctype field models — the only shapes crossing the API boundary
@@ -73,6 +74,18 @@ class TaskDoc(BaseModel):
 	status: str = "Open"
 	is_group: int = 0
 	priority: str = "Medium"
+	assigned_to: list[str] = Field(default_factory=list, alias="_assign")
+
+	model_config = {"populate_by_name": True}
+
+	@field_validator("assigned_to", mode="before")
+	@classmethod
+	def parse_assign(cls, v: str | list | None) -> list[str]:
+		if not v:
+			return []
+		if isinstance(v, str):
+			return json.loads(v)
+		return v
 
 
 class TimesheetDetailDoc(BaseModel):
