@@ -1,6 +1,8 @@
 /// <reference path="./types/frappe.d.ts" />
 import { createApp } from "vue";
 import TaskView from "./TaskView.vue";
+import ViewModeSwitcher from "./components/ViewModeSwitcher.vue";
+import type { ViewMode } from "./components/ViewModeSwitcher.vue";
 
 frappe.provide("frappe.views");
 frappe.provide("frappe.ui.toolbar");
@@ -43,8 +45,8 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     taskViewData: any;
     /** Reference to the mounted Vue TaskView instance for view mode switching. */
     taskViewInstance: any;
-    /** Currently active view mode. */
-    activeViewMode: string;
+    /** Reference to the mounted ViewModeSwitcher instance. */
+    modeSwitcherInstance: any;
 
     prepare_data(r: any) {
         // Store the structured {projects, tasks} response for the Vue app.
@@ -71,7 +73,6 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
     setup_page() {
         super.setup_page();
-        this.activeViewMode = 'all';
 
         frappe
             .call({
@@ -97,43 +98,23 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
                 }
             });
 
-        // ── View mode toggle buttons ─────────────────────────
-        this.setupViewModeButtons();
+        // ── View mode toggle (Vue) ──────────────────────────
+        this.mountModeSwitcher();
     }
 
-    setupViewModeButtons() {
-        const modes = [
-            { key: 'all', label: 'All Tasks', icon: 'list' },
-            { key: 'my_tasks', label: 'My Tasks', icon: 'user' },
-            { key: 'pinned', label: 'Pinned', icon: 'pin' },
-        ];
+    mountModeSwitcher() {
+        const el = document.createElement('div');
+        // page_form is a jQuery object; access underlying DOM node
+        (this.page.page_form[0] as HTMLElement).appendChild(el);
 
-        const $container = $('<div class="taskview-mode-buttons btn-group btn-group-sm"></div>');
-
-        for (const mode of modes) {
-            const $btn = $(`<button class="btn btn-default btn-sm taskview-mode-btn" data-mode="${mode.key}">${mode.label}</button>`);
-            if (mode.key === 'all') $btn.addClass('btn-primary-dark');
-            $btn.on('click', () => {
-                this.setViewMode(mode.key);
-            });
-            $container.append($btn);
-        }
-
-        // Insert after .sort-selector in page actions
-        this.page.page_form.append($container);
-    }
-
-    setViewMode(mode: string) {
-        this.activeViewMode = mode;
-
-        // Update button active states
-        this.page.page_form.find('.taskview-mode-btn').removeClass('btn-primary-dark');
-        this.page.page_form.find(`.taskview-mode-btn[data-mode="${mode}"]`).addClass('btn-primary-dark');
-
-        // Tell the Vue instance to switch
-        if (this.taskViewInstance?.setViewMode) {
-            this.taskViewInstance.setViewMode(mode);
-        }
+        const app = createApp(ViewModeSwitcher, {
+            'onUpdate:mode': (mode: ViewMode) => {
+                if (this.taskViewInstance?.setViewMode) {
+                    this.taskViewInstance.setViewMode(mode);
+                }
+            },
+        });
+        this.modeSwitcherInstance = app.mount(el);
     }
 
     // WE DON'T NEED SKELETONS.
@@ -145,19 +126,22 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     setup_keyboard_navigation() { }
 
     render_header(_refresh_header = false) {
-        this.$result.find(".list-row-head").remove();
+        const resultEl = this.$result[0] as HTMLElement;
+        resultEl.querySelectorAll('.list-row-head').forEach(el => el.remove());
     }
 
     render_list() {
+        const resultEl = this.$result[0] as HTMLElement;
         // Clear everything out of the result area
-        this.$result.empty();
+        resultEl.innerHTML = '';
 
         // Enable Frappe's scrolling container CSS (fixed-height .result-container)
-        this.parent.page.main.parent().addClass("list-view");
+        const mainParent = (this.parent.page.main[0] as HTMLElement).parentElement;
+        if (mainParent) mainParent.classList.add('list-view');
 
         // Make a new Vue container to hold the header and rows
         const container = document.createElement('div');
-        this.$result.append(container);
+        resultEl.appendChild(container);
 
         locals.nodes = {};
 
