@@ -59,6 +59,73 @@ from .models import (
 )
 
 # ─────────────────────────────────────────────────────────────
+#  Helpers
+# ─────────────────────────────────────────────────────────────
+
+
+def _apply_filter(query: Any, table: Table, filter_tuple: list) -> Any:
+	"""Apply a single Frappe filter tuple to a PyPika query.
+
+	Frappe list-view filters arrive as four-element tuples::
+
+	[doctype, fieldname, operator, value]
+
+	This function translates the operator string into the corresponding
+	PyPika criterion and appends it to the query's ``WHERE`` clause.
+
+	Supported operators: ``=``, ``!=``, ``like``, ``not like``, ``in``,
+	``not in``, ``>``, ``<``, ``>=``, ``<=``, ``between``, ``is``
+	(set / not set).
+
+	Args:
+		query: The in-progress PyPika query builder.
+		table: The PyPika table reference to resolve field names against.
+		filter_tuple: A ``[doctype, field, op, value]`` list from the
+			Frappe report-view params.
+
+	Returns:
+		The query with the additional ``WHERE`` clause appended.
+
+	Raises:
+		frappe.ValidationError: If the operator is unsupported.
+	"""
+	_doctype, fieldname, operator, value = filter_tuple
+	field = table[fieldname]
+
+	match operator.lower().strip():
+		case "=":
+			return query.where(field == value)
+		case "!=":
+			return query.where(field != value)
+		case "like":
+			return query.where(field.like(value))
+		case "not like":
+			return query.where(field.not_like(value))
+		case "in":
+			return query.where(field.isin(value if isinstance(value, (list, tuple, set)) else [value]))
+		case "not in":
+			return query.where(field.notin(value if isinstance(value, (list, tuple, set)) else [value]))
+		case ">":
+			return query.where(field > value)
+		case "<":
+			return query.where(field < value)
+		case ">=":
+			return query.where(field >= value)
+		case "<=":
+			return query.where(field <= value)
+		case "between":
+			return query.where(field.between(value[0], value[1]))
+		case "is":
+			if value and str(value).lower() == "set":
+				return query.where(field.isnotnull())
+			return query.where(field.isnull())
+		case _:
+			frappe.throw(f"Unsupported filter operator: {operator}")
+
+	return query
+
+
+# ─────────────────────────────────────────────────────────────
 #  GET — flat lists of projects, tasks, and timesheet details
 # ─────────────────────────────────────────────────────────────
 
@@ -222,51 +289,6 @@ def get_active_timers() -> ActiveTimersResponse:
 	return ActiveTimersResponse(timers=timers).model_dump()
 
 
-# ─────────────────────────────────────────────────────────────
-#  SAVE — single endpoint, routes by doctype
-# ─────────────────────────────────────────────────────────────
-
-
-@frappe.whitelist()
-def save_doc(payload: str, form_params: str | None = None) -> GetResponse:
-	"""Save a document (Project, Task, or Timesheet Detail).
-
-	Accepts a JSON string conforming to :class:`SaveDocRequest`::
-
-	{"doc": {"doctype": "...", ...}, "children": [...]}
-
-	The ``doctype`` field on ``doc`` determines which handler is called:
-
-	- ``"Project"``          → :func:`_save_project`
-	- ``"Task"``             → :func:`_save_task`
-	- ``"Timesheet Detail"`` → :func:`_save_timesheet_detail`
-
-	After the mutation a ``frappe.db.commit()`` is issued and a fresh
-	:func:`get` response is returned so the frontend can rebuild its tree.
-
-	Args:
-		payload: JSON-serialised :class:`SaveDocRequest`.
-		form_params: Optional JSON-serialised dict of list-view form
-			params (doctype, filters, etc.) so the subsequent :func:`get`
-			call can apply the user's current filters.
-
-	Returns:
-		A fresh :class:`GetResponse` reflecting the post-mutation state.
-	"""
-	req = SaveDocRequest(**json.loads(payload))
-
-	match req.doc.doctype:
-		case "Project":
-			_save_project(cast(ProjectDoc, req.doc))
-		case "Task":
-			_save_task(cast(TaskDoc, req.doc), req.children)
-		case "Timesheet Detail":
-			_save_timesheet_detail(cast(TimesheetDetailDoc, req.doc))
-
-	frappe.db.commit()
-	return get(form_params)
-
-
 # ── Project ───────────────────────────────────────────────────
 
 
@@ -299,6 +321,22 @@ def _save_project(doc: ProjectDoc) -> None:
 				"status": doc.status,
 			}
 		).insert()
+
+
+def _update_children_project(children: list[TaskDoc], project: str) -> None:
+	"""Bulk-update the ``project`` field on descendant tasks.
+
+	Called after a drag-reparent when the dragged task moved to a
+	different project.  Each child with a valid ``name`` gets its
+	``project`` field set to the new value.
+
+	Args:
+		children: Flat list of descendant :class:`TaskDoc` models.
+		project: The new project name to assign.
+	"""
+	for child in children:
+		if child.name:
+			frappe.db.set_value("Task", child.name, {"project": project})
 
 
 # ── Task ──────────────────────────────────────────────────────
@@ -354,20 +392,211 @@ def _save_task(doc: TaskDoc, children: list[TaskDoc] | None = None) -> None:
 		frappe.get_doc(new_doc).insert()
 
 
-def _update_children_project(children: list[TaskDoc], project: str) -> None:
-	"""Bulk-update the ``project`` field on descendant tasks.
+def _get_or_create_timesheet_detail(project: str, task: str, description: str = "") -> TimesheetDetail:
+	"""Find an open Timesheet Detail or create a new one.
 
-	Called after a drag-reparent when the dragged task moved to a
-	different project.  Each child with a valid ``name`` gets its
-	``project`` field set to the new value.
+	Looks for an existing row with ``to_time IS NULL`` for the given
+	project/task combination.  If none exists, appends a new row to the
+	current user's draft Timesheet (creating the Timesheet itself if
+	necessary).
 
 	Args:
-		children: Flat list of descendant :class:`TaskDoc` models.
-		project: The new project name to assign.
+		project: The Frappe Project name.
+		task: The Frappe Task name.
+		description: Optional initial description for the new row.
+
+	Returns:
+		A :class:`TimesheetDetail` document ready for field assignment
+		and ``save()``.
 	"""
-	for child in children:
-		if child.name:
-			frappe.db.set_value("Task", child.name, {"project": project})
+	existing = frappe.db.exists("Timesheet Detail", {"project": project, "task": task, "to_time": None})
+	if existing:
+		return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", existing))
+
+	employee_name = frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
+
+	existing_timesheet = frappe.db.exists(
+		"Timesheet", {"employee": employee_name, "docstatus": 0, "parent_project": project}
+	)
+
+	if existing_timesheet:
+		timesheet = cast(Timesheet, frappe.get_doc("Timesheet", existing_timesheet))
+	else:
+		timesheet = cast(Timesheet, frappe.new_doc("Timesheet"))
+		timesheet.doctype = "Timesheet"
+		timesheet.employee = employee_name
+		timesheet.parent_project = project
+
+	timesheet.append(
+		"time_logs",
+		{
+			"project": project,
+			"task": task,
+			"description": description,
+		},
+	)
+
+	if existing_timesheet:
+		timesheet.save(ignore_permissions=True)
+	else:
+		timesheet.insert(ignore_permissions=True)
+
+	frappe.db.commit()
+	return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", timesheet.time_logs[-1].name))
+
+
+# ── Timesheet Detail ─────────────────────────────────────────
+
+
+def _save_timesheet_detail(doc: TimesheetDetailDoc) -> None:
+	"""Handle all timer operations by inspecting the doc fields.
+
+	Instead of an explicit action enum, the backend derives the intended
+	operation from the combination of fields present on the incoming
+	:class:`TimesheetDetailDoc`:
+
+	+-----------------------+--------------------------------------------+
+	| Fields present        | Action                                     |
+	+=======================+============================================+
+	| No ``name``,          | **Manual time log** — set ``from_time``,   |
+	| ``from_time`` +       | ``to_time``, compute ``hours``.            |
+	| ``to_time``           |                                            |
+	+-----------------------+--------------------------------------------+
+	| No ``name``           | **Start** new timer — set ``from_time``    |
+	|                       | and ``start_time`` to now.                 |
+	+-----------------------+--------------------------------------------+
+	| ``name`` + ``to_time``| **Stop** — compute final ``hours`` and     |
+	|                       | ``to_time``.                               |
+	+-----------------------+--------------------------------------------+
+	| ``name`` +            | **Pause** — accumulate elapsed seconds     |
+	| ``paused == 1``       | into ``paused_time_in_seconds``.           |
+	+-----------------------+--------------------------------------------+
+	| ``name`` +            | **Resume** — reset ``start_time`` to now   |
+	| ``paused == 0``       | and clear ``paused``.                      |
+	+-----------------------+--------------------------------------------+
+
+	Args:
+		doc: Validated :class:`TimesheetDetailDoc` from the payload.
+
+	Side effects:
+		Creates or mutates a Timesheet Detail row and its parent
+		Timesheet via ``frappe.get_doc`` / ``frappe.new_doc``.
+	"""
+	now = get_datetime()
+	assert isinstance(now, datetime.datetime)
+
+	if not doc.name:
+		# New timesheet detail — either start timer or log manual entry
+		detail = _get_or_create_timesheet_detail(doc.project, doc.task, doc.description)
+
+		if doc.from_time and doc.to_time:
+			# Manual time log — user provided both times
+			detail.from_time = get_datetime(doc.from_time)
+			detail.to_time = get_datetime(doc.to_time)
+			assert isinstance(detail.from_time, datetime.datetime)
+			assert isinstance(detail.to_time, datetime.datetime)
+			detail.hours = (detail.to_time - detail.from_time).total_seconds() / 3600
+		else:
+			# Start new timer
+			detail.from_time = now
+			detail.start_time = now
+			detail.paused = False
+
+		detail.save(ignore_permissions=True)
+		return
+
+	# Existing detail — load and apply state transition
+	detail = cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", doc.name))
+
+	if doc.delete:
+		# Discard — remove the detail row and clean up empty parent
+		parent_name = detail.parent
+		detail.delete(ignore_permissions=True)
+		if parent_name:
+			parent_ts = frappe.get_doc("Timesheet", parent_name)
+			if not parent_ts.get("time_logs"):
+				parent_ts.delete(ignore_permissions=True)
+		return
+
+	if doc.update_description:
+		# Description-only update — persist without state transition
+		detail.description = doc.description
+		detail.save(ignore_permissions=True)
+		return
+
+	if doc.to_time:
+		# Stop — calculate final hours
+		from_time = get_datetime(detail.from_time)
+		start_time = get_datetime(detail.start_time)
+		assert isinstance(from_time, datetime.datetime) and isinstance(start_time, datetime.datetime)
+
+		total_seconds = (now - start_time).total_seconds() + (detail.paused_time_in_seconds or 0)
+		detail.hours = total_seconds / 3600
+		detail.to_time = datetime.datetime.fromtimestamp(
+			from_time.timestamp() + total_seconds, tz=datetime.timezone.utc
+		).replace(tzinfo=None)
+		detail.description = doc.description or detail.description
+
+	elif doc.paused:
+		# Pause — accumulate elapsed time
+		start_time = get_datetime(detail.start_time)
+		assert isinstance(start_time, datetime.datetime), "start_time not set or invalid"
+		detail.paused_time_in_seconds = int(
+			(detail.paused_time_in_seconds or 0) + (now - start_time).total_seconds()
+		)
+		detail.paused = True
+
+	else:
+		# Resume — reset start_time
+		detail.start_time = now
+		detail.paused = False
+
+	detail.save(ignore_permissions=True)
+
+
+# ─────────────────────────────────────────────────────────────
+#  SAVE — single endpoint, routes by doctype
+# ─────────────────────────────────────────────────────────────
+
+
+@frappe.whitelist()
+def save_doc(payload: str, form_params: str | None = None) -> GetResponse:
+	"""Save a document (Project, Task, or Timesheet Detail).
+
+	Accepts a JSON string conforming to :class:`SaveDocRequest`::
+
+	{"doc": {"doctype": "...", ...}, "children": [...]}
+
+	The ``doctype`` field on ``doc`` determines which handler is called:
+
+	- ``"Project"``          → :func:`_save_project`
+	- ``"Task"``             → :func:`_save_task`
+	- ``"Timesheet Detail"`` → :func:`_save_timesheet_detail`
+
+	After the mutation a ``frappe.db.commit()`` is issued and a fresh
+	:func:`get` response is returned so the frontend can rebuild its tree.
+
+	Args:
+		payload: JSON-serialised :class:`SaveDocRequest`.
+		form_params: Optional JSON-serialised dict of list-view form
+			params (doctype, filters, etc.) so the subsequent :func:`get`
+			call can apply the user's current filters.
+
+	Returns:
+		A fresh :class:`GetResponse` reflecting the post-mutation state.
+	"""
+	req = SaveDocRequest(**json.loads(payload))
+
+	match req.doc.doctype:
+		case "Project":
+			_save_project(cast(ProjectDoc, req.doc))
+		case "Task":
+			_save_task(cast(TaskDoc, req.doc), req.children)
+		case "Timesheet Detail":
+			_save_timesheet_detail(cast(TimesheetDetailDoc, req.doc))
+
+	frappe.db.commit()
+	return get(form_params)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -381,7 +610,7 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> GetRespon
 
 	Accepts a JSON string::
 
-	        {"subjects": ["Task A", "Task B"], "project": "PROJ-001", "parent_task": "TASK-001"}
+	{"subjects": ["Task A", "Task B"], "project": "PROJ-001", "parent_task": "TASK-001"}
 
 	Each non-empty subject becomes a new Task under the given project
 	and optional parent_task.  If a parent_task is provided its
@@ -599,230 +828,3 @@ def reorder_pinned_tasks(order: str, form_params: str | None = None) -> GetRespo
 
 	frappe.db.commit()
 	return get(form_params)
-
-
-# ── Timesheet Detail ─────────────────────────────────────────
-
-
-def _save_timesheet_detail(doc: TimesheetDetailDoc) -> None:
-	"""Handle all timer operations by inspecting the doc fields.
-
-	Instead of an explicit action enum, the backend derives the intended
-	operation from the combination of fields present on the incoming
-	:class:`TimesheetDetailDoc`:
-
-	+-----------------------+--------------------------------------------+
-	| Fields present        | Action                                     |
-	+=======================+============================================+
-	| No ``name``,          | **Manual time log** — set ``from_time``,   |
-	| ``from_time`` +       | ``to_time``, compute ``hours``.            |
-	| ``to_time``           |                                            |
-	+-----------------------+--------------------------------------------+
-	| No ``name``           | **Start** new timer — set ``from_time``    |
-	|                       | and ``start_time`` to now.                 |
-	+-----------------------+--------------------------------------------+
-	| ``name`` + ``to_time``| **Stop** — compute final ``hours`` and     |
-	|                       | ``to_time``.                               |
-	+-----------------------+--------------------------------------------+
-	| ``name`` +            | **Pause** — accumulate elapsed seconds     |
-	| ``paused == 1``       | into ``paused_time_in_seconds``.           |
-	+-----------------------+--------------------------------------------+
-	| ``name`` +            | **Resume** — reset ``start_time`` to now   |
-	| ``paused == 0``       | and clear ``paused``.                      |
-	+-----------------------+--------------------------------------------+
-
-	Args:
-		doc: Validated :class:`TimesheetDetailDoc` from the payload.
-
-	Side effects:
-		Creates or mutates a Timesheet Detail row and its parent
-		Timesheet via ``frappe.get_doc`` / ``frappe.new_doc``.
-	"""
-	now = get_datetime()
-	assert isinstance(now, datetime.datetime)
-
-	if not doc.name:
-		# New timesheet detail — either start timer or log manual entry
-		detail = _get_or_create_timesheet_detail(doc.project, doc.task, doc.description)
-
-		if doc.from_time and doc.to_time:
-			# Manual time log — user provided both times
-			detail.from_time = get_datetime(doc.from_time)
-			detail.to_time = get_datetime(doc.to_time)
-			assert isinstance(detail.from_time, datetime.datetime)
-			assert isinstance(detail.to_time, datetime.datetime)
-			detail.hours = (detail.to_time - detail.from_time).total_seconds() / 3600
-		else:
-			# Start new timer
-			detail.from_time = now
-			detail.start_time = now
-			detail.paused = False
-
-		detail.save(ignore_permissions=True)
-		return
-
-	# Existing detail — load and apply state transition
-	detail = cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", doc.name))
-
-	if doc.delete:
-		# Discard — remove the detail row and clean up empty parent
-		parent_name = detail.parent
-		detail.delete(ignore_permissions=True)
-		if parent_name:
-			parent_ts = frappe.get_doc("Timesheet", parent_name)
-			if not parent_ts.get("time_logs"):
-				parent_ts.delete(ignore_permissions=True)
-		return
-
-	if doc.update_description:
-		# Description-only update — persist without state transition
-		detail.description = doc.description
-		detail.save(ignore_permissions=True)
-		return
-
-	if doc.to_time:
-		# Stop — calculate final hours
-		from_time = get_datetime(detail.from_time)
-		start_time = get_datetime(detail.start_time)
-		assert isinstance(from_time, datetime.datetime) and isinstance(start_time, datetime.datetime)
-
-		total_seconds = (now - start_time).total_seconds() + (detail.paused_time_in_seconds or 0)
-		detail.hours = total_seconds / 3600
-		detail.to_time = datetime.datetime.utcfromtimestamp(from_time.timestamp() + total_seconds)
-		detail.description = doc.description or detail.description
-
-	elif doc.paused:
-		# Pause — accumulate elapsed time
-		start_time = get_datetime(detail.start_time)
-		assert isinstance(start_time, datetime.datetime), "start_time not set or invalid"
-		detail.paused_time_in_seconds = int(
-			(detail.paused_time_in_seconds or 0) + (now - start_time).total_seconds()
-		)
-		detail.paused = True
-
-	else:
-		# Resume — reset start_time
-		detail.start_time = now
-		detail.paused = False
-
-	detail.save(ignore_permissions=True)
-
-
-def _get_or_create_timesheet_detail(project: str, task: str, description: str = "") -> TimesheetDetail:
-	"""Find an open Timesheet Detail or create a new one.
-
-	Looks for an existing row with ``to_time IS NULL`` for the given
-	project/task combination.  If none exists, appends a new row to the
-	current user's draft Timesheet (creating the Timesheet itself if
-	necessary).
-
-	Args:
-		project: The Frappe Project name.
-		task: The Frappe Task name.
-		description: Optional initial description for the new row.
-
-	Returns:
-		A :class:`TimesheetDetail` document ready for field assignment
-		and ``save()``.
-	"""
-	existing = frappe.db.exists("Timesheet Detail", {"project": project, "task": task, "to_time": None})
-	if existing:
-		return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", existing))
-
-	employee_name = frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
-
-	existing_timesheet = frappe.db.exists(
-		"Timesheet", {"employee": employee_name, "docstatus": 0, "parent_project": project}
-	)
-
-	if existing_timesheet:
-		timesheet = cast(Timesheet, frappe.get_doc("Timesheet", existing_timesheet))
-	else:
-		timesheet = cast(Timesheet, frappe.new_doc("Timesheet"))
-		timesheet.doctype = "Timesheet"
-		timesheet.employee = employee_name
-		timesheet.parent_project = project
-
-	timesheet.append(
-		"time_logs",
-		{
-			"project": project,
-			"task": task,
-			"description": description,
-		},
-	)
-
-	if existing_timesheet:
-		timesheet.save(ignore_permissions=True)
-	else:
-		timesheet.insert(ignore_permissions=True)
-
-	frappe.db.commit()
-	return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", timesheet.time_logs[-1].name))
-
-
-# ─────────────────────────────────────────────────────────────
-#  Helpers
-# ─────────────────────────────────────────────────────────────
-
-
-def _apply_filter(query: Any, table: Table, filter_tuple: list) -> Any:
-	"""Apply a single Frappe filter tuple to a PyPika query.
-
-	Frappe list-view filters arrive as four-element tuples::
-
-	[doctype, fieldname, operator, value]
-
-	This function translates the operator string into the corresponding
-	PyPika criterion and appends it to the query's ``WHERE`` clause.
-
-	Supported operators: ``=``, ``!=``, ``like``, ``not like``, ``in``,
-	``not in``, ``>``, ``<``, ``>=``, ``<=``, ``between``, ``is``
-	(set / not set).
-
-	Args:
-		query: The in-progress PyPika query builder.
-		table: The PyPika table reference to resolve field names against.
-		filter_tuple: A ``[doctype, field, op, value]`` list from the
-			Frappe report-view params.
-
-	Returns:
-		The query with the additional ``WHERE`` clause appended.
-
-	Raises:
-		frappe.ValidationError: If the operator is unsupported.
-	"""
-	_doctype, fieldname, operator, value = filter_tuple
-	field = table[fieldname]
-
-	match operator.lower().strip():
-		case "=":
-			return query.where(field == value)
-		case "!=":
-			return query.where(field != value)
-		case "like":
-			return query.where(field.like(value))
-		case "not like":
-			return query.where(field.not_like(value))
-		case "in":
-			return query.where(field.isin(value if isinstance(value, (list, tuple, set)) else [value]))
-		case "not in":
-			return query.where(field.notin(value if isinstance(value, (list, tuple, set)) else [value]))
-		case ">":
-			return query.where(field > value)
-		case "<":
-			return query.where(field < value)
-		case ">=":
-			return query.where(field >= value)
-		case "<=":
-			return query.where(field <= value)
-		case "between":
-			return query.where(field.between(value[0], value[1]))
-		case "is":
-			if value and str(value).lower() == "set":
-				return query.where(field.isnotnull())
-			return query.where(field.isnull())
-		case _:
-			frappe.throw(f"Unsupported filter operator: {operator}")
-
-	return query

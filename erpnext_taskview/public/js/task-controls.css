@@ -3,76 +3,78 @@
    Imported via JS `import` so Vite rolls it into each bundle's CSS. */
 
 .task-btn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 28px;
-	height: 28px;
-	border: none;
-	border-radius: 4px;
-	cursor: pointer;
-	font-size: 12px;
-	transition: background 0.15s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition:
+    background 0.15s,
+    transform 0.1s;
 }
 
 .task-btn:active {
-	transform: scale(0.92);
+  transform: scale(0.92);
 }
 
 .task-btn--pause {
-	background: var(--yellow-100, #fff3cd);
-	color: var(--yellow-600, #d4a017);
+  background: var(--yellow-100, #fff3cd);
+  color: var(--yellow-600, #d4a017);
 }
 
 .task-btn--pause:hover {
-	background: var(--yellow-200, #ffe69c);
+  background: var(--yellow-200, #ffe69c);
 }
 
 .task-btn--resume {
-	background: var(--blue-100, #cfe2ff);
-	color: var(--blue-600, #0d6efd);
+  background: var(--blue-100, #cfe2ff);
+  color: var(--blue-600, #0d6efd);
 }
 
 .task-btn--resume:hover {
-	background: var(--blue-200, #9ec5fe);
+  background: var(--blue-200, #9ec5fe);
 }
 
 .task-btn--stop {
-	background: var(--red-100, #f8d7da);
-	color: var(--red-600, #dc3545);
+  background: var(--red-100, #f8d7da);
+  color: var(--red-600, #dc3545);
 }
 
 .task-btn--stop:hover {
-	background: var(--red-200, #f1aeb5);
+  background: var(--red-200, #f1aeb5);
 }
 
 .task-btn--expand {
-	background: var(--blue-100, #cfe2ff);
-	color: var(--blue-600, #0d6efd);
-	font-weight: bold;
+  background: var(--blue-100, #cfe2ff);
+  color: var(--blue-600, #0d6efd);
+  font-weight: bold;
 }
 
 .task-btn--expand:hover {
-	background: var(--blue-200, #9ec5fe);
+  background: var(--blue-200, #9ec5fe);
 }
 
 .task-btn--delete {
-	background: var(--gray-100, #f8f9fa);
-	color: var(--gray-600, #6c757d);
-	font-size: 14px;
+  background: var(--gray-100, #f8f9fa);
+  color: var(--gray-600, #6c757d);
+  font-size: 14px;
 }
 
 .task-btn--delete:hover {
-	background: var(--red-100, #f8d7da);
-	color: var(--red-600, #dc3545);
+  background: var(--red-100, #f8d7da);
+  color: var(--red-600, #dc3545);
 }
 
 .task-btn--quick-entry {
-	background: var(--green-100, #d1e7dd);
-	color: var(--green-600, #198754);
-	font-size: 14px;
+  background: var(--green-100, #d1e7dd);
+  color: var(--green-600, #198754);
+  font-size: 14px;
 }
 
 .task-btn--quick-entry:hover {
-	background: var(--green-200, #a3cfbb);
+  background: var(--green-200, #a3cfbb);
 }

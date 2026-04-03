@@ -11,15 +11,14 @@
  * timers appear.  It is completely independent of the task-view list page.
  */
 
-/// <reference path="./types/frappe.d.ts" />
-import { createApp } from 'vue';
-import TimerDock from './components/TimerDock.vue';
+import { createApp } from "vue";
+import TimerDock from "./components/TimerDock.vue";
 // import './assets/style/timerdock.css';
 
 // Mount the dock once the DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-	const container = document.createElement('div');
-	container.id = 'erpnext-taskview-timer-dock';
-	document.body.appendChild(container);
-	createApp(TimerDock).mount(container);
+document.addEventListener("DOMContentLoaded", () => {
+  const container = document.createElement("div");
+  container.id = "erpnext-taskview-timer-dock";
+  document.body.appendChild(container);
+  createApp(TimerDock).mount(container);
 });

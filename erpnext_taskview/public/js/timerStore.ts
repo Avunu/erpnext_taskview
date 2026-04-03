@@ -15,43 +15,43 @@
  * shared Vue runtime.
  */
 
-import { computed, ref, type Ref } from 'vue';
+import { computed, ref, type Ref } from "vue";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface ActiveTimer {
-	name: string;
-	parent: string;
-	project: string;
-	task: string;
-	task_subject: string;
-	project_name: string;
-	from_time: string | null;
-	to_time: string | null;
-	hours: number;
-	paused: number;
-	start_time: string | null;
-	paused_time_in_seconds: number;
-	description: string;
+  name: string;
+  parent: string;
+  project: string;
+  task: string;
+  task_subject: string;
+  project_name: string;
+  from_time: string | null;
+  to_time: string | null;
+  hours: number;
+  paused: number;
+  start_time: string | null;
+  paused_time_in_seconds: number;
+  description: string;
 }
 
 // ---------------------------------------------------------------------------
 // Cross-bundle communication
 // ---------------------------------------------------------------------------
 
-const CACHE_KEY = '__erpnext_taskview_timers__';
-const EVENT_NAME = 'erpnext_taskview:timers_changed';
+const CACHE_KEY = "__erpnext_taskview_timers__";
+const EVENT_NAME = "erpnext_taskview:timers_changed";
 
 /** Write the timer list to a window-level cache for other bundles. */
 function publishToCache(list: ActiveTimer[]): void {
-	(window as any)[CACHE_KEY] = list;
+  (window as any)[CACHE_KEY] = list;
 }
 
 /** Read the timer list from the window-level cache (set by any bundle). */
 function readFromCache(): ActiveTimer[] | null {
-	return (window as any)[CACHE_KEY] ?? null;
+  return (window as any)[CACHE_KEY] ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -64,18 +64,18 @@ const loading = ref(false);
 
 /** Rebuild local refs from a timer list (shared or fetched). */
 function hydrateFromList(list: ActiveTimer[]): void {
-	const map = new Map<string, ActiveTimer>();
-	for (const t of list) {
-		map.set(t.name, t);
-	}
-	timers.value = map;
-	loaded.value = true;
+  const map = new Map<string, ActiveTimer>();
+  for (const t of list) {
+    map.set(t.name, t);
+  }
+  timers.value = map;
+  loaded.value = true;
 }
 
 // Listen for changes signalled by the other bundle
 document.addEventListener(EVENT_NAME, () => {
-	const cached = readFromCache();
-	if (cached) hydrateFromList(cached);
+  const cached = readFromCache();
+  if (cached) hydrateFromList(cached);
 });
 
 // ---------------------------------------------------------------------------
@@ -83,43 +83,41 @@ document.addEventListener(EVENT_NAME, () => {
 // ---------------------------------------------------------------------------
 
 export async function fetchTimers(): Promise<void> {
-	loading.value = true;
-	try {
-		const result = await new Promise<{ timers: ActiveTimer[] }>((resolve, reject) => {
-			frappe.call({
-				method: 'erpnext_taskview.erpnext_taskview.api.get_active_timers',
-				callback: (r: { message: { timers: ActiveTimer[] } }) => resolve(r.message),
-				error: (err: unknown) => reject(err),
-			});
-		});
-		hydrateFromList(result.timers);
-		// Share with other bundles — cache + event
-		publishToCache(result.timers);
-		document.dispatchEvent(new CustomEvent(EVENT_NAME));
-	} finally {
-		loading.value = false;
-	}
+  loading.value = true;
+  try {
+    const result = await new Promise<{ timers: ActiveTimer[] }>((resolve, reject) => {
+      frappe.call({
+        method: "erpnext_taskview.erpnext_taskview.api.get_active_timers",
+        callback: (r: { message: { timers: ActiveTimer[] } }) => resolve(r.message),
+        error: (err: unknown) => reject(err),
+      });
+    });
+    hydrateFromList(result.timers);
+    // Share with other bundles — cache + event
+    publishToCache(result.timers);
+    document.dispatchEvent(new CustomEvent(EVENT_NAME));
+  } finally {
+    loading.value = false;
+  }
 }
 
-export async function sendTimerAction(
-	detail: Record<string, unknown>,
-): Promise<unknown> {
-	loading.value = true;
-	try {
-		const payload = JSON.stringify({ doc: { doctype: 'Timesheet Detail', ...detail } });
-		const result = await new Promise<unknown>((resolve, reject) => {
-			frappe.call({
-				method: 'erpnext_taskview.erpnext_taskview.api.save_doc',
-				args: { payload },
-				callback: (r: { message: unknown }) => resolve(r.message),
-				error: (err: unknown) => reject(err),
-			});
-		});
-		await fetchTimers();
-		return result;
-	} finally {
-		loading.value = false;
-	}
+export async function sendTimerAction(detail: Record<string, unknown>): Promise<unknown> {
+  loading.value = true;
+  try {
+    const payload = JSON.stringify({ doc: { doctype: "Timesheet Detail", ...detail } });
+    const result = await new Promise<unknown>((resolve, reject) => {
+      frappe.call({
+        method: "erpnext_taskview.erpnext_taskview.api.save_doc",
+        args: { payload },
+        callback: (r: { message: unknown }) => resolve(r.message),
+        error: (err: unknown) => reject(err),
+      });
+    });
+    await fetchTimers();
+    return result;
+  } finally {
+    loading.value = false;
+  }
 }
 
 export const refreshTimers = fetchTimers;
@@ -128,21 +126,18 @@ export const refreshTimers = fetchTimers;
  * Persist a description update for an active timer without triggering
  * a full timer refresh.  Intended to be called from a debounced handler.
  */
-export async function saveTimerDescription(
-	name: string,
-	description: string,
-): Promise<void> {
-	const payload = JSON.stringify({
-		doc: { doctype: 'Timesheet Detail', name, description, update_description: 1 },
-	});
-	await new Promise<void>((resolve, reject) => {
-		frappe.call({
-			method: 'erpnext_taskview.erpnext_taskview.api.save_doc',
-			args: { payload },
-			callback: () => resolve(),
-			error: (err: unknown) => reject(err),
-		});
-	});
+export async function saveTimerDescription(name: string, description: string): Promise<void> {
+  const payload = JSON.stringify({
+    doc: { doctype: "Timesheet Detail", name, description, update_description: 1 },
+  });
+  await new Promise<void>((resolve, reject) => {
+    frappe.call({
+      method: "erpnext_taskview.erpnext_taskview.api.save_doc",
+      args: { payload },
+      callback: () => resolve(),
+      error: (err: unknown) => reject(err),
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -150,18 +145,18 @@ export async function saveTimerDescription(
 // ---------------------------------------------------------------------------
 
 export function getRunningTimer(): ActiveTimer | null {
-	for (const [, t] of timers.value) {
-		if (!t.paused) return t;
-	}
-	return null;
+  for (const [, t] of timers.value) {
+    if (!t.paused) return t;
+  }
+  return null;
 }
 
 export const timersByTask = computed(() => {
-	const map = new Map<string, ActiveTimer>();
-	for (const [, t] of timers.value) {
-		map.set(t.task, t);
-	}
-	return map;
+  const map = new Map<string, ActiveTimer>();
+  for (const [, t] of timers.value) {
+    map.set(t.task, t);
+  }
+  return map;
 });
 
 // ---------------------------------------------------------------------------

@@ -17,11 +17,7 @@ declare global {
 
     xcall: <T = any>(method: string, args?: Record<string, unknown>) => Promise<T>;
 
-    confirm: (
-      message: string,
-      onyes?: () => void,
-      onno?: () => void,
-    ) => void;
+    confirm: (message: string, onyes?: () => void, onno?: () => void) => void;
 
     prompt: (
       fields: Array<{
@@ -55,7 +51,11 @@ declare global {
     };
 
     db: {
-      get_value: <T = any>(doctype: string, filters: string | Record<string, unknown>, fieldname: string | string[]) => Promise<T>;
+      get_value: <T = any>(
+        doctype: string,
+        filters: string | Record<string, unknown>,
+        fieldname: string | string[],
+      ) => Promise<T>;
       get_list: <T = any>(doctype: string, args?: Record<string, unknown>) => Promise<T[]>;
       exists: (doctype: string, name: string | Record<string, unknown>) => Promise<boolean>;
       delete_doc: (doctype: string, name: string) => Promise<void>;
@@ -92,7 +92,12 @@ declare global {
 
     ui: {
       form: {
-        Form: new (doctype: string, wrapper: HTMLElement, read_only: boolean, docname: string) => any;
+        Form: new (
+          doctype: string,
+          wrapper: HTMLElement,
+          read_only: boolean,
+          docname: string,
+        ) => any;
       };
       toolbar: any;
       keys: {
@@ -119,4 +124,4 @@ declare global {
   function __(message: string, replace?: Record<string, string> | null, context?: string): string;
 }
 
-export { };
+export {};

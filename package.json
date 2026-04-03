@@ -9,7 +9,12 @@
     "build:taskview": "vite build",
     "build:timerdock": "BUNDLE=timerdock vite build",
     "preview": "vite preview",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "lint": "oxlint erpnext_taskview/public/js",
+    "lint:fix": "oxlint --fix erpnext_taskview/public/js",
+    "format": "oxfmt --write erpnext_taskview/public/js",
+    "format:check": "oxfmt --check erpnext_taskview/public/js",
+    "upgrade-all": "npx npm-check-updates -u && yarn install"
   },
   "dependencies": {
     "@he-tree/vue": "^2.10.2",
@@ -20,8 +25,10 @@
     "vue3-side-panel": "^1.3.0"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.5.2",
     "@vitejs/plugin-vue": "^6.0.5",
+    "oxfmt": "^0.43.0",
+    "oxlint": "^1.58.0",
     "typescript": "^6.0.2",
     "vite": "^8.0.3",
     "vue-tsc": "^3.2.6"
