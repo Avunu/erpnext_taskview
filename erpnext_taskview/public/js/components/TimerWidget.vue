@@ -24,14 +24,14 @@
 		</div>
 		<div v-if="expanded" class="timer-widget__detail">
 			<textarea v-model="description" class="timer-widget__description" placeholder="What are you working on?"
-				rows="2" @blur="saveDescription"></textarea>
+				rows="2" @input="scheduleDescriptionSave" @blur="persistDescription"></textarea>
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
-import { type ActiveTimer, sendTimerAction, getRunningTimer } from '../timerStore';
+import { type ActiveTimer, sendTimerAction, getRunningTimer, saveTimerDescription } from '../timerStore';
 import '../task-controls.css';
 
 /**
@@ -64,6 +64,8 @@ export default defineComponent({
 			tickInterval: null as ReturnType<typeof setInterval> | null,
 			/** Current tick timestamp for elapsed calculation. */
 			now: Date.now(),
+			/** Debounce timer for persisting description. */
+			descDebounce: null as ReturnType<typeof setTimeout> | null,
 		};
 	},
 
@@ -102,6 +104,10 @@ export default defineComponent({
 
 	beforeUnmount() {
 		this.stopTick();
+		if (this.descDebounce !== null) {
+			clearTimeout(this.descDebounce);
+			this.descDebounce = null;
+		}
 	},
 
 	methods: {
@@ -166,15 +172,24 @@ export default defineComponent({
 		},
 
 		/**
-		 * Persist the description field.
-		 *
-		 * Called on textarea blur. The description is stored locally and
-		 * sent along with the stop action when the timer is stopped.
-		 * (No separate save — description is committed on stop.)
+		 * Debounced save of description to the backend.
+		 * Limits saves to at most once every 30 seconds.
 		 */
-		saveDescription(): void {
-			// Description is held locally and sent with stop action.
-			// No intermediate persist to avoid noise.
+		scheduleDescriptionSave(): void {
+			if (this.descDebounce !== null) return; // already scheduled
+			this.descDebounce = setTimeout(() => {
+				this.descDebounce = null;
+				this.persistDescription();
+			}, 30_000);
+		},
+
+		/** Immediately persist the current description to the backend. */
+		async persistDescription(): Promise<void> {
+			try {
+				await saveTimerDescription(this.timer.name, this.description);
+			} catch (err) {
+				this.$emit('error', err);
+			}
 		},
 
 		/** Discard the timer entirely (delete the Timesheet Detail row). */

@@ -76,14 +76,9 @@ export default defineComponent({
 			return timers.value.size;
 		},
 
-		/** Sorted list of timers — running first, then paused. */
+		/** List of timers in creation order (no re-sorting on pause/resume). */
 		timerList(): ActiveTimer[] {
-			const arr = Array.from(timers.value.values());
-			arr.sort((a, b) => {
-				if (a.paused !== b.paused) return a.paused - b.paused;
-				return (a.task_subject || a.task).localeCompare(b.task_subject || b.task);
-			});
-			return arr;
+			return Array.from(timers.value.values());
 		},
 
 		/** Inline style for absolute positioning. */

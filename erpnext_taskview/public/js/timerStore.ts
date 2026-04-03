@@ -124,6 +124,27 @@ export async function sendTimerAction(
 
 export const refreshTimers = fetchTimers;
 
+/**
+ * Persist a description update for an active timer without triggering
+ * a full timer refresh.  Intended to be called from a debounced handler.
+ */
+export async function saveTimerDescription(
+	name: string,
+	description: string,
+): Promise<void> {
+	const payload = JSON.stringify({
+		doc: { doctype: 'Timesheet Detail', name, description, update_description: 1 },
+	});
+	await new Promise<void>((resolve, reject) => {
+		frappe.call({
+			method: 'erpnext_taskview.erpnext_taskview.api.save_doc',
+			args: { payload },
+			callback: () => resolve(),
+			error: (err: unknown) => reject(err),
+		});
+	});
+}
+
 // ---------------------------------------------------------------------------
 // Derived helpers
 // ---------------------------------------------------------------------------

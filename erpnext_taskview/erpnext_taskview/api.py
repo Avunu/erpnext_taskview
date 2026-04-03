@@ -674,6 +674,12 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> None:
 				parent_ts.delete(ignore_permissions=True)
 		return
 
+	if doc.update_description:
+		# Description-only update — persist without state transition
+		detail.description = doc.description
+		detail.save(ignore_permissions=True)
+		return
+
 	if doc.to_time:
 		# Stop — calculate final hours
 		from_time = get_datetime(detail.from_time)
