@@ -530,7 +530,9 @@ export default defineComponent({
       } else {
         locals.nodes[projectName] = true;
       }
-      this.emitInteraction();
+      if (!this.isBlank) {
+        this.emitInteraction();
+      }
       this.isEditing = false;
     },
 
