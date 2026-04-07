@@ -179,6 +179,21 @@ def get(args: str | dict | None = None) -> GetResponse:
 		for f in args.filters:
 			pq = _apply_filter(pq, Projects, f)
 
+	if args.doctype == "Task" and args.filters:
+		for f in args.filters:
+			fieldname = f[1] if isinstance(f, (list, tuple)) else f.get("fieldname", "")
+			if fieldname == "project":
+				pq = _apply_filter(
+					pq,
+					Projects,
+					[
+						f[0] if isinstance(f, (list, tuple)) else f.get("doctype", "Project"),
+						"name",
+						f[2] if isinstance(f, (list, tuple)) else f.get("operator", "="),
+						f[3] if isinstance(f, (list, tuple)) else f.get("value", ""),
+					],
+				)
+
 	projects_raw = pq.run(as_dict=True)
 	if not projects_raw:
 		return GetResponse(projects=[], tasks=[]).model_dump()
