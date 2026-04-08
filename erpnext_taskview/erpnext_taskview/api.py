@@ -287,6 +287,7 @@ def get_active_timers() -> ActiveTimersResponse:
 			TD.task,
 			Tasks.subject.as_("task_subject"),
 			Projects.project_name,
+			Projects.customer,
 			TD.from_time,
 			TD.to_time,
 			TD.hours,
@@ -511,6 +512,11 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> None:
 			assert isinstance(detail.from_time, datetime.datetime)
 			assert isinstance(detail.to_time, datetime.datetime)
 			detail.hours = (detail.to_time - detail.from_time).total_seconds() / 3600
+			if doc.activity_type:
+				detail.activity_type = doc.activity_type
+			detail.is_billable = bool(doc.is_billable)
+			if doc.completed:
+				detail.completed = 1
 		else:
 			# Start new timer
 			detail.from_time = now
@@ -551,6 +557,11 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> None:
 			from_time.timestamp() + total_seconds, tz=datetime.timezone.utc
 		).replace(tzinfo=None)
 		detail.description = doc.description or detail.description
+		if doc.activity_type:
+			detail.activity_type = doc.activity_type
+		detail.is_billable = bool(doc.is_billable)
+		if doc.completed:
+			detail.completed = 1
 
 	elif doc.paused:
 		# Pause — accumulate elapsed time

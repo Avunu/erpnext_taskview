@@ -4,6 +4,40 @@ declare global {
     frappe: typeof frappe;
   }
 
+  interface FrappeDialogField {
+    label?: string;
+    fieldname: string;
+    fieldtype: string;
+    default?: any;
+    options?: string;
+    reqd?: 0 | 1 | boolean;
+    read_only?: 0 | 1 | boolean;
+    hidden?: 0 | 1 | boolean;
+    depends_on?: string;
+    description?: string;
+  }
+
+  interface FrappeDialogOptions {
+    title: string;
+    fields?: FrappeDialogField[];
+    size?: "small" | "large" | "extra-large";
+    primary_action_label?: string;
+    primary_action?: (values: Record<string, any>) => void;
+    secondary_action_label?: string;
+    secondary_action?: () => void;
+    minimizable?: boolean;
+  }
+
+  interface FrappeDialog {
+    show(): void;
+    hide(): void;
+    get_value(fieldname: string): any;
+    set_value(fieldname: string, value: any): Promise<void>;
+    get_field(fieldname: string): any;
+    clear(): void;
+    set_title(title: string): void;
+  }
+
   var frappe: {
     call: <T = any>(options: {
       method: string;
@@ -20,13 +54,7 @@ declare global {
     confirm: (message: string, onyes?: () => void, onno?: () => void) => void;
 
     prompt: (
-      fields: Array<{
-        label: string;
-        fieldname: string;
-        fieldtype: string;
-        reqd?: boolean;
-        default?: string;
-      }>,
+      fields: FrappeDialogField[],
       callback: (values: Record<string, any>) => void,
       title?: string,
       primary_label?: string,
@@ -99,6 +127,7 @@ declare global {
           docname: string,
         ) => any;
       };
+      Dialog: new (options: FrappeDialogOptions) => FrappeDialog;
       toolbar: any;
       keys: {
         handlers: Record<string, ((e: KeyboardEvent) => void)[]>;
@@ -124,4 +153,4 @@ declare global {
   function __(message: string, replace?: Record<string, string> | null, context?: string): string;
 }
 
-export {};
+export { };

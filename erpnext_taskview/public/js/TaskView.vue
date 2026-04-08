@@ -55,18 +55,7 @@
   <div>
     <VueSidePanel v-model="isOpened" width="80%" panel-color="var(--sidebar-bg-color)">
       <div class="sidebar">
-        <!-- Form will be inserted here -->
-        <div v-if="showForm" ref="formWrapper"></div>
-
-        <!-- TimeLogger component, only shown when `showForm` is false -->
-        <TimeLogger
-          v-if="!showForm"
-          :doc="timeLoggerDoc"
-          :currentTheme="currentTheme"
-          :isOpened="isOpened"
-          :descriptionOnly="descriptionOnly"
-          @close-time-logger="closeTimeLogger"
-        ></TimeLogger>
+        <div ref="formWrapper"></div>
       </div>
     </VueSidePanel>
   </div>
@@ -77,7 +66,6 @@ import { defineComponent, type PropType } from "vue";
 import { Draggable, dragContext } from "@he-tree/vue";
 import Task from "./components/Task.vue";
 import PinnedView from "./components/PinnedView.vue";
-import TimeLogger from "./components/TimeLogger.vue";
 import { VueSidePanel } from "vue3-side-panel";
 import "vue3-side-panel/dist/vue3-side-panel.css";
 import "@he-tree/vue/style/default.css";
@@ -115,7 +103,7 @@ interface StatObject {
 
 export default defineComponent({
   name: "TaskView",
-  components: { Draggable, Task, PinnedView, VueSidePanel, TimeLogger },
+  components: { Draggable, Task, PinnedView, VueSidePanel },
 
   props: {
     docs: {
@@ -135,9 +123,6 @@ export default defineComponent({
       highlightedProject: null as TreeData | null,
       activeNode: null as TreeData | null,
       isOpened: false,
-      showForm: true,
-      timeLoggerDoc: {} as any,
-      descriptionOnly: false,
       currentTheme:
         theme === "automatic"
           ? window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -687,10 +672,10 @@ export default defineComponent({
           return;
         }
 
-        await (frappe as any).model.with_doctype(doctype);
+        await frappe.model.with_doctype(doctype);
         formWrapper.innerHTML = "";
-        const formInstance = new (frappe as any).ui.form.Form(doctype, formWrapper, true, "");
-        await (frappe as any).model.with_doc(doctype, docName);
+        const formInstance = new frappe.ui.form.Form(doctype, formWrapper, true, "");
+        await frappe.model.with_doc(doctype, docName);
         formInstance.refresh(docName);
       } catch (err) {
         console.error("Error loading form:", err);
@@ -699,22 +684,7 @@ export default defineComponent({
 
     openSidebar(payload: any): void {
       this.isOpened = true;
-
-      if ("isProject" in payload && !("descriptionOnly" in payload)) {
-        this.showForm = true;
-        this.loadForm(payload);
-      } else {
-        this.timeLoggerDoc = payload;
-        this.showForm = false;
-        this.descriptionOnly = payload.descriptionOnly ?? false;
-      }
-    },
-
-    closeTimeLogger(): void {
-      this.timeLoggerDoc = null;
-      this.showForm = true;
-      this.descriptionOnly = false;
-      this.isOpened = false;
+      this.loadForm(payload);
     },
   },
 });

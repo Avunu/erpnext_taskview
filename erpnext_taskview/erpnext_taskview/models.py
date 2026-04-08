@@ -130,6 +130,9 @@ class TimesheetDetailDoc(BaseModel):
 	start_time: datetime | None = None
 	paused_time_in_seconds: int = 0
 	description: str = ""
+	activity_type: str = ""
+	is_billable: int = 0
+	completed: int = 0
 	delete: int = 0
 	update_description: int = 0
 
@@ -201,6 +204,7 @@ class ActiveTimerDoc(BaseModel):
 	task: str
 	task_subject: str = ""
 	project_name: str = ""
+	customer: str | None = None
 	from_time: datetime | None = None
 	to_time: datetime | None = None
 	hours: float = 0

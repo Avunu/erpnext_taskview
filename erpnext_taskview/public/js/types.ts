@@ -52,6 +52,9 @@ export interface TimesheetDetailDoc {
   start_time: string | null;
   paused_time_in_seconds: number;
   description: string;
+  activity_type?: string;
+  is_billable?: number;
+  completed?: number;
 }
 
 export type FrappeDoc = ProjectDoc | TaskDoc | TimesheetDetailDoc;

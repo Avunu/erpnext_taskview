@@ -28,6 +28,7 @@ export interface ActiveTimer {
   task: string;
   task_subject: string;
   project_name: string;
+  customer: string | null;
   from_time: string | null;
   to_time: string | null;
   hours: number;

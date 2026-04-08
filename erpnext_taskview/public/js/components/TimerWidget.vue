@@ -54,6 +54,7 @@ import {
   getRunningTimer,
   saveTimerDescription,
 } from "../timerStore";
+import { showStopTimerDialog, calcElapsedHrs } from "../timerDialog";
 import { Play, Pause, Square, Trash2 } from "lucide-vue-next";
 import "../task-controls.css";
 
@@ -179,20 +180,54 @@ export default defineComponent({
     },
 
     /**
-     * Stop the timer.
-     *
-     * Sends the stop signal with the current description.
+     * Pause immediately then open the shared "Log Timer" dialog.
+     * If cancelled, the timer is resumed.
      */
     async stopTimer(): Promise<void> {
-      try {
-        await sendTimerAction({
-          name: this.timer.name,
-          to_time: new Date().toISOString(),
-          description: this.description,
-        });
-      } catch (err) {
-        this.$emit("error", err);
+      if (!this.timer.paused) {
+        try {
+          await sendTimerAction({ name: this.timer.name, paused: 1 });
+        } catch (err) {
+          this.$emit("error", err);
+          return;
+        }
       }
+
+      const timerName = this.timer.name;
+      const currentDesc = this.description;
+
+      showStopTimerDialog({
+        elapsedHrs: calcElapsedHrs(
+          this.timer.paused_time_in_seconds,
+          this.timer.paused,
+          this.timer.start_time,
+        ),
+        currentDesc,
+        taskSubject: this.timer.task_subject || this.timer.task,
+        projectName: this.timer.project_name || this.timer.project,
+        customer: this.timer.customer,
+        onSubmit: async (values) => {
+          try {
+            await sendTimerAction({
+              name: timerName,
+              to_time: new Date().toISOString(),
+              description: values.description || currentDesc || "",
+              activity_type: values.activity_type || "",
+              is_billable: values.is_billable ? 1 : 0,
+              completed: values.completed ? 1 : 0,
+            });
+          } catch (err) {
+            this.$emit("error", err);
+          }
+        },
+        onCancel: async () => {
+          try {
+            await sendTimerAction({ name: timerName, paused: 0 });
+          } catch (err) {
+            this.$emit("error", err);
+          }
+        },
+      });
     },
 
     /**

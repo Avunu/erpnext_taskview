@@ -2,7 +2,9 @@
   <div class="task" @click="emitInteraction">
     <div class="task">
       <!-- Drag handle in pinned mode -->
-      <span v-if="pinned" class="pinned-drag-handle"><GripVertical :size="16" /></span>
+      <span v-if="pinned" class="pinned-drag-handle">
+        <GripVertical :size="16" />
+      </span>
 
       <!-- Spiced-up Checkbox -->
       <div v-if="!isBlank" class="custom-checkbox task-control">
@@ -115,6 +117,7 @@ import {
   getProjectName,
 } from "../types";
 import { timersByTask, getRunningTimer, type ActiveTimer } from "../timerStore";
+import { showStopTimerDialog, calcElapsedHrs } from "../timerDialog";
 import AssignTo from "./AssignTo.vue";
 import {
   GripVertical,
@@ -383,16 +386,59 @@ export default defineComponent({
     },
 
     /**
-     * Open the sidebar in stop-timer mode (description only).
-     *
-     * The actual stop signal is sent by the TimeLogger component
-     * when the user submits the form.
+     * Pause immediately then open the shared "Log Timer" dialog.
+     * If cancelled, the timer is resumed.
      */
-    stopTimer(): void {
-      this.$emit("open-sidebar", {
-        doc: this.node.doc,
-        timesheetDetail: this.timesheetDetail,
-        descriptionOnly: true,
+    async stopTimer(): Promise<void> {
+      const timer = this.timesheetDetail;
+      if (!timer) return;
+
+      if (!timer.paused) {
+        try {
+          await this.sendTimerDoc({ name: timer.name, paused: 1 });
+        } catch (err) {
+          this.$emit("catch-error", err);
+          return;
+        }
+      }
+
+      const timerName = timer.name;
+      const currentDesc = timer.description || "";
+
+      showStopTimerDialog({
+        elapsedHrs: calcElapsedHrs(timer.paused_time_in_seconds, timer.paused, timer.start_time),
+        currentDesc,
+        taskSubject: timer.task_subject || timer.task,
+        projectName: timer.project_name || timer.project,
+        customer: timer.customer,
+        onSubmit: async (values) => {
+          try {
+            const data = await saveDoc({
+              doctype: "Timesheet Detail",
+              name: timerName,
+              to_time: new Date().toISOString(),
+              description: values.description || currentDesc,
+              activity_type: values.activity_type || "",
+              is_billable: values.is_billable ? 1 : 0,
+              completed: values.completed ? 1 : 0,
+            });
+            this.$emit("catch-success", data);
+          } catch (err) {
+            this.$emit("catch-error", err);
+          }
+        },
+        onCancel: async () => {
+          try {
+            const data = await saveDoc({
+              doctype: "Timesheet Detail",
+              name: timerName,
+              paused: 0,
+            });
+            this.$emit("catch-success", data);
+          } catch (err) {
+            this.$emit("catch-error", err);
+          }
+        },
       });
     },
 
@@ -410,20 +456,68 @@ export default defineComponent({
     },
 
     /**
-     * Either open the manual-log sidebar (stopped) or stop the timer.
+     * Either open a manual-log dialog (stopped) or stop the running timer.
      *
      * Bound to the secondary Log/Stop button in the template.
      */
     logOrStopTimer(): void {
       if (this.timerStatus === "stopped") {
-        this.$emit("open-sidebar", {
-          doc: this.node.doc,
-          timesheetDetail: this.timesheetDetail,
-          descriptionOnly: false,
-        });
+        this.logManualTime();
       } else {
         this.stopTimer();
       }
+    },
+
+    /**
+     * Show a dialog to manually log time for this task (no active timer).
+     */
+    logManualTime(): void {
+      const project = getProjectName(this.node);
+      const task = this.node.doc.name;
+
+      const d = new frappe.ui.Dialog({
+        title: "Log Time",
+        fields: [
+          {
+            label: "Activity Type",
+            fieldname: "activity_type",
+            fieldtype: "Link",
+            options: "Activity Type",
+          },
+          { label: "Hrs", fieldname: "hrs", fieldtype: "Float", reqd: 1 },
+          { label: "Description", fieldname: "description", fieldtype: "Small Text" },
+          { label: "Is Billable", fieldname: "is_billable", fieldtype: "Check" },
+          { label: "Completed", fieldname: "completed", fieldtype: "Check" },
+        ],
+        size: "small",
+        primary_action_label: "Submit",
+        primary_action: async (values: any) => {
+          if (!values.hrs) {
+            frappe.throw(__("Hours is required"));
+            return;
+          }
+          const now = new Date();
+          const fromTime = new Date(now.getTime() - values.hrs * 3600 * 1000);
+          try {
+            const data = await saveDoc({
+              doctype: "Timesheet Detail",
+              project,
+              task,
+              from_time: fromTime.toISOString(),
+              to_time: now.toISOString(),
+              description: values.description || "",
+              activity_type: values.activity_type || "",
+              is_billable: values.is_billable ? 1 : 0,
+              completed: values.completed ? 1 : 0,
+            });
+            this.$emit("catch-success", data);
+            d.hide();
+          } catch (err) {
+            this.$emit("catch-error", err);
+          }
+        },
+      });
+      d.show();
     },
 
     /** Enter inline edit mode for the subject/title. */
