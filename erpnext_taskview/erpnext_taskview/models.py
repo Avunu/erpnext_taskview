@@ -225,6 +225,20 @@ class ActiveTimersResponse(BaseModel):
 	timers: list[ActiveTimerDoc]
 
 
+class SaveDocResponse(GetResponse):
+	"""Response from ``save_doc`` augmented with optional status messages.
+
+	Attributes:
+		alert: Short success message to display via ``frappe.show_alert``. ``None`` for
+			non-logging mutations (pause, resume, etc.).
+		notice: Informational message to display via ``frappe.msgprint``,
+			e.g. when a task cannot be completed due to open subtasks.
+	"""
+
+	alert: str | None = None
+	notice: str | None = None
+
+
 # ---------------------------------------------------------------------------
 # save_doc request — carries optional children for reparenting
 # ---------------------------------------------------------------------------

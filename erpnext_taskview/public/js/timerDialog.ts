@@ -29,8 +29,8 @@ export interface StopTimerDialogOptions {
 	projectName: string;
 	/** Customer name for the context header (optional). */
 	customer?: string | null;
-	/** Called when the user submits the form. Should stop the timer. */
-	onSubmit: (values: StopTimerValues) => Promise<void>;
+	/** Called when the user submits the form. Should stop the timer and return status messages. */
+	onSubmit: (values: StopTimerValues) => Promise<{ alert?: string; notice?: string }>;
 	/** Called when the user cancels. Should resume the timer. */
 	onCancel: () => Promise<void>;
 }
@@ -88,8 +88,18 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 		size: "small",
 		primary_action_label: "Submit",
 		primary_action: async (values: Record<string, any>) => {
-			await onSubmit(values as StopTimerValues);
-			d.hide();
+			try {
+				const status = await onSubmit(values as StopTimerValues);
+				d.hide();
+				if (status?.alert) {
+					frappe.show_alert({ message: status.alert, indicator: "green" });
+				}
+				if (status?.notice) {
+					frappe.msgprint({ message: status.notice, title: "Notice" });
+				}
+			} catch (err) {
+				frappe.throw(String(err));
+			}
 		},
 		secondary_action_label: "Cancel",
 		secondary_action: async () => {

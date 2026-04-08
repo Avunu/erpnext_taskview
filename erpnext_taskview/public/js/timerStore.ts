@@ -16,6 +16,7 @@
  */
 
 import { computed, ref, type Ref } from "vue";
+import { type SaveDocResponse } from "./types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -102,15 +103,15 @@ export async function fetchTimers(): Promise<void> {
   }
 }
 
-export async function sendTimerAction(detail: Record<string, unknown>): Promise<unknown> {
+export async function sendTimerAction(detail: Record<string, unknown>): Promise<SaveDocResponse> {
   loading.value = true;
   try {
     const payload = JSON.stringify({ doc: { doctype: "Timesheet Detail", ...detail } });
-    const result = await new Promise<unknown>((resolve, reject) => {
+    const result = await new Promise<SaveDocResponse>((resolve, reject) => {
       frappe.call({
         method: "erpnext_taskview.erpnext_taskview.api.save_doc",
         args: { payload },
-        callback: (r: { message: unknown }) => resolve(r.message),
+        callback: (r: { message: SaveDocResponse }) => resolve(r.message),
         error: (err: unknown) => reject(err),
       });
     });

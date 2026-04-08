@@ -207,18 +207,15 @@ export default defineComponent({
         projectName: this.timer.project_name || this.timer.project,
         customer: this.timer.customer,
         onSubmit: async (values) => {
-          try {
-            await sendTimerAction({
-              name: timerName,
-              to_time: new Date().toISOString(),
-              description: values.description || currentDesc || "",
-              activity_type: values.activity_type || "",
-              is_billable: values.is_billable ? 1 : 0,
-              completed: values.completed ? 1 : 0,
-            });
-          } catch (err) {
-            this.$emit("error", err);
-          }
+          const result = await sendTimerAction({
+            name: timerName,
+            to_time: new Date().toISOString(),
+            description: values.description || currentDesc || "",
+            activity_type: values.activity_type || "",
+            is_billable: values.is_billable ? 1 : 0,
+            completed: values.completed ? 1 : 0,
+          });
+          return { alert: result.alert, notice: result.notice };
         },
         onCancel: async () => {
           try {

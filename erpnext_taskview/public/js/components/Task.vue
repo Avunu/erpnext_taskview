@@ -412,20 +412,17 @@ export default defineComponent({
         projectName: timer.project_name || timer.project,
         customer: timer.customer,
         onSubmit: async (values) => {
-          try {
-            const data = await saveDoc({
-              doctype: "Timesheet Detail",
-              name: timerName,
-              to_time: new Date().toISOString(),
-              description: values.description || currentDesc,
-              activity_type: values.activity_type || "",
-              is_billable: values.is_billable ? 1 : 0,
-              completed: values.completed ? 1 : 0,
-            });
-            this.$emit("catch-success", data);
-          } catch (err) {
-            this.$emit("catch-error", err);
-          }
+          const data = await saveDoc({
+            doctype: "Timesheet Detail",
+            name: timerName,
+            to_time: new Date().toISOString(),
+            description: values.description || currentDesc,
+            activity_type: values.activity_type || "",
+            is_billable: values.is_billable ? 1 : 0,
+            completed: values.completed ? 1 : 0,
+          });
+          this.$emit("catch-success", data);
+          return { alert: data.alert, notice: data.notice };
         },
         onCancel: async () => {
           try {

@@ -54,6 +54,7 @@ from .models import (
 	GetResponse,
 	ProjectDoc,
 	SaveDocRequest,
+	SaveDocResponse,
 	TaskDoc,
 	TimesheetDetailDoc,
 )
@@ -464,7 +465,7 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 # ── Timesheet Detail ─────────────────────────────────────────
 
 
-def _save_timesheet_detail(doc: TimesheetDetailDoc) -> None:
+def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 	"""Handle all timer operations by inspecting the doc fields.
 
 	Instead of an explicit action enum, the backend derives the intended
@@ -524,7 +525,10 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> None:
 			detail.paused = False
 
 		detail.save(ignore_permissions=True)
-		return
+		return {
+			"alert": f"Logged {detail.hours:.2f} hrs" if doc.from_time and doc.to_time else None,
+			"notice": None,
+		}
 
 	# Existing detail — load and apply state transition
 	detail = cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", doc.name))
@@ -560,8 +564,20 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> None:
 		if doc.activity_type:
 			detail.activity_type = doc.activity_type
 		detail.is_billable = bool(doc.is_billable)
-		if doc.completed:
-			detail.completed = 1
+
+		notice: str | None = None
+		if doc.completed and detail.task:
+			open_subtasks = frappe.db.count(
+				"Task", {"parent_task": detail.task, "status": ["!=", "Completed"]}
+			)
+			if open_subtasks:
+				notice = f"This task has {open_subtasks} open subtask(s) and cannot be marked as Completed."
+			else:
+				detail.completed = 1
+				frappe.db.set_value("Task", detail.task, "status", "Completed")
+
+		detail.save(ignore_permissions=True)
+		return {"alert": f"Logged {detail.hours:.2f} hrs", "notice": notice}
 
 	elif doc.paused:
 		# Pause — accumulate elapsed time
@@ -578,6 +594,7 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> None:
 		detail.paused = False
 
 	detail.save(ignore_permissions=True)
+	return {"alert": None, "notice": None}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -586,7 +603,7 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> None:
 
 
 @frappe.whitelist()
-def save_doc(payload: str, form_params: str | None = None) -> GetResponse:
+def save_doc(payload: str, form_params: str | None = None) -> SaveDocResponse:
 	"""Save a document (Project, Task, or Timesheet Detail).
 
 	Accepts a JSON string conforming to :class:`SaveDocRequest`::
@@ -613,16 +630,17 @@ def save_doc(payload: str, form_params: str | None = None) -> GetResponse:
 	"""
 	req = SaveDocRequest(**json.loads(payload))
 
+	status: dict[str, str | None] = {"alert": None, "notice": None}
 	match req.doc.doctype:
 		case "Project":
 			_save_project(cast(ProjectDoc, req.doc))
 		case "Task":
 			_save_task(cast(TaskDoc, req.doc), req.children)
 		case "Timesheet Detail":
-			_save_timesheet_detail(cast(TimesheetDetailDoc, req.doc))
+			status = _save_timesheet_detail(cast(TimesheetDetailDoc, req.doc))
 
 	frappe.db.commit()
-	return get(form_params)
+	return SaveDocResponse(**get(form_params), **status).model_dump()
 
 
 # ─────────────────────────────────────────────────────────────

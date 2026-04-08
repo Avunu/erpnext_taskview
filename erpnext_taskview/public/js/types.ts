@@ -68,6 +68,11 @@ export interface GetResponse {
   tasks: TaskDoc[];
 }
 
+export interface SaveDocResponse extends GetResponse {
+  alert?: string;
+  notice?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Tree node — minimal wrapper for @he-tree/vue
 // ---------------------------------------------------------------------------
@@ -117,7 +122,7 @@ function getFormParams(): string | undefined {
   return JSON.stringify(params);
 }
 
-export function saveDoc(doc: Partial<FrappeDoc>, children?: TaskDoc[]): Promise<GetResponse> {
+export function saveDoc(doc: Partial<FrappeDoc>, children?: TaskDoc[]): Promise<SaveDocResponse> {
   const payload: Record<string, unknown> = { doc };
   if (children) payload.children = children;
 
@@ -129,7 +134,7 @@ export function saveDoc(doc: Partial<FrappeDoc>, children?: TaskDoc[]): Promise<
     frappe.call({
       method: "erpnext_taskview.erpnext_taskview.api.save_doc",
       args,
-      callback: (r: { message: GetResponse }) => resolve(r.message),
+      callback: (r: { message: SaveDocResponse }) => resolve(r.message),
       error: (err: unknown) => reject(err),
     });
   });
