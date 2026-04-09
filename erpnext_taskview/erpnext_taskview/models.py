@@ -47,6 +47,15 @@ class ProjectDoc(BaseModel):
 	status: str = "Open"
 	idx: int | None = None
 	customer: str | None = ""
+	creation: datetime | str | None = None
+	modified: datetime | str | None = None
+
+	@field_validator("creation", "modified", mode="before")
+	@classmethod
+	def coerce_datetime(cls, v: datetime | str | None) -> str | None:
+		if isinstance(v, datetime):
+			return v.isoformat()
+		return v
 
 
 class TaskDoc(BaseModel):
@@ -79,8 +88,17 @@ class TaskDoc(BaseModel):
 	assigned_to: list[str] = Field(default_factory=list, alias="_assign")
 	todo_name: str | None = None
 	pin_idx: int | None = None
+	creation: datetime | str | None = None
+	modified: datetime | str | None = None
 
 	model_config = {"populate_by_name": True}
+
+	@field_validator("creation", "modified", mode="before")
+	@classmethod
+	def coerce_datetime(cls, v: datetime | str | None) -> str | None:
+		if isinstance(v, datetime):
+			return v.isoformat()
+		return v
 
 	@field_validator("assigned_to", mode="before")
 	@classmethod

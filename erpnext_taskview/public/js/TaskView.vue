@@ -161,6 +161,7 @@ export default defineComponent({
             : "light"
           : theme,
       sideTimersElement: null as HTMLElement | null,
+      manualSort: true,
     };
   },
 
@@ -189,33 +190,25 @@ export default defineComponent({
     // ── Tree assembly ─────────────────────────────────────
 
     buildTree(data: GetResponse): TreeData[] {
+      // Data arrives pre-sorted from the backend; the two-pass map approach
+      // preserves that order naturally in each node's children array.
       const nodes = new Map<string, TreeData>();
-      // Sort projects by idx before inserting so root order is stable
-      const sortedProjects = [...data.projects].sort((a, b) => (a.idx ?? 0) - (b.idx ?? 0));
       const root: TreeData[] = [];
-      for (const p of sortedProjects) {
+      for (const p of data.projects) {
         const node: TreeData = { doc: p, children: [] };
         nodes.set(p.name, node);
         root.push(node);
       }
-      // First pass: create all task nodes (no attachment yet)
+      // First pass: create all task nodes
       for (const t of data.tasks) {
         nodes.set(t.name, { doc: t, children: [] });
       }
-      // Second pass: attach children to parents (order of iteration = lft order = parents first)
+      // Second pass: attach — push order == backend sort order
       for (const t of data.tasks) {
         const node = nodes.get(t.name)!;
         const parentKey = t.parent_task || t.project;
         const parent = nodes.get(parentKey);
         if (parent) parent.children.push(node);
-      }
-      // Sort each node's children by idx so drag-ordered positions are honoured
-      for (const node of nodes.values()) {
-        if (node.children.length > 1) {
-          node.children.sort(
-            (a, b) => ((a.doc as TaskDoc).idx ?? 0) - ((b.doc as TaskDoc).idx ?? 0),
-          );
-        }
       }
       return root;
     },
@@ -270,6 +263,11 @@ export default defineComponent({
         projects: data.projects.filter((p) => includedProjects.has(p.name)),
         tasks: data.tasks.filter((t) => includedTasks.has(t.name)),
       };
+    },
+
+    /** Called by the list bundle when the sort selector changes. */
+    setSortMode(isManual: boolean): void {
+      this.manualSort = isManual;
     },
 
     setViewMode(mode: "all" | "my_tasks" | "pinned"): void {
@@ -454,10 +452,10 @@ export default defineComponent({
         stat.droppable = false;
         stat.dragOpen = false;
       } else if (isProject) {
-        // Projects are draggable at root level but not droppable into other projects
-        stat.disableDrag = false;
+        // Projects are only draggable in Manual sort mode
+        stat.disableDrag = !this.manualSort;
         stat.disableDrop = false;
-        stat.draggable = true;
+        stat.draggable = this.manualSort;
         stat.droppable = true;
         stat.dragOpen = true;
       } else if (hasActiveTimer || runningChildren) {
@@ -466,9 +464,10 @@ export default defineComponent({
         stat.droppable = true;
         stat.dragOpen = true;
       } else {
-        stat.disableDrag = false;
+        // Tasks are only draggable in Manual sort mode
+        stat.disableDrag = !this.manualSort;
         stat.disableDrop = false;
-        stat.draggable = true;
+        stat.draggable = this.manualSort;
         stat.droppable = true;
         stat.dragOpen = true;
       }
@@ -823,6 +822,39 @@ export default defineComponent({
 </script>
 
 <style>
+/* ── Sort bar ──────────────────────────────────────────────── */
+.tv-sort-bar {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.sort-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tv-sort-select {
+  height: 26px;
+  padding: 2px 6px;
+  font-size: 12px;
+  border: 1px solid var(--border-color, #d1d8dd);
+  border-radius: 4px;
+  background: var(--control-bg, #fff);
+  color: var(--text-color, #333);
+  cursor: pointer;
+}
+
+.tv-sort-order {
+  height: 26px;
+  padding: 2px 7px;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* ── Tree ──────────────────────────────────────────────────── */
 .tree-container {
   /* Adjusts overall tree font size */
   font-size: 14px;

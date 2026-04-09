@@ -46,6 +46,7 @@ from frappe.desk.reportview import get_form_params
 from frappe.query_builder import DocType, Table
 from frappe.types.frappedict import _dict
 from frappe.utils.data import get_datetime
+from pypika.enums import Order
 
 from .custom.timesheet_detail import TimesheetDetail
 from .models import (
@@ -62,6 +63,38 @@ from .models import (
 # ─────────────────────────────────────────────────────────────
 #  Helpers
 # ─────────────────────────────────────────────────────────────
+
+
+_PROJECT_SORT_FIELDS = frozenset({"idx", "creation", "modified", "project_name", "status", "customer"})
+_TASK_SORT_FIELDS = frozenset({"idx", "creation", "modified", "subject", "status", "priority"})
+
+
+def _parse_sort(args: _dict) -> tuple[str, Order]:
+	"""Extract (field_name, Order) from form-params args.
+
+	Handles two sources:
+	- ``sort_by`` / ``sort_order`` sent by our own ``getFormParams()``.
+	- ``order_by`` SQL string sent by Frappe's ListView, e.g.
+		``'`tabProject`.`creation` desc, `tabProject`.`name` desc'``.
+
+	Defaults to ``("idx", Order.asc)``.
+	"""
+	if args.get("sort_by"):
+		direction = Order.desc if (args.get("sort_order") or "asc").lower() == "desc" else Order.asc
+		return str(args.sort_by), direction
+
+	order_by = args.get("order_by")
+	if order_by:
+		first = order_by.split(",")[0].strip()
+		if "." in first:
+			first = first.split(".", 1)[1]
+		parts = first.split()
+		if parts:
+			fieldname = parts[0].strip("`")
+			direction = Order.desc if len(parts) >= 2 and parts[1].lower() == "desc" else Order.asc
+			return fieldname, direction
+
+	return "idx", Order.asc
 
 
 def _apply_filter(query: Any, table: Table, filter_tuple: list) -> Any:
@@ -172,9 +205,16 @@ def get(args: str | dict | None = None) -> GetResponse:
 			Projects.status,
 			Projects.idx,
 			Projects.customer,
+			Projects.creation,
+			Projects.modified,
 		)
 		.where(Projects.docstatus == 0)
-		.orderby(Projects.idx)
+	)
+
+	p_sort_field, p_order = _parse_sort(args)
+	pq = pq.orderby(
+		Projects[p_sort_field] if p_sort_field in _PROJECT_SORT_FIELDS else Projects.idx,
+		order=p_order,
 	)
 
 	if args.doctype == "Project" and args.filters:
@@ -225,13 +265,20 @@ def get(args: str | dict | None = None) -> GetResponse:
 			Tasks.is_group,
 			Tasks.priority,
 			Tasks.idx,
+			Tasks.creation,
+			Tasks.modified,
 			Tasks._assign,
 			TD.name.as_("todo_name"),
 			TD.idx.as_("pin_idx"),
 		)
 		.where(Tasks.docstatus == 0)
 		.where(Tasks.project.isin(project_names))
-		.orderby(Tasks.lft)
+	)
+
+	t_sort_field, t_order = _parse_sort(args)
+	tq = tq.orderby(
+		Tasks[t_sort_field] if t_sort_field in _TASK_SORT_FIELDS else Tasks.lft,
+		order=t_order,
 	)
 
 	if args.doctype == "Task" and args.filters:

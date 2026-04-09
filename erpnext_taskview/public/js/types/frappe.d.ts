@@ -142,6 +142,10 @@ declare global {
 
     get_doc: <T extends Record<string, any> = Record<string, any>>(doctype: string, name: string) => T;
     get_meta: (doctype: string) => FrappeMeta;
+    meta: {
+      get_label: (doctype: string, fieldname: string) => string;
+      [key: string]: any;
+    };
     provide: (namespace: string) => void;
     new_doc: (doctype: string, options?: Record<string, unknown>) => void;
 
@@ -163,6 +167,25 @@ declare global {
       };
       Dialog: new (options: FrappeDialogOptions) => FrappeDialog;
       toolbar: any;
+      SortSelector: new (opts: {
+        parent: any;
+        doctype?: string;
+        args?: Record<string, any>;
+        change?: (sort_by: string, sort_order: string) => void;
+        onchange?: (sort_by: string, sort_order: string) => void;
+        [key: string]: any;
+      }) => {
+        sort_by: string;
+        sort_order: string;
+        args: { options: Array<{ fieldname: string; label?: string }>;[key: string]: any };
+        wrapper: any;
+        labels: Record<string, string>;
+        doctype: string;
+        set_value(sort_by: string, sort_order: string): void;
+        get_label(fieldname: string): string;
+        [key: string]: any;
+      };
+      TaskViewSortSelector: any;
       keys: {
         handlers: Record<string, ((e: KeyboardEvent) => void)[]>;
         add_shortcut: (options: {

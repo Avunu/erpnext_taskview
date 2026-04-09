@@ -10,8 +10,7 @@
 import { useLocalStorage } from "@vueuse/core";
 import type { RemovableRef } from "@vueuse/core";
 
-function storageKey(): string {
-	// frappe.session.user is available by the time any component mounts
+function treeStorageKey(): string {
 	const user = frappe.session?.user ?? "guest";
 	return `erpnext_taskview:tree_state:${user}`;
 }
@@ -19,4 +18,4 @@ function storageKey(): string {
 /** Reactive record of expanded/collapsed state keyed by doc name. */
 export const treeNodes: RemovableRef<Record<string, boolean>> = useLocalStorage<
 	Record<string, boolean>
->(storageKey(), {});
+>(treeStorageKey(), {});

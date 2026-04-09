@@ -24,6 +24,8 @@ export interface ProjectDoc {
   status: string;
   idx?: number;
   customer: string;
+  creation?: string;
+  modified?: string;
 }
 
 export interface TaskDoc {
@@ -39,6 +41,8 @@ export interface TaskDoc {
   assigned_to: string[];
   todo_name: string | null;
   pin_idx: number | null;
+  creation?: string;
+  modified?: string;
 }
 
 export interface TimesheetDetailDoc {
@@ -111,7 +115,7 @@ export function getProjectName(node: TreeNode): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Capture the current list-view's form params (doctype, filters, etc.)
+ * Capture the current list-view's form params (doctype, filters, sort, etc.)
  * so mutation endpoints can forward them to `get()` on the backend.
  */
 function getFormParams(): string | undefined {
@@ -121,6 +125,10 @@ function getFormParams(): string | undefined {
   if (list.doctype) params.doctype = list.doctype;
   if (list.filters) params.filters = list.get_filters_for_args?.() ?? list.filters;
   if (list.or_filters) params.or_filters = list.or_filters;
+  if (list.sort_selector) {
+    params.sort_by = list.sort_selector.sort_by;
+    params.sort_order = list.sort_selector.sort_order;
+  }
   return JSON.stringify(params);
 }
 
@@ -144,8 +152,12 @@ export function saveDoc(doc: Partial<FrappeDoc>, children?: TaskDoc[]): Promise<
 
 export function fetchData(): Promise<GetResponse> {
   return new Promise((resolve, reject) => {
+    const callArgs: Record<string, string> = {};
+    const fp = getFormParams();
+    if (fp) callArgs.args = fp;
     frappe.call({
       method: "erpnext_taskview.erpnext_taskview.api.get",
+      args: callArgs,
       callback: (r: { message: GetResponse }) => resolve(r.message),
       error: (err: unknown) => reject(err),
     });

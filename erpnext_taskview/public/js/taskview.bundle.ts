@@ -2,10 +2,26 @@ import { createApp } from "vue";
 import TaskView from "./TaskView.vue";
 import ViewModeSwitcher from "./components/ViewModeSwitcher.vue";
 import type { ViewMode } from "./components/ViewModeSwitcher.vue";
+import { fetchData } from "./types";
 
 frappe.provide("frappe.views");
 frappe.provide("frappe.ui.toolbar");
 frappe.provide("frappe.ui.form");
+
+class TaskViewSortSelector extends (frappe.ui.SortSelector as any) {
+	constructor(opts: Record<string, any>) {
+		super(opts);
+	}
+	get_label(fieldname: string): string {
+		if (fieldname === "idx") {
+			return __("Manual");
+		} else {
+			return (this as any).labels[fieldname] || frappe.meta.get_label((this as any).doctype, fieldname);
+		}
+	}
+}
+(frappe.ui as any).TaskViewSortSelector = TaskViewSortSelector;
+
 
 frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListViewSelect {
     setup_views() {
@@ -54,9 +70,9 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
             fields: null,
         };
         this.method = "erpnext_taskview.erpnext_taskview.api.get";
-
-        // TODO: set Task View as the current view in the dropdown and add list view to the list of views
-        // use setup_view_menu() from base_list.js?
+        // Default to Manual (idx) sort — matches our drag-and-drop ordering
+        this.sort_by = "idx";
+        this.sort_order = "asc";
     }
 
     setup_page() {
@@ -88,6 +104,31 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         // ── View mode toggle (Vue) ──────────────────────────
         this.mountModeSwitcher();
     }
+
+	setup_sort_selector() {
+		if (this.hide_sort_selector) return;
+		this.sort_selector = new TaskViewSortSelector({
+			parent: this.$filter_section,
+			doctype: this.doctype,
+			args: {
+				sort_by: this.sort_by,
+				sort_order: this.sort_order,
+			},
+			onchange: this.on_sort_change.bind(this),
+		});
+	}
+
+	on_sort_change(sort_by: string, sort_order: string) {
+		this.sort_by = sort_by;
+		this.sort_order = sort_order;
+		const isManual = sort_by === "idx";
+		fetchData().then((data) => {
+			if (this.taskViewInstance) {
+				this.taskViewInstance.setSortMode(isManual);
+				this.taskViewInstance.premount(data);
+			}
+		});
+	}
 
     mountModeSwitcher() {
         const el = document.createElement("div");
@@ -135,6 +176,7 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         // Mount TaskView directly as the root component
         const app = createApp(TaskView, { docs: this.taskViewData });
         this.taskViewInstance = app.mount(container);
+        this.taskViewInstance.setSortMode(this.sort_by === "idx");
     }
 };
 
