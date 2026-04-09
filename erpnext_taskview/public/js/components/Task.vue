@@ -523,7 +523,7 @@ export default defineComponent({
       this.isEditing = true;
       this.editedText = this.isBlank ? "" : this.displayText;
       nextTick(() => {
-        const inputElement = document.querySelector(".task-subject-edit") as HTMLInputElement;
+        const inputElement = this.$el.querySelector(".task-subject-edit") as HTMLInputElement;
         if (inputElement) inputElement.focus();
       });
     },

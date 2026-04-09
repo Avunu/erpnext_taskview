@@ -34,6 +34,7 @@ export interface TaskDoc {
   status: string;
   is_group: number;
   priority: string;
+  idx?: number;
   assigned_to: string[];
   todo_name: string | null;
   pin_idx: number | null;

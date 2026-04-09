@@ -195,12 +195,24 @@ export default defineComponent({
         nodes.set(p.name, node);
         root.push(node);
       }
+      // First pass: create all task nodes (no attachment yet)
       for (const t of data.tasks) {
-        const node: TreeData = { doc: t, children: [] };
-        nodes.set(t.name, node);
+        nodes.set(t.name, { doc: t, children: [] });
+      }
+      // Second pass: attach children to parents (order of iteration = lft order = parents first)
+      for (const t of data.tasks) {
+        const node = nodes.get(t.name)!;
         const parentKey = t.parent_task || t.project;
         const parent = nodes.get(parentKey);
         if (parent) parent.children.push(node);
+      }
+      // Sort each node's children by idx so drag-ordered positions are honoured
+      for (const node of nodes.values()) {
+        if (node.children.length > 1) {
+          node.children.sort(
+            (a, b) => ((a.doc as TaskDoc).idx ?? 0) - ((b.doc as TaskDoc).idx ?? 0),
+          );
+        }
       }
       return root;
     },
@@ -342,6 +354,13 @@ export default defineComponent({
       const parentIsProject = parentDoc.doctype === "Project";
 
       taskDoc.parent_task = parentIsProject ? null : parentDoc.name;
+
+      // Determine 1-based position among real (non-blank) siblings after drop
+      const postDropSiblings = ((draggedStat.parent.children || []) as StatObject[]).filter(
+        (s) => s.data?.doc?.name,
+      );
+      const newIdx = postDropSiblings.indexOf(draggedStat) + 1;
+      if (newIdx > 0) taskDoc.idx = newIdx;
 
       const draggedProject = getProjectName(draggedStat.data);
       const parentProject = getProjectName(parentData);
@@ -608,8 +627,12 @@ export default defineComponent({
       const isProject = node.doc.doctype === "Project";
       const isBlank = !node.doc.name;
 
+      // Clicking a blank node should never reposition it — the blank is
+      // already in the correct place and the user is about to type into it.
+      if (isBlank) return;
+
       if (isProject) {
-        if (!isBlank && node.doc.status !== "Completed") {
+        if (node.doc.status !== "Completed") {
           this.highlightedProject = node;
         } else {
           return;
@@ -621,12 +644,12 @@ export default defineComponent({
         }
       }
 
-      // Track the active node and re-place the blank at the right level
-      this.activeNode = isBlank ? null : node;
+      // Track the active node and re-place the blank as its child
+      this.activeNode = node;
       this.stripBlanks(this.treeData);
 
       let targetParent: TreeData | null = null;
-      if (!isBlank && !isProject) {
+      if (!isProject) {
         // Task selected → blank as its child
         targetParent = this.findParentNode(this.treeData, node.doc.name);
       } else if (this.highlightedProject?.doc.name) {

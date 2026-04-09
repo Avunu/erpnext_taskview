@@ -223,6 +223,7 @@ def get(args: str | dict | None = None) -> GetResponse:
 			Tasks.status,
 			Tasks.is_group,
 			Tasks.priority,
+			Tasks.idx,
 			Tasks._assign,
 			TD.name.as_("todo_name"),
 			TD.idx.as_("pin_idx"),
@@ -356,6 +357,48 @@ def _update_children_project(children: list[TaskDoc], project: str) -> None:
 			frappe.db.set_value("Task", child.name, {"project": project})
 
 
+def _reorder_siblings(
+	task_name: str,
+	parent_task: str | None,
+	project: str,
+	new_idx: int,
+) -> None:
+	"""Shift sibling ``idx`` values to make room for the moved task.
+
+	All sibling tasks sharing the same ``parent_task`` and ``project``
+	that have ``idx >= new_idx`` (excluding the moved task itself) are
+	incremented by one, then the moved task is assigned ``new_idx``.
+
+	This leaves gaps in ``idx`` values over time, which is harmless —
+	sorting by ``idx`` is stable regardless of gaps.
+
+	Args:
+		task_name: The Frappe name of the task being repositioned.
+		parent_task: The (new) parent task name, or ``None`` for project-root tasks.
+		project: The project the task belongs to.
+		new_idx: The 1-based target sibling position.
+	"""
+	Tasks = cast(Table, DocType("Task"))
+
+	# Bump all siblings at the target slot or higher (excluding the moved task)
+	q = (
+		frappe.qb.update(Tasks)
+		.set(Tasks.idx, Tasks.idx + 1)
+		.where(Tasks.name != task_name)
+		.where(Tasks.project == project)
+		.where(Tasks.idx >= new_idx)
+		.where(Tasks.docstatus == 0)
+	)
+	if parent_task:
+		q = q.where(Tasks.parent_task == parent_task)
+	else:
+		q = q.where(Tasks.parent_task.isnull())
+	q.run()
+
+	# Place the moved task at the target slot
+	frappe.db.set_value("Task", task_name, "idx", new_idx)
+
+
 # ── Task ──────────────────────────────────────────────────────
 
 
@@ -395,6 +438,10 @@ def _save_task(doc: TaskDoc, children: list[TaskDoc] | None = None) -> None:
 			_update_children_project(children, doc.project)
 
 		frappe.db.set_value("Task", doc.name, update_fields)
+
+		# Reorder siblings when a drag operation supplies a target position
+		if doc.idx is not None and doc.project:
+			_reorder_siblings(doc.name, doc.parent_task, doc.project, doc.idx)
 	else:
 		new_doc: dict[str, Any] = {
 			"doctype": "Task",

@@ -74,6 +74,7 @@ class TaskDoc(BaseModel):
 	status: str = "Open"
 	is_group: int = 0
 	priority: str = "Medium"
+	idx: int | None = None
 	assigned_to: list[str] = Field(default_factory=list, alias="_assign")
 	todo_name: str | None = None
 	pin_idx: int | None = None
