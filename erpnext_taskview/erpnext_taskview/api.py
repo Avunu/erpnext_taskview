@@ -420,7 +420,7 @@ def _reorder_siblings(
 		.set(Tasks.idx, Tasks.idx + 1)
 		.where(Tasks.name != task_name)
 		.where(Tasks.project == project)
-		.where(Tasks.idx >= new_idx)
+		.where(Tasks.idx >= new_idx | Tasks.idx.isnull())
 		.where(Tasks.docstatus == 0)
 	)
 	if parent_task:
