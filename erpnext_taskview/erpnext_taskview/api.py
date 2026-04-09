@@ -420,7 +420,7 @@ def _reorder_siblings(
 		.set(Tasks.idx, Tasks.idx + 1)
 		.where(Tasks.name != task_name)
 		.where(Tasks.project == project)
-		.where(Tasks.idx >= new_idx | Tasks.idx.isnull())
+		.where(Tasks.idx >= new_idx)
 		.where(Tasks.docstatus == 0)
 	)
 	if parent_task:
@@ -428,6 +428,16 @@ def _reorder_siblings(
 	else:
 		q = q.where(Tasks.parent_task.isnull())
 	q.run()
+
+	# set the idx on all tasks where the idx is null
+	(
+		frappe.qb.update(Tasks)
+		.set(Tasks.idx, new_idx - 1)
+		.where(Tasks.name == task_name)
+		.where(Tasks.project == project)
+		.where(Tasks.docstatus == 0)
+		.where(Tasks.idx.isnull())
+	).run()
 
 	# Place the moved task at the target slot
 	frappe.db.set_value("Task", task_name, "idx", new_idx)
