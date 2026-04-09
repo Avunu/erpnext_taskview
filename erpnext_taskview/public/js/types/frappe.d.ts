@@ -4,6 +4,32 @@ declare global {
     frappe: typeof frappe;
   }
 
+  interface FrappeMeta {
+    name: string;
+    doctype: string;
+    istable?: 0 | 1;
+    hide_toolbar?: 0 | 1;
+    in_dialog?: 0 | 1;
+    is_submittable?: 0 | 1;
+    track_changes?: 0 | 1;
+    quick_entry?: 0 | 1;
+    fields: FrappeDocField[];
+    [key: string]: any;
+  }
+
+  interface FrappeDocField {
+    fieldname: string;
+    fieldtype: string;
+    label?: string;
+    options?: string;
+    reqd?: 0 | 1;
+    read_only?: 0 | 1;
+    hidden?: 0 | 1;
+    in_list_view?: 0 | 1;
+    in_filter?: 0 | 1;
+    [key: string]: any;
+  }
+
   interface FrappeDialogField {
     label?: string;
     fieldname: string;
@@ -105,9 +131,16 @@ declare global {
       can_write: (doctype: string) => boolean;
       can_delete: (doctype: string) => boolean;
       can_create: (doctype: string) => boolean;
+      on: (
+        doctype: string,
+        fieldname: string,
+        handler: (fieldname: string, value: unknown, doc: any) => void,
+      ) => void;
+      off: (doctype: string, fieldname: string) => void;
     };
 
     get_doc: <T = any>(doctype: string, name: string) => Promise<T>;
+    get_meta: (doctype: string) => FrappeMeta;
     provide: (namespace: string) => void;
     new_doc: (doctype: string, options?: Record<string, unknown>) => void;
 

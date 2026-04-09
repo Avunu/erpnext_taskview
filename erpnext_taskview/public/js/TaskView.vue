@@ -53,10 +53,36 @@
     />
   </div>
   <div>
-    <VueSidePanel v-model="isOpened" width="80%" panel-color="var(--sidebar-bg-color)">
-      <div class="sidebar">
+    <VueSidePanel v-model="isOpened" width="930px" hide-close-btn>
+      <template #header>
+        <div class="page-head flex">
+          <div class="container">
+            <div class="row flex-nowrap align-center page-head-content justify-between">
+              <div class="page-title">
+                <div class="flex fill-width title-area ellipsis">
+                  <ul class="nav d-sm-flex navbar-breadcrumbs ellipsis">
+                    <li class="ellipsis worksapce-breadcrumb">{{ sidebarDoctype }}</li>
+                    <li class="ellipsis title-text">{{ sidebarTitle }}</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="flex col page-actions justify-content-end">
+                <button
+                  v-if="sidebarFormInstance"
+                  class="btn btn-primary btn-sm"
+                  :disabled="!sidebarDirty"
+                  @click="saveSidebarForm"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+      <template #default>
         <div ref="formWrapper"></div>
-      </div>
+      </template>
     </VueSidePanel>
   </div>
 </template>
@@ -123,6 +149,10 @@ export default defineComponent({
       highlightedProject: null as TreeData | null,
       activeNode: null as TreeData | null,
       isOpened: false,
+      sidebarTitle: "" as string,
+      sidebarDoctype: "" as string,
+      sidebarDirty: false,
+      sidebarFormInstance: null as any,
       currentTheme:
         theme === "automatic"
           ? window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -673,17 +703,60 @@ export default defineComponent({
         }
 
         await frappe.model.with_doctype(doctype);
+        const meta = frappe.get_meta(doctype);
+        const prev = meta.hide_toolbar;
+        meta.hide_toolbar = 1;
         formWrapper.innerHTML = "";
         const formInstance = new frappe.ui.form.Form(doctype, formWrapper, true, "");
         await frappe.model.with_doc(doctype, docName);
         formInstance.refresh(docName);
+        formInstance.page.page_head.addClass("hidden");
+        meta.hide_toolbar = prev;
+
+        // Populate our custom header
+        this.sidebarDoctype = __(doctype);
+        this.sidebarTitle = docName;
+        this.sidebarDirty = false;
+        this.sidebarFormInstance = formInstance;
+
+        // Track dirty state so the Save button reflects unsaved changes
+        frappe.model.on(doctype, "*", (_field: string, _val: unknown, _changedDoc: any) => {
+          if (formInstance.is_dirty()) {
+            this.sidebarDirty = true;
+          } else {
+            this.sidebarDirty = false;
+          }
+        });
+
+        // hide_toolbar suppresses the footer/timeline — restore it manually
+        if (!formInstance.footer && (frappe.boot as any).desk_settings?.timeline) {
+          const footerEl = document.createElement("div");
+          formInstance.page.main[0].parentElement?.appendChild(footerEl);
+          formInstance.footer = new (frappe.ui.form as any).Footer({
+            frm: formInstance,
+            parent: footerEl,
+          });
+          formInstance.footer.refresh();
+          formInstance.parent.removeClass = function () {};
+        }
       } catch (err) {
         console.error("Error loading form:", err);
       }
     },
 
+    saveSidebarForm(): void {
+      if (!this.sidebarFormInstance) return;
+      this.sidebarFormInstance.save("Save", () => {
+        this.sidebarDirty = false;
+      });
+    },
+
     openSidebar(payload: any): void {
       this.isOpened = true;
+      this.sidebarFormInstance = null;
+      this.sidebarTitle = "";
+      this.sidebarDoctype = "";
+      this.sidebarDirty = false;
       this.loadForm(payload);
     },
   },
@@ -719,12 +792,26 @@ export default defineComponent({
 
 /* sidebar */
 
+.form-tabs-list {
+  top: 0 !important;
+}
+
 .sidebar {
-  /* background-color: var(--sidebar-bg-color); */
-  /* height: 100%; */
   padding-left: 10px;
   padding-right: 10px;
   padding-bottom: 20px;
   padding-top: 65px;
+}
+
+.body-sidebar {
+  z-index: 500 !important;
+}
+
+.vsp-overlay {
+  z-index: 501 !important;
+}
+
+.vsp--right-side {
+  z-index: 550 !important;
 }
 </style>

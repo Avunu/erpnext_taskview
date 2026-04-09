@@ -1,7 +1,7 @@
 <template>
   <div v-if="visible" ref="dockEl" class="timer-dock" :style="dockStyle">
     <div class="timer-dock__handle" @pointerdown="startDrag">
-      <span class="timer-dock__title"><Timer :size="14" /> Timers ({{ timerCount }})</span>
+      <span class="timer-dock__title"> <Timer :size="14" /> Timers ({{ timerCount }}) </span>
       <button class="timer-dock__toggle" @click="collapsed = !collapsed">
         <ChevronDown v-if="collapsed" :size="14" />
         <ChevronUp v-else :size="14" />
@@ -177,8 +177,8 @@ export default defineComponent({
 
 .timer-dock {
   position: fixed;
-  z-index: 1060;
-  /* above Frappe modals (1050) */
+  z-index: 500;
+  /* above sidebar (110) and dialogs (1000) */
   width: 320px;
   max-height: 80vh;
   overflow-y: auto;
