@@ -424,12 +424,18 @@ def _save_task(doc: TaskDoc, children: list[TaskDoc] | None = None) -> None:
 	"""
 	if doc.name:
 		update_fields: dict[str, Any] = {}
-		for field in ("subject", "project", "parent_task", "status", "is_group", "priority"):
+		for field in ("subject", "project", "status", "is_group", "priority"):
 			val = getattr(doc, field)
 			if val is not None:
 				update_fields[field] = val
 
-		# If reparenting, ensure new parent has is_group=1
+		# parent_task must always be written when present — None means "clear it"
+		# (moving a task to project-root level).  The default is also None, but
+		# drag operations always supply idx, so we use that as the sentinel.
+		if doc.idx is not None or children is not None:
+			update_fields["parent_task"] = doc.parent_task  # may be None — that's intentional
+
+		# If reparenting to a task parent, ensure new parent has is_group=1
 		if doc.parent_task:
 			frappe.db.set_value("Task", doc.parent_task, {"is_group": 1})
 
