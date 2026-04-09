@@ -310,7 +310,7 @@ def get_active_timers() -> ActiveTimersResponse:
 # ── Project ───────────────────────────────────────────────────
 
 
-def _save_project(doc: ProjectDoc) -> None:
+def _save_project(doc: ProjectDoc, form_params: _dict | None) -> None:
 	"""Insert or update a Project.
 
 	Insert/update is determined by the presence of ``doc.name``:
@@ -332,11 +332,19 @@ def _save_project(doc: ProjectDoc) -> None:
 			},
 		)
 	else:
+		customer = None
+		if form_params and form_params.get("doctype") == "Project":
+			for f in form_params.get("filters") or []:
+				# filter tuple: [doctype, fieldname, op, value]
+				if isinstance(f, (list, tuple)) and len(f) >= 4 and f[1] == "customer":
+					customer = f[3]
+					break
 		frappe.get_doc(
 			{
 				"doctype": "Project",
 				"project_name": doc.project_name,
 				"status": doc.status,
+				"customer": customer,
 			}
 		).insert()
 
@@ -665,7 +673,7 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 
 
 @frappe.whitelist()
-def save_doc(payload: str, form_params: str | None = None) -> SaveDocResponse:
+def save_doc(payload: str, form_params: str | dict | None = None) -> SaveDocResponse:
 	"""Save a document (Project, Task, or Timesheet Detail).
 
 	Accepts a JSON string conforming to :class:`SaveDocRequest`::
@@ -691,11 +699,17 @@ def save_doc(payload: str, form_params: str | None = None) -> SaveDocResponse:
 		A fresh :class:`GetResponse` reflecting the post-mutation state.
 	"""
 	req = SaveDocRequest(**json.loads(payload))
+	if isinstance(form_params, str):
+		form_params = json.loads(form_params)
+	if isinstance(form_params, dict):
+		form_params = _dict(form_params)
+
+	assert isinstance(form_params, _dict) or form_params is None, "Invalid form_params"
 
 	status: dict[str, str | None] = {"alert": None, "notice": None}
 	match req.doc.doctype:
 		case "Project":
-			_save_project(cast(ProjectDoc, req.doc))
+			_save_project(cast(ProjectDoc, req.doc), form_params)
 		case "Task":
 			_save_task(cast(TaskDoc, req.doc), req.children)
 		case "Timesheet Detail":
