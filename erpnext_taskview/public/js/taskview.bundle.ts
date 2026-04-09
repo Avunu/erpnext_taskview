@@ -163,6 +163,18 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         }
     }
 
+    setup_view_menu() {
+        super.setup_view_menu();
+        // `ListView.view_name` always returns "List", so the button group label is
+        // always "List View". Patch it to "Task View" after the super call.
+        if (this.views_menu) {
+            (this.views_menu as any)
+                .closest(".custom-btn-group")
+                .find(".custom-btn-group-label")
+                .text(__("Task View"));
+        }
+    }
+
     // Disable ListView's keyboard shortcuts (space, enter, arrows) which
     // conflict with the Vue tree's inline text editors.
     setup_keyboard_navigation() { }
