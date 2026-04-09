@@ -149,6 +149,20 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     show_skeleton() { }
     hide_skeleton() { }
 
+    // Consider projects as data too — tasks may be empty while projects exist.
+    toggle_result_area() {
+        const hasData =
+            (this.taskViewData?.projects?.length ?? 0) > 0 || this.data.length > 0;
+        (this.$result as any).parent(".result-container").toggle(hasData);
+        (this.$result as any).toggle(hasData);
+        (this.$paging_area as any).toggle(hasData);
+        (this.$no_result as any).toggle(!hasData);
+        if (hasData) {
+            const show_more = this.start + this.page_length <= this.data.length;
+            (this.$paging_area as any).find(".btn-more").toggle(show_more);
+        }
+    }
+
     // Disable ListView's keyboard shortcuts (space, enter, arrows) which
     // conflict with the Vue tree's inline text editors.
     setup_keyboard_navigation() { }
