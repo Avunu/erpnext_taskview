@@ -107,6 +107,7 @@ import {
   getProjectName,
 } from "./types";
 import { refreshTimers, timersByTask } from "./timerStore";
+import { treeNodes } from "./treeState";
 
 // ── Types used only by this component ────────────────────────
 
@@ -308,7 +309,7 @@ export default defineComponent({
       while (current) {
         current.open = true;
         if (current.data?.doc?.name) {
-          locals.nodes[current.data.doc.name] = true;
+          treeNodes.value[current.data.doc.name] = true;
         }
         current = current.parent;
       }
@@ -421,20 +422,20 @@ export default defineComponent({
 
       if (isProject && node.doc.name) {
         const projectDoc = node.doc as ProjectDoc;
-        if (projectDoc.project_name in locals.nodes) {
-          const value = locals.nodes[projectDoc.project_name];
+        if (projectDoc.project_name in treeNodes.value) {
+          const value = treeNodes.value[projectDoc.project_name];
           stat.open = value;
-          locals.nodes[node.doc.name] = value;
-          delete locals.nodes[projectDoc.project_name];
+          treeNodes.value[node.doc.name] = value;
+          delete treeNodes.value[projectDoc.project_name];
           pleaseExpandMe = value;
         }
       }
 
-      if (locals.nodes?.[node.doc.name || ""] === false) {
+      if (treeNodes.value?.[node.doc.name || ""] === false) {
         stat.open = false;
       }
 
-      if (locals.nodes?.[node.doc.name || ""] === true || pleaseExpandMe) {
+      if (treeNodes.value?.[node.doc.name || ""] === true || pleaseExpandMe) {
         stat.open = true;
         this.updateHighlightedProject();
       }
@@ -571,7 +572,7 @@ export default defineComponent({
       if (!node.doc.name) return;
 
       stat.open = !stat.open;
-      locals.nodes[node.doc.name] = stat.open;
+      treeNodes.value[node.doc.name] = stat.open;
 
       if (stat.open) {
         stat.children?.forEach((child) => {
@@ -592,7 +593,7 @@ export default defineComponent({
           (project) =>
             project.doc.doctype === "Project" &&
             project.doc.name &&
-            locals.nodes?.[project.doc.name],
+            treeNodes.value?.[project.doc.name],
         );
         if (nextExpandedProject) {
           this.highlightedProject = nextExpandedProject;
@@ -692,7 +693,7 @@ export default defineComponent({
       }
 
       if (targetParent) {
-        locals.nodes[targetParent.doc.name] = true;
+        treeNodes.value[targetParent.doc.name] = true;
         this.ensureBlankChild(targetParent);
       }
     },
@@ -707,7 +708,7 @@ export default defineComponent({
         (node) =>
           node.doc.doctype === "Project" &&
           node.doc.name &&
-          locals.nodes?.[node.doc.name] !== false,
+          treeNodes.value?.[node.doc.name] !== false,
       );
 
       if (expandedProjects.length > 0) {

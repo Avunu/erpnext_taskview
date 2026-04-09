@@ -117,6 +117,7 @@ import {
   getProjectName,
 } from "../types";
 import { timersByTask, getRunningTimer, type ActiveTimer } from "../timerStore";
+import { treeNodes } from "../treeState";
 import { showStopTimerDialog, calcElapsedHrs } from "../timerDialog";
 import AssignTo from "./AssignTo.vue";
 import {
@@ -320,7 +321,7 @@ export default defineComponent({
       const newStatus = this.node.doc.status === "Open" ? "Completed" : "Open";
       this.node.doc.status = newStatus;
       if (this.node.doc.name) {
-        locals.nodes[this.node.doc.name] = true;
+        treeNodes.value[this.node.doc.name] = true;
       }
       try {
         const data = await saveDoc({ ...this.node.doc, status: newStatus });
@@ -618,9 +619,9 @@ export default defineComponent({
 
       const projectName = getProjectName(this.node);
       if (this.node.doc.name === "" && this.isProject) {
-        locals.nodes[this.editedText] = true;
+        treeNodes.value[this.editedText] = true;
       } else {
-        locals.nodes[projectName] = true;
+        treeNodes.value[projectName] = true;
       }
       if (!this.isBlank) {
         this.emitInteraction();
