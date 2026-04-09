@@ -541,21 +541,30 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 			parent_ts = frappe.get_doc("Timesheet", parent_name)
 			if not parent_ts.get("time_logs"):
 				parent_ts.delete(ignore_permissions=True)
-		return
+		return {
+			"alert": f"Deleted timer for task {detail.task}",
+			"notice": None,
+		}
 
 	if doc.update_description:
 		# Description-only update — persist without state transition
 		detail.description = doc.description
 		detail.save(ignore_permissions=True)
-		return
+		return {"alert": None, "notice": None}
 
 	if doc.to_time:
-		# Stop — calculate final hours
+		# Stop — use user-confirmed hours if provided, otherwise compute from elapsed time
 		from_time = get_datetime(detail.from_time)
-		start_time = get_datetime(detail.start_time)
-		assert isinstance(from_time, datetime.datetime) and isinstance(start_time, datetime.datetime)
+		assert isinstance(from_time, datetime.datetime)
 
-		total_seconds = (now - start_time).total_seconds() + (detail.paused_time_in_seconds or 0)
+		if doc.hours > 0:
+			# User overrode the hours in the dialog — honour it directly
+			total_seconds = doc.hours * 3600
+		else:
+			start_time = get_datetime(detail.start_time)
+			assert isinstance(start_time, datetime.datetime)
+			total_seconds = (now - start_time).total_seconds() + (detail.paused_time_in_seconds or 0)
+
 		detail.hours = total_seconds / 3600
 		detail.to_time = datetime.datetime.fromtimestamp(
 			from_time.timestamp() + total_seconds, tz=datetime.timezone.utc

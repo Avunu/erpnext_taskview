@@ -210,6 +210,7 @@ export default defineComponent({
           const result = await sendTimerAction({
             name: timerName,
             to_time: new Date().toISOString(),
+            hours: values.hrs,
             description: values.description || currentDesc || "",
             activity_type: values.activity_type || "",
             is_billable: values.is_billable ? 1 : 0,
