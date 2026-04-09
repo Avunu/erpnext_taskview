@@ -386,6 +386,10 @@ export default defineComponent({
     // ── Per-node render hook ──────────────────────────────
 
     modifyNodeAndStat(node: TreeData, stat: StatObject): { node: TreeData; stat: StatObject } {
+      // During drag @he-tree temporarily inserts a placeholder node into
+      // treeData that has no `doc`. Return early and leave the stat untouched.
+      if (!node.doc) return { node, stat };
+
       const isProject = node.doc.doctype === "Project";
       const isBlank = !node.doc.name;
       const detail = timersByTask.value.get(node.doc.name);
@@ -415,7 +419,9 @@ export default defineComponent({
 
       let runningChildren = false;
       if (node.children?.length > 0) {
-        runningChildren = node.children.some((child) => timersByTask.value.has(child.doc.name));
+        runningChildren = node.children.some(
+          (child) => child.doc && timersByTask.value.has(child.doc.name),
+        );
       }
 
       if (isBlank) {
@@ -465,7 +471,7 @@ export default defineComponent({
     stripBlanks(nodes: TreeData[]): void {
       for (const node of nodes) {
         if (node.children) {
-          node.children = node.children.filter((c) => !!c.doc.name);
+          node.children = node.children.filter((c) => !!c.doc?.name);
           this.stripBlanks(node.children);
         }
       }
