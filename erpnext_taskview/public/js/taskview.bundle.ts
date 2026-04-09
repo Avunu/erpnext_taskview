@@ -14,7 +14,7 @@ frappe.views.TaskViewSelect = class TaskViewSelect extends frappe.views.ListView
 
         if (this.doctype === "Task" || this.doctype === "Project") {
             // Add the Task view to the views object
-            this.add_view_to_menu("Tasks", () => {
+            this.add_view_to_menu("Task View", () => {
                 this.set_route("tasks");
             });
         }
@@ -47,7 +47,7 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
     setup_defaults() {
         super.setup_defaults();
-        this.page_title = "Task View";
+        this.page_title = `${this.doctype} Task View`;
         this.page_name = "task-view";
         this.show_hide_filters = false;
         this.list_view_settings = {
