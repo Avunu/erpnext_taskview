@@ -137,9 +137,10 @@ declare global {
         handler: (fieldname: string, value: unknown, doc: any) => void,
       ) => void;
       off: (doctype: string, fieldname: string) => void;
+      get_doc_title: (doc: Record<string, any>) => string;
     };
 
-    get_doc: <T = any>(doctype: string, name: string) => Promise<T>;
+    get_doc: <T extends Record<string, any> = Record<string, any>>(doctype: string, name: string) => T;
     get_meta: (doctype: string) => FrappeMeta;
     provide: (namespace: string) => void;
     new_doc: (doctype: string, options?: Record<string, unknown>) => void;

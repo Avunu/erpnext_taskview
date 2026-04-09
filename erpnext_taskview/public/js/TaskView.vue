@@ -60,9 +60,9 @@
             <div class="row flex-nowrap align-center page-head-content justify-between">
               <div class="page-title">
                 <div class="flex fill-width title-area ellipsis">
-                  <ul class="nav d-sm-flex navbar-breadcrumbs ellipsis">
-                    <li class="ellipsis worksapce-breadcrumb">{{ sidebarDoctype }}</li>
-                    <li class="ellipsis title-text">{{ sidebarTitle }}</li>
+                  <ul class="nav d-sm-flex ellipsis">
+                    <li class="ellipsis text-large breadcrumb-item">{{ sidebarDoctype }}</li>
+                    <li class="ellipsis text-large breadcrumb-item">{{ sidebarTitle }}</li>
                   </ul>
                 </div>
               </div>
@@ -721,7 +721,7 @@ export default defineComponent({
 
         // Track dirty state so the Save button reflects unsaved changes
         frappe.model.on(doctype, "*", (_field: string, _val: unknown, _changedDoc: any) => {
-          if (formInstance.is_dirty()) {
+          if (formInstance.is_dirty) {
             this.sidebarDirty = true;
           } else {
             this.sidebarDirty = false;
