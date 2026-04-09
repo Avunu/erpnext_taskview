@@ -170,10 +170,11 @@ def get(args: str | dict | None = None) -> GetResponse:
 			Projects.name,
 			Projects.project_name,
 			Projects.status,
+			Projects.idx,
 			Projects.customer,
 		)
 		.where(Projects.docstatus == 0)
-		.orderby(Projects.name)
+		.orderby(Projects.idx)
 	)
 
 	if args.doctype == "Project" and args.filters:
@@ -310,6 +311,29 @@ def get_active_timers() -> ActiveTimersResponse:
 # ── Project ───────────────────────────────────────────────────
 
 
+def _reorder_projects(project_name: str, new_idx: int) -> None:
+	"""Shift sibling project ``idx`` values to make room for the moved project.
+
+	All projects with ``idx >= new_idx`` (excluding the moved project) are
+	incremented by one, then the moved project is assigned ``new_idx``.
+
+	Args:
+		project_name: The Frappe name of the project being repositioned.
+		new_idx: The 1-based target position.
+	"""
+	Projects = cast(Table, DocType("Project"))
+
+	(
+		frappe.qb.update(Projects)
+		.set(Projects.idx, Projects.idx + 1)
+		.where(Projects.name != project_name)
+		.where(Projects.idx >= new_idx)
+		.where(Projects.docstatus == 0)
+	).run()
+
+	frappe.db.set_value("Project", project_name, "idx", new_idx)
+
+
 def _save_project(doc: ProjectDoc, form_params: _dict | None) -> None:
 	"""Insert or update a Project.
 
@@ -331,6 +355,8 @@ def _save_project(doc: ProjectDoc, form_params: _dict | None) -> None:
 				"status": doc.status,
 			},
 		)
+		if doc.idx is not None:
+			_reorder_projects(doc.name, doc.idx)
 	else:
 		customer = None
 		if form_params and form_params.get("doctype") == "Project":

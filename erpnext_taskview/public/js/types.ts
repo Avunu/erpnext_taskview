@@ -22,6 +22,7 @@ export interface ProjectDoc {
   name: string;
   project_name: string;
   status: string;
+  idx?: number;
   customer: string;
 }
 

@@ -4,7 +4,7 @@
       class="mtl-tree"
       v-model="treeData"
       treeLine
-      :rootDroppable="false"
+      :rootDroppable="true"
       @after-drop="handleDragEnd"
     >
       <template #default="{ node, stat }">
@@ -189,8 +189,10 @@ export default defineComponent({
 
     buildTree(data: GetResponse): TreeData[] {
       const nodes = new Map<string, TreeData>();
+      // Sort projects by idx before inserting so root order is stable
+      const sortedProjects = [...data.projects].sort((a, b) => (a.idx ?? 0) - (b.idx ?? 0));
       const root: TreeData[] = [];
-      for (const p of data.projects) {
+      for (const p of sortedProjects) {
         const node: TreeData = { doc: p, children: [] };
         nodes.set(p.name, node);
         root.push(node);
@@ -333,8 +335,28 @@ export default defineComponent({
 
     async handleDragEnd(): Promise<void> {
       const draggedStat = (dragContext as any).dragNode;
+      if (!draggedStat?.data?.doc) {
+        await this.catchError(new Error("Invalid drop target"));
+        return;
+      }
+
+      const draggedDoc = draggedStat.data.doc;
+      const draggedIsProject = draggedDoc.doctype === "Project";
+
+      // ── Project reorder: dropped at root level ────────────
+      if (draggedIsProject) {
+        const realRoots = (this.treeData as TreeData[]).filter((n) => n.doc?.name);
+        const newIdx = realRoots.findIndex((n) => n.doc.name === draggedDoc.name) + 1;
+        if (newIdx > 0) {
+          (draggedDoc as ProjectDoc).idx = newIdx;
+          await this.saveAndRebuild(draggedDoc as ProjectDoc);
+        }
+        return;
+      }
+
+      // ── Task reorder / reparent ───────────────────────────
       if (!draggedStat?.parent?.data?.doc) {
-        // Dropped at root level or into an invalid target — reload and bail
+        // Dropped at root level — invalid for tasks
         await this.catchError(new Error("Invalid drop target"));
         return;
       }
@@ -430,7 +452,14 @@ export default defineComponent({
         stat.draggable = false;
         stat.droppable = false;
         stat.dragOpen = false;
-      } else if (isProject || hasActiveTimer || runningChildren) {
+      } else if (isProject) {
+        // Projects are draggable at root level but not droppable into other projects
+        stat.disableDrag = false;
+        stat.disableDrop = false;
+        stat.draggable = true;
+        stat.droppable = true;
+        stat.dragOpen = true;
+      } else if (hasActiveTimer || runningChildren) {
         stat.disableDrag = true;
         stat.draggable = false;
         stat.droppable = true;

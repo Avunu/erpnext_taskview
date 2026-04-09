@@ -45,6 +45,7 @@ class ProjectDoc(BaseModel):
 	name: str = ""
 	project_name: str = ""
 	status: str = "Open"
+	idx: int | None = None
 	customer: str | None = ""
 
 
