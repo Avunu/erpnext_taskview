@@ -13,6 +13,7 @@
 export interface StopTimerValues {
 	activity_type: string;
 	hrs: number;
+	billing_hrs: number;
 	description: string;
 	is_billable: 0 | 1;
 	completed: 0 | 1;
@@ -83,6 +84,13 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 			{ label: "Hrs", fieldname: "hrs", fieldtype: "Float", default: elapsedHrs },
 			{ label: "Description", fieldname: "description", fieldtype: "Small Text", default: currentDesc },
 			{ label: "Is Billable", fieldname: "is_billable", fieldtype: "Check" },
+			{
+				label: "Billable Time",
+				fieldname: "billing_hrs",
+				fieldtype: "Float",
+				depends_on: "eval:doc.is_billable == 1",
+				description: "Defaults to Hrs when Billable is checked. Edit independently if needed.",
+			},
 			{ label: "Completed", fieldname: "completed", fieldtype: "Check" },
 		],
 		size: "small",
@@ -107,6 +115,13 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 			d.hide();
 		},
 	});
+
+	// When Is Billable is toggled on, seed Billable Time from current Hrs
+	d.fields_dict.is_billable.df.onchange = () => {
+		if (d.get_value("is_billable") && !d.get_value("billing_hrs")) {
+			d.set_value("billing_hrs", d.get_value("hrs") || 0);
+		}
+	};
 
 	d.show();
 }

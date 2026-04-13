@@ -660,6 +660,8 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 			if doc.activity_type:
 				detail.activity_type = doc.activity_type
 			detail.is_billable = bool(doc.is_billable)
+			if doc.is_billable and doc.billing_hours > 0:
+				detail.billing_hours = doc.billing_hours
 			if doc.completed:
 				detail.completed = 1
 		else:
@@ -717,6 +719,8 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 		if doc.activity_type:
 			detail.activity_type = doc.activity_type
 		detail.is_billable = bool(doc.is_billable)
+		if doc.is_billable and doc.billing_hours > 0:
+			detail.billing_hours = doc.billing_hours
 
 		notice: str | None = None
 		if doc.completed and detail.task:

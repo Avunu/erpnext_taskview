@@ -418,6 +418,7 @@ export default defineComponent({
             name: timerName,
             to_time: new Date().toISOString(),
             hours: values.hrs,
+            billing_hours: values.is_billable ? (values.billing_hrs || values.hrs) : 0,
             description: values.description || currentDesc,
             activity_type: values.activity_type || "",
             is_billable: values.is_billable ? 1 : 0,
@@ -486,6 +487,13 @@ export default defineComponent({
           { label: "Hrs", fieldname: "hrs", fieldtype: "Float", reqd: 1 },
           { label: "Description", fieldname: "description", fieldtype: "Small Text" },
           { label: "Is Billable", fieldname: "is_billable", fieldtype: "Check" },
+          {
+            label: "Billable Time",
+            fieldname: "billing_hrs",
+            fieldtype: "Float",
+            depends_on: "eval:doc.is_billable == 1",
+            description: "Defaults to Hrs when Billable is checked. Edit independently if needed.",
+          },
           { label: "Completed", fieldname: "completed", fieldtype: "Check" },
         ],
         size: "small",
@@ -507,6 +515,7 @@ export default defineComponent({
               description: values.description || "",
               activity_type: values.activity_type || "",
               is_billable: values.is_billable ? 1 : 0,
+              billing_hours: values.is_billable ? (values.billing_hrs || values.hrs) : 0,
               completed: values.completed ? 1 : 0,
             });
             this.$emit("catch-success", data);
@@ -516,10 +525,14 @@ export default defineComponent({
           }
         },
       });
+      // When Is Billable is toggled on, seed Billable Time from current Hrs
+      d.fields_dict.is_billable.df.onchange = () => {
+        if (d.get_value("is_billable") && !d.get_value("billing_hrs")) {
+          d.set_value("billing_hrs", d.get_value("hrs") || 0);
+        }
+      };
       d.show();
     },
-
-    /** Enter inline edit mode for the subject/title. */
     editTask(): void {
       this.isEditing = true;
       this.editedText = this.isBlank ? "" : this.displayText;

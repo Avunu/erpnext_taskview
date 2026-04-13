@@ -61,6 +61,7 @@ export interface TimesheetDetailDoc {
   activity_type?: string;
   is_billable?: number;
   completed?: number;
+  billing_hours?: number;
 }
 
 export type FrappeDoc = ProjectDoc | TaskDoc | TimesheetDetailDoc;

@@ -54,14 +54,27 @@ declare global {
     minimizable?: boolean;
   }
 
+  interface FrappeDialogFieldInstance {
+    /** The field's descriptor / definition object. Mutate to change behaviour (e.g. add onchange). */
+    df: FrappeDialogField & {
+      onchange?: () => void;
+      [key: string]: any;
+    };
+    refresh(): void;
+    set_value(value: any): void;
+    get_value(): any;
+  }
+
   interface FrappeDialog {
     show(): void;
     hide(): void;
     get_value(fieldname: string): any;
     set_value(fieldname: string, value: any): Promise<void>;
-    get_field(fieldname: string): any;
+    get_field(fieldname: string): FrappeDialogFieldInstance;
     clear(): void;
     set_title(title: string): void;
+    /** Keyed map of every field instance in the dialog, indexed by fieldname. */
+    fields_dict: Record<string, FrappeDialogFieldInstance>;
   }
 
   var frappe: {

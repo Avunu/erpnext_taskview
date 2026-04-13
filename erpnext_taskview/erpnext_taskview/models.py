@@ -146,6 +146,7 @@ class TimesheetDetailDoc(BaseModel):
 	from_time: datetime | None = None
 	to_time: datetime | None = None
 	hours: float = 0
+	billing_hours: float = 0
 	paused: int = 0
 	start_time: datetime | None = None
 	paused_time_in_seconds: int = 0
