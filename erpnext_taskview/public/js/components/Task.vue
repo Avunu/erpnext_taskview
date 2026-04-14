@@ -285,13 +285,14 @@ export default defineComponent({
       if (this.isProject || this.isBlank) return false;
       return !!(this.node.doc as TaskDoc).todo_name;
     },
-    /** Breadcrumb text for pinned view: "Project / Parent Task" or just "Project". */
+    /** Breadcrumb text for pinned view: "Customer · Project Name / Parent Task Subject" */
     pinnedMeta(): string {
       if (this.isProject || this.isBlank) return "";
       const doc = this.node.doc as TaskDoc;
       const parts: string[] = [];
-      if (doc.project) parts.push(doc.project);
-      if (doc.parent_task) parts.push(doc.parent_task);
+      const projectLabel = [doc.customer, doc.project_name || doc.project].filter(Boolean).join(" · ");
+      if (projectLabel) parts.push(projectLabel);
+      if (doc.parent_task_subject || doc.parent_task) parts.push(doc.parent_task_subject || doc.parent_task!);
       return parts.join(" / ");
     },
     /**

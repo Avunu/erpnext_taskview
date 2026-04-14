@@ -33,7 +33,10 @@ export interface TaskDoc {
   name: string;
   subject: string;
   project: string;
+  project_name?: string | null;
+  customer?: string | null;
   parent_task: string | null;
+  parent_task_subject?: string | null;
   status: string;
   is_group: number;
   priority: string;

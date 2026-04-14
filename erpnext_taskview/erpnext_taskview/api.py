@@ -246,6 +246,8 @@ def get(args: str | dict | None = None) -> GetResponse:
 	# ── Tasks ─────────────────────────────────────────────────
 	# Left-join ToDo to get per-user pin state in a single query.
 	# The join is scoped to the current user's open pinned ToDos.
+	# Also left-join Projects for project_name and self-join Tasks for parent_task_subject.
+	ParentTask = Tasks.as_("parent_task_tbl")
 	tq = (
 		frappe.qb.from_(Tasks)
 		.left_join(TD)
@@ -256,11 +258,18 @@ def get(args: str | dict | None = None) -> GetResponse:
 			& (TD.status == "Open")
 			& (TD.pin == 1)
 		)
+		.left_join(Projects)
+		.on(Projects.name == Tasks.project)
+		.left_join(ParentTask)
+		.on(ParentTask.name == Tasks.parent_task)
 		.select(
 			Tasks.name,
 			Tasks.subject,
 			Tasks.project,
+			Projects.project_name,
+			Projects.customer,
 			Tasks.parent_task,
+			ParentTask.subject.as_("parent_task_subject"),
 			Tasks.status,
 			Tasks.is_group,
 			Tasks.priority,

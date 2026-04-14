@@ -80,7 +80,10 @@ class TaskDoc(BaseModel):
 	name: str = ""
 	subject: str = ""
 	project: str = ""
+	project_name: str | None = None
+	customer: str | None = None
 	parent_task: str | None = None
+	parent_task_subject: str | None = None
 	status: str = "Open"
 	is_group: int = 0
 	priority: str = "Medium"
