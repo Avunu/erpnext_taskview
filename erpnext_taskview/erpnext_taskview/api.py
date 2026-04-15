@@ -761,7 +761,7 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 		if doc.activity_type:
 			detail.activity_type = doc.activity_type
 		detail.is_billable = bool(doc.is_billable)
-		if doc.is_billable and doc.billing_hours > 0:
+		if detail.is_billable and doc.billing_hours > 0:
 			detail.billing_hours = doc.billing_hours
 
 		notice: str | None = None
@@ -776,10 +776,6 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 				frappe.db.set_value("Task", detail.task, "status", "Completed")
 
 		detail.save(ignore_permissions=True)
-
-		# Force-write billing_hours after save to survive any validation resets
-		if doc.is_billable and doc.billing_hours > 0:
-			detail.db_set("billing_hours", doc.billing_hours, update_modified=False)
 
 		return {"alert": f"Logged {detail.hours:.2f} hrs", "notice": notice}
 
