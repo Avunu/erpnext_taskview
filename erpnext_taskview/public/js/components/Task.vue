@@ -513,6 +513,7 @@ export default defineComponent({
               task,
               from_time: fromTime.toISOString(),
               to_time: now.toISOString(),
+              hours: values.hrs,
               description: values.description || "",
               activity_type: values.activity_type || "",
               is_billable: values.is_billable ? 1 : 0,

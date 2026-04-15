@@ -44,6 +44,7 @@ import frappe
 from erpnext.projects.doctype.timesheet.timesheet import Timesheet
 from frappe.desk.reportview import get_form_params
 from frappe.query_builder import DocType, Table
+from frappe.query_builder.functions import Max
 from frappe.types.frappedict import _dict
 from frappe.utils.data import get_datetime
 from pypika.enums import Order
@@ -63,6 +64,25 @@ from .models import (
 # ─────────────────────────────────────────────────────────────
 #  Helpers
 # ─────────────────────────────────────────────────────────────
+
+
+def _naive_dt(val: datetime.datetime | str | None) -> datetime.datetime | None:
+	"""Parse a datetime value and strip timezone info.
+
+	Frappe stores all datetimes as naive (server-local) in the DB, but
+	the frontend sends ISO strings with ``Z`` (UTC) suffixes.  Mixing
+	tz-aware and naive datetimes causes arithmetic errors *and* 4-hour
+	(or whatever the UTC offset is) shifts when saved.
+
+	This helper converts any input through ``get_datetime()`` and then
+	strips the ``tzinfo`` so the result is always a naive datetime
+	comparable with DB-loaded values.
+	"""
+	if val is None:
+		return None
+	dt = get_datetime(val)
+	assert isinstance(dt, datetime.datetime)
+	return dt.replace(tzinfo=None)
 
 
 _PROJECT_SORT_FIELDS = frozenset({"idx", "creation", "modified", "project_name", "status", "customer"})
@@ -166,7 +186,7 @@ def _apply_filter(query: Any, table: Table, filter_tuple: list) -> Any:
 
 @frappe.whitelist()
 @frappe.read_only()
-def get(args: str | dict | None = None) -> GetResponse:
+def get(args: str | dict | None = None) -> dict[str, Any]:
 	"""Fetch projects and tasks as flat lists.
 
 	Executes two PyPika queries:
@@ -247,7 +267,7 @@ def get(args: str | dict | None = None) -> GetResponse:
 	# Left-join ToDo to get per-user pin state in a single query.
 	# The join is scoped to the current user's open pinned ToDos.
 	# Also left-join Projects for project_name and self-join Tasks for parent_task_subject.
-	ParentTask = Tasks.as_("parent_task_tbl")
+	ParentTask = cast(Table, Tasks.as_("parent_task_tbl"))
 	tq = (
 		frappe.qb.from_(Tasks)
 		.left_join(TD)
@@ -317,7 +337,7 @@ def get(args: str | dict | None = None) -> GetResponse:
 
 @frappe.whitelist()
 @frappe.read_only()
-def get_active_timers() -> ActiveTimersResponse:
+def get_active_timers() -> dict[str, Any]:
 	"""Fetch all open timesheet details for the current user.
 
 	Unlike :func:`get`, this endpoint is not filtered by the list-view's
@@ -406,7 +426,7 @@ def _save_project(doc: ProjectDoc, form_params: _dict | None) -> None:
 		frappe.db.set_value(
 			"Project",
 			doc.name,
-			{
+			{  # type: ignore[arg-type]
 				"project_name": doc.project_name,
 				"status": doc.status,
 			},
@@ -444,7 +464,7 @@ def _update_children_project(children: list[TaskDoc], project: str) -> None:
 	"""
 	for child in children:
 		if child.name:
-			frappe.db.set_value("Task", child.name, {"project": project})
+			frappe.db.set_value("Task", child.name, {"project": project})  # type: ignore[arg-type]
 
 
 def _reorder_siblings(
@@ -537,13 +557,13 @@ def _save_task(doc: TaskDoc, children: list[TaskDoc] | None = None) -> None:
 
 		# If reparenting to a task parent, ensure new parent has is_group=1
 		if doc.parent_task:
-			frappe.db.set_value("Task", doc.parent_task, {"is_group": 1})
+			frappe.db.set_value("Task", doc.parent_task, {"is_group": 1})  # type: ignore[arg-type]
 
 		# If project changed, update descendant tasks
 		if children and doc.project:
 			_update_children_project(children, doc.project)
 
-		frappe.db.set_value("Task", doc.name, update_fields)
+		frappe.db.set_value("Task", doc.name, update_fields)  # type: ignore[arg-type]
 
 		# Reorder siblings when a drag operation supplies a target position
 		if doc.idx is not None and doc.project:
@@ -558,7 +578,7 @@ def _save_task(doc: TaskDoc, children: list[TaskDoc] | None = None) -> None:
 		}
 		if doc.parent_task:
 			new_doc["parent_task"] = doc.parent_task
-			frappe.db.set_value("Task", doc.parent_task, {"is_group": 1})
+			frappe.db.set_value("Task", doc.parent_task, "is_group", 1)
 		frappe.get_doc(new_doc).insert()
 
 
@@ -581,21 +601,22 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 	"""
 	existing = frappe.db.exists("Timesheet Detail", {"project": project, "task": task, "to_time": None})
 	if existing:
-		return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", existing))
+		return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", str(existing)))
 
-	employee_name = frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
+	employee_name = cast(str | None, frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name"))
 
 	existing_timesheet = frappe.db.exists(
 		"Timesheet", {"employee": employee_name, "docstatus": 0, "parent_project": project}
 	)
 
 	if existing_timesheet:
-		timesheet = cast(Timesheet, frappe.get_doc("Timesheet", existing_timesheet))
+		timesheet = cast(Timesheet, frappe.get_doc("Timesheet", str(existing_timesheet)))
 	else:
 		timesheet = cast(Timesheet, frappe.new_doc("Timesheet"))
 		timesheet.doctype = "Timesheet"
-		timesheet.employee = employee_name
+		timesheet.employee = cast(str | None, employee_name)
 		timesheet.parent_project = project
+		timesheet.customer = cast(str | None, frappe.db.get_value("Project", project, "customer"))
 
 	timesheet.append(
 		"time_logs",
@@ -612,7 +633,9 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 		timesheet.insert(ignore_permissions=True)
 
 	frappe.db.commit()
-	return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", timesheet.time_logs[-1].name))
+	last_log = timesheet.time_logs[-1]
+	assert last_log.name, "Timesheet Detail was not created"
+	return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", last_log.name))
 
 
 # ── Timesheet Detail ─────────────────────────────────────────
@@ -660,12 +683,17 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 		detail = _get_or_create_timesheet_detail(doc.project, doc.task, doc.description)
 
 		if doc.from_time and doc.to_time:
-			# Manual time log — user provided both times
-			detail.from_time = get_datetime(doc.from_time)
-			detail.to_time = get_datetime(doc.to_time)
-			assert isinstance(detail.from_time, datetime.datetime)
-			assert isinstance(detail.to_time, datetime.datetime)
-			detail.hours = (detail.to_time - detail.from_time).total_seconds() / 3600
+			# Manual time log — user provided both times.
+			# Use the submitted hours as the authoritative duration and
+			# derive to_time = from_time + hours so the stored time range
+			# is always consistent with what the user confirmed.
+			detail.from_time = _naive_dt(doc.from_time)
+			assert detail.from_time is not None
+			hours = doc.hours if doc.hours > 0 else (
+				(_naive_dt(doc.to_time) - detail.from_time).total_seconds() / 3600  # type: ignore[union-attr,operator]
+			)
+			detail.hours = hours
+			detail.to_time = detail.from_time + datetime.timedelta(hours=hours)
 			if doc.activity_type:
 				detail.activity_type = doc.activity_type
 			detail.is_billable = bool(doc.is_billable)
@@ -680,6 +708,11 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 			detail.paused = False
 
 		detail.save(ignore_permissions=True)
+
+		# Force-write billing_hours after save to survive any validation resets
+		if doc.from_time and doc.to_time and doc.is_billable and doc.billing_hours > 0:
+			detail.db_set("billing_hours", doc.billing_hours, update_modified=False)
+
 		return {
 			"alert": f"Logged {detail.hours:.2f} hrs" if doc.from_time and doc.to_time else None,
 			"notice": None,
@@ -708,22 +741,22 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 		return {"alert": None, "notice": None}
 
 	if doc.to_time:
-		# Stop — use user-confirmed hours if provided, otherwise compute from elapsed time
-		from_time = get_datetime(detail.from_time)
-		assert isinstance(from_time, datetime.datetime)
+		# Stop — use user-confirmed hours if provided, otherwise compute from elapsed time.
+		# to_time is always derived as from_time + hours so the stored time
+		# range is consistent with the confirmed duration.
+		from_time = _naive_dt(detail.from_time)
+		assert from_time is not None
 
 		if doc.hours > 0:
 			# User overrode the hours in the dialog — honour it directly
 			total_seconds = doc.hours * 3600
 		else:
-			start_time = get_datetime(detail.start_time)
-			assert isinstance(start_time, datetime.datetime)
+			start_time = _naive_dt(detail.start_time)
+			assert start_time is not None, "start_time not set or invalid"
 			total_seconds = (now - start_time).total_seconds() + (detail.paused_time_in_seconds or 0)
 
 		detail.hours = total_seconds / 3600
-		detail.to_time = datetime.datetime.fromtimestamp(
-			from_time.timestamp() + total_seconds, tz=datetime.timezone.utc
-		).replace(tzinfo=None)
+		detail.to_time = from_time + datetime.timedelta(seconds=total_seconds)
 		detail.description = doc.description or detail.description
 		if doc.activity_type:
 			detail.activity_type = doc.activity_type
@@ -743,12 +776,17 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 				frappe.db.set_value("Task", detail.task, "status", "Completed")
 
 		detail.save(ignore_permissions=True)
+
+		# Force-write billing_hours after save to survive any validation resets
+		if doc.is_billable and doc.billing_hours > 0:
+			detail.db_set("billing_hours", doc.billing_hours, update_modified=False)
+
 		return {"alert": f"Logged {detail.hours:.2f} hrs", "notice": notice}
 
 	elif doc.paused:
 		# Pause — accumulate elapsed time
-		start_time = get_datetime(detail.start_time)
-		assert isinstance(start_time, datetime.datetime), "start_time not set or invalid"
+		start_time = _naive_dt(detail.start_time)
+		assert start_time is not None, "start_time not set or invalid"
 		detail.paused_time_in_seconds = int(
 			(detail.paused_time_in_seconds or 0) + (now - start_time).total_seconds()
 		)
@@ -769,7 +807,7 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 
 
 @frappe.whitelist()
-def save_doc(payload: str, form_params: str | dict | None = None) -> SaveDocResponse:
+def save_doc(payload: str, form_params: str | dict | None = None) -> dict[str, Any]:
 	"""Save a document (Project, Task, or Timesheet Detail).
 
 	Accepts a JSON string conforming to :class:`SaveDocRequest`::
@@ -812,7 +850,7 @@ def save_doc(payload: str, form_params: str | dict | None = None) -> SaveDocResp
 			status = _save_timesheet_detail(cast(TimesheetDetailDoc, req.doc))
 
 	frappe.db.commit()
-	return SaveDocResponse(**get(form_params), **status).model_dump()
+	return SaveDocResponse(**get(form_params), **status).model_dump()  # type: ignore[arg-type]
 
 
 # ─────────────────────────────────────────────────────────────
@@ -821,7 +859,7 @@ def save_doc(payload: str, form_params: str | dict | None = None) -> SaveDocResp
 
 
 @frappe.whitelist()
-def bulk_create_tasks(payload: str, form_params: str | None = None) -> GetResponse:
+def bulk_create_tasks(payload: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Create multiple tasks at once from a list of subjects.
 
 	Accepts a JSON string::
@@ -848,7 +886,7 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> GetRespon
 		frappe.throw("subjects and project are required")
 
 	if parent_task:
-		frappe.db.set_value("Task", parent_task, {"is_group": 1})
+		frappe.db.set_value("Task", parent_task, {"is_group": 1})  # type: ignore[arg-type]
 
 	for subject in subjects:
 		subject = subject.strip()
@@ -875,7 +913,7 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> GetRespon
 
 
 @frappe.whitelist()
-def assign_task(task: str, user: str, form_params: str | None = None) -> GetResponse:
+def assign_task(task: str, user: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Assign a user to a Task via Frappe's ToDo mechanism.
 
 	Uses ``frappe.desk.form.assign_to.add`` which creates a ToDo and
@@ -903,7 +941,7 @@ def assign_task(task: str, user: str, form_params: str | None = None) -> GetResp
 
 
 @frappe.whitelist()
-def unassign_task(task: str, user: str, form_params: str | None = None) -> GetResponse:
+def unassign_task(task: str, user: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Remove a user's assignment from a Task.
 
 	Uses ``frappe.desk.form.assign_to.remove`` which cancels the ToDo
@@ -930,7 +968,7 @@ def unassign_task(task: str, user: str, form_params: str | None = None) -> GetRe
 
 
 @frappe.whitelist()
-def pin_task(task: str, form_params: str | None = None) -> GetResponse:
+def pin_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Pin a task for the current user.
 
 	Creates (or reuses) a ToDo with ``pin=1`` for the current user.
@@ -958,7 +996,7 @@ def pin_task(task: str, form_params: str | None = None) -> GetResponse:
 	)
 
 	if existing:
-		frappe.db.set_value("ToDo", existing, {"pin": 1})
+		frappe.db.set_value("ToDo", str(existing), "pin", 1)  # type: ignore[arg-type]
 	else:
 		# Create via assign_to so _assign is properly maintained
 		from frappe.desk.form.assign_to import add as assign_add
@@ -978,22 +1016,24 @@ def pin_task(task: str, form_params: str | None = None) -> GetResponse:
 		)
 		if new_todo:
 			# Set idx to max + 1
-			max_idx = (
-				frappe.db.get_value(
-					doctype="ToDo",
-					filters={"allocated_to": user, "pin": 1, "status": "Open"},
-					fieldname=[{"MAX": "idx", "as": "max_idx"}],
-				)
-				or 0
+			TD = cast(Table, DocType("ToDo"))
+			max_idx_result = (
+				frappe.qb.from_(TD)
+				.select(Max(TD.idx).as_("max_idx"))
+				.where(TD.allocated_to == user)
+				.where(TD.pin == 1)
+				.where(TD.status == "Open")
+				.run(as_dict=True)
 			)
-			frappe.db.set_value("ToDo", new_todo, {"pin": 1, "idx": int(max_idx) + 1})
+			max_idx = int(max_idx_result[0]["max_idx"] or 0) if max_idx_result else 0
+			frappe.db.set_value("ToDo", str(new_todo), {"pin": 1, "idx": max_idx + 1})  # type: ignore[arg-type]
 
 	frappe.db.commit()
 	return get(form_params)
 
 
 @frappe.whitelist()
-def unpin_task(task: str, form_params: str | None = None) -> GetResponse:
+def unpin_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Unpin a task for the current user.
 
 	Sets ``pin=0`` on the user's open ToDo for this task.  Does **not**
@@ -1013,14 +1053,14 @@ def unpin_task(task: str, form_params: str | None = None) -> GetResponse:
 		"name",
 	)
 	if existing:
-		frappe.db.set_value("ToDo", existing, {"pin": 0})
+		frappe.db.set_value("ToDo", str(existing), "pin", 0)
 
 	frappe.db.commit()
 	return get(form_params)
 
 
 @frappe.whitelist()
-def reorder_pinned_tasks(order: str, form_params: str | None = None) -> GetResponse:
+def reorder_pinned_tasks(order: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Update the sort order of pinned tasks for the current user.
 
 	Accepts a JSON array of ToDo names in the desired order.  Each
@@ -1040,7 +1080,7 @@ def reorder_pinned_tasks(order: str, form_params: str | None = None) -> GetRespo
 		# Verify ownership before updating
 		owner = frappe.db.get_value("ToDo", todo_name, "allocated_to")
 		if owner == user:
-			frappe.db.set_value("ToDo", todo_name, {"idx": idx})
+			frappe.db.set_value("ToDo", todo_name, {"idx": idx})  # type: ignore[arg-type]
 
 	frappe.db.commit()
 	return get(form_params)
