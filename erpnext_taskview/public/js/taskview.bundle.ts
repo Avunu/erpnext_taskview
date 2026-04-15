@@ -203,6 +203,10 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
         const app = createApp(TaskView, { docs: this.taskViewData });
         this.taskViewInstance = app.mount(container);
         this.taskViewInstance.setSortMode(this.sort_by === "idx");
+        // Restore view mode from the switcher (survives filter-triggered re-renders)
+        if (this.modeSwitcherInstance?.activeMode) {
+            this.taskViewInstance.setViewMode(this.modeSwitcherInstance.activeMode);
+        }
     }
 };
 
