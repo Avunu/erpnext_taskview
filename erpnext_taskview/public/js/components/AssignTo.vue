@@ -69,6 +69,49 @@ interface UserOption {
   label: string;
 }
 
+// Module-level cache: shared across all instances and Vue app re-creations.
+// The promise ensures only one API call is ever in-flight.
+let _userCache: { users: UserOption[]; images: Record<string, string> } | null = null;
+let _userCachePromise: Promise<{ users: UserOption[]; images: Record<string, string> }> | null =
+  null;
+
+function fetchUsersOnce(): Promise<{ users: UserOption[]; images: Record<string, string> }> {
+  if (_userCache) return Promise.resolve(_userCache);
+  if (_userCachePromise) return _userCachePromise;
+
+  _userCachePromise = new Promise<{ users: UserOption[]; images: Record<string, string> }>(
+    (resolve, reject) => {
+      frappe.call({
+        method: "frappe.client.get_list",
+        args: {
+          doctype: "User",
+          filters: { enabled: 1, user_type: "System User" },
+          fields: ["name", "full_name", "user_image"],
+          limit_page_length: 0,
+        },
+        callback: (r: any) => {
+          const result = r.message || [];
+          const users: UserOption[] = [];
+          const images: Record<string, string> = {};
+          for (const u of result) {
+            if (u.name === "Administrator" || u.name === "Guest") continue;
+            users.push({ value: u.name, label: u.full_name || u.name });
+            if (u.user_image) images[u.name] = u.user_image;
+          }
+          _userCache = { users, images };
+          resolve(_userCache);
+        },
+        error: (err: any) => {
+          _userCachePromise = null; // allow retry on failure
+          reject(err);
+        },
+      });
+    },
+  );
+
+  return _userCachePromise;
+}
+
 export default defineComponent({
   name: "AssignTo",
   components: { Pin },
@@ -125,39 +168,10 @@ export default defineComponent({
 
   methods: {
     async loadUsers(): Promise<void> {
-      if ((this.$options as any)._cachedUsers) {
-        const cached = (this.$options as any)._cachedUsers as {
-          users: UserOption[];
-          images: Record<string, string>;
-        };
+      try {
+        const cached = await fetchUsersOnce();
         this.allUsers = cached.users;
         this.userImages = cached.images;
-        return;
-      }
-      try {
-        const result = await new Promise<any[]>((resolve, reject) => {
-          frappe.call({
-            method: "frappe.client.get_list",
-            args: {
-              doctype: "User",
-              filters: { enabled: 1, user_type: "System User" },
-              fields: ["name", "full_name", "user_image"],
-              limit_page_length: 0,
-            },
-            callback: (r: any) => resolve(r.message || []),
-            error: reject,
-          });
-        });
-        const users: UserOption[] = [];
-        const images: Record<string, string> = {};
-        for (const u of result) {
-          if (u.name === "Administrator" || u.name === "Guest") continue;
-          users.push({ value: u.name, label: u.full_name || u.name });
-          if (u.user_image) images[u.name] = u.user_image;
-        }
-        this.allUsers = users;
-        this.userImages = images;
-        (this.$options as any)._cachedUsers = { users, images };
       } catch (err) {
         console.error("Failed to load users:", err);
       }
