@@ -388,10 +388,12 @@ def get_active_timers() -> dict[str, Any]:
 
 
 def _reorder_projects(project_name: str, new_idx: int) -> None:
-	"""Shift sibling project ``idx`` values to make room for the moved project.
+	"""Rebuild contiguous ``idx`` values for all projects after a move.
 
-	All projects with ``idx >= new_idx`` (excluding the moved project) are
-	incremented by one, then the moved project is assigned ``new_idx``.
+	Uses the same strategy as :func:`_reorder_siblings`:
+	projects below ``new_idx`` stay put, those at or above shift up,
+	and unindexed projects get appended.  The result is a dense
+	1-based sequence.
 
 	Args:
 		project_name: The Frappe name of the project being repositioned.
@@ -399,15 +401,40 @@ def _reorder_projects(project_name: str, new_idx: int) -> None:
 	"""
 	Projects = cast(Table, DocType("Project"))
 
-	(
-		frappe.qb.update(Projects)
-		.set(Projects.idx, Projects.idx + 1)
-		.where(Projects.name != project_name)
-		.where(Projects.idx >= new_idx)
+	siblings = (
+		frappe.qb.from_(Projects)
+		.select(Projects.name, Projects.idx)
 		.where(Projects.docstatus == 0)
-	).run()
+	).run(as_dict=True)
 
-	frappe.db.set_value("Project", project_name, "idx", new_idx)
+	below: list[dict] = []
+	at_or_above: list[dict] = []
+	unindexed: list[dict] = []
+
+	for s in siblings:
+		if s.name == project_name:
+			continue
+		if not s.idx:
+			unindexed.append(s)
+		elif s.idx < new_idx:
+			below.append(s)
+		else:
+			at_or_above.append(s)
+
+	below.sort(key=lambda s: s.idx)
+	at_or_above.sort(key=lambda s: s.idx)
+
+	final_order: list[str] = []
+	for s in below:
+		final_order.append(s["name"])
+	final_order.append(project_name)
+	for s in at_or_above:
+		final_order.append(s["name"])
+	for s in unindexed:
+		final_order.append(s["name"])
+
+	for idx, name in enumerate(final_order, start=1):
+		frappe.db.set_value("Project", name, "idx", idx)
 
 
 def _save_project(doc: ProjectDoc, form_params: _dict | None) -> None:
@@ -473,14 +500,19 @@ def _reorder_siblings(
 	project: str,
 	new_idx: int,
 ) -> None:
-	"""Shift sibling ``idx`` values to make room for the moved task.
+	"""Rebuild contiguous ``idx`` values for all siblings after a move.
 
-	All sibling tasks sharing the same ``parent_task`` and ``project``
-	that have ``idx >= new_idx`` (excluding the moved task itself) are
-	incremented by one, then the moved task is assigned ``new_idx``.
+	Strategy:
+	1. Place the moved task at ``new_idx``.
+	2. All other siblings with a valid (non-zero, non-null) ``idx``
+	   **below** ``new_idx`` are left at their current positions.
+	3. All other siblings with ``idx >= new_idx`` are shifted up by one
+	   to make room, then compacted to remove gaps.
+	4. Siblings with ``idx`` of ``0`` or ``NULL`` are assigned
+	   incrementing values above the current maximum.
 
-	This leaves gaps in ``idx`` values over time, which is harmless —
-	sorting by ``idx`` is stable regardless of gaps.
+	The end result is a dense, gap-free 1-based sequence for the entire
+	sibling set.
 
 	Args:
 		task_name: The Frappe name of the task being repositioned.
@@ -490,33 +522,56 @@ def _reorder_siblings(
 	"""
 	Tasks = cast(Table, DocType("Task"))
 
-	# Bump all siblings at the target slot or higher (excluding the moved task)
-	q = (
-		frappe.qb.update(Tasks)
-		.set(Tasks.idx, Tasks.idx + 1)
-		.where(Tasks.name != task_name)
+	# Build the base sibling filter
+	base_q = (
+		frappe.qb.from_(Tasks)
 		.where(Tasks.project == project)
-		.where(Tasks.idx >= new_idx)
 		.where(Tasks.docstatus == 0)
 	)
 	if parent_task:
-		q = q.where(Tasks.parent_task == parent_task)
+		base_q = base_q.where(Tasks.parent_task == parent_task)
 	else:
-		q = q.where(Tasks.parent_task.isnull())
-	q.run()
+		base_q = base_q.where(
+			(Tasks.parent_task.isnull()) | (Tasks.parent_task == "")
+		)
 
-	# set the idx on all tasks where the idx is null
-	(
-		frappe.qb.update(Tasks)
-		.set(Tasks.idx, new_idx - 1)
-		.where(Tasks.name == task_name)
-		.where(Tasks.project == project)
-		.where(Tasks.docstatus == 0)
-		.where(Tasks.idx.isnull())
-	).run()
+	# Fetch all siblings: name, idx
+	siblings = (
+		base_q.select(Tasks.name, Tasks.idx)
+	).run(as_dict=True)
 
-	# Place the moved task at the target slot
-	frappe.db.set_value("Task", task_name, "idx", new_idx)
+	# Split into: the moved task, indexed siblings, unindexed siblings
+	below: list[dict] = []      # idx < new_idx, keep as-is
+	at_or_above: list[dict] = []  # idx >= new_idx, need shifting
+	unindexed: list[dict] = []  # idx is 0 or NULL
+
+	for s in siblings:
+		if s.name == task_name:
+			continue
+		if not s.idx:
+			unindexed.append(s)
+		elif s.idx < new_idx:
+			below.append(s)
+		else:
+			at_or_above.append(s)
+
+	# Sort each group by current idx for stable ordering
+	below.sort(key=lambda s: s.idx)
+	at_or_above.sort(key=lambda s: s.idx)
+
+	# Build the final ordering: below + moved task + at_or_above + unindexed
+	final_order: list[str] = []
+	for s in below:
+		final_order.append(s["name"])
+	final_order.append(task_name)
+	for s in at_or_above:
+		final_order.append(s["name"])
+	for s in unindexed:
+		final_order.append(s["name"])
+
+	# Write contiguous 1-based idx values
+	for idx, name in enumerate(final_order, start=1):
+		frappe.db.set_value("Task", name, "idx", idx)
 
 
 # ── Task ──────────────────────────────────────────────────────
