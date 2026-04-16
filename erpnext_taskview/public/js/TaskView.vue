@@ -458,11 +458,6 @@ export default defineComponent({
         stat.draggable = this.manualSort;
         stat.droppable = true;
         stat.dragOpen = true;
-      } else if (hasActiveTimer || runningChildren) {
-        stat.disableDrag = true;
-        stat.draggable = false;
-        stat.droppable = true;
-        stat.dragOpen = true;
       } else {
         // Tasks are only draggable in Manual sort mode
         stat.disableDrag = !this.manualSort;

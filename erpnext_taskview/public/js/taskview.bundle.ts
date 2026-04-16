@@ -181,12 +181,12 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
 
     // The base ListView's update_url_with_filters checks
     // `frappe.get_route_str() == this.page_name` which never matches for
-    // our custom view (route is "List/Task/tasks", page_name is "task-view").
+    // our custom view (route is "List/<doctype>/Tasks", page_name is "task-view").
     // Override to use the correct route check.
     update_url_with_filters() {
         const route = frappe.get_route();
-        if (route && route[0] === "List" && route[2] === "tasks") {
-            window.history.replaceState(null, null, this.get_url_with_filters());
+        if (route && route[0] === "List" && route[2] === "Tasks") {
+            window.history.replaceState(null, "", this.get_url_with_filters());
         }
     }
 
