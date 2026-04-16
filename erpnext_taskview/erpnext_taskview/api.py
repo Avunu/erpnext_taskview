@@ -960,6 +960,45 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> dict[str,
 
 
 # ─────────────────────────────────────────────────────────────
+#  DELETE TASK
+# ─────────────────────────────────────────────────────────────
+
+
+@frappe.whitelist()
+def delete_task(task: str, form_params: str | None = None) -> dict[str, Any]:
+	"""Delete a Task, cleaning up depends_on references first.
+
+	ERPNext's Task.populate_depends_on() automatically adds child tasks
+	to their parent's ``depends_on`` table.  We must remove those
+	references before deletion to avoid LinkExistsError.
+
+	Args:
+		task: Task document name, e.g. ``"TASK-00042"``.
+		form_params: Optional list-view form params forwarded to ``get()``.
+
+	Returns:
+		A fresh :class:`GetResponse`.
+	"""
+	if isinstance(form_params, str):
+		form_params = json.loads(form_params)
+
+	# Remove this task from any parent's depends_on table
+	TaskDependsOn = DocType("Task Depends On")
+	links = (
+		frappe.qb.from_(TaskDependsOn)
+		.select(TaskDependsOn.name, TaskDependsOn.parent)
+		.where(TaskDependsOn.task == task)
+	).run(as_dict=True)
+
+	for link in links:
+		frappe.delete_doc("Task Depends On", link.name, ignore_permissions=True)
+
+	frappe.delete_doc("Task", task)
+	frappe.db.commit()
+	return get(form_params)
+
+
+# ─────────────────────────────────────────────────────────────
 #  ASSIGN / UNASSIGN — manage task assignments via ToDo
 # ─────────────────────────────────────────────────────────────
 

@@ -190,6 +190,21 @@ export function bulkCreateTasks(
   });
 }
 
+export function deleteTask(task: string): Promise<GetResponse> {
+  const args: Record<string, string> = { task };
+  const fp = getFormParams();
+  if (fp) args.form_params = fp;
+
+  return new Promise((resolve, reject) => {
+    frappe.call({
+      method: "erpnext_taskview.erpnext_taskview.api.delete_task",
+      args,
+      callback: (r: { message: GetResponse }) => resolve(r.message),
+      error: (err: unknown) => reject(err),
+    });
+  });
+}
+
 export function assignTask(task: string, user: string): Promise<GetResponse> {
   const args: Record<string, string> = { task, user };
   const fp = getFormParams();

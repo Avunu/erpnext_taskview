@@ -103,8 +103,8 @@
 import { defineComponent, nextTick, type PropType } from "vue";
 import {
   saveDoc,
-  fetchData,
   bulkCreateTasks,
+  deleteTask as apiDeleteTask,
   assignTask,
   unassignTask,
   pinTask,
@@ -690,9 +690,7 @@ export default defineComponent({
       const label = this.isProject ? (doc as ProjectDoc).project_name : (doc as TaskDoc).subject;
       frappe.confirm(`Delete <b>${frappe.utils.escape_html(label)}</b>?`, async () => {
         try {
-          await frappe.db.set_value(doc.doctype, doc.name, "parent_task", "");
-          await frappe.db.delete_doc(doc.doctype, doc.name);
-          const data = await fetchData();
+          const data = await apiDeleteTask(doc.name);
           this.$emit("catch-success", data);
         } catch (error) {
           this.$emit("catch-error", error);
