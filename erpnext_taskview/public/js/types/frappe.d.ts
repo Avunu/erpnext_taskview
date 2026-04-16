@@ -123,6 +123,7 @@ declare global {
         filters: string | Record<string, unknown>,
         fieldname: string | string[],
       ) => Promise<T>;
+      set_value: (doctype: string, name: string, fieldname: string, value: any) => Promise<void>;
       get_list: <T = any>(doctype: string, args?: Record<string, unknown>) => Promise<T[]>;
       exists: (doctype: string, name: string | Record<string, unknown>) => Promise<boolean>;
       delete_doc: (doctype: string, name: string) => Promise<void>;

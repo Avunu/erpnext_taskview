@@ -20,7 +20,7 @@
 
       <!-- Task Subject -->
       <div class="task-subject-container">
-        <p v-if="!isEditing" class="task-subject" @click="editTask">
+        <p v-if="!isEditing" class="task-subject" @click.stop="editTask">
           {{ displayText }}
           <span v-if="customerName" class="task-customer">{{ customerName }}</span>
         </p>
@@ -583,9 +583,11 @@ export default defineComponent({
      * expand state.
      */
     async saveEdit(): Promise<void> {
+      let saved = false;
       if (this.editedText.trim() !== "") {
         const currentText = this.displayText;
         if (this.editedText !== currentText) {
+          saved = true;
           if (this.isBlank) {
             // INSERT a new Task or Project
             let newDoc: Partial<ProjectDoc> | Partial<TaskDoc>;
@@ -638,7 +640,7 @@ export default defineComponent({
       } else {
         treeNodes.value[projectName] = true;
       }
-      if (!this.isBlank) {
+      if (!this.isBlank && saved) {
         this.emitInteraction();
       }
       this.isEditing = false;
@@ -688,6 +690,7 @@ export default defineComponent({
       const label = this.isProject ? (doc as ProjectDoc).project_name : (doc as TaskDoc).subject;
       frappe.confirm(`Delete <b>${frappe.utils.escape_html(label)}</b>?`, async () => {
         try {
+          await frappe.db.set_value(doc.doctype, doc.name, "parent_task", "");
           await frappe.db.delete_doc(doc.doctype, doc.name);
           const data = await fetchData();
           this.$emit("catch-success", data);

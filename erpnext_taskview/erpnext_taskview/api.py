@@ -582,13 +582,55 @@ def _save_task(doc: TaskDoc, children: list[TaskDoc] | None = None) -> None:
 		frappe.get_doc(new_doc).insert()
 
 
+def _pause_running_timers(*, exclude_task: str | None = None) -> None:
+	"""Pause all non-paused open timers for the current user.
+
+	Ensures at most one timer is running at any time.  Called before
+	starting or resuming a timer so the backend is the single authority
+	for the one-running-timer invariant.
+
+	Args:
+		exclude_task: If given, skip the timer on this task (the one about
+			to be started/resumed).
+	"""
+	TD = cast(Table, DocType("Timesheet Detail"))
+	TS = cast(Table, DocType("Timesheet"))
+
+	running = (
+		frappe.qb.from_(TD)
+		.join(TS).on(TD.parent == TS.name)
+		.select(TD.name, TD.start_time, TD.paused_time_in_seconds)
+		.where(TS.owner == frappe.session.user)
+		.where(TD.to_time.isnull())
+		.where(TD.paused == 0)
+	).run(as_dict=True)
+
+	now = get_datetime()
+	assert isinstance(now, datetime.datetime)
+
+	for row in running:
+		if exclude_task:
+			# Look up the task for this detail to check exclusion
+			task_name = frappe.db.get_value("Timesheet Detail", row.name, "task")
+			if task_name == exclude_task:
+				continue
+		detail = cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", row.name))
+		start_time = _naive_dt(detail.start_time)
+		if start_time:
+			detail.paused_time_in_seconds = int(
+				(detail.paused_time_in_seconds or 0) + (now - start_time).total_seconds()
+			)
+		detail.paused = True  # type: ignore[assignment]
+		detail.save(ignore_permissions=True)
+
+
 def _get_or_create_timesheet_detail(project: str, task: str, description: str = "") -> TimesheetDetail:
 	"""Find an open Timesheet Detail or create a new one.
 
 	Looks for an existing row with ``to_time IS NULL`` for the given
-	project/task combination.  If none exists, appends a new row to the
-	current user's draft Timesheet (creating the Timesheet itself if
-	necessary).
+	project/task combination owned by the current user.  If none exists,
+	appends a new row to the current user's draft Timesheet (creating the
+	Timesheet itself if necessary).
 
 	Args:
 		project: The Frappe Project name.
@@ -599,9 +641,21 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 		A :class:`TimesheetDetail` document ready for field assignment
 		and ``save()``.
 	"""
-	existing = frappe.db.exists("Timesheet Detail", {"project": project, "task": task, "to_time": None})
+	# Scope lookup to current user's timesheets only
+	TD = cast(Table, DocType("Timesheet Detail"))
+	TS = cast(Table, DocType("Timesheet"))
+	existing = (
+		frappe.qb.from_(TD)
+		.join(TS).on(TD.parent == TS.name)
+		.select(TD.name)
+		.where(TS.owner == frappe.session.user)
+		.where(TD.project == project)
+		.where(TD.task == task)
+		.where(TD.to_time.isnull())
+		.limit(1)
+	).run(pluck="name")
 	if existing:
-		return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", str(existing)))
+		return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", existing[0]))
 
 	employee_name = cast(str | None, frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name"))
 
@@ -702,7 +756,8 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 			if doc.completed:
 				detail.completed = 1
 		else:
-			# Start new timer
+			# Start new timer — auto-pause any other running timer first
+			_pause_running_timers(exclude_task=doc.task)
 			detail.from_time = now
 			detail.start_time = now
 			detail.paused = False
@@ -789,7 +844,8 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 		detail.paused = True
 
 	else:
-		# Resume — reset start_time
+		# Resume — auto-pause any other running timer, then reset start_time
+		_pause_running_timers(exclude_task=detail.task)
 		detail.start_time = now
 		detail.paused = False
 
