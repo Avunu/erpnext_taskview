@@ -168,6 +168,9 @@ declare global {
       list_views_route: Record<string, string>;
     };
 
+    get_route: () => string[];
+    get_route_str: () => string;
+
     views: any;
 
     ui: {

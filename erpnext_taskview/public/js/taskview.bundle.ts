@@ -179,6 +179,17 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
     // conflict with the Vue tree's inline text editors.
     setup_keyboard_navigation() { }
 
+    // The base ListView's update_url_with_filters checks
+    // `frappe.get_route_str() == this.page_name` which never matches for
+    // our custom view (route is "List/Task/tasks", page_name is "task-view").
+    // Override to use the correct route check.
+    update_url_with_filters() {
+        const route = frappe.get_route();
+        if (route && route[0] === "List" && route[2] === "tasks") {
+            window.history.replaceState(null, null, this.get_url_with_filters());
+        }
+    }
+
     render_header(_refresh_header = false) {
         const resultEl = this.$result[0] as HTMLElement;
         resultEl.querySelectorAll(".list-row-head").forEach((el) => el.remove());
