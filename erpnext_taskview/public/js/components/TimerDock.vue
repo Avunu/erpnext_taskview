@@ -1,8 +1,14 @@
 <template>
   <div v-if="visible" ref="dockEl" class="timer-dock" :style="dockStyle">
+    <div class="timer-dock__resize timer-dock__resize--left" @pointerdown="startResize($event, 'left')"></div>
+    <div class="timer-dock__resize timer-dock__resize--right" @pointerdown="startResize($event, 'right')"></div>
     <div class="timer-dock__handle" @pointerdown="startDrag">
       <span class="timer-dock__title"> <Timer :size="14" /> Timers ({{ timerCount }}) </span>
-      <button class="timer-dock__toggle" @click="collapsed = !collapsed">
+      <span v-if="collapsed && runningTimer" class="timer-dock__running-info">
+        <span class="timer-dock__running-task">{{ runningTimer.task_subject || runningTimer.task }}</span>
+        <span class="timer-dock__running-time">{{ runningElapsed }}</span>
+      </span>
+      <button class="timer-dock__toggle" @click.stop="collapsed = !collapsed">
         <ChevronDown v-if="collapsed" :size="14" />
         <ChevronUp v-else :size="14" />
       </button>
@@ -22,7 +28,7 @@
 import { defineComponent } from "vue";
 import TimerWidget from "./TimerWidget.vue";
 import { Timer, ChevronDown, ChevronUp } from "lucide-vue-next";
-import { timers, loaded, fetchTimers, type ActiveTimer } from "../timerStore";
+import { timers, loaded, fetchTimers, getRunningTimer, type ActiveTimer } from "../timerStore";
 
 /**
  * Floating, draggable timer dock — persistent global overlay.
@@ -64,6 +70,16 @@ export default defineComponent({
       dragging: false,
       dragOffsetX: 0,
       dragOffsetY: 0,
+      /** Dock width (resizable). */
+      dockWidth: 320,
+      /** Resize state. */
+      resizing: false as false | "left" | "right",
+      resizeStartX: 0,
+      resizeStartWidth: 0,
+      resizeStartPosX: 0,
+      /** Tick for running timer display while collapsed. */
+      now: Date.now(),
+      tickInterval: null as ReturnType<typeof setInterval> | null,
     };
   },
 
@@ -83,27 +99,62 @@ export default defineComponent({
       return Array.from(timers.value.values());
     },
 
-    /** Inline style for absolute positioning. */
+    /** The currently running (non-paused) timer, if any. */
+    runningTimer(): ActiveTimer | null {
+      return getRunningTimer();
+    },
+
+    /** Elapsed display for the running timer (shown when collapsed). */
+    runningElapsed(): string {
+      if (!this.runningTimer) return "";
+      const pausedSec = this.runningTimer.paused_time_in_seconds || 0;
+      let totalSeconds = pausedSec;
+      if (this.runningTimer.start_time) {
+        const segmentMs = this.now - new Date(this.runningTimer.start_time).getTime();
+        totalSeconds += Math.max(0, Math.floor(segmentMs / 1000));
+      }
+      const h = Math.floor(totalSeconds / 3600);
+      const m = Math.floor((totalSeconds % 3600) / 60);
+      const s = totalSeconds % 60;
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    },
+
+    /** Inline style for absolute positioning + dynamic width. */
     dockStyle(): Record<string, string> {
       if (!this.posInitialised) return { visibility: "hidden" };
       return {
         left: `${this.posX}px`,
         top: `${this.posY}px`,
+        width: `${this.dockWidth}px`,
       };
     },
   },
 
   mounted() {
     this.restorePosition();
+    this.restoreWidth();
     fetchTimers();
 
     document.addEventListener("pointermove", this.onDrag);
+    document.addEventListener("pointermove", this.onResize);
     document.addEventListener("pointerup", this.endDrag);
+    document.addEventListener("pointerup", this.endResize);
+    window.addEventListener("resize", this.clampToViewport);
+
+    this.tickInterval = setInterval(() => { this.now = Date.now(); }, 1000);
   },
 
   beforeUnmount() {
     document.removeEventListener("pointermove", this.onDrag);
+    document.removeEventListener("pointermove", this.onResize);
     document.removeEventListener("pointerup", this.endDrag);
+    document.removeEventListener("pointerup", this.endResize);
+    window.removeEventListener("resize", this.clampToViewport);
+
+    if (this.tickInterval !== null) {
+      clearInterval(this.tickInterval);
+      this.tickInterval = null;
+    }
   },
 
   methods: {
@@ -115,6 +166,7 @@ export default defineComponent({
           const { x, y } = JSON.parse(saved);
           this.posX = x;
           this.posY = y;
+          this.clampToViewport();
           this.posInitialised = true;
           return;
         }
@@ -122,32 +174,47 @@ export default defineComponent({
         /* ignore */
       }
       // Default: bottom-right corner with padding.
-      this.posX = window.innerWidth - 340;
+      this.posX = window.innerWidth - this.dockWidth - 20;
       this.posY = window.innerHeight - 200;
       this.posInitialised = true;
     },
 
-    /** Begin dragging the dock. */
-    startDrag(e: PointerEvent): void {
-      this.dragging = true;
-      const el = this.$refs.dockEl as HTMLElement;
-      const rect = el.getBoundingClientRect();
-      this.dragOffsetX = e.clientX - rect.left;
-      this.dragOffsetY = e.clientY - rect.top;
-      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    /** Restore dock width from sessionStorage. */
+    restoreWidth(): void {
+      try {
+        const saved = sessionStorage.getItem("erpnext_taskview_dock_width");
+        if (saved) {
+          this.dockWidth = Math.max(250, Math.min(Number(saved), window.innerWidth - 20));
+        }
+      } catch {
+        /* ignore */
+      }
     },
 
-    /** Handle pointer move during drag. */
-    onDrag(e: PointerEvent): void {
-      if (!this.dragging) return;
-      this.posX = Math.max(0, Math.min(e.clientX - this.dragOffsetX, window.innerWidth - 320));
-      this.posY = Math.max(0, Math.min(e.clientY - this.dragOffsetY, window.innerHeight - 60));
+    /** Persist dock width to sessionStorage. */
+    saveWidth(): void {
+      try {
+        sessionStorage.setItem("erpnext_taskview_dock_width", String(this.dockWidth));
+      } catch {
+        /* ignore */
+      }
     },
 
-    /** End drag and persist position. */
-    endDrag(): void {
-      if (!this.dragging) return;
-      this.dragging = false;
+    /** Clamp dock position so it stays within the viewport. */
+    clampToViewport(): void {
+      const maxX = Math.max(0, window.innerWidth - this.dockWidth);
+      const maxY = Math.max(0, window.innerHeight - 60);
+      this.posX = Math.max(0, Math.min(this.posX, maxX));
+      this.posY = Math.max(0, Math.min(this.posY, maxY));
+      // Also clamp width if window shrank
+      if (this.dockWidth > window.innerWidth - 20) {
+        this.dockWidth = Math.max(250, window.innerWidth - 20);
+      }
+      this.savePosition();
+    },
+
+    /** Persist dock position to sessionStorage. */
+    savePosition(): void {
       try {
         sessionStorage.setItem(
           "erpnext_taskview_dock_pos",
@@ -156,6 +223,67 @@ export default defineComponent({
       } catch {
         /* ignore */
       }
+    },
+
+    /** Begin dragging the dock. */
+    startDrag(e: PointerEvent): void {
+      if (this.resizing) return;
+      this.dragging = true;
+      const el = this.$refs.dockEl as HTMLElement;
+      const rect = el.getBoundingClientRect();
+      this.dragOffsetX = e.clientX - rect.left;
+      this.dragOffsetY = e.clientY - rect.top;
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    },
+
+    /** Handle pointer move during drag — clamped to viewport. */
+    onDrag(e: PointerEvent): void {
+      if (!this.dragging) return;
+      this.posX = Math.max(0, Math.min(e.clientX - this.dragOffsetX, window.innerWidth - this.dockWidth));
+      this.posY = Math.max(0, Math.min(e.clientY - this.dragOffsetY, window.innerHeight - 60));
+    },
+
+    /** End drag and persist position. */
+    endDrag(): void {
+      if (!this.dragging) return;
+      this.dragging = false;
+      this.savePosition();
+    },
+
+    /** Begin resizing the dock from a side edge. */
+    startResize(e: PointerEvent, side: "left" | "right"): void {
+      e.stopPropagation();
+      this.resizing = side;
+      this.resizeStartX = e.clientX;
+      this.resizeStartWidth = this.dockWidth;
+      this.resizeStartPosX = this.posX;
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    },
+
+    /** Handle pointer move during resize. */
+    onResize(e: PointerEvent): void {
+      if (!this.resizing) return;
+      const dx = e.clientX - this.resizeStartX;
+      if (this.resizing === "right") {
+        const maxW = window.innerWidth - this.posX;
+        this.dockWidth = Math.max(250, Math.min(this.resizeStartWidth + dx, maxW));
+      } else {
+        // Left edge: width grows in the opposite direction, position shifts
+        const newWidth = Math.max(250, this.resizeStartWidth - dx);
+        const newX = this.resizeStartPosX + (this.resizeStartWidth - newWidth);
+        if (newX >= 0) {
+          this.dockWidth = newWidth;
+          this.posX = newX;
+        }
+      }
+    },
+
+    /** End resize and persist width + position. */
+    endResize(): void {
+      if (!this.resizing) return;
+      this.resizing = false;
+      this.saveWidth();
+      this.savePosition();
     },
 
     /** Display backend errors via Frappe toast. */
@@ -178,9 +306,8 @@ export default defineComponent({
 .timer-dock {
   position: fixed;
   z-index: 500;
-  /* above sidebar (110) and dialogs (1000) */
-  width: 320px;
   max-height: 80vh;
+  overflow-x: hidden;
   overflow-y: auto;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
@@ -194,6 +321,26 @@ export default defineComponent({
 
 .timer-dock:hover {
   box-shadow: 0 6px 28px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Resize handles ── */
+
+.timer-dock__resize {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  z-index: 10;
+}
+
+.timer-dock__resize--left {
+  left: 0;
+  cursor: ew-resize;
+}
+
+.timer-dock__resize--right {
+  right: 0;
+  cursor: ew-resize;
 }
 
 /* ── Drag handle / header ── */
@@ -231,6 +378,36 @@ export default defineComponent({
 
 .timer-dock__toggle:hover {
   opacity: 1;
+}
+
+/* ── Collapsed running timer info ── */
+
+.timer-dock__running-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  margin-left: 12px;
+  font-weight: 400;
+}
+
+.timer-dock__running-task {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.timer-dock__running-time {
+  font-family: "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--blue-200, #9ec5fe);
 }
 
 /* ── Body / widget stack ── */

@@ -414,7 +414,6 @@ export default defineComponent({
       const isProject = node.doc.doctype === "Project";
       const isBlank = !node.doc.name;
       const detail = timersByTask.value.get(node.doc.name);
-      const hasActiveTimer = !!detail;
 
       let pleaseExpandMe = false;
 

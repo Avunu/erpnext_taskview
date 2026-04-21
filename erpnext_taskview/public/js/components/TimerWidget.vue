@@ -9,7 +9,7 @@
   >
     <div class="timer-widget__header" @click="toggleExpanded">
       <div class="timer-widget__info">
-        <span class="timer-widget__project">{{ timer.project_name || timer.project }}</span>
+        <span class="timer-widget__project">{{ projectLabel }}</span>
         <span class="timer-widget__task">{{ timer.task_subject || timer.task }}</span>
       </div>
       <div class="timer-widget__time">
@@ -95,6 +95,15 @@ export default defineComponent({
   },
 
   computed: {
+    /** Project label with customer prefix. */
+    projectLabel(): string {
+      const name = this.timer.project_name || this.timer.project;
+      if (this.timer.customer) {
+        return `${this.timer.customer} · ${name}`;
+      }
+      return name;
+    },
+
     /**
      * Live elapsed time display string (HH:MM:SS).
      *
