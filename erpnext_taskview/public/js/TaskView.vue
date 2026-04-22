@@ -37,6 +37,7 @@
             @add-sibling-task="addSiblingTask(node)"
             @catch-error="catchError"
             @catch-success="premount"
+            @blank-saved="handleBlankSaved"
             @open-sidebar="openSidebar"
             @request-expand="expandAncestors(stat)"
           />
@@ -162,6 +163,8 @@ export default defineComponent({
           : theme,
       sideTimersElement: null as HTMLElement | null,
       manualSort: true,
+      /** Parent doc name whose next blank child should auto-focus after rebuild. */
+      autoFocusParent: null as string | null,
     };
   },
 
@@ -278,6 +281,7 @@ export default defineComponent({
     },
 
     async catchError(error: unknown): Promise<void> {
+      this.autoFocusParent = null;
       console.error("Error updating data:", error);
       frappe.msgprint(`Error updating data: ${error}`);
       try {
@@ -286,6 +290,13 @@ export default defineComponent({
       } catch (fetchErr) {
         console.error("Error fetching fresh data:", fetchErr);
       }
+    },
+
+    /** Handle a blank task save: set autoFocusParent so the next blank auto-focuses. */
+    handleBlankSaved(payload: { data: GetResponse; parentName: string }): void {
+      this.autoFocusParent = payload.parentName;
+      treeNodes.value[payload.parentName] = true;
+      this.premount(payload.data);
     },
 
     async saveAndRebuild(
@@ -521,6 +532,12 @@ export default defineComponent({
 
       if (targetParent) {
         this.ensureBlankChild(targetParent);
+        // Auto-focus the blank if typewriter mode is active for this parent
+        if (this.autoFocusParent && targetParent.doc.name === this.autoFocusParent) {
+          const blankChild = targetParent.children.find((c) => !c.doc.name);
+          if (blankChild) blankChild._autoFocus = true;
+          this.autoFocusParent = null;
+        }
       }
       return docs;
     },
@@ -534,6 +551,9 @@ export default defineComponent({
       const isProject = node.doc.doctype === "Project";
       const projectName = getProjectName(node);
       const parentTask = isProject ? null : node.doc.name;
+      // Calculate next available idx: count real (non-blank) siblings + 1
+      const realChildren = node.children.filter((c) => !!c.doc?.name);
+      const nextIdx = realChildren.length + 1;
 
       const blankTask = this.createNode({
         doctype: "Task",
@@ -544,6 +564,7 @@ export default defineComponent({
         status: "Open",
         is_group: 0,
         priority: "Medium",
+        idx: nextIdx,
       } as TaskDoc);
       node.children = [...node.children, blankTask];
       this.treeData = [...this.treeData];

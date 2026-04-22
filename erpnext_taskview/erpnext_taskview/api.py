@@ -402,9 +402,7 @@ def _reorder_projects(project_name: str, new_idx: int) -> None:
 	Projects = cast(Table, DocType("Project"))
 
 	siblings = (
-		frappe.qb.from_(Projects)
-		.select(Projects.name, Projects.idx)
-		.where(Projects.docstatus == 0)
+		frappe.qb.from_(Projects).select(Projects.name, Projects.idx).where(Projects.docstatus == 0)
 	).run(as_dict=True)
 
 	below: list[dict] = []
@@ -421,8 +419,8 @@ def _reorder_projects(project_name: str, new_idx: int) -> None:
 		else:
 			at_or_above.append(s)
 
-	below.sort(key=lambda s: s.idx)
-	at_or_above.sort(key=lambda s: s.idx)
+	below.sort(key=lambda s: s["idx"])
+	at_or_above.sort(key=lambda s: s["idx"])
 
 	final_order: list[str] = []
 	for s in below:
@@ -505,11 +503,11 @@ def _reorder_siblings(
 	Strategy:
 	1. Place the moved task at ``new_idx``.
 	2. All other siblings with a valid (non-zero, non-null) ``idx``
-	   **below** ``new_idx`` are left at their current positions.
+		**below** ``new_idx`` are left at their current positions.
 	3. All other siblings with ``idx >= new_idx`` are shifted up by one
-	   to make room, then compacted to remove gaps.
+		to make room, then compacted to remove gaps.
 	4. Siblings with ``idx`` of ``0`` or ``NULL`` are assigned
-	   incrementing values above the current maximum.
+		incrementing values above the current maximum.
 
 	The end result is a dense, gap-free 1-based sequence for the entire
 	sibling set.
@@ -523,25 +521,17 @@ def _reorder_siblings(
 	Tasks = cast(Table, DocType("Task"))
 
 	# Build the base sibling filter
-	base_q = (
-		frappe.qb.from_(Tasks)
-		.where(Tasks.project == project)
-		.where(Tasks.docstatus == 0)
-	)
+	base_q = frappe.qb.from_(Tasks).where(Tasks.project == project).where(Tasks.docstatus == 0)
 	if parent_task:
 		base_q = base_q.where(Tasks.parent_task == parent_task)
 	else:
-		base_q = base_q.where(
-			(Tasks.parent_task.isnull()) | (Tasks.parent_task == "")
-		)
+		base_q = base_q.where((Tasks.parent_task.isnull()) | (Tasks.parent_task == ""))
 
 	# Fetch all siblings: name, idx
-	siblings = (
-		base_q.select(Tasks.name, Tasks.idx)
-	).run(as_dict=True)
+	siblings = (base_q.select(Tasks.name, Tasks.idx)).run(as_dict=True)
 
 	# Split into: the moved task, indexed siblings, unindexed siblings
-	below: list[dict] = []      # idx < new_idx, keep as-is
+	below: list[dict] = []  # idx < new_idx, keep as-is
 	at_or_above: list[dict] = []  # idx >= new_idx, need shifting
 	unindexed: list[dict] = []  # idx is 0 or NULL
 
@@ -556,8 +546,8 @@ def _reorder_siblings(
 			at_or_above.append(s)
 
 	# Sort each group by current idx for stable ordering
-	below.sort(key=lambda s: s.idx)
-	at_or_above.sort(key=lambda s: s.idx)
+	below.sort(key=lambda s: s["idx"])
+	at_or_above.sort(key=lambda s: s["idx"])
 
 	# Build the final ordering: below + moved task + at_or_above + unindexed
 	final_order: list[str] = []
@@ -634,6 +624,8 @@ def _save_task(doc: TaskDoc, children: list[TaskDoc] | None = None) -> None:
 		if doc.parent_task:
 			new_doc["parent_task"] = doc.parent_task
 			frappe.db.set_value("Task", doc.parent_task, "is_group", 1)
+		if doc.idx:
+			new_doc["idx"] = doc.idx
 		frappe.get_doc(new_doc).insert()
 
 
@@ -653,7 +645,8 @@ def _pause_running_timers(*, exclude_task: str | None = None) -> None:
 
 	running = (
 		frappe.qb.from_(TD)
-		.join(TS).on(TD.parent == TS.name)
+		.join(TS)
+		.on(TD.parent == TS.name)
 		.select(TD.name, TD.start_time, TD.paused_time_in_seconds)
 		.where(TS.owner == frappe.session.user)
 		.where(TD.to_time.isnull())
@@ -701,7 +694,8 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 	TS = cast(Table, DocType("Timesheet"))
 	existing = (
 		frappe.qb.from_(TD)
-		.join(TS).on(TD.parent == TS.name)
+		.join(TS)
+		.on(TD.parent == TS.name)
 		.select(TD.name)
 		.where(TS.owner == frappe.session.user)
 		.where(TD.project == project)
@@ -712,7 +706,9 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 	if existing:
 		return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", existing[0]))
 
-	employee_name = cast(str | None, frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name"))
+	employee_name = cast(
+		str | None, frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
+	)
 
 	existing_timesheet = frappe.db.exists(
 		"Timesheet", {"employee": employee_name, "docstatus": 0, "parent_project": project}
@@ -798,8 +794,12 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 			# is always consistent with what the user confirmed.
 			detail.from_time = _naive_dt(doc.from_time)
 			assert detail.from_time is not None
-			hours = doc.hours if doc.hours > 0 else (
-				(_naive_dt(doc.to_time) - detail.from_time).total_seconds() / 3600  # type: ignore[union-attr,operator]
+			hours = (
+				doc.hours
+				if doc.hours > 0
+				else (
+					(_naive_dt(doc.to_time) - detail.from_time).total_seconds() / 3600  # type: ignore[union-attr,operator]
+				)
 			)
 			detail.hours = hours
 			detail.to_time = detail.from_time + datetime.timedelta(hours=hours)

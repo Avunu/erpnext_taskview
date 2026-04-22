@@ -1,11 +1,19 @@
 <template>
   <div v-if="visible" ref="dockEl" class="timer-dock" :style="dockStyle">
-    <div class="timer-dock__resize timer-dock__resize--left" @pointerdown="startResize($event, 'left')"></div>
-    <div class="timer-dock__resize timer-dock__resize--right" @pointerdown="startResize($event, 'right')"></div>
+    <div
+      class="timer-dock__resize timer-dock__resize--left"
+      @pointerdown="startResize($event, 'left')"
+    ></div>
+    <div
+      class="timer-dock__resize timer-dock__resize--right"
+      @pointerdown="startResize($event, 'right')"
+    ></div>
     <div class="timer-dock__handle" @pointerdown="startDrag">
       <span class="timer-dock__title"> <Timer :size="14" /> Timers ({{ timerCount }}) </span>
       <span v-if="collapsed && runningTimer" class="timer-dock__running-info">
-        <span class="timer-dock__running-task">{{ runningTimer.task_subject || runningTimer.task }}</span>
+        <span class="timer-dock__running-task">{{
+          runningTimer.task_subject || runningTimer.task
+        }}</span>
         <span class="timer-dock__running-time">{{ runningElapsed }}</span>
       </span>
       <button class="timer-dock__toggle" @click.stop="collapsed = !collapsed">
@@ -141,7 +149,9 @@ export default defineComponent({
     document.addEventListener("pointerup", this.endResize);
     window.addEventListener("resize", this.clampToViewport);
 
-    this.tickInterval = setInterval(() => { this.now = Date.now(); }, 1000);
+    this.tickInterval = setInterval(() => {
+      this.now = Date.now();
+    }, 1000);
   },
 
   beforeUnmount() {
@@ -239,7 +249,10 @@ export default defineComponent({
     /** Handle pointer move during drag — clamped to viewport. */
     onDrag(e: PointerEvent): void {
       if (!this.dragging) return;
-      this.posX = Math.max(0, Math.min(e.clientX - this.dragOffsetX, window.innerWidth - this.dockWidth));
+      this.posX = Math.max(
+        0,
+        Math.min(e.clientX - this.dragOffsetX, window.innerWidth - this.dockWidth),
+      );
       this.posY = Math.max(0, Math.min(e.clientY - this.dragOffsetY, window.innerHeight - 60));
     },
 

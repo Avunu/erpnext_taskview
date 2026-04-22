@@ -20,7 +20,12 @@
 
       <!-- Task Subject -->
       <div class="task-subject-container">
-        <p v-if="!isEditing" class="task-subject" @click.stop="editTask">
+        <p
+          v-if="!isEditing"
+          class="task-subject"
+          @click.stop="handleSubjectClick"
+          @dblclick.stop="editTask"
+        >
           {{ displayText }}
           <span v-if="customerName" class="task-customer">{{ customerName }}</span>
         </p>
@@ -212,6 +217,7 @@ export default defineComponent({
     "open-sidebar",
     "request-expand",
     "quick-entry",
+    "blank-saved",
   ],
 
   setup() {
@@ -290,9 +296,12 @@ export default defineComponent({
       if (this.isProject || this.isBlank) return "";
       const doc = this.node.doc as TaskDoc;
       const parts: string[] = [];
-      const projectLabel = [doc.customer, doc.project_name || doc.project].filter(Boolean).join(" · ");
+      const projectLabel = [doc.customer, doc.project_name || doc.project]
+        .filter(Boolean)
+        .join(" · ");
       if (projectLabel) parts.push(projectLabel);
-      if (doc.parent_task_subject || doc.parent_task) parts.push(doc.parent_task_subject || doc.parent_task!);
+      if (doc.parent_task_subject || doc.parent_task)
+        parts.push(doc.parent_task_subject || doc.parent_task!);
       return parts.join(" / ");
     },
     /**
@@ -419,7 +428,7 @@ export default defineComponent({
             name: timerName,
             to_time: new Date().toISOString(),
             hours: values.hrs,
-            billing_hours: values.is_billable ? (values.billing_hrs || values.hrs) : 0,
+            billing_hours: values.is_billable ? values.billing_hrs || values.hrs : 0,
             description: values.description || currentDesc,
             activity_type: values.activity_type || "",
             is_billable: values.is_billable ? 1 : 0,
@@ -517,7 +526,7 @@ export default defineComponent({
               description: values.description || "",
               activity_type: values.activity_type || "",
               is_billable: values.is_billable ? 1 : 0,
-              billing_hours: values.is_billable ? (values.billing_hrs || values.hrs) : 0,
+              billing_hours: values.is_billable ? values.billing_hrs || values.hrs : 0,
               completed: values.completed ? 1 : 0,
             });
             this.$emit("catch-success", data);
@@ -535,6 +544,14 @@ export default defineComponent({
       };
       d.show();
     },
+    /** Click on the subject text: emit interaction; blanks also enter edit mode. */
+    handleSubjectClick(): void {
+      this.emitInteraction();
+      if (this.isBlank) {
+        this.editTask();
+      }
+    },
+
     editTask(): void {
       this.isEditing = true;
       this.editedText = this.isBlank ? "" : this.displayText;
@@ -602,11 +619,19 @@ export default defineComponent({
                 parent_task: taskDoc.parent_task || null,
                 status: "Open",
                 priority: "Medium",
+                idx: taskDoc.idx || 0,
               };
             }
             try {
               const data = await saveDoc(newDoc);
-              this.$emit("catch-success", data);
+              if (!this.isProject) {
+                // Emit blank-saved for typewriter-style input: auto-focus next blank
+                const parentName =
+                  (this.node.doc as TaskDoc).parent_task || (this.node.doc as TaskDoc).project;
+                this.$emit("blank-saved", { data, parentName });
+              } else {
+                this.$emit("catch-success", data);
+              }
             } catch (error) {
               this.$emit("catch-error", error);
             }
