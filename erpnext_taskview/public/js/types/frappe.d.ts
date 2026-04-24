@@ -155,7 +155,10 @@ declare global {
       get_doc_title: (doc: Record<string, any>) => string;
     };
 
-    get_doc: <T extends Record<string, any> = Record<string, any>>(doctype: string, name: string) => T;
+    get_doc: <T extends Record<string, any> = Record<string, any>>(
+      doctype: string,
+      name: string,
+    ) => T;
     get_meta: (doctype: string) => FrappeMeta;
     meta: {
       get_label: (doctype: string, fieldname: string) => string;
@@ -195,7 +198,7 @@ declare global {
       }) => {
         sort_by: string;
         sort_order: string;
-        args: { options: Array<{ fieldname: string; label?: string }>;[key: string]: any };
+        args: { options: Array<{ fieldname: string; label?: string }>; [key: string]: any };
         wrapper: any;
         labels: Record<string, string>;
         doctype: string;
@@ -228,4 +231,4 @@ declare global {
   function __(message: string, replace?: Record<string, string> | null, context?: string): string;
 }
 
-export { };
+export {};
