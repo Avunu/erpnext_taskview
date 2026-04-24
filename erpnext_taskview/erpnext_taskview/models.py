@@ -226,7 +226,7 @@ class ActiveTimerDoc(BaseModel):
 	parent: str
 	project: str
 	task: str
-	task_subject: str = ""
+	task_subject: str | None = None
 	project_name: str = ""
 	customer: str | None = None
 	from_time: datetime | None = None

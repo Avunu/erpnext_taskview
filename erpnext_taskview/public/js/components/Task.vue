@@ -419,6 +419,7 @@ export default defineComponent({
       showStopTimerDialog({
         elapsedHrs: calcElapsedHrs(timer.paused_time_in_seconds, timer.paused, timer.start_time),
         currentDesc,
+        taskName: timer.task,
         taskSubject: timer.task_subject || timer.task,
         projectName: timer.project_name || timer.project,
         customer: timer.customer,
@@ -426,6 +427,7 @@ export default defineComponent({
           const data = await saveDoc({
             doctype: "Timesheet Detail",
             name: timerName,
+            task: values.task,
             to_time: new Date().toISOString(),
             hours: values.hrs,
             billing_hours: values.is_billable ? values.billing_hrs || values.hrs : 0,

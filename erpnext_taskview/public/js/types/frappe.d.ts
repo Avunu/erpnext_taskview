@@ -41,6 +41,7 @@ declare global {
     hidden?: 0 | 1 | boolean;
     depends_on?: string;
     description?: string;
+    get_query?: () => { filters: Record<string, any> };
   }
 
   interface FrappeDialogOptions {

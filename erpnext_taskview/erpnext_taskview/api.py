@@ -854,6 +854,11 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 		# Stop — use user-confirmed hours if provided, otherwise compute from elapsed time.
 		# to_time is always derived as from_time + hours so the stored time
 		# range is consistent with the confirmed duration.
+
+		# Allow reassigning the task on stop
+		if doc.task and doc.task != detail.task:
+			detail.task = doc.task
+
 		from_time = _naive_dt(detail.from_time)
 		assert from_time is not None
 

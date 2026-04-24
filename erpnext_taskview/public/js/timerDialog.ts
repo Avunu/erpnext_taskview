@@ -11,6 +11,7 @@
  */
 
 export interface StopTimerValues {
+	task: string;
 	activity_type: string;
 	hrs: number;
 	billing_hrs: number;
@@ -24,9 +25,11 @@ export interface StopTimerDialogOptions {
 	elapsedHrs: number;
 	/** Current description to pre-fill the Description field. */
 	currentDesc: string;
+	/** Task name (document name) for the Task field default. */
+	taskName: string;
 	/** Task subject for the context header. */
 	taskSubject: string;
-	/** Project name for the context header. */
+	/** Project name for the context header and Task filter. */
 	projectName: string;
 	/** Customer name for the context header (optional). */
 	customer?: string | null;
@@ -65,7 +68,7 @@ export function calcElapsedHrs(
  * hook is invoked so the timer can be resumed.
  */
 export function showStopTimerDialog(options: StopTimerDialogOptions): void {
-	const { elapsedHrs, currentDesc, taskSubject, projectName, customer, onSubmit, onCancel } = options;
+	const { elapsedHrs, currentDesc, taskName, taskSubject, projectName, customer, onSubmit, onCancel } = options;
 
 	const labeledPart = (label: string, value: string | null | undefined) =>
 		value ? `<span class="text-muted" style="margin-right:12px;"><span style="font-size:10px;text-transform:uppercase;letter-spacing:0.05em;opacity:0.7;">${label}:</span> ${frappe.utils.escape_html(value)}</span>` : "";
@@ -80,6 +83,14 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 		title: "Log Timer",
 		fields: [
 			{ fieldname: "context", fieldtype: "HTML", options: contextHtml },
+			{
+				label: "Task",
+				fieldname: "task",
+				fieldtype: "Link",
+				options: "Task",
+				default: taskName,
+				get_query: () => ({ filters: { project: projectName } }),
+			},
 			{ label: "Activity Type", fieldname: "activity_type", fieldtype: "Link", options: "Activity Type" },
 			{ label: "Hrs", fieldname: "hrs", fieldtype: "Float", default: elapsedHrs },
 			{ label: "Description", fieldname: "description", fieldtype: "Small Text", default: currentDesc },

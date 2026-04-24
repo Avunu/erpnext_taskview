@@ -212,12 +212,14 @@ export default defineComponent({
           this.timer.start_time,
         ),
         currentDesc,
+        taskName: this.timer.task,
         taskSubject: this.timer.task_subject || this.timer.task,
         projectName: this.timer.project_name || this.timer.project,
         customer: this.timer.customer,
         onSubmit: async (values) => {
           const result = await sendTimerAction({
             name: timerName,
+            task: values.task,
             to_time: new Date().toISOString(),
             hours: values.hrs,
             description: values.description || currentDesc || "",
