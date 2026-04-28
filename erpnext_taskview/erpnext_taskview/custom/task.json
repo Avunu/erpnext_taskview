@@ -19,6 +19,15 @@
       "property": "track_changes",
       "property_type": "Check",
       "value": 1
+    },
+    {
+      "doc_type": "Task",
+      "doctype_or_field": "DocType",
+      "module": "ERPNext TaskView",
+      "name": "Task-main-show_title_field_in_link",
+      "property": "show_title_field_in_link",
+      "property_type": "Check",
+      "value": 1
     }
   ],
   "sync_on_migrate": 1
