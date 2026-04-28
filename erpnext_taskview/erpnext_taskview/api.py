@@ -1,3 +1,6 @@
+# Copyright (c) 2026, Avunu LLC and contributors
+# For license information, please see license.txt
+
 """Backend API for the ERPNext Task View.
 
 This module exposes **three** whitelisted endpoints consumed by the Vue

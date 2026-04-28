@@ -1,3 +1,6 @@
+// Copyright (c) 2026, Avunu LLC and contributors
+// For license information, please see license.txt
+
 import { createApp } from "vue";
 import TaskView from "./TaskView.vue";
 import ViewModeSwitcher from "./components/ViewModeSwitcher.vue";

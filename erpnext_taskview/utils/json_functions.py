@@ -1,3 +1,6 @@
+# Copyright (c) 2026, Avunu LLC and contributors
+# For license information, please see license.txt
+
 """
 Custom PyPika functions for JSON operations in MariaDB/MySQL.
 
@@ -25,9 +28,8 @@ Example usage:
 
 from typing import Any
 
-from frappe.query_builder.functions import AggregateFunction
 from frappe.query_builder.terms import ValueWrapper
-from pypika.terms import Function, Term
+from pypika.terms import AggregateFunction, Function, Term
 
 
 class _Fn:

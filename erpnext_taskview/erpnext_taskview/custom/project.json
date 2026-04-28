@@ -1,62 +1,61 @@
 {
-    "custom_fields": [],
-    "doctype": "Project",
-    "property_setters": [
-        {
-            "doc_type": "Project",
-            "doctype_or_field": "DocType",
-            "field_name": null,
-            "is_system_generated": 1,
-            "module": "ERPNext TaskView",
-            "name": "Project-main-default_view",
-            "property": "default_view",
-            "property_type": "Select",
-            "value": "Tasks"
-        },
-        {
-            "doc_type": "Project",
-            "doctype_or_field": "DocField",
-            "field_name": "customer",
-            "is_system_generated": 1,
-            "module": "ERPNext TaskView",
-            "name": "Project-customer-in_list_view",
-            "property": "in_list_view",
-            "property_type": "Check",
-            "value": "1"
-        },
-        {
-            "doc_type": "Project",
-            "doctype_or_field": "DocField",
-            "field_name": "customer",
-            "is_system_generated": 1,
-            "module": "ERPNext TaskView",
-            "name": "Project-customer-in_standard_filter",
-            "property": "in_standard_filter",
-            "property_type": "Check",
-            "value": "1"
-        },
-        {
-            "doc_type": "Project",
-            "doctype_or_field": "DocField",
-            "field_name": "customer",
-            "is_system_generated": 1,
-            "module": "ERPNext TaskView",
-            "name": "Project-customer-in_filter",
-            "property": "in_filter",
-            "property_type": "Check",
-            "value": "1"
-        },
-        {
-            "doc_type": "Project",
-            "doctype_or_field": "DocField",
-            "field_name": "customer",
-            "is_system_generated": 1,
-            "module": "ERPNext TaskView",
-            "name": "Project-customer-in_preview",
-            "property": "in_preview",
-            "property_type": "Check",
-            "value": "1"
-        }
-    ],
-    "sync_on_migrate": 1
+  "custom_fields": [],
+  "doctype": "Project",
+  "property_setters": [
+    {
+      "doc_type": "Project",
+      "doctype_or_field": "DocType",
+      "is_system_generated": 0,
+      "module": "ERPNext TaskView",
+      "name": "Project-main-default_view",
+      "property": "default_view",
+      "property_type": "Select",
+      "value": "Tasks"
+    },
+    {
+      "doc_type": "Project",
+      "doctype_or_field": "DocField",
+      "field_name": "customer",
+      "is_system_generated": 0,
+      "module": "ERPNext TaskView",
+      "name": "Project-customer-in_list_view",
+      "property": "in_list_view",
+      "property_type": "Check",
+      "value": "1"
+    },
+    {
+      "doc_type": "Project",
+      "doctype_or_field": "DocField",
+      "field_name": "customer",
+      "is_system_generated": 0,
+      "module": "ERPNext TaskView",
+      "name": "Project-customer-in_standard_filter",
+      "property": "in_standard_filter",
+      "property_type": "Check",
+      "value": "1"
+    },
+    {
+      "doc_type": "Project",
+      "doctype_or_field": "DocField",
+      "field_name": "customer",
+      "is_system_generated": 0,
+      "module": "ERPNext TaskView",
+      "name": "Project-customer-in_filter",
+      "property": "in_filter",
+      "property_type": "Check",
+      "value": "1"
+    },
+    {
+      "doc_type": "Project",
+      "doctype_or_field": "DocField",
+      "field_name": "customer",
+      "is_system_generated": 0,
+      "module": "ERPNext TaskView",
+      "name": "Project-customer-in_preview",
+      "property": "in_preview",
+      "property_type": "Check",
+      "value": "1"
+    }
+  ],
+  "sync_on_migrate": 1
 }

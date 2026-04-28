@@ -1,3 +1,6 @@
+// Copyright (c) 2026, Avunu LLC and contributors
+// For license information, please see license.txt
+
 /**
  * Persistent tree collapse/expand state, stored in localStorage per user.
  *

@@ -1,3 +1,6 @@
+# Copyright (c) 2026, Avunu LLC and contributors
+# For license information, please see license.txt
+
 app_name = "erpnext_taskview"
 app_title = "ERPNext TaskView"
 app_publisher = "Avunu LLC"

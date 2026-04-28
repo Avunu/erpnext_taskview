@@ -1,3 +1,6 @@
+<!-- Copyright (c) 2026, Avunu LLC and contributors
+For license information, please see license.txt-->
+
 # ERPNext TaskRunner - TypeScript Migration
 
 This project has been successfully migrated from JavaScript to TypeScript, providing better type safety and development experience.

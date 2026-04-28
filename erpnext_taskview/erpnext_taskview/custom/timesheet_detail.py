@@ -1,3 +1,6 @@
+# Copyright (c) 2026, Avunu LLC and contributors
+# For license information, please see license.txt
+
 from erpnext.projects.doctype.timesheet_detail.timesheet_detail import TimesheetDetail as BaseTimesheetDetail
 from frappe.types import DF
 
