@@ -64,8 +64,7 @@ repos:
               .*node_modules.*|
               .*boilerplate.*|
               erpnext_taskview/templates/includes/.*|
-              erpnext_taskview/public/js/lib/.*|
-              .*proposal_builder\.js$
+              erpnext_taskview/public/js/lib/.*
           )$
 
 ci:
