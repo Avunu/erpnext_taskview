@@ -7,26 +7,26 @@ This module exposes **three** whitelisted endpoints consumed by the Vue
 frontend:
 
 ``get()``
-    Returns flat lists of projects and tasks.
-    Accepts optional Frappe report-view filters via ``get_form_params()``.
+	Returns flat lists of projects and tasks.
+	Accepts optional Frappe report-view filters via ``get_form_params()``.
 
 ``get_active_timers()``
-    Returns all open (``to_time IS NULL``) timesheet details for the
-    current user regardless of project filter.  Each row is enriched
-    with ``task_subject`` and ``project_name`` so the global timer dock
-    can render without additional round-trips.
+	Returns all open (``to_time IS NULL``) timesheet details for the
+	current user regardless of project filter.  Each row is enriched
+	with ``task_subject`` and ``project_name`` so the global timer dock
+	can render without additional round-trips.
 
 ``save_doc(payload)``
-    Accepts a JSON-serialised :class:`SaveDocRequest` and routes the
-    enclosed document to the appropriate handler based on its ``doctype``
-    discriminator:
+	Accepts a JSON-serialised :class:`SaveDocRequest` and routes the
+	enclosed document to the appropriate handler based on its ``doctype``
+	discriminator:
 
-    - ``"Project"``  → :func:`_save_project`
-    - ``"Task"``     → :func:`_save_task`
-    - ``"Timesheet Detail"`` → :func:`_save_timesheet_detail`
+	- ``"Project"``  → :func:`_save_project`
+	- ``"Task"``     → :func:`_save_task`
+	- ``"Timesheet Detail"`` → :func:`_save_timesheet_detail`
 
-    After every mutation the endpoint returns a fresh ``get()`` response
-    so the frontend can rebuild the tree with current data.
+	After every mutation the endpoint returns a fresh ``get()`` response
+	so the frontend can rebuild the tree with current data.
 
 Design principles
 -----------------
@@ -675,6 +675,35 @@ def _pause_running_timers(*, exclude_task: str | None = None) -> None:
 		detail.save(ignore_permissions=True)
 
 
+def _find_existing_timesheet(employee: str | None, project: str) -> str | None:
+	"""Find a draft Timesheet to append new time logs to.
+
+	If any app registers a ``taskview_find_timesheet`` hook, the **last**
+	registered callable is invoked and its return value is used (standard
+	Frappe last-wins convention).  This lets downstream apps enforce
+	policies such as "one timesheet per calendar month per project".
+
+	When no hook is registered the default behaviour is to return any
+	draft Timesheet that matches the *employee + project* pair.
+
+	Hook signature::
+		my_find_timesheet(employee: str, project: str) -> str | None: ...
+
+	Args:
+		employee: The Employee document name.
+		project: The Frappe Project name.
+
+	Returns:
+		The Timesheet ``name`` to reuse, or ``None`` to create a new one.
+	"""
+	hooks = frappe.get_hooks("taskview_find_timesheet")
+	if hooks:
+		return frappe.call(hooks[-1], employee=employee, project=project)
+
+	result = frappe.db.exists("Timesheet", {"employee": employee, "docstatus": 0, "parent_project": project})
+	return str(result) if result else None
+
+
 def _get_or_create_timesheet_detail(project: str, task: str, description: str = "") -> TimesheetDetail:
 	"""Find an open Timesheet Detail or create a new one.
 
@@ -713,9 +742,7 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 		str | None, frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
 	)
 
-	existing_timesheet = frappe.db.exists(
-		"Timesheet", {"employee": employee_name, "docstatus": 0, "parent_project": project}
-	)
+	existing_timesheet = _find_existing_timesheet(employee_name, project)
 
 	if existing_timesheet:
 		timesheet = cast(Timesheet, frappe.get_doc("Timesheet", str(existing_timesheet)))
