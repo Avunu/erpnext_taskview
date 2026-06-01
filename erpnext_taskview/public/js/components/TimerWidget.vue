@@ -214,6 +214,7 @@ export default defineComponent({
         currentDesc,
         taskName: this.timer.task,
         taskSubject: this.timer.task_subject || this.timer.task,
+        project: this.timer.project,
         projectName: this.timer.project_name || this.timer.project,
         customer: this.timer.customer,
         onSubmit: async (values) => {

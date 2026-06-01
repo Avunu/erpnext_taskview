@@ -32,7 +32,9 @@ export interface StopTimerDialogOptions {
   taskName: string;
   /** Task subject for the context header. */
   taskSubject: string;
-  /** Project name for the context header and Task filter. */
+  /** Project doc name (e.g. "PROJ-0001") used to filter the Task link field. */
+  project: string;
+  /** Project title for the context header display. */
   projectName: string;
   /** Customer name for the context header (optional). */
   customer?: string | null;
@@ -76,6 +78,7 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
     currentDesc,
     taskName,
     taskSubject,
+    project,
     projectName,
     customer,
     onSubmit,
@@ -103,7 +106,7 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
         fieldtype: "Link",
         options: "Task",
         default: taskName,
-        get_query: () => ({ filters: { project: projectName } }),
+        get_query: () => ({ filters: { project } }),
       },
       {
         label: "Activity Type",
