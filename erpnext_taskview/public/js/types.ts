@@ -139,9 +139,14 @@ function getFormParams(): string | undefined {
   return JSON.stringify(params);
 }
 
-export function saveDoc(doc: Partial<FrappeDoc>, children?: TaskDoc[]): Promise<SaveDocResponse> {
+export function saveDoc(
+  doc: Partial<FrappeDoc>,
+  children?: TaskDoc[],
+  siblingOrder?: string[],
+): Promise<SaveDocResponse> {
   const payload: Record<string, unknown> = { doc };
   if (children) payload.children = children;
+  if (siblingOrder) payload.sibling_order = siblingOrder;
 
   const args: Record<string, string> = { payload: JSON.stringify(payload) };
   const fp = getFormParams();

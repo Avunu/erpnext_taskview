@@ -41,7 +41,8 @@ Design principles
 
 import datetime
 import json
-from typing import Any, cast
+from dataclasses import dataclass
+from typing import Any, Literal, cast
 
 import frappe
 from erpnext.projects.doctype.timesheet.timesheet import Timesheet
@@ -239,6 +240,9 @@ def get(args: str | dict | None = None) -> dict[str, Any]:
 		Projects[p_sort_field] if p_sort_field in _PROJECT_SORT_FIELDS else Projects.idx,
 		order=p_order,
 	)
+	# Stable tiebreaker so equal/zero-idx rows render deterministically and the
+	# manual-order anchor in _write_interleaved_idx matches what the user saw.
+	pq = pq.orderby(Projects.creation, order=Order.asc)
 
 	if args.doctype == "Project" and args.filters:
 		for f in args.filters:
@@ -312,6 +316,9 @@ def get(args: str | dict | None = None) -> dict[str, Any]:
 		Tasks[t_sort_field] if t_sort_field in _TASK_SORT_FIELDS else Tasks.lft,
 		order=t_order,
 	)
+	# Stable tiebreaker so equal/zero-idx rows render deterministically and the
+	# manual-order anchor in _write_interleaved_idx matches what the user saw.
+	tq = tq.orderby(Tasks.creation, order=Order.asc)
 
 	if args.doctype == "Task" and args.filters:
 		for f in args.filters:
@@ -438,7 +445,96 @@ def _reorder_projects(project_name: str, new_idx: int) -> None:
 		frappe.db.set_value("Project", name, "idx", idx)
 
 
-def _save_project(doc: ProjectDoc, form_params: _dict | None) -> None:
+@dataclass(frozen=True, slots=True)
+class _SiblingRow:
+	"""One row of a sibling group used to rebuild manual ordering.
+
+	Mirrors the three columns selected for a reorder.  ``idx`` is ``0``/``None``
+	for rows never positioned via a drag; ``creation`` is the deterministic
+	tiebreaker that makes the reconstructed order match what the user saw.
+	"""
+
+	name: str
+	idx: int | None
+	creation: datetime.datetime
+
+
+def _write_interleaved_idx(
+	doctype: Literal["Task", "Project"],
+	rows: list[_SiblingRow],
+	ordered_visible_names: list[str],
+) -> None:
+	"""Write dense 1-based ``idx`` from an explicit visible order.
+
+	``rows`` is the *full* sibling group (each dict carrying ``name``, ``idx``,
+	``creation``).  ``ordered_visible_names`` is the subset the frontend can
+	see, in the desired order.  Hidden rows (present in ``rows`` but not named)
+	are re-anchored immediately after the visible row they currently follow, so
+	completed / filtered siblings keep their position relative to visible ones.
+
+	The current order is reconstructed exactly as :func:`get` sorts — ``idx``
+	ascending (``0``/``NULL`` first) then ``creation`` — so the anchor matches
+	what the user saw on screen.  The result is a dense, gap-free sequence with
+	the visible rows in the requested order.
+
+	Args:
+		doctype: ``"Task"`` or ``"Project"``.
+		rows: Full sibling group as :class:`_SiblingRow` objects.
+		ordered_visible_names: Visible names in the desired display order.
+	"""
+	rows = sorted(rows, key=lambda r: (r.idx or 0, r.creation))
+	in_group = {r.name for r in rows}
+	visible_set = set(ordered_visible_names)
+
+	# Attach each hidden row to its nearest visible predecessor.
+	leading_hidden: list[str] = []
+	attach: dict[str, list[str]] = {}
+	last_visible: str | None = None
+	for r in rows:
+		if r.name in visible_set:
+			last_visible = r.name
+		elif last_visible is None:
+			leading_hidden.append(r.name)
+		else:
+			attach.setdefault(last_visible, []).append(r.name)
+
+	final: list[str] = list(leading_hidden)
+	for name in ordered_visible_names:
+		if name not in in_group:  # drop stale names (e.g. concurrent reparent)
+			continue
+		final.append(name)
+		final.extend(attach.get(name, []))
+
+	for idx, name in enumerate(final, start=1):
+		frappe.db.set_value(doctype, name, "idx", idx)
+
+
+def _apply_project_order(ordered_visible_names: list[str]) -> None:
+	"""Persist an explicit project ordering captured by the frontend.
+
+	Writes a dense, gap-free 1-based ``idx`` from the exact order the user
+	sees, rather than reconstructing it from stored ``idx`` values.  Projects
+	form a single global group, so the only "hidden" rows are projects the
+	current filters excluded; those are interleaved after the visible project
+	they currently follow so nothing is lost or reshuffled.
+
+	Args:
+		ordered_visible_names: Project names in the desired display order.
+	"""
+	Projects = cast(Table, DocType("Project"))
+
+	rows = [
+		_SiblingRow(**r)
+		for r in (
+			frappe.qb.from_(Projects)
+			.select(Projects.name, Projects.idx, Projects.creation)
+			.where(Projects.docstatus == 0)
+		).run(as_dict=True)
+	]
+	_write_interleaved_idx("Project", rows, ordered_visible_names)
+
+
+def _save_project(doc: ProjectDoc, form_params: _dict | None, sibling_order: list[str] | None = None) -> None:
 	"""Insert or update a Project.
 
 	Insert/update is determined by the presence of ``doc.name``:
@@ -459,7 +555,9 @@ def _save_project(doc: ProjectDoc, form_params: _dict | None) -> None:
 				"status": doc.status,
 			},
 		)
-		if doc.idx is not None:
+		if sibling_order:
+			_apply_project_order(sibling_order)
+		elif doc.idx is not None:
 			_reorder_projects(doc.name, doc.idx)
 	else:
 		customer = None
@@ -567,10 +665,50 @@ def _reorder_siblings(
 		frappe.db.set_value("Task", name, "idx", idx)
 
 
+def _apply_sibling_order(
+	project: str,
+	parent_task: str | None,
+	ordered_visible_names: list[str],
+) -> None:
+	"""Persist an explicit sibling ordering captured by the frontend.
+
+	The authoritative order is the list of visible node names the user sees
+	after a drag, not a value reconstructed from stored ``idx``.  The full
+	sibling group (same ``project`` + ``parent_task``) is fetched so hidden
+	siblings — Completed/Cancelled tasks, or tasks filtered out by the
+	"My Tasks" view — are re-anchored after the visible row they currently
+	follow rather than lost.  See :func:`_write_interleaved_idx`.
+
+	Args:
+		project: The project the sibling group belongs to.
+		parent_task: The (new) parent task name, or ``None`` for project-root tasks.
+		ordered_visible_names: Visible task names in the desired display order.
+	"""
+	Tasks = cast(Table, DocType("Task"))
+
+	base_q = (
+		frappe.qb.from_(Tasks)
+		.select(Tasks.name, Tasks.idx, Tasks.creation)
+		.where(Tasks.project == project)
+		.where(Tasks.docstatus == 0)
+	)
+	if parent_task:
+		base_q = base_q.where(Tasks.parent_task == parent_task)
+	else:
+		base_q = base_q.where((Tasks.parent_task.isnull()) | (Tasks.parent_task == ""))
+
+	rows = [_SiblingRow(**r) for r in base_q.run(as_dict=True)]
+	_write_interleaved_idx("Task", rows, ordered_visible_names)
+
+
 # ── Task ──────────────────────────────────────────────────────
 
 
-def _save_task(doc: TaskDoc, children: list[TaskDoc] | None = None) -> None:
+def _save_task(
+	doc: TaskDoc,
+	children: list[TaskDoc] | None = None,
+	sibling_order: list[str] | None = None,
+) -> None:
 	"""Insert or update a Task, with optional descendant reparenting.
 
 	Insert/update is determined by the presence of ``doc.name``.
@@ -613,8 +751,12 @@ def _save_task(doc: TaskDoc, children: list[TaskDoc] | None = None) -> None:
 
 		frappe.db.set_value("Task", doc.name, update_fields)  # type: ignore[arg-type]
 
-		# Reorder siblings when a drag operation supplies a target position
-		if doc.idx is not None and doc.project:
+		# Reorder siblings when a drag operation supplies a target position.
+		# Prefer the explicit visible order the frontend captured; fall back to
+		# idx-based reconstruction only when no order list was sent.
+		if doc.project and sibling_order:
+			_apply_sibling_order(doc.project, doc.parent_task, sibling_order)
+		elif doc.idx is not None and doc.project:
 			_reorder_siblings(doc.name, doc.parent_task, doc.project, doc.idx)
 	else:
 		new_doc: dict[str, Any] = {
@@ -985,9 +1127,9 @@ def save_doc(payload: str, form_params: str | dict | None = None) -> dict[str, A
 	status: dict[str, str | None] = {"alert": None, "notice": None}
 	match req.doc.doctype:
 		case "Project":
-			_save_project(cast(ProjectDoc, req.doc), form_params)
+			_save_project(cast(ProjectDoc, req.doc), form_params, req.sibling_order)
 		case "Task":
-			_save_task(cast(TaskDoc, req.doc), req.children)
+			_save_task(cast(TaskDoc, req.doc), req.children, req.sibling_order)
 		case "Timesheet Detail":
 			status = _save_timesheet_detail(cast(TimesheetDetailDoc, req.doc))
 

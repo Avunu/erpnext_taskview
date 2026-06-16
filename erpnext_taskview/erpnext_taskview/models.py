@@ -283,7 +283,13 @@ class SaveDocRequest(BaseModel):
 		doc: The document to insert or update (Project, Task, or Timesheet Detail).
 		children: Descendant tasks whose ``project`` field should be updated
 			when the parent task is reparented.  ``None`` for non-drag operations.
+		sibling_order: Ordered list of the destination sibling group's *visible*
+			(non-blank) doc names, captured by the frontend after a drag.  The
+			backend writes ``idx = position`` for these and interleaves any
+			hidden/unlisted siblings after the visible row they currently follow.
+			``None`` for non-drag operations.
 	"""
 
 	doc: FrappeDoc
 	children: list[TaskDoc] | None = None
+	sibling_order: list[str] | None = None

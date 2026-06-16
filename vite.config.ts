@@ -21,6 +21,15 @@ const common = {
 
 const target = process.env.BUNDLE;
 
+// Drop noisy "/* #__PURE__ */" INVALID_ANNOTATION warnings from third-party deps
+// (e.g. @vueuse/core) — not actionable in our code. Anything outside node_modules
+// still surfaces normally.
+const onwarn = (warning: any, warn: (w: any) => void): void => {
+  const where = String(warning.id ?? warning.loc?.file ?? warning.message ?? '');
+  if (warning.code === 'INVALID_ANNOTATION' && where.includes('node_modules')) return;
+  warn(warning);
+};
+
 const taskviewConfig = defineConfig({
   ...common,
   build: {
@@ -29,16 +38,20 @@ const taskviewConfig = defineConfig({
     rollupOptions: {
       input: resolve(__dirname, 'erpnext_taskview/public/js/taskview.bundle.ts'),
       external: ['frappe'],
+      onwarn,
       output: {
         format: 'iife',
         globals: { frappe: 'frappe' },
         entryFileNames: 'js/taskview.bundle.[hash].js',
         assetFileNames: 'css/taskview.bundle.[hash].[ext]',
-        inlineDynamicImports: true,
       },
     },
     sourcemap: true,
     cssCodeSplit: false,
+    // taskview and timerdock build into the same ../dist sequentially, so we
+    // must NOT auto-empty (the second build would wipe the first). Setting this
+    // explicitly to false also silences Vite's out-of-root emptyOutDir warning.
+    emptyOutDir: false,
   },
 });
 
@@ -50,16 +63,17 @@ const timerdockConfig = defineConfig({
     rollupOptions: {
       input: resolve(__dirname, 'erpnext_taskview/public/js/timerdock.bundle.ts'),
       external: ['frappe'],
+      onwarn,
       output: {
         format: 'iife',
         globals: { frappe: 'frappe' },
         entryFileNames: 'js/timerdock.bundle.[hash].js',
         assetFileNames: 'css/timerdock.bundle.[hash].[ext]',
-        inlineDynamicImports: true,
       },
     },
     sourcemap: true,
     cssCodeSplit: false,
+    emptyOutDir: false,
   },
 });
 

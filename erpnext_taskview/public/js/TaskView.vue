@@ -302,9 +302,10 @@ export default defineComponent({
     async saveAndRebuild(
       doc: Partial<ProjectDoc> | Partial<TaskDoc> | Partial<TimesheetDetailDoc>,
       children?: TaskDoc[],
+      siblingOrder?: string[],
     ): Promise<void> {
       try {
-        const data = await saveDoc(doc, children);
+        const data = await saveDoc(doc, children, siblingOrder);
         this.premount(data);
       } catch (error) {
         this.catchError(error);
@@ -359,7 +360,10 @@ export default defineComponent({
         const newIdx = realRoots.findIndex((n) => n.doc.name === draggedDoc.name) + 1;
         if (newIdx > 0) {
           (draggedDoc as ProjectDoc).idx = newIdx;
-          await this.saveAndRebuild(draggedDoc as ProjectDoc);
+          // Send the explicit, authoritative order of all real projects so the
+          // backend persists exactly what's on screen (see saveDoc / _apply_project_order).
+          const siblingOrder = realRoots.map((n) => n.doc.name);
+          await this.saveAndRebuild(draggedDoc as ProjectDoc, undefined, siblingOrder);
         }
         return;
       }
@@ -394,6 +398,11 @@ export default defineComponent({
       const newIdx = postDropSiblings.indexOf(draggedStat) + 1;
       if (newIdx > 0) taskDoc.idx = newIdx;
 
+      // Capture the explicit, authoritative order of the destination sibling
+      // group (the dragged node is already at its dropped slot here) so the
+      // backend persists exactly what's on screen (see _apply_sibling_order).
+      const siblingOrder = postDropSiblings.map((s) => (s.data!.doc as TaskDoc).name);
+
       const draggedProject = getProjectName(draggedStat.data);
       const parentProject = getProjectName(parentData);
       if (draggedProject !== parentProject) {
@@ -411,7 +420,7 @@ export default defineComponent({
       };
 
       const children = collectChildren(draggedStat.data);
-      await this.saveAndRebuild(taskDoc, children.length > 0 ? children : undefined);
+      await this.saveAndRebuild(taskDoc, children.length > 0 ? children : undefined, siblingOrder);
       this.handleTaskInteraction(draggedStat.data);
     },
 
