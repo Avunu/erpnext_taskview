@@ -95,9 +95,11 @@ frappe.views.TasksView = class TasksView extends frappe.views.ListView {
           this.list_view_settings.fields = null;
         }
 
-        // Primary action setup
-        this.page.set_primary_action("New Task", () => {
-          frappe.new_doc("Task");
+        // Primary action: create a new doc of whichever list this view backs
+        // (Project list → "New Project", Task list → "New Task").
+        const newLabel = this.doctype === "Project" ? __("New Project") : __("New Task");
+        this.page.set_primary_action(newLabel, () => {
+          frappe.new_doc(this.doctype);
         });
       },
       error: (error: any) => {

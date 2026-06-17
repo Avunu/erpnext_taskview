@@ -548,6 +548,23 @@ export default defineComponent({
           this.autoFocusParent = null;
         }
       }
+
+      // When a task is selected, also keep a sibling "Add task..." directly
+      // below it (in addition to the child blank above).
+      if (this.activeNode && this.activeNode.doc.doctype !== "Project") {
+        const taskNode = this.findParentNode(docs, this.activeNode.doc.name);
+        if (taskNode) {
+          const siblingBlank = this.ensureBlankSibling(docs, taskNode);
+          // Typewriter mode: a saved sibling sets autoFocusParent to the task's
+          // parent, so focus the freshly re-created sibling blank.
+          const taskDoc = taskNode.doc as TaskDoc;
+          const parentName = taskDoc.parent_task || taskDoc.project;
+          if (siblingBlank && this.autoFocusParent === parentName) {
+            siblingBlank._autoFocus = true;
+            this.autoFocusParent = null;
+          }
+        }
+      }
       return docs;
     },
 
@@ -577,6 +594,46 @@ export default defineComponent({
       } as TaskDoc);
       node.children = [...node.children, blankTask];
       this.treeData = [...this.treeData];
+    },
+
+    /**
+     * Add a single blank "Add task..." sibling directly below `task` (same
+     * parent), if that parent doesn't already hold a blank.  Complements
+     * {@link ensureBlankChild}: a selected task offers both a child placeholder
+     * (new subtask) and a sibling placeholder (new task at the same level).
+     * Returns the inserted blank node, or `null` if none was added.
+     */
+    ensureBlankSibling(tree: TreeData[], task: TreeData): TreeData | null {
+      const taskDoc = task.doc as TaskDoc;
+      const parentName = taskDoc.parent_task || taskDoc.project;
+      const parent = this.findParentNode(tree, parentName);
+      if (!parent || !parent.children) return null;
+      if (parent.children.some((c) => !c.doc.name)) return null;
+
+      const at = parent.children.findIndex((c) => c.doc.name === taskDoc.name);
+      if (at === -1) return null;
+
+      const blankTask = this.createNode({
+        doctype: "Task",
+        name: "",
+        subject: "Add task...",
+        project: taskDoc.project,
+        parent_task: taskDoc.parent_task || null,
+        status: "Open",
+        is_group: 0,
+        priority: "Medium",
+        // Same idx as the selected task so the saved sibling sorts directly
+        // below it — the creation tiebreaker in get() places the newer row after.
+        idx: taskDoc.idx || 0,
+      } as TaskDoc);
+
+      parent.children = [
+        ...parent.children.slice(0, at + 1),
+        blankTask,
+        ...parent.children.slice(at + 1),
+      ];
+      this.treeData = [...this.treeData];
+      return blankTask;
     },
 
     // ── Highlight and navigation ──────────────────────────
@@ -718,6 +775,11 @@ export default defineComponent({
       if (targetParent) {
         treeNodes.value[targetParent.doc.name] = true;
         this.ensureBlankChild(targetParent);
+      }
+
+      // Task selected → also offer a sibling "Add task..." directly below it.
+      if (!isProject) {
+        this.ensureBlankSibling(this.treeData, node);
       }
     },
 
