@@ -256,11 +256,11 @@ export default defineComponent({
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  background: var(--blue-50, #eff6ff);
-  border: 1px solid var(--blue-200, #bfdbfe);
-  border-radius: 12px;
+  background: var(--bg-light-blue);
+  border: 1px solid var(--blue-200);
+  border-radius: var(--border-radius-lg);
   padding: 1px 4px 1px 1px;
-  font-size: 11px;
+  font-size: var(--text-tiny);
   max-width: 120px;
 }
 
@@ -272,22 +272,22 @@ export default defineComponent({
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1;
-  color: var(--gray-600, #6c757d);
+  color: var(--text-muted);
   opacity: 0;
   transition: opacity 0.15s;
   padding: 0 2px;
 }
 
 .assign-pill-remove:hover {
-  color: var(--red-600, #dc3545);
+  color: var(--red-600);
 }
 
 .assign-avatar {
   width: 20px;
   height: 20px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full);
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -296,38 +296,38 @@ export default defineComponent({
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--gray-300, #dee2e6);
-  color: var(--gray-700, #495057);
+  background: var(--gray-300);
+  color: var(--text-on-gray);
   font-size: 9px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 
 .assign-btn--pin {
-  background: var(--gray-100, #f8f9fa);
-  color: var(--gray-500, #adb5bd);
-  font-size: 13px;
+  background: var(--bg-gray);
+  color: var(--text-on-gray);
+  font-size: var(--text-sm);
 }
 
 .assign-btn--pin:hover {
-  background: var(--blue-100, #cfe2ff);
-  color: var(--blue-600, #0d6efd);
+  background: var(--bg-blue);
+  color: var(--text-on-blue);
 }
 
 .assign-btn--pinned {
-  background: var(--blue-100, #cfe2ff);
-  color: var(--blue-600, #0d6efd);
+  background: var(--bg-blue);
+  color: var(--text-on-blue);
 }
 
 .assign-btn--add {
-  background: var(--gray-100, #f8f9fa);
-  color: var(--gray-600, #6c757d);
-  font-size: 16px;
-  font-weight: bold;
+  background: var(--bg-gray);
+  color: var(--text-on-gray);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
 }
 
 .assign-btn--add:hover {
-  background: var(--blue-100, #cfe2ff);
-  color: var(--blue-600, #0d6efd);
+  background: var(--bg-blue);
+  color: var(--text-on-blue);
 }
 
 .assign-dropdown {
@@ -335,10 +335,10 @@ export default defineComponent({
   top: 100%;
   right: 0;
   z-index: 100;
-  background: var(--card-bg, #fff);
-  border: 1px solid var(--border-color, #dee2e6);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
   width: 240px;
   max-height: 280px;
   display: flex;
@@ -348,11 +348,11 @@ export default defineComponent({
 .assign-search {
   padding: 8px 10px;
   border: none;
-  border-bottom: 1px solid var(--border-color, #dee2e6);
-  font-size: 13px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: var(--text-sm);
   outline: none;
   background: transparent;
-  color: var(--text-color, #333);
+  color: var(--text-color);
 }
 
 .assign-user-list {
@@ -369,15 +369,15 @@ export default defineComponent({
   gap: 8px;
   padding: 6px 10px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 .assign-user-item:hover {
-  background: var(--blue-50, #eff6ff);
+  background: var(--bg-light-blue);
 }
 
 .assign-user-item--empty {
-  color: var(--gray-500, #adb5bd);
+  color: var(--text-muted);
   cursor: default;
   justify-content: center;
 }

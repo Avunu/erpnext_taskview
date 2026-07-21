@@ -77,7 +77,7 @@ export default defineComponent({
 .pinned-empty {
   text-align: center;
   padding: 32px 16px;
-  color: var(--gray-500, #adb5bd);
-  font-size: 14px;
+  color: var(--text-muted);
+  font-size: var(--text-md);
 }
 </style>

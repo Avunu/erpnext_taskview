@@ -801,7 +801,7 @@ export default defineComponent({
 
 <style scoped>
 .highlighted-project div .task-subject-container {
-  font-weight: bold;
+  font-weight: var(--weight-bold);
 }
 
 .task {
@@ -815,7 +815,7 @@ export default defineComponent({
   flex-grow: 1;
   margin-right: 10px;
   margin-left: 10px;
-  border-bottom: 1px dashed darkgrey;
+  border-bottom: 1px dashed var(--border-color);
 }
 
 .task-subject {
@@ -831,15 +831,15 @@ export default defineComponent({
 .task-customer {
   margin-left: 8px;
   font-size: 0.85em;
-  font-weight: normal;
-  color: var(--gray-600, #6c757d);
+  font-weight: var(--weight-regular);
+  color: var(--text-muted);
   opacity: 0.8;
 }
 
 .pinned-drag-handle {
   cursor: grab;
-  color: var(--gray-400, #ced4da);
-  font-size: 16px;
+  color: var(--text-light);
+  font-size: var(--text-lg);
   user-select: none;
   flex-shrink: 0;
 }
@@ -851,7 +851,7 @@ export default defineComponent({
 .task-pinned-meta {
   display: block;
   font-size: 0.8em;
-  color: var(--gray-600, #6c757d);
+  color: var(--text-muted);
   font-style: italic;
   white-space: nowrap;
   overflow: hidden;
@@ -860,9 +860,9 @@ export default defineComponent({
 
 .task-subject-edit {
   padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-tiny);
+  font-size: var(--text-md);
   width: 100%;
   white-space: nowrap;
   overflow: hidden;
@@ -899,15 +899,15 @@ export default defineComponent({
 .custom-checkbox .checkmark {
   height: 20px;
   width: 20px;
-  background-color: #d8dfed;
-  border-radius: 4px;
+  background-color: var(--control-bg);
+  border-radius: var(--border-radius-tiny);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .custom-checkbox input:checked ~ .checkmark {
-  background-color: #2196f3;
+  background-color: var(--primary);
 }
 
 .custom-checkbox .checkmark:after {
@@ -920,7 +920,7 @@ export default defineComponent({
   display: block;
   width: 5px;
   height: 10px;
-  border: solid white;
+  border: solid var(--white);
   border-width: 0 3px 3px 0;
   transform: rotate(45deg);
 }

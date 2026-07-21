@@ -142,7 +142,6 @@ export default defineComponent({
   },
 
   data() {
-    const theme = document.documentElement.getAttribute("data-theme-mode") || "light";
     return {
       treeData: [] as TreeData[],
       pinnedTasks: [] as TaskDoc[],
@@ -155,12 +154,6 @@ export default defineComponent({
       sidebarDoctype: "" as string,
       sidebarDirty: false,
       sidebarFormInstance: null as any,
-      currentTheme:
-        theme === "automatic"
-          ? window.matchMedia("(prefers-color-scheme: dark)").matches
-            ? "dark"
-            : "light"
-          : theme,
       sideTimersElement: null as HTMLElement | null,
       manualSort: true,
       /** Parent doc name whose next blank child should auto-focus after rebuild. */
@@ -180,7 +173,6 @@ export default defineComponent({
   },
 
   mounted() {
-    this.setTheme();
     this.updateHighlightedProject();
     document.addEventListener("keydown", this.handleKeydown);
   },
@@ -323,23 +315,6 @@ export default defineComponent({
         }
         current = current.parent;
       }
-    },
-
-    // ── Theme ─────────────────────────────────────────────
-
-    setTheme(): void {
-      document.documentElement.style.setProperty(
-        "--task-hover-bg-color",
-        this.currentTheme === "dark" ? "#686868" : "#ededed",
-      );
-      document.documentElement.style.setProperty(
-        "--icon-color",
-        this.currentTheme === "dark" ? "#d3d3d3" : "#000000",
-      );
-      document.documentElement.style.setProperty(
-        "--sidebar-bg-color",
-        this.currentTheme === "dark" ? "#2f2f2f" : "#f9f9f9",
-      );
     },
 
     // ── Drag and drop ─────────────────────────────────────
@@ -908,12 +883,19 @@ export default defineComponent({
 </script>
 
 <style>
+/* App-local custom props, aliased to global Frappe tokens so they follow the
+   active theme automatically (no JS theme-switching needed). */
+:root {
+  --task-hover-bg-color: var(--fg-hover-color);
+  --icon-color: var(--text-muted);
+}
+
 /* ── Sort bar ──────────────────────────────────────────────── */
 .tv-sort-bar {
   display: flex;
   align-items: center;
   padding: 4px 8px;
-  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .sort-selector {
@@ -925,25 +907,25 @@ export default defineComponent({
 .tv-sort-select {
   height: 26px;
   padding: 2px 6px;
-  font-size: 12px;
-  border: 1px solid var(--border-color, #d1d8dd);
-  border-radius: 4px;
-  background: var(--control-bg, #fff);
-  color: var(--text-color, #333);
+  font-size: var(--text-xs);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-tiny);
+  background: var(--control-bg);
+  color: var(--text-color);
   cursor: pointer;
 }
 
 .tv-sort-order {
   height: 26px;
   padding: 2px 7px;
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1;
 }
 
 /* ── Tree ──────────────────────────────────────────────────── */
 .tree-container {
   /* Adjusts overall tree font size */
-  font-size: 14px;
+  font-size: var(--text-md);
 }
 
 .small-icon {

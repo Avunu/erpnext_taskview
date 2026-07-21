@@ -322,18 +322,18 @@ export default defineComponent({
   max-height: 80vh;
   overflow-x: hidden;
   overflow-y: auto;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  background: var(--fg-color, #fff);
-  border: 1px solid var(--border-color, #d1d8dd);
-  font-family: var(--font-stack, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
-  font-size: 13px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--modal-shadow);
+  background: var(--fg-color);
+  border: 1px solid var(--border-color);
+  font-family: var(--font-stack);
+  font-size: var(--text-sm);
   user-select: none;
   transition: box-shadow 0.2s;
 }
 
 .timer-dock:hover {
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--modal-shadow);
 }
 
 /* ── Resize handles ── */
@@ -364,9 +364,9 @@ export default defineComponent({
   justify-content: space-between;
   padding: 8px 12px;
   cursor: grab;
-  background: var(--heading-color, #333);
-  color: #fff;
-  border-radius: 8px 8px 0 0;
+  background: var(--heading-color);
+  color: var(--white);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
   touch-action: none;
 }
 
@@ -375,16 +375,16 @@ export default defineComponent({
 }
 
 .timer-dock__title {
-  font-weight: 600;
-  font-size: 13px;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
 }
 
 .timer-dock__toggle {
   background: none;
   border: none;
-  color: #fff;
+  color: var(--white);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--text-xs);
   padding: 2px 6px;
   opacity: 0.8;
 }
@@ -402,7 +402,7 @@ export default defineComponent({
   flex: 1;
   min-width: 0;
   margin-left: 12px;
-  font-weight: 400;
+  font-weight: var(--weight-regular);
 }
 
 .timer-dock__running-task {
@@ -411,16 +411,16 @@ export default defineComponent({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 12px;
+  font-size: var(--text-xs);
   opacity: 0.85;
 }
 
 .timer-dock__running-time {
-  font-family: "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--font-family-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   white-space: nowrap;
-  color: var(--blue-200, #9ec5fe);
+  color: var(--blue-200);
 }
 
 /* ── Body / widget stack ── */
@@ -429,7 +429,7 @@ export default defineComponent({
   display: flex;
   flex-direction: column;
   gap: 1px;
-  background: var(--border-color, #d1d8dd);
+  background: var(--border-color);
 }
 
 /* ─────────────────────────────────────────────
@@ -437,16 +437,16 @@ export default defineComponent({
    ───────────────────────────────────────────── */
 
 .timer-widget {
-  background: var(--fg-color, #fff);
+  background: var(--fg-color);
   transition: background 0.15s;
 }
 
 .timer-widget--running {
-  border-left: 3px solid var(--blue-500, #2490ef);
+  border-left: 3px solid var(--blue-500);
 }
 
 .timer-widget--paused {
-  border-left: 3px solid var(--yellow-500, #ffc107);
+  border-left: 3px solid var(--yellow-500);
 }
 
 .timer-widget__header {
@@ -458,7 +458,7 @@ export default defineComponent({
 }
 
 .timer-widget__header:hover {
-  background: var(--control-bg, #f4f5f6);
+  background: var(--control-bg);
 }
 
 .timer-widget__info {
@@ -471,7 +471,7 @@ export default defineComponent({
 
 .timer-widget__project {
   font-size: 10px;
-  color: var(--text-light, #8d99a6);
+  color: var(--text-light);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -480,30 +480,30 @@ export default defineComponent({
 }
 
 .timer-widget__task {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-color, #333);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .timer-widget__time {
-  font-family: "SF Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-family-mono);
   font-size: 14px;
-  font-weight: 600;
-  color: var(--text-color, #333);
+  font-weight: var(--weight-semibold);
+  color: var(--text-color);
   white-space: nowrap;
   min-width: 70px;
   text-align: right;
 }
 
 .timer-widget--running .timer-widget__time {
-  color: var(--blue-500, #2490ef);
+  color: var(--blue-500);
 }
 
 .timer-widget--paused .timer-widget__time {
-  color: var(--yellow-600, #d4a017);
+  color: var(--yellow-600);
 }
 
 /* ── Controls ── */
@@ -519,43 +519,43 @@ export default defineComponent({
 
 .timer-widget__detail {
   padding: 6px 10px 10px;
-  border-top: 1px solid var(--border-color, #d1d8dd);
+  border-top: 1px solid var(--border-color);
 }
 
 .timer-widget__description {
   width: 100%;
-  border: 1px solid var(--border-color, #d1d8dd);
-  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-tiny);
   padding: 6px 8px;
-  font-size: 12px;
+  font-size: var(--text-xs);
   font-family: inherit;
   resize: vertical;
   min-height: 40px;
-  color: var(--text-color, #333);
-  background: var(--control-bg, #f4f5f6);
+  color: var(--text-color);
+  background: var(--control-bg);
 }
 
 .timer-widget__description:focus {
   outline: none;
-  border-color: var(--blue-500, #2490ef);
-  background: var(--fg-color, #fff);
+  border-color: var(--blue-500);
+  background: var(--fg-color);
 }
 
 /* ── Dark theme overrides ── */
 
 [data-theme="dark"] .timer-dock {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--modal-shadow);
 }
 
 [data-theme="dark"] .timer-widget__btn--pause {
-  background: rgba(255, 193, 7, 0.15);
+  background: var(--alert-bg-warning);
 }
 
 [data-theme="dark"] .timer-widget__btn--resume {
-  background: rgba(13, 110, 253, 0.15);
+  background: var(--alert-bg-info);
 }
 
 [data-theme="dark"] .timer-widget__btn--stop {
-  background: rgba(220, 53, 69, 0.15);
+  background: var(--alert-bg-danger);
 }
 </style>

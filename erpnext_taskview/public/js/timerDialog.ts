@@ -92,8 +92,8 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 
   const contextHtml = `
 		<div style="border-left:3px solid var(--primary-color);padding:6px 10px;margin-bottom:1rem;">
-			<div style="font-weight:600;font-size:13px;">${frappe.utils.escape_html(taskSubject)}</div>
-			<div style="margin-top:3px;font-size:12px;">${labeledPart("Project", projectName)}${labeledPart("Customer", customer)}</div>
+			<div style="font-weight:var(--weight-semibold);font-size:var(--text-sm);">${frappe.utils.escape_html(taskSubject)}</div>
+			<div style="margin-top:3px;font-size:var(--text-xs);">${labeledPart("Project", projectName)}${labeledPart("Customer", customer)}</div>
 		</div>`;
 
   const d = new frappe.ui.Dialog({
