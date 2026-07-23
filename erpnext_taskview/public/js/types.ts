@@ -143,10 +143,12 @@ export function saveDoc(
   doc: Partial<FrappeDoc>,
   children?: TaskDoc[],
   siblingOrder?: string[],
+  assignToMe?: boolean,
 ): Promise<SaveDocResponse> {
   const payload: Record<string, unknown> = { doc };
   if (children) payload.children = children;
   if (siblingOrder) payload.sibling_order = siblingOrder;
+  if (assignToMe) payload.assign_to_me = true;
 
   const args: Record<string, string> = { payload: JSON.stringify(payload) };
   const fp = getFormParams();
@@ -180,9 +182,11 @@ export function bulkCreateTasks(
   subjects: string[],
   project: string,
   parentTask?: string | null,
+  assignToMe?: boolean,
 ): Promise<GetResponse> {
   const payload: Record<string, unknown> = { subjects, project };
   if (parentTask) payload.parent_task = parentTask;
+  if (assignToMe) payload.assign_to_me = true;
 
   const args: Record<string, string> = { payload: JSON.stringify(payload) };
   const fp = getFormParams();

@@ -32,6 +32,7 @@
             :node="node"
             :sideTimersElement="sideTimersElement"
             :isOpened="isOpened"
+            :viewMode="viewMode"
             class="mtl-ml"
             @task-interaction="handleTaskInteraction(node)"
             @add-sibling-task="addSiblingTask(node)"

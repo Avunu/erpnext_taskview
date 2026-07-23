@@ -288,8 +288,14 @@ class SaveDocRequest(BaseModel):
 			backend writes ``idx = position`` for these and interleaves any
 			hidden/unlisted siblings after the visible row they currently follow.
 			``None`` for non-drag operations.
+		assign_to_me: When ``True``, a newly inserted Task is self-assigned to the
+			current user.  Sent by the frontend when creating a task from the
+			"My Tasks" view so it satisfies the assigned-to-me filter immediately
+			instead of vanishing on the next rebuild.  Ignored for updates and for
+			non-Task doctypes.
 	"""
 
 	doc: FrappeDoc
 	children: list[TaskDoc] | None = None
 	sibling_order: list[str] | None = None
+	assign_to_me: bool = False

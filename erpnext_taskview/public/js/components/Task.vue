@@ -199,6 +199,16 @@ export default defineComponent({
       required: false,
       default: false,
     },
+    /**
+     * The active view mode of the parent TaskView.  When `"my_tasks"`, newly
+     * created tasks are self-assigned to the current user so they aren't
+     * filtered out of the view the instant they're saved.
+     */
+    viewMode: {
+      type: String as PropType<"all" | "my_tasks" | "pinned">,
+      required: false,
+      default: "all",
+    },
   },
   emits: [
     "task-interaction",
@@ -623,7 +633,10 @@ export default defineComponent({
               };
             }
             try {
-              const data = await saveDoc(newDoc);
+              // In "My Tasks" view, self-assign new tasks so they don't get
+              // filtered out the moment they're saved.
+              const assignToMe = !this.isProject && this.viewMode === "my_tasks";
+              const data = await saveDoc(newDoc, undefined, undefined, assignToMe);
               if (!this.isProject) {
                 // Emit blank-saved for typewriter-style input: auto-focus next blank
                 const parentName =
@@ -699,7 +712,12 @@ export default defineComponent({
             .filter(Boolean);
           if (!subjects.length) return;
           try {
-            const data = await bulkCreateTasks(subjects, project, parentTask);
+            const data = await bulkCreateTasks(
+              subjects,
+              project,
+              parentTask,
+              this.viewMode === "my_tasks",
+            );
             this.$emit("catch-success", data);
           } catch (error) {
             this.$emit("catch-error", error);

@@ -704,10 +704,33 @@ def _apply_sibling_order(
 # ── Task ──────────────────────────────────────────────────────
 
 
+def _assign_to_current_user(task: str) -> None:
+	"""Self-assign a Task to the current user via Frappe's ToDo mechanism.
+
+	Used when a task is created from the "My Tasks" view so it satisfies the
+	assigned-to-me filter immediately instead of vanishing on the next rebuild.
+	Uses ``frappe.desk.form.assign_to.add`` so the Task's ``_assign`` field is
+	maintained consistently with the assign/unassign endpoints.
+
+	Args:
+		task: The Frappe name of the freshly-inserted Task.
+	"""
+	from frappe.desk.form.assign_to import add as assign_add
+
+	assign_add(
+		{
+			"doctype": "Task",
+			"name": task,
+			"assign_to": json.dumps([frappe.session.user]),
+		}
+	)
+
+
 def _save_task(
 	doc: TaskDoc,
 	children: list[TaskDoc] | None = None,
 	sibling_order: list[str] | None = None,
+	assign_to_me: bool = False,
 ) -> None:
 	"""Insert or update a Task, with optional descendant reparenting.
 
@@ -771,7 +794,10 @@ def _save_task(
 			frappe.db.set_value("Task", doc.parent_task, "is_group", 1)
 		if doc.idx:
 			new_doc["idx"] = doc.idx
-		frappe.get_doc(new_doc).insert()
+		inserted = frappe.get_doc(new_doc)
+		inserted.insert()
+		if assign_to_me:
+			_assign_to_current_user(inserted.name)
 
 
 def _pause_running_timers(*, exclude_task: str | None = None) -> None:
@@ -1129,7 +1155,7 @@ def save_doc(payload: str, form_params: str | dict | None = None) -> dict[str, A
 		case "Project":
 			_save_project(cast(ProjectDoc, req.doc), form_params, req.sibling_order)
 		case "Task":
-			_save_task(cast(TaskDoc, req.doc), req.children, req.sibling_order)
+			_save_task(cast(TaskDoc, req.doc), req.children, req.sibling_order, req.assign_to_me)
 		case "Timesheet Detail":
 			status = _save_timesheet_detail(cast(TimesheetDetailDoc, req.doc))
 
@@ -1155,8 +1181,9 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> dict[str,
 	``is_group`` flag is set to ``1``.
 
 	Args:
-		payload: JSON string with ``subjects``, ``project``, and
-			optional ``parent_task``.
+		payload: JSON string with ``subjects``, ``project``, optional
+			``parent_task``, and optional ``assign_to_me`` (self-assign each new
+			task to the current user — sent from the "My Tasks" view).
 
 	Returns:
 		A fresh :class:`GetResponse` reflecting the post-mutation state.
@@ -1165,6 +1192,7 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> dict[str,
 	subjects: list[str] = data.get("subjects", [])
 	project: str = data.get("project", "")
 	parent_task: str | None = data.get("parent_task") or None
+	assign_to_me: bool = bool(data.get("assign_to_me"))
 
 	if not subjects or not project:
 		frappe.throw("subjects and project are required")
@@ -1185,7 +1213,10 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> dict[str,
 		}
 		if parent_task:
 			new_doc["parent_task"] = parent_task
-		frappe.get_doc(new_doc).insert()
+		inserted = frappe.get_doc(new_doc)
+		inserted.insert()
+		if assign_to_me:
+			_assign_to_current_user(inserted.name)
 
 	frappe.db.commit()
 	return get(form_params)
