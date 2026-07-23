@@ -1,105 +1,96 @@
 <template>
-  <div class="task" @click="emitInteraction">
-    <div class="task">
-      <!-- Drag handle in pinned mode -->
-      <span v-if="pinned" class="pinned-drag-handle">
-        <GripVertical :size="16" />
-      </span>
+  <div class="task" :class="{ 'task--completed': isCompleted }" @click="emitInteraction">
+    <!-- Drag handle in pinned mode -->
+    <span v-if="pinned" class="pinned-drag-handle">
+      <GripVertical :size="16" />
+    </span>
 
-      <!-- Spiced-up Checkbox -->
-      <div v-if="!isBlank" class="custom-checkbox task-control">
-        <label>
-          <input
-            type="checkbox"
-            :checked="node.doc.status === 'Completed'"
-            @change="toggleComplete"
-          />
-          <span class="checkmark"></span>
-        </label>
-      </div>
-
-      <!-- Task Subject -->
-      <div class="task-subject-container">
-        <p
-          v-if="!isEditing"
-          class="task-subject"
-          @click.stop="handleSubjectClick"
-          @dblclick.stop="editTask"
-        >
-          {{ displayText }}
-          <span v-if="customerName" class="task-customer">{{ customerName }}</span>
-        </p>
+    <!-- Spiced-up Checkbox.  Clicks stop here so ticking a task never selects
+         the row: selection injects the "Add task..." placeholders, and that
+         shift moves the next checkbox out from under the cursor. -->
+    <div v-if="!isBlank" class="custom-checkbox task-control" @click.stop>
+      <label>
         <input
-          v-if="isEditing"
-          type="text"
-          v-model="editedText"
-          @blur="handleBlur"
-          @keyup.enter="unfocusInput"
-          @keydown.stop
-          @keydown.esc="cancelEdit"
-          class="task-subject-edit"
+          type="checkbox"
+          :checked="node.doc.status === 'Completed'"
+          @change="toggleComplete"
         />
-        <!-- Breadcrumb metadata shown in pinned view -->
-        <span v-if="pinned && pinnedMeta" class="task-pinned-meta">{{ pinnedMeta }}</span>
-      </div>
+        <span class="checkmark"></span>
+      </label>
+    </div>
 
-      <!-- action buttons for non-blank, non-completed tasks -->
-      <div v-if="!isProject && !isBlank && node.doc.status !== 'Completed'" class="task-controls">
-        <AssignTo
-          :assignedTo="taskAssignedTo"
-          :taskName="node.doc.name"
-          :isPinned="taskIsPinned"
-          @assign="handleAssign"
-          @unassign="handleUnassign"
-          @pin="handlePin"
-          @unpin="handleUnpin"
-        />
-        <button
-          class="task-btn"
-          :class="timerStatus === 'running' ? 'task-btn--pause' : 'task-btn--resume'"
-          @click="toggleTimer"
-          :title="
-            timerStatus === 'stopped' ? 'Start' : timerStatus === 'paused' ? 'Resume' : 'Pause'
-          "
-        >
-          <Pause v-if="timerStatus === 'running'" :size="14" />
-          <Play v-else :size="14" />
-        </button>
-        <button
-          class="task-btn task-btn--stop"
-          v-if="timerStatus !== 'stopped'"
-          @click="logOrStopTimer"
-          title="Stop"
-        >
-          <Square :size="14" />
-        </button>
-        <button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
-          <PanelRightOpen :size="14" />
-        </button>
-        <button
-          class="task-btn task-btn--quick-entry"
-          @click="quickEntry"
-          title="Quick add subtasks"
-        >
-          <ClipboardList :size="14" />
-        </button>
-        <button class="task-btn task-btn--delete" @click="deleteTask" title="Delete task">
-          <Trash2 :size="14" />
-        </button>
-      </div>
-      <!-- expand sidebar for projects (no timer/delete controls) -->
-      <div v-else-if="!isBlank" class="task-controls">
-        <button
-          class="task-btn task-btn--quick-entry"
-          @click="quickEntry"
-          title="Quick add subtasks"
-        >
-          <ClipboardList :size="14" />
-        </button>
-        <button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
-          <PanelRightOpen :size="14" />
-        </button>
-      </div>
+    <!-- Task Subject -->
+    <div class="task-subject-container">
+      <p
+        v-if="!isEditing"
+        class="task-subject"
+        :title="displayText"
+        @click.stop="handleSubjectClick"
+        @dblclick.stop="editTask"
+      >
+        {{ displayText }}
+        <span v-if="customerName" class="task-customer">{{ customerName }}</span>
+      </p>
+      <input
+        v-if="isEditing"
+        type="text"
+        v-model="editedText"
+        @blur="handleBlur"
+        @keyup.enter="unfocusInput"
+        @keydown.stop
+        @keydown.esc="cancelEdit"
+        class="task-subject-edit"
+      />
+      <!-- Breadcrumb metadata shown in pinned view -->
+      <span v-if="pinned && pinnedMeta" class="task-pinned-meta">{{ pinnedMeta }}</span>
+    </div>
+
+    <!-- action buttons for non-blank, non-completed tasks -->
+    <div v-if="!isProject && !isBlank && node.doc.status !== 'Completed'" class="task-controls">
+      <AssignTo
+        :assignedTo="taskAssignedTo"
+        :taskName="node.doc.name"
+        :isPinned="taskIsPinned"
+        @assign="handleAssign"
+        @unassign="handleUnassign"
+        @pin="handlePin"
+        @unpin="handleUnpin"
+      />
+      <button
+        class="task-btn"
+        :class="timerStatus === 'running' ? 'task-btn--pause' : 'task-btn--resume'"
+        @click="toggleTimer"
+        :title="timerStatus === 'stopped' ? 'Start' : timerStatus === 'paused' ? 'Resume' : 'Pause'"
+      >
+        <Pause v-if="timerStatus === 'running'" :size="14" />
+        <Play v-else :size="14" />
+      </button>
+      <button
+        class="task-btn task-btn--stop"
+        v-if="timerStatus !== 'stopped'"
+        @click="logOrStopTimer"
+        title="Stop"
+      >
+        <Square :size="14" />
+      </button>
+      <button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
+        <PanelRightOpen :size="14" />
+      </button>
+      <button class="task-btn task-btn--quick-entry" @click="quickEntry" title="Quick add subtasks">
+        <ClipboardList :size="14" />
+      </button>
+      <button class="task-btn task-btn--delete" @click="deleteTask" title="Delete task">
+        <Trash2 :size="14" />
+      </button>
+    </div>
+    <!-- expand sidebar for projects (no timer/delete controls) -->
+    <div v-else-if="!isBlank" class="task-controls">
+      <button class="task-btn task-btn--quick-entry" @click="quickEntry" title="Quick add subtasks">
+        <ClipboardList :size="14" />
+      </button>
+      <button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
+        <PanelRightOpen :size="14" />
+      </button>
     </div>
   </div>
 </template>
@@ -248,6 +239,10 @@ export default defineComponent({
     isBlank(): boolean {
       return !this.node.doc.name;
     },
+    /** True once the row has been ticked — drives the struck-through styling. */
+    isCompleted(): boolean {
+      return !this.isBlank && this.node.doc.status === "Completed";
+    },
     /**
      * The open timer for this task, or `null`.
      *
@@ -324,8 +319,12 @@ export default defineComponent({
     /**
      * Toggle the task's status between Open and Completed.
      *
-     * Persists the change via {@link saveDoc} and emits `catch-success`
-     * so the tree rebuilds with updated data.
+     * The status is applied optimistically and the tree is deliberately **not**
+     * rebuilt: `get()` hides Completed tasks, so a rebuild would yank this row
+     * out and shift every row below it up — which makes ticking several tasks
+     * in a row a game of chase-the-checkbox.  The row stays put (struck
+     * through) until the next natural refresh.  A failed save falls through to
+     * `catch-error`, which refetches and restores the true state.
      */
     async toggleComplete(): Promise<void> {
       const newStatus = this.node.doc.status === "Open" ? "Completed" : "Open";
@@ -334,12 +333,10 @@ export default defineComponent({
         treeNodes.value[this.node.doc.name] = true;
       }
       try {
-        const data = await saveDoc({ ...this.node.doc, status: newStatus });
-        this.$emit("catch-success", data);
+        await saveDoc({ ...this.node.doc, status: newStatus });
       } catch (error) {
         this.$emit("catch-error", error);
       }
-      this.emitInteraction();
     },
 
     /**
@@ -809,10 +806,22 @@ export default defineComponent({
   flex-direction: row;
   align-items: center;
   width: 100%;
+  /* Without this the row keeps its content width inside the flex tree node
+     and overflows to the right, taking the controls off-screen. */
+  min-width: 0;
+}
+
+.task--completed .task-subject {
+  color: var(--text-muted);
+  text-decoration: line-through;
 }
 
 .task-subject-container {
   flex-grow: 1;
+  /* Overrides the default `min-width: auto`, which would keep a long subject
+     at its full width and push .task-controls out of view instead of letting
+     .task-subject ellipsis. */
+  min-width: 0;
   margin-right: 10px;
   margin-left: 10px;
   border-bottom: 1px dashed var(--border-color);

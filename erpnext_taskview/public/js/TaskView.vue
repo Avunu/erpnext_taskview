@@ -939,6 +939,14 @@ export default defineComponent({
   flex-direction: row;
   align-items: center;
   width: 100%;
+  /* Shrink below content width (see .task in Task.vue) so a long subject
+     truncates rather than pushing the row's controls out of view. */
+  min-width: 0;
+}
+
+/* The chevron is fixed-width — only the subject should give up space. */
+.outer-task > .he-tree__open-icon {
+  flex-shrink: 0;
 }
 
 .mtl-tree .tree-node:hover {
