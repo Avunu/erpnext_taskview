@@ -12,7 +12,10 @@
         <div
           v-if="modifyNodeAndStat(node, stat)"
           class="outer-task"
-          :class="{ 'highlighted-project': isHighlightedProject(node) }"
+          :class="{
+            'highlighted-project': isHighlightedProject(node),
+            'task-selected': isSelected(node),
+          }"
         >
           <!-- expand/collapse button -->
           <a
@@ -34,7 +37,7 @@
             :isOpened="isOpened"
             :viewMode="viewMode"
             class="mtl-ml"
-            @task-interaction="handleTaskInteraction(node)"
+            @task-interaction="handleTaskInteraction(node, $event)"
             @add-sibling-task="addSiblingTask(node)"
             @catch-error="catchError"
             @catch-success="premount"
@@ -108,8 +111,9 @@ import {
   fetchData,
   getProjectName,
 } from "./types";
-import { refreshTimers, timersByTask } from "./timerStore";
+import { refreshTimers } from "./timerStore";
 import { treeNodes } from "./treeState";
+import { selectionToMarkdown } from "./taskMarkdown";
 
 // ── Types used only by this component ────────────────────────
 
@@ -150,6 +154,10 @@ export default defineComponent({
       lastResponse: null as GetResponse | null,
       highlightedProject: null as TreeData | null,
       activeNode: null as TreeData | null,
+      /** Names of tasks/projects in the current multi-selection (Ctrl/Shift-click). */
+      selectedTasks: new Set<string>(),
+      /** Last node touched by a plain or Ctrl-click; anchors Shift-range selection. */
+      selectionAnchor: null as string | null,
       isOpened: false,
       sidebarTitle: "" as string,
       sidebarDoctype: "" as string,
@@ -267,6 +275,8 @@ export default defineComponent({
     },
 
     setViewMode(mode: "all" | "my_tasks" | "pinned"): void {
+      this.clearSelection();
+      this.selectionAnchor = null;
       this.viewMode = mode;
       if (this.lastResponse) {
         this.premount(this.lastResponse);
@@ -409,7 +419,6 @@ export default defineComponent({
 
       const isProject = node.doc.doctype === "Project";
       const isBlank = !node.doc.name;
-      const detail = timersByTask.value.get(node.doc.name);
 
       let pleaseExpandMe = false;
 
@@ -431,13 +440,6 @@ export default defineComponent({
       if (treeNodes.value?.[node.doc.name || ""] === true || pleaseExpandMe) {
         stat.open = true;
         this.updateHighlightedProject();
-      }
-
-      let runningChildren = false;
-      if (node.children?.length > 0) {
-        runningChildren = node.children.some(
-          (child) => child.doc && timersByTask.value.has(child.doc.name),
-        );
       }
 
       if (isBlank) {
@@ -715,13 +717,33 @@ export default defineComponent({
       }
     },
 
-    handleTaskInteraction(node: TreeData): void {
+    handleTaskInteraction(node: TreeData, event?: MouseEvent): void {
       const isProject = node.doc.doctype === "Project";
       const isBlank = !node.doc.name;
 
       // Clicking a blank node should never reposition it — the blank is
       // already in the correct place and the user is about to type into it.
       if (isBlank) return;
+
+      // ── Multi-selection (Ctrl/Cmd toggles, Shift extends a range) ──────
+      // Modifier-clicks build the copy selection and deliberately skip the
+      // blank-placeholder repositioning that a plain click performs below.
+      if (event && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        this.toggleSelected(node.doc.name);
+        this.selectionAnchor = node.doc.name;
+        return;
+      }
+      if (event && event.shiftKey) {
+        event.preventDefault(); // suppress native text selection across the range
+        this.selectRange(node.doc.name);
+        this.selectionAnchor = this.selectionAnchor ?? node.doc.name;
+        return;
+      }
+
+      // Plain click clears any multi-selection and anchors the next range.
+      this.clearSelection();
+      this.selectionAnchor = node.doc.name;
 
       if (isProject) {
         if (node.doc.status !== "Completed") {
@@ -756,6 +778,108 @@ export default defineComponent({
       // Task selected → also offer a sibling "Add task..." directly below it.
       if (!isProject) {
         this.ensureBlankSibling(this.treeData, node);
+      }
+    },
+
+    // ── Multi-selection & copy-to-clipboard ──────────────────
+
+    /** Whether a node is part of the current copy selection. */
+    isSelected(node: TreeData): boolean {
+      return !!node.doc.name && this.selectedTasks.has(node.doc.name);
+    },
+
+    /** Add/remove a single node from the selection. */
+    toggleSelected(name: string): void {
+      if (this.selectedTasks.has(name)) {
+        this.selectedTasks.delete(name);
+      } else {
+        this.selectedTasks.add(name);
+      }
+    },
+
+    /** Drop the whole selection (Escape, plain click, or view switch). */
+    clearSelection(): void {
+      if (this.selectedTasks.size) this.selectedTasks.clear();
+    },
+
+    /**
+     * Flatten `treeData` to the names of visible **task** rows in display
+     * order, honoring collapse state so a Shift-range only spans currently
+     * visible tasks.  Projects are traversed (to reach their tasks) but never
+     * listed — a range must not sweep a whole project subtree into the copy.
+     * Blank placeholder nodes are skipped.
+     */
+    flattenVisibleTaskRows(): string[] {
+      const names: string[] = [];
+      const walk = (nodes: TreeData[]): void => {
+        for (const node of nodes) {
+          const name = node.doc.name;
+          if (!name) continue;
+          if (node.doc.doctype !== "Project") names.push(name);
+          // `treeNodes` stores `false` only for explicitly collapsed nodes.
+          if (treeNodes.value?.[name] !== false) walk(node.children);
+        }
+      };
+      walk(this.treeData);
+      return names;
+    },
+
+    /** Replace the selection with the inclusive task range anchor→target. */
+    selectRange(targetName: string): void {
+      this.clearSelection();
+      if (!this.selectionAnchor) {
+        this.selectedTasks.add(targetName);
+        return;
+      }
+      const order = this.flattenVisibleTaskRows();
+      const a = order.indexOf(this.selectionAnchor);
+      const b = order.indexOf(targetName);
+      if (a === -1 || b === -1) {
+        this.selectedTasks.add(targetName);
+        return;
+      }
+      const [lo, hi] = a <= b ? [a, b] : [b, a];
+      for (let i = lo; i <= hi; i++) this.selectedTasks.add(order[i]);
+    },
+
+    /** Serialize the selection to a markdown tree and copy it to the clipboard. */
+    async copySelectionToClipboard(): Promise<void> {
+      const markdown = selectionToMarkdown(this.treeData, this.selectedTasks);
+      if (!markdown) return;
+      const count = this.selectedTasks.size;
+      const notifyOk = (): void =>
+        frappe.show_alert({
+          message: __("Copied {0} task(s) to clipboard", { "0": String(count) }),
+          indicator: "green",
+        });
+      try {
+        // `navigator.clipboard` is absent in non-secure contexts; a throw here
+        // (sync or async) falls through to the execCommand fallback.
+        await navigator.clipboard.writeText(markdown);
+        notifyOk();
+      } catch {
+        try {
+          this.copyViaTextarea(markdown);
+          notifyOk();
+        } catch {
+          frappe.show_alert({ message: __("Copy to clipboard failed"), indicator: "red" });
+        }
+      }
+    },
+
+    /** Legacy clipboard path for desks served over an insecure origin. */
+    copyViaTextarea(text: string): void {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } finally {
+        document.body.removeChild(ta);
       }
     },
 
@@ -803,8 +927,27 @@ export default defineComponent({
     handleKeydown(event: KeyboardEvent): void {
       const tag = document.activeElement?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+      // Ctrl/Cmd+C copies the current selection as a markdown tree.
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === "c" &&
+        this.selectedTasks.size
+      ) {
+        event.preventDefault();
+        this.copySelectionToClipboard();
+        return;
+      }
+
+      // Escape clears the selection.
+      if (event.key === "Escape" && this.selectedTasks.size) {
+        this.clearSelection();
+        return;
+      }
+
+      // "Start typing to create" — but never for Ctrl/Cmd shortcuts.
       const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}[\]|\\:;'",.<>?/`~\- ]$/;
-      if (allowedKeys.test(event.key) && !this.isOpened) {
+      if (allowedKeys.test(event.key) && !event.ctrlKey && !event.metaKey && !this.isOpened) {
         this.editRootBlankTask();
       }
     },
@@ -888,6 +1031,7 @@ export default defineComponent({
    active theme automatically (no JS theme-switching needed). */
 :root {
   --task-hover-bg-color: var(--fg-hover-color);
+  --task-selected-bg-color: var(--highlight-color);
   --icon-color: var(--text-muted);
 }
 
@@ -952,6 +1096,14 @@ export default defineComponent({
 
 .mtl-tree .tree-node:hover {
   background-color: var(--task-hover-bg-color);
+}
+
+/* Multi-selected rows (Ctrl/Shift-click) painted for the copy feature.  The
+   inner .outer-task paints over the .tree-node hover background, so selection
+   stays visible on hover. */
+.outer-task.task-selected {
+  background-color: var(--task-selected-bg-color);
+  border-radius: var(--border-radius);
 }
 
 .he-tree__open-icon svg path {

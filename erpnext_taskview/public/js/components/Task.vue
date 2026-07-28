@@ -1,5 +1,5 @@
 <template>
-  <div class="task" :class="{ 'task--completed': isCompleted }" @click="emitInteraction">
+  <div class="task" :class="{ 'task--completed': isCompleted }" @click="emitInteraction($event)">
     <!-- Drag handle in pinned mode -->
     <span v-if="pinned" class="pinned-drag-handle">
       <GripVertical :size="16" />
@@ -25,7 +25,7 @@
         v-if="!isEditing"
         class="task-subject"
         :title="displayText"
-        @click.stop="handleSubjectClick"
+        @click.stop="handleSubjectClick($event)"
         @dblclick.stop="editTask"
       >
         {{ displayText }}
@@ -149,7 +149,7 @@ import "../task-controls.css";
  *
  * | Event              | Payload              | When                                   |
  * |--------------------|----------------------|----------------------------------------|
- * | `task-interaction`  | —                    | Any click on the row                   |
+ * | `task-interaction`  | `MouseEvent`         | Any click on the row (carries modifiers)|
  * | `add-sibling-task`  | —                    | (Reserved) sibling creation request    |
  * | `catch-error`       | `unknown`            | Backend call failed                    |
  * | `catch-success`     | `GetResponse`        | Backend call succeeded                 |
@@ -321,9 +321,13 @@ export default defineComponent({
   },
 
   methods: {
-    /** Emit `task-interaction` to notify the tree of a user click. */
-    emitInteraction(): void {
-      this.$emit("task-interaction");
+    /**
+     * Emit `task-interaction` to notify the tree of a user click.  The
+     * originating {@link MouseEvent} is forwarded so the tree can read
+     * Ctrl/Cmd/Shift modifiers for multi-selection.
+     */
+    emitInteraction(event?: MouseEvent): void {
+      this.$emit("task-interaction", event);
     },
 
     /**
@@ -555,8 +559,8 @@ export default defineComponent({
       d.show();
     },
     /** Click on the subject text: emit interaction; blanks also enter edit mode. */
-    handleSubjectClick(): void {
-      this.emitInteraction();
+    handleSubjectClick(event?: MouseEvent): void {
+      this.emitInteraction(event);
       if (this.isBlank) {
         this.editTask();
       }
@@ -853,6 +857,8 @@ export default defineComponent({
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Prevent Shift-click (range multi-select) from highlighting subject text. */
+  user-select: none;
 }
 
 .task-customer {
