@@ -27,7 +27,9 @@
 }
 
 .task-btn--pause:hover {
-  background: var(--yellow-200);
+  /* --surface-*-2 flips per theme (a light tint in light, a dark surface in
+     dark); the raw --*-200 ramp does not, and flashed a bright pastel in dark. */
+  background: var(--surface-amber-2);
 }
 
 .task-btn--resume {
@@ -36,7 +38,7 @@
 }
 
 .task-btn--resume:hover {
-  background: var(--blue-200);
+  background: var(--surface-blue-2);
 }
 
 .task-btn--stop {
@@ -45,7 +47,7 @@
 }
 
 .task-btn--stop:hover {
-  background: var(--red-200);
+  background: var(--surface-red-2);
 }
 
 .task-btn--expand {
@@ -55,7 +57,7 @@
 }
 
 .task-btn--expand:hover {
-  background: var(--blue-200);
+  background: var(--surface-blue-2);
 }
 
 .task-btn--delete {
@@ -76,5 +78,5 @@
 }
 
 .task-btn--quick-entry:hover {
-  background: var(--green-200);
+  background: var(--surface-green-2);
 }

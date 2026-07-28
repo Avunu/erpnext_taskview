@@ -555,16 +555,4 @@ export default defineComponent({
   background: var(--subtle-fg);
   color: var(--text-color);
 }
-
-[data-theme="dark"] .timer-widget__btn--pause {
-  background: var(--alert-bg-warning);
-}
-
-[data-theme="dark"] .timer-widget__btn--resume {
-  background: var(--alert-bg-info);
-}
-
-[data-theme="dark"] .timer-widget__btn--stop {
-  background: var(--alert-bg-danger);
-}
 </style>
