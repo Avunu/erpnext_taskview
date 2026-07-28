@@ -258,7 +258,11 @@ export default defineComponent({
   gap: 2px;
   background: var(--bg-light-blue);
   border: 1px solid var(--blue-200);
-  border-radius: var(--border-radius-lg);
+  /* Pill token, not --border-radius-lg: carbon deliberately squares every
+     --border-radius-* except --border-radius-full (its reserved tag/pill/avatar
+     shape), so -lg collapsed these to square corners. -full keeps a rounded pill
+     in every theme and matches the round avatar it wraps. */
+  border-radius: var(--border-radius-full);
   padding: 1px 4px 1px 1px;
   font-size: var(--text-tiny);
   max-width: 120px;
