@@ -264,6 +264,14 @@ export default defineComponent({
   max-width: 120px;
 }
 
+/* The numeric --blue-* ramp does not flip for dark themes, so --blue-200 stays
+   a near-white light blue and draws a harsh ring on the dark pill surface.
+   Pair the border with the surface's own outline token, which flips correctly
+   in both the core (espresso) and carbon dark themes. */
+[data-theme="dark"] .assign-pill {
+  border-color: var(--outline-blue-1);
+}
+
 .assign-pill:hover .assign-pill-remove {
   opacity: 1;
 }

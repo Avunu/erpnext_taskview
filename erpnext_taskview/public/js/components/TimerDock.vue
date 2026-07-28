@@ -547,6 +547,15 @@ export default defineComponent({
   box-shadow: var(--modal-shadow);
 }
 
+/* The header uses --heading-color as a background, but that is a *text* token:
+   in dark themes it flips to a near-white gray, leaving white-on-white with no
+   contrast. Use an elevated neutral surface + the theme's text color so the bar
+   stays a legible dark header in both the core and carbon dark themes. */
+[data-theme="dark"] .timer-dock__handle {
+  background: var(--subtle-fg);
+  color: var(--text-color);
+}
+
 [data-theme="dark"] .timer-widget__btn--pause {
   background: var(--alert-bg-warning);
 }
