@@ -1,0 +1,36 @@
+name: check
+
+# CI gate for this repo. Auto-merge is only as safe as what runs here, so this is what
+# you mark required on `main`.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # Matches the pkgs.nodejs_22 pinned in flake.nix.
+          node-version: 22
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn typecheck
+
+      - run: yarn lint
+
+      - run: yarn format:check
+
+      # Not `yarn build`: that chains update-assets.mjs, which resolves ../../sites and
+      # rewrites a bench's assets.json — there is no bench in CI. Build the two Vite
+      # bundles directly instead; they are what a dependency bump can actually break.
+      - run: yarn build:taskview
+
+      - run: yarn build:timerdock
