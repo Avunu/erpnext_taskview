@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@he-tree/vue": "^2.10.5",
-    "@vueuse/core": "^14.3.0",
+    "@vueuse/core": "^14.4.0",
     "frappe-ui": "^0.1",
     "lucide-vue-next": "^1.0.0",
     "vue": "^3",
@@ -28,10 +28,10 @@
   "devDependencies": {
     "@types/node": "^26.1.2",
     "@vitejs/plugin-vue": "^6.0.8",
-    "oxfmt": "^0.61.0",
-    "oxlint": "^1.76.0",
+    "oxfmt": "^0.62.0",
+    "oxlint": "^1.77.0",
     "typescript": "^7.0.2",
-    "vite": "^8.1.5",
-    "vue-tsc": "^3.3.8"
+    "vite": "^8.2.0",
+    "vue-tsc": "^3.3.9"
   }
 }
