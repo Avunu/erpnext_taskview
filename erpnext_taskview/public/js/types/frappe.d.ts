@@ -140,6 +140,14 @@ declare global {
       xss_sanitise: (text: string, options?: Record<string, unknown>) => string;
       get_absolute_url: (path: string) => string;
       is_mac: () => boolean;
+      /** Desk route for a document, e.g. "/desk/task/TASK-0001". */
+      get_form_link: (
+        doctype: string,
+        name: string,
+        html?: boolean,
+        display_text?: string | null,
+        query_params_obj?: Record<string, unknown> | null,
+      ) => string;
     };
 
     model: {
@@ -173,6 +181,10 @@ declare global {
     router: {
       list_views: string[];
       list_views_route: Record<string, string>;
+      /** "Timesheet Detail" -> "timesheet-detail". */
+      slug: (name: string) => string;
+      /** Joins route segments onto the desk base path, e.g. ["task"] -> "/desk/task". */
+      make_url: (params: (string | Record<string, unknown>)[]) => string;
     };
 
     get_route: () => string[];

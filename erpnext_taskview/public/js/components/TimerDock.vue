@@ -470,7 +470,7 @@ export default defineComponent({
 }
 
 .timer-widget__project {
-  font-size: 10px;
+  font-size: var(--text-tiny);
   color: var(--text-light);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -490,7 +490,7 @@ export default defineComponent({
 
 .timer-widget__time {
   font-family: var(--font-family-mono);
-  font-size: 14px;
+  font-size: var(--text-md);
   font-weight: var(--weight-semibold);
   color: var(--text-color);
   white-space: nowrap;
