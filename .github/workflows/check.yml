@@ -29,8 +29,14 @@ jobs:
       - run: yarn format:check
 
       # Not `yarn build`: that chains update-assets.mjs, which resolves ../../sites and
-      # rewrites a bench's assets.json — there is no bench in CI. Build the two Vite
+      # rewrites a bench's assets.json — there is no bench in CI. Build the Vite
       # bundles directly instead; they are what a dependency bump can actually break.
       - run: yarn build:taskview
 
       - run: yarn build:timerdock
+
+      - run: yarn build:portal
+
+      # Frappe renders www/projects.html as a Jinja template and refuses any
+      # template containing ".__" (frappe/utils/jinja.py).
+      - run: test -f erpnext_taskview/www/projects.html && ! grep -F '.__' erpnext_taskview/www/projects.html

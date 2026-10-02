@@ -1,5 +1,16 @@
 {
-  "custom_fields": [],
+  "custom_fields": [
+    {
+      "description": "Hours budgeted for the whole project. Leave 0 to use the sum of the task estimates.",
+      "dt": "Project",
+      "fieldname": "budgeted_hours",
+      "fieldtype": "Float",
+      "insert_after": "estimated_costing",
+      "label": "Budgeted Hours",
+      "module": "ERPNext TaskView",
+      "non_negative": 1
+    }
+  ],
   "doctype": "Project",
   "property_setters": [
     {

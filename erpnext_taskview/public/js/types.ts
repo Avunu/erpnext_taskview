@@ -20,7 +20,19 @@
 // Doc types — mirrors models.py (single source of truth)
 // ---------------------------------------------------------------------------
 
-export interface ProjectDoc {
+/** Where a budget comes from: the doc's own field, or its children's sum. */
+export type BudgetSource = "own" | "rollup";
+
+/** Hour budget fields merged onto docs by `get()` (see `budget.py`). */
+export interface BudgetFields {
+  /** Effective budget in hours; 0 when nothing is estimated. */
+  budget_hours?: number;
+  /** Live logged hours incl. descendants, excluding the user's own open timers. */
+  logged_hours?: number;
+  budget_source?: BudgetSource | null;
+}
+
+export interface ProjectDoc extends BudgetFields {
   doctype: "Project";
   name: string;
   project_name: string;
@@ -31,7 +43,7 @@ export interface ProjectDoc {
   modified?: string;
 }
 
-export interface TaskDoc {
+export interface TaskDoc extends BudgetFields {
   doctype: "Task";
   name: string;
   subject: string;
@@ -84,6 +96,19 @@ export interface GetResponse {
 export interface SaveDocResponse extends GetResponse {
   alert?: string;
   notice?: string;
+}
+
+/** Mirrors `models.Budget`. */
+export interface Budget {
+  budget_hours: number;
+  logged_hours: number;
+  source: BudgetSource | null;
+}
+
+/** Mirrors `models.BudgetSet` — budgets keyed by doc name. */
+export interface BudgetSet {
+  projects: Record<string, Budget>;
+  tasks: Record<string, Budget>;
 }
 
 // ---------------------------------------------------------------------------
@@ -159,6 +184,18 @@ export function saveDoc(
       method: "erpnext_taskview.erpnext_taskview.api.save_doc",
       args,
       callback: (r: { message: SaveDocResponse }) => resolve(r.message),
+      error: (err: unknown) => reject(err),
+    });
+  });
+}
+
+/** Fresh budgets for the given projects, without rebuilding the tree. */
+export function fetchBudgetSummary(projects: string[]): Promise<BudgetSet> {
+  return new Promise((resolve, reject) => {
+    frappe.call({
+      method: "erpnext_taskview.erpnext_taskview.budget.get_budget_summary",
+      args: { projects: JSON.stringify(projects) },
+      callback: (r: { message: BudgetSet }) => resolve(r.message),
       error: (err: unknown) => reject(err),
     });
   });

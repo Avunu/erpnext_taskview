@@ -53,6 +53,7 @@ from frappe.types.frappedict import _dict
 from frappe.utils.data import get_datetime
 from pypika.enums import Order
 
+from .budget import compute_budgets
 from .custom.timesheet_detail import TimesheetDetail
 from .models import (
 	ActiveTimerDoc,
@@ -333,6 +334,20 @@ def get(args: str | dict | None = None) -> dict[str, Any]:
 		tq = tq.where(Tasks.status.notin(["Completed", "Cancelled"]))
 
 	tasks = [TaskDoc(**r) for r in tq.run(as_dict=True)]
+
+	# ── Budgets ───────────────────────────────────────────────
+	# Rolled up over *all* tasks of these projects (including the hidden
+	# Completed ones).  The user's own open timers are left out: the frontend
+	# adds them live so the meters tick while a timer runs.
+	budgets = compute_budgets(project_names, exclude_open_owner=frappe.session.user)
+	for doc, budget in [
+		*((p, budgets.projects.get(p.name)) for p in projects),
+		*((t, budgets.tasks.get(t.name)) for t in tasks),
+	]:
+		if budget:
+			doc.budget_hours = budget.budget_hours
+			doc.logged_hours = budget.logged_hours
+			doc.budget_source = budget.source
 
 	return GetResponse(
 		projects=projects,

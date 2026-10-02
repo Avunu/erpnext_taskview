@@ -1,0 +1,29 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "node",
+      "vite/client"
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@desk/*": [
+        "../erpnext_taskview/public/js/*"
+      ],
+      "frappe-ui": [
+        "./src/types/frappe-ui.d.ts"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "src/**/*.d.ts",
+    "../erpnext_taskview/public/js/budget.ts"
+  ],
+  "exclude": [
+    "../node_modules"
+  ]
+}
