@@ -9,7 +9,7 @@ Frappe's query builder.
 
 Example usage:
 	from frappe.query_builder import DocType
-	from pequea.utils.json_functions import JSON_OBJECTAGG, JSON_ARRAYAGG
+	from erpnext_taskview.utils.json_functions import JSON_OBJECTAGG, JSON_ARRAYAGG
 
 	Item = DocType("Item")
 	IVA = DocType("Item Variant Attribute")
