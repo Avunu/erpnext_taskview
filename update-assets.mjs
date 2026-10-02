@@ -40,6 +40,26 @@ const BUNDLES = [
 	},
 ];
 
+/** Customer portal SPA output (vite.portal.config.ts). */
+const PORTAL_SRC = path.resolve(__dirname, APP_NAME, 'public', 'portal');
+const PORTAL_DEST = path.resolve(SITES_PATH, 'assets', APP_NAME, 'portal');
+
+/**
+ * Copy the portal SPA into sites/assets when the app's assets dir is a copy
+ * rather than the usual symlink to public/ (which serves it already).  The
+ * SPA references its files by hashed URL, so assets.json is not involved.
+ */
+function copyPortal() {
+	if (!fs.existsSync(PORTAL_SRC)) return;
+	const assetsAppDir = path.dirname(PORTAL_DEST);
+	if (fs.existsSync(assetsAppDir) && fs.realpathSync(assetsAppDir) === fs.realpathSync(path.dirname(PORTAL_SRC))) {
+		return;
+	}
+	fs.rmSync(PORTAL_DEST, { recursive: true, force: true });
+	fs.cpSync(PORTAL_SRC, PORTAL_DEST, { recursive: true });
+	console.log(`  portal -> /assets/${APP_NAME}/portal/`);
+}
+
 /**
  * Copy a CSS file to the assets destination and update assets.json.
  */
@@ -111,6 +131,8 @@ function main() {
 			}
 		}
 	}
+
+	copyPortal();
 
 	// Write updated assets.json
 	fs.writeFileSync(ASSETS_JSON_PATH, JSON.stringify(assetsJson, null, 4));

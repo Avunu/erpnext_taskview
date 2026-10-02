@@ -45,6 +45,14 @@
       <span v-if="pinned && pinnedMeta" class="task-pinned-meta">{{ pinnedMeta }}</span>
     </div>
 
+    <!-- Hours logged vs. budget (tasks with an estimate, projects with a budget) -->
+    <BudgetMeter
+      v-if="hasBudget"
+      :logged="node.doc.logged_hours || 0"
+      :budget="node.doc.budget_hours || 0"
+      :liveExtra="liveExtra"
+    />
+
     <!-- action buttons for non-blank, non-completed tasks -->
     <div v-if="!isProject && !isBlank && node.doc.status !== 'Completed'" class="task-controls">
       <AssignTo
@@ -113,9 +121,11 @@ import {
   getProjectName,
 } from "../types";
 import { timersByTask, getRunningTimer, type ActiveTimer } from "../timerStore";
+import { liveExtraByNode } from "../budgetLive";
 import { treeNodes } from "../treeState";
 import { showStopTimerDialog, calcElapsedHrs } from "../timerDialog";
 import AssignTo from "./AssignTo.vue";
+import BudgetMeter from "./BudgetMeter.vue";
 import {
   GripVertical,
   Play,
@@ -143,6 +153,8 @@ import "../task-controls.css";
  * | `timesheetDetail`   | Looked up from the global `timersByTask` store    |
  * | `timerStatus`       | Derived from `timesheetDetail.paused`               |
  * | `displayText`       | `getDisplayText(node)` helper                       |
+ * | `hasBudget`         | `doc.budget_hours > 0`                              |
+ * | `liveExtra`         | Own open timers, from `budgetLive.liveExtraByNode`  |
  * | `activeTimerDetail` | `getRunningTimer()` from the global timer store     |
  *
  * ## Events emitted
@@ -166,6 +178,7 @@ export default defineComponent({
   name: "Task",
   components: {
     AssignTo,
+    BudgetMeter,
     GripVertical,
     Play,
     Pause,
@@ -278,6 +291,15 @@ export default defineComponent({
     /** Human-readable display text for the tree row label. */
     displayText(): string {
       return getDisplayText(this.node);
+    },
+    /** Whether to show the budget meter: the task / project has an hour budget. */
+    hasBudget(): boolean {
+      return !this.isBlank && (this.node.doc.budget_hours ?? 0) > 0;
+    },
+    /** Hours of the current user's own open timers on this node or below it. */
+    liveExtra(): number {
+      if (this.isBlank) return 0;
+      return liveExtraByNode.value.get(this.node.doc.name) ?? 0;
     },
     /** Customer name from the project, shown on project rows. */
     customerName(): string {

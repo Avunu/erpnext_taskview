@@ -5,7 +5,7 @@
 
 This module is the **single source of truth** for the request/response
 contracts shared between the Python backend and the TypeScript frontend.
-The TypeScript interfaces in ``script.ts`` mirror these models exactly.
+The TypeScript interfaces in ``public/js/types.ts`` mirror these models exactly.
 
 Run ``generate-types`` (devenv script) to regenerate the corresponding
 TypeScript interfaces whenever models change.
@@ -30,6 +30,38 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field, field_validator
 
 # ---------------------------------------------------------------------------
+# Hour budgets — computed by ``budget.py``, merged onto Project / Task docs
+# ---------------------------------------------------------------------------
+
+BudgetSource = Literal["own", "rollup"]
+"""Where a budget comes from: the doc's own field (``Task.expected_time`` /
+``Project.budgeted_hours``) or the sum of its children's budgets."""
+
+
+class Budget(BaseModel):
+	"""Hours budgeted vs. hours logged for one Task or Project.
+
+	Attributes:
+		budget_hours: Effective budget; ``0`` when neither the doc nor any
+			descendant carries an estimate.
+		logged_hours: Live logged hours (draft + submitted timesheets and open
+			timers), including all descendants.
+		source: ``"own"`` / ``"rollup"``, or ``None`` when there is no budget.
+	"""
+
+	budget_hours: float = 0
+	logged_hours: float = 0
+	source: BudgetSource | None = None
+
+
+class BudgetSet(BaseModel):
+	"""Budgets for a set of projects and their tasks, keyed by doc name."""
+
+	projects: dict[str, Budget] = Field(default_factory=dict)
+	tasks: dict[str, Budget] = Field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
 # Doctype field models — the only shapes crossing the API boundary
 # ---------------------------------------------------------------------------
 
@@ -52,6 +84,9 @@ class ProjectDoc(BaseModel):
 	customer: str | None = ""
 	creation: datetime | str | None = None
 	modified: datetime | str | None = None
+	budget_hours: float = 0
+	logged_hours: float = 0
+	budget_source: BudgetSource | None = None
 
 	@field_validator("creation", "modified", mode="before")
 	@classmethod
@@ -96,6 +131,9 @@ class TaskDoc(BaseModel):
 	pin_idx: int | None = None
 	creation: datetime | str | None = None
 	modified: datetime | str | None = None
+	budget_hours: float = 0
+	logged_hours: float = 0
+	budget_source: BudgetSource | None = None
 
 	model_config = {"populate_by_name": True}
 

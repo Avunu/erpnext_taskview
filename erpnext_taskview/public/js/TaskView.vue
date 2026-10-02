@@ -131,9 +131,11 @@ import {
   type TreeNode,
   saveDoc,
   fetchData,
+  fetchBudgetSummary,
   getProjectName,
 } from "./types";
-import { refreshTimers } from "./timerStore";
+import { refreshTimers, timers } from "./timerStore";
+import { setBudgetTree } from "./budgetLive";
 import { treeNodes } from "./treeState";
 import { selectionToMarkdown } from "./taskMarkdown";
 
@@ -157,6 +159,9 @@ export interface TreeData extends TreeNode {
  * which lands on whatever chrome happens to be mounted.
  */
 const FLYOUT_Z_INDEX = 1025;
+
+/** Dispatched by `timerStore.ts` whenever either bundle's timer list changes. */
+const TIMERS_CHANGED_EVENT = "erpnext_taskview:timers_changed";
 
 interface StatObject {
   open: boolean;
@@ -207,6 +212,10 @@ export default defineComponent({
       manualSort: true,
       /** Parent doc name whose next blank child should auto-focus after rebuild. */
       autoFocusParent: null as string | null,
+      /** Open timers seen at the last timer event; a disappearance means time was logged. */
+      knownTimerNames: new Set<string>(),
+      /** When the tree was last rebuilt from a fresh `get()` snapshot. */
+      lastPremountAt: 0,
     };
   },
 
@@ -248,10 +257,12 @@ export default defineComponent({
   mounted() {
     this.updateHighlightedProject();
     document.addEventListener("keydown", this.handleKeydown);
+    document.addEventListener(TIMERS_CHANGED_EVENT, this.handleTimersChanged);
   },
 
   beforeUnmount() {
     document.removeEventListener("keydown", this.handleKeydown);
+    document.removeEventListener(TIMERS_CHANGED_EVENT, this.handleTimersChanged);
   },
 
   methods: {
@@ -297,7 +308,46 @@ export default defineComponent({
       docs = this.addBlankProject(docs);
       docs = this.addBlankTasks(docs);
       this.treeData = docs;
+      setBudgetTree(source.tasks);
+      this.lastPremountAt = Date.now();
       refreshTimers();
+    },
+
+    // ── Budget meters ─────────────────────────────────────
+
+    /**
+     * Timer store event (either bundle).  When an open timer disappears — it
+     * was stopped or logged, e.g. from the dock — its hours moved from the
+     * live figure into `logged_hours`, so fetch fresh budgets.  Skipped right
+     * after a rebuild (that snapshot already carries them) and on instances
+     * whose DOM the list view has since replaced.
+     */
+    handleTimersChanged(): void {
+      const names = new Set(timers.value.keys());
+      const logged = [...this.knownTimerNames].some((n) => !names.has(n));
+      this.knownTimerNames = names;
+      if (!logged || !(this.$el as Node | null)?.isConnected) return;
+      if (Date.now() - this.lastPremountAt < 3000) return;
+      this.refreshBudgets();
+    },
+
+    /** Patch budget figures onto the current docs without rebuilding the tree. */
+    async refreshBudgets(): Promise<void> {
+      const response = this.lastResponse;
+      if (!response?.projects.length) return;
+      try {
+        const budgets = await fetchBudgetSummary(response.projects.map((p) => p.name));
+        for (const doc of [...response.projects, ...response.tasks]) {
+          const b =
+            doc.doctype === "Project" ? budgets.projects[doc.name] : budgets.tasks[doc.name];
+          if (!b) continue;
+          doc.budget_hours = b.budget_hours;
+          doc.logged_hours = b.logged_hours;
+          doc.budget_source = b.source;
+        }
+      } catch (error) {
+        console.warn("erpnext_taskview: budget refresh failed", error);
+      }
     },
 
     /** Filter response to only show tasks assigned to the current user and their ancestor chain. */
