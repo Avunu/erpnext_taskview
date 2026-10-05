@@ -51,6 +51,7 @@
   </div>
   <div v-else class="pinned-container">
     <PinnedView
+      ref="pinnedView"
       :pinnedTasks="pinnedTasks"
       @catch-success="premount"
       @catch-error="catchError"
@@ -1062,7 +1063,13 @@ export default defineComponent({
       // "Start typing to create" — but never for Ctrl/Cmd shortcuts.
       const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}[\]|\\:;'",.<>?/`~\- ]$/;
       if (allowedKeys.test(event.key) && !event.ctrlKey && !event.metaKey && !this.isOpened) {
-        this.editRootBlankTask();
+        if (this.viewMode === "pinned") {
+          // Focus synchronously, while the key is still being handled, so the
+          // typed character lands in the quick-entry input.
+          (this.$refs.pinnedView as InstanceType<typeof PinnedView> | undefined)?.focusEntry();
+        } else {
+          this.editRootBlankTask();
+        }
       }
     },
 

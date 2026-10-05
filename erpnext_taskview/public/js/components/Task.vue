@@ -41,9 +41,22 @@
         @keydown.esc="cancelEdit"
         class="task-subject-edit"
       />
-      <!-- Breadcrumb metadata shown in pinned view -->
-      <span v-if="pinned && pinnedMeta" class="task-pinned-meta">{{ pinnedMeta }}</span>
+      <!-- Breadcrumb metadata shown in pinned view (subtasks; top-level tasks get the picker) -->
+      <span v-if="pinned && !showProjectPicker && pinnedMeta" class="task-pinned-meta">{{
+        pinnedMeta
+      }}</span>
     </div>
+
+    <!-- Project selector for top-level pinned tasks.  Outside the subject
+         container, whose overflow:hidden would clip the dropdown. -->
+    <ProjectPicker
+      v-if="showProjectPicker"
+      :project="taskDoc.project"
+      :projectName="taskDoc.project_name"
+      :customer="taskDoc.customer"
+      :recentProjects="recentProjects"
+      @select="handleSetProject"
+    />
 
     <!-- Hours logged vs. budget (tasks with an estimate, projects with a budget) -->
     <BudgetMeter
@@ -59,12 +72,15 @@
         :assignedTo="taskAssignedTo"
         :taskName="node.doc.name"
         :isPinned="taskIsPinned"
+        :pinLocked="!hasProject"
         @assign="handleAssign"
         @unassign="handleUnassign"
         @pin="handlePin"
         @unpin="handleUnpin"
       />
+      <!-- Timers and subtasks need a project: timesheets are kept per project. -->
       <button
+        v-if="hasProject"
         class="task-btn"
         :class="timerStatus === 'running' ? 'task-btn--pause' : 'task-btn--resume'"
         @click="toggleTimer"
@@ -84,7 +100,12 @@
       <button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
         <PanelRightOpen :size="14" />
       </button>
-      <button class="task-btn task-btn--quick-entry" @click="quickEntry" title="Quick add subtasks">
+      <button
+        v-if="hasProject"
+        class="task-btn task-btn--quick-entry"
+        @click="quickEntry"
+        title="Quick add subtasks"
+      >
         <ClipboardList :size="14" />
       </button>
       <button class="task-btn task-btn--delete" @click="deleteTask" title="Delete task">
@@ -113,6 +134,7 @@ import {
   unassignTask,
   pinTask,
   unpinTask,
+  setTaskProject,
   type TreeNode,
   type ProjectDoc,
   type TaskDoc,
@@ -126,6 +148,7 @@ import { treeNodes } from "../treeState";
 import { showStopTimerDialog, calcElapsedHrs } from "../timerDialog";
 import AssignTo from "./AssignTo.vue";
 import BudgetMeter from "./BudgetMeter.vue";
+import ProjectPicker from "./ProjectPicker.vue";
 import {
   GripVertical,
   Play,
@@ -154,6 +177,7 @@ import "../task-controls.css";
  * | `timerStatus`       | Derived from `timesheetDetail.paused`               |
  * | `displayText`       | `getDisplayText(node)` helper                       |
  * | `hasBudget`         | `doc.budget_hours > 0`                              |
+ * | `hasProject`        | `false` for a pinned quick-entry task with no project |
  * | `liveExtra`         | Own open timers, from `budgetLive.liveExtraByNode`  |
  * | `activeTimerDetail` | `getRunningTimer()` from the global timer store     |
  *
@@ -179,6 +203,7 @@ export default defineComponent({
   components: {
     AssignTo,
     BudgetMeter,
+    ProjectPicker,
     GripVertical,
     Play,
     Pause,
@@ -211,6 +236,12 @@ export default defineComponent({
       type: Boolean,
       required: false,
       default: false,
+    },
+    /** Pinned view: projects of the user's pinned tasks, listed first in the project picker. */
+    recentProjects: {
+      type: Array as PropType<string[]>,
+      required: false,
+      default: () => [],
     },
     /**
      * The active view mode of the parent TaskView.  When `"my_tasks"`, newly
@@ -312,6 +343,21 @@ export default defineComponent({
     taskAssignedTo(): string[] {
       if (this.isProject || this.isBlank) return [];
       return (this.node.doc as TaskDoc).assigned_to || [];
+    },
+    /** The row's doc as a Task (only meaningful when `!isProject`). */
+    taskDoc(): TaskDoc {
+      return this.node.doc as TaskDoc;
+    },
+    /**
+     * False for a pinned quick-entry task that has no project yet.  Such a
+     * task can't run a timer, get subtasks, or be unpinned until it has one.
+     */
+    hasProject(): boolean {
+      return this.isProject || !!this.taskDoc.project;
+    },
+    /** Pinned view: top-level tasks get a project picker in place of the breadcrumb. */
+    showProjectPicker(): boolean {
+      return this.pinned && !this.isProject && !this.isBlank && !this.taskDoc.parent_task;
     },
     /** Whether the current user has pinned this task. */
     taskIsPinned(): boolean {
@@ -788,6 +834,15 @@ export default defineComponent({
     async handlePin(): Promise<void> {
       try {
         const data = await pinTask(this.node.doc.name);
+        this.$emit("catch-success", data);
+      } catch (error) {
+        this.$emit("catch-error", error);
+      }
+    },
+
+    async handleSetProject(project: string): Promise<void> {
+      try {
+        const data = await setTaskProject(this.node.doc.name, project);
         this.$emit("catch-success", data);
       } catch (error) {
         this.$emit("catch-error", error);

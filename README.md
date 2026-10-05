@@ -14,6 +14,7 @@ A **Task View** list view for Task and Project, which is the default view for bo
 - Drag and drop to reorder and re-parent tasks.
 - Inline add and edit, plus quick entry for several subtasks at once.
 - Assign and pin tasks; switch between **All Tasks**, **My Tasks** and **Pinned**.
+- Quick entry in **Pinned**: type a title and press Enter to add a pinned task, then keep typing. New tasks go below the last task you clicked, or at the end. Choose a project from the chip on the task later; the project also sets the customer. Until it has a project, a task can't run a timer or be unpinned.
 - Open a task's full form in a side panel.
 - Select several tasks and copy them as Markdown.
 

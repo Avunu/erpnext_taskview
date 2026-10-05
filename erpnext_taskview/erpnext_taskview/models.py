@@ -107,7 +107,8 @@ class TaskDoc(BaseModel):
 		doctype: Discriminator literal; always ``"Task"``.
 		name: Frappe document name.  Empty string for new tasks.
 		subject: Task title displayed in the tree row.
-		project: Name of the parent Project doc.
+		project: Name of the parent Project doc.  Empty for a pinned task
+			created by quick entry and not yet given a project.
 		parent_task: Name of the parent Task, or ``None`` if at project root.
 		status: Workflow status (``"Open"``, ``"Completed"``, etc.).
 		is_group: ``1`` if this task contains children, ``0`` otherwise.
@@ -143,6 +144,12 @@ class TaskDoc(BaseModel):
 		if isinstance(v, datetime):
 			return v.isoformat()
 		return v
+
+	@field_validator("project", mode="before")
+	@classmethod
+	def coerce_project(cls, v: str | None) -> str:
+		# Pinned quick-entry tasks have no project yet (NULL in the database).
+		return v or ""
 
 	@field_validator("assigned_to", mode="before")
 	@classmethod
@@ -228,12 +235,26 @@ class GetResponse(BaseModel):
 	Attributes:
 		projects: All projects matching the current filters.
 		tasks: All tasks belonging to the returned projects, ordered by
-			nested-set ``lft``.  Tasks pinned by the current user carry
+			nested-set ``lft``, plus the current user's pinned tasks that have
+			no project yet.  Tasks pinned by the current user carry
 			``todo_name`` and ``pin_idx`` from the joined ToDo row.
 	"""
 
 	projects: list[ProjectDoc]
 	tasks: list[TaskDoc]
+
+
+class CreatePinnedTaskResponse(GetResponse):
+	"""Response from ``create_pinned_task``.
+
+	Attributes:
+		task: Name of the new Task.
+		todo_name: Name of its pinned ToDo.  The Pinned view inserts the next
+			quick-entry task after this one.
+	"""
+
+	task: str
+	todo_name: str
 
 
 # ---------------------------------------------------------------------------

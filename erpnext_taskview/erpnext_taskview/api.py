@@ -46,6 +46,7 @@ from typing import Any, Literal, cast
 
 import frappe
 from erpnext.projects.doctype.timesheet.timesheet import Timesheet
+from frappe import _
 from frappe.desk.reportview import get_form_params
 from frappe.query_builder import DocType, Table
 from frappe.query_builder.functions import Max
@@ -58,6 +59,7 @@ from .custom.timesheet_detail import TimesheetDetail
 from .models import (
 	ActiveTimerDoc,
 	ActiveTimersResponse,
+	CreatePinnedTaskResponse,
 	GetResponse,
 	ProjectDoc,
 	SaveDocRequest,
@@ -200,7 +202,9 @@ def get(args: str | dict | None = None) -> dict[str, Any]:
 		``get_form_params()`` when the list-view doctype is ``"Project"``.
 	2. **Tasks** — all non-cancelled tasks belonging to the matched
 		projects, ordered by nested-set ``lft`` so the tree can be
-		reconstructed via a single parent-key pass.
+		reconstructed via a single parent-key pass.  The current user's
+		pinned tasks without a project are included too; the tree skips
+		them and the Pinned view lists them.
 
 	Timer state is served separately by :func:`get_active_timers` and
 	managed by the global timer store on the frontend.
@@ -265,9 +269,6 @@ def get(args: str | dict | None = None) -> dict[str, Any]:
 				)
 
 	projects_raw = pq.run(as_dict=True)
-	if not projects_raw:
-		return GetResponse(projects=[], tasks=[]).model_dump()
-
 	project_names = [r["name"] for r in projects_raw]
 	projects = [ProjectDoc(**r) for r in projects_raw]
 
@@ -275,6 +276,12 @@ def get(args: str | dict | None = None) -> dict[str, Any]:
 	# Left-join ToDo to get per-user pin state in a single query.
 	# The join is scoped to the current user's open pinned ToDos.
 	# Also left-join Projects for project_name and self-join Tasks for parent_task_subject.
+	#
+	# Besides the tasks of the matched projects, the current user's own pinned
+	# tasks without a project are included: the Pinned view's quick entry
+	# creates those, and they stay there until they are given a project.
+	unfiled_pin = ((Tasks.project.isnull()) | (Tasks.project == "")) & TD.name.isnotnull()
+	task_scope = (Tasks.project.isin(project_names) | unfiled_pin) if project_names else unfiled_pin
 	ParentTask = cast(Table, Tasks.as_("parent_task_tbl"))
 	tq = (
 		frappe.qb.from_(Tasks)
@@ -309,7 +316,7 @@ def get(args: str | dict | None = None) -> dict[str, Any]:
 			TD.idx.as_("pin_idx"),
 		)
 		.where(Tasks.docstatus == 0)
-		.where(Tasks.project.isin(project_names))
+		.where(task_scope)
 	)
 
 	t_sort_field, t_order = _parse_sort(args)
@@ -997,7 +1004,10 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 	assert isinstance(now, datetime.datetime)
 
 	if not doc.name:
-		# New timesheet detail — either start timer or log manual entry
+		# New timesheet detail — either start timer or log manual entry.
+		# Timesheets are kept per project, so a task needs one first.
+		if not doc.project:
+			frappe.throw(_("Choose a project for this task before logging time"))
 		detail = _get_or_create_timesheet_detail(doc.project, doc.task, doc.description)
 
 		if doc.from_time and doc.to_time:
@@ -1336,17 +1346,74 @@ def unassign_task(task: str, user: str, form_params: str | None = None) -> dict[
 # ─────────────────────────────────────────────────────────────
 
 
+def _pin_for_current_user(task: str) -> str:
+	"""Pin a Task for the current user and return the pinned ToDo's name.
+
+	Pinning implies self-assignment: the user's open ToDo for the task is
+	reused, or one is created through ``assign_to.add`` so the Task's
+	``_assign`` field stays consistent.  Its position in the pinned list is
+	set separately by :func:`_place_pin`.
+
+	Args:
+		task: Task document name.
+
+	Returns:
+		The name of the user's open ToDo for the task, now with ``pin=1``.
+	"""
+	user = frappe.session.user
+	filters = {"reference_type": "Task", "reference_name": task, "allocated_to": user, "status": "Open"}
+
+	todo = frappe.db.get_value("ToDo", filters, "name")
+	if not todo:
+		_assign_to_current_user(task)
+		todo = frappe.db.get_value("ToDo", filters, "name")
+	if not todo:
+		frappe.throw(_("Could not pin task {0}").format(task))
+
+	frappe.db.set_value("ToDo", str(todo), "pin", 1)
+	return str(todo)
+
+
+def _place_pin(todo_name: str, after: str | None = None) -> None:
+	"""Move a pinned ToDo within the current user's pinned list.
+
+	Places ``todo_name`` directly after the ToDo named ``after``, or at the
+	end of the list when ``after`` is ``None`` or no longer pinned, then
+	renumbers the whole list as a dense 1-based ``idx``.  Only rows whose
+	``idx`` changes are written.
+
+	Args:
+		todo_name: The pinned ToDo to place.
+		after: The pinned ToDo it should follow, or ``None`` for the end.
+	"""
+	rows = frappe.get_all(
+		"ToDo",
+		filters={
+			"reference_type": "Task",
+			"allocated_to": frappe.session.user,
+			"status": "Open",
+			"pin": 1,
+		},
+		fields=["name", "idx"],
+		order_by="idx asc, creation asc",
+	)
+	current_idx = {r.name: r.idx for r in rows}
+	order = [r.name for r in rows if r.name != todo_name]
+	position = order.index(after) + 1 if after in order else len(order)
+	order.insert(position, todo_name)
+
+	for idx, name in enumerate(order, start=1):
+		if current_idx.get(name) != idx:
+			frappe.db.set_value("ToDo", name, "idx", idx, update_modified=False)
+
+
 @frappe.whitelist()
 def pin_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Pin a task for the current user.
 
-	Creates (or reuses) a ToDo with ``pin=1`` for the current user.
-	Pinning implies self-assignment — if no open ToDo exists for this
-	user+task, one is created.  If an existing open ToDo exists, its
-	``pin`` flag is set to ``1``.
-
-	The new pin gets ``idx`` = max existing idx + 1 so it appears at
-	the bottom of the user's pinned list.
+	Creates (or reuses) a ToDo with ``pin=1`` for the current user (see
+	:func:`_pin_for_current_user`) and moves it to the bottom of the user's
+	pinned list.
 
 	Args:
 		task: Task document name.
@@ -1355,47 +1422,113 @@ def pin_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 	Returns:
 		A fresh :class:`GetResponse`.
 	"""
-	user = frappe.session.user
+	_place_pin(_pin_for_current_user(task))
+	frappe.db.commit()
+	return get(form_params)
 
-	# Check for existing open ToDo for this user+task
-	existing = frappe.db.get_value(
-		"ToDo",
-		{"reference_type": "Task", "reference_name": task, "allocated_to": user, "status": "Open"},
-		"name",
-	)
 
-	if existing:
-		frappe.db.set_value("ToDo", str(existing), "pin", 1)  # type: ignore[arg-type]
-	else:
-		# Create via assign_to so _assign is properly maintained
-		from frappe.desk.form.assign_to import add as assign_add
+@frappe.whitelist()
+def create_pinned_task(
+	subject: str, after: str | None = None, form_params: str | None = None
+) -> dict[str, Any]:
+	"""Create a Task from the Pinned view's quick entry.
 
-		assign_add(
-			{
-				"doctype": "Task",
-				"name": task,
-				"assign_to": json.dumps([user]),
-			}
-		)
-		# Now set pin on the new ToDo
-		new_todo = frappe.db.get_value(
-			"ToDo",
-			{"reference_type": "Task", "reference_name": task, "allocated_to": user, "status": "Open"},
-			"name",
-		)
-		if new_todo:
-			# Set idx to max + 1
-			TD = cast(Table, DocType("ToDo"))
-			max_idx_result = (
-				frappe.qb.from_(TD)
-				.select(Max(TD.idx).as_("max_idx"))
-				.where(TD.allocated_to == user)
-				.where(TD.pin == 1)
-				.where(TD.status == "Open")
-				.run(as_dict=True)
-			)
-			max_idx = int(max_idx_result[0]["max_idx"] or 0) if max_idx_result else 0
-			frappe.db.set_value("ToDo", str(new_todo), {"pin": 1, "idx": max_idx + 1})  # type: ignore[arg-type]
+	The task has no project yet; it is self-assigned to the current user,
+	pinned, and placed in the user's pinned list directly after ``after``.
+	It is given a project later with :func:`set_task_project`.
+
+	Args:
+		subject: The task title.
+		after: Name of the pinned ToDo the new task should follow, or ``None``
+			to add it at the end of the list.
+		form_params: Optional list-view form params forwarded to ``get()``.
+
+	Returns:
+		A :class:`CreatePinnedTaskResponse`: a fresh :class:`GetResponse` plus
+		the new task's name and its pinned ToDo.
+	"""
+	subject = (subject or "").strip()
+	if not subject:
+		frappe.throw(_("A task needs a subject"))
+
+	task = frappe.get_doc({"doctype": "Task", "subject": subject, "status": "Open", "priority": "Medium"})
+	task.insert()
+	todo = _pin_for_current_user(task.name)
+	_place_pin(todo, after)
+
+	frappe.db.commit()
+	return CreatePinnedTaskResponse(**get(form_params), task=task.name, todo_name=todo).model_dump()
+
+
+def _descendant_tasks(task: str) -> list[str]:
+	"""Names of all subtasks of ``task``, at any depth.
+
+	Walks ``parent_task`` links rather than the nested set, like
+	``budget.py`` does, because ``lft``/``rgt`` are not reliable on existing
+	data.  A seen-set guards against ``parent_task`` cycles.
+	"""
+	seen = {task}
+	found: list[str] = []
+	frontier = [task]
+	while frontier:
+		children = frappe.get_all("Task", filters={"parent_task": ["in", frontier]}, pluck="name")
+		frontier = [c for c in children if c not in seen]
+		seen.update(frontier)
+		found.extend(frontier)
+	return found
+
+
+@frappe.whitelist()
+def set_task_project(task: str, project: str, form_params: str | None = None) -> dict[str, Any]:
+	"""Move a top-level Task, with all of its subtasks, to a project.
+
+	Used by the project picker in the Pinned view, mainly to give quick-entry
+	tasks their project (and through it, their customer).  The task goes to
+	the bottom of the project's top-level tasks.  Time already logged on the
+	task stays on its previous project, as it does when a task is dragged to
+	another project in the tree.
+
+	Args:
+		task: Task document name.  Must not have a parent task.
+		project: The Project to move it to.
+		form_params: Optional list-view form params forwarded to ``get()``.
+
+	Returns:
+		A fresh :class:`GetResponse`.
+	"""
+	doc = frappe.get_doc("Task", task)
+	if doc.parent_task:
+		frappe.throw(_("Only a top-level task can be moved to another project here"))
+	if not frappe.db.exists("Project", project):
+		frappe.throw(_("Project {0} not found").format(project))
+
+	old_project = doc.project
+	if old_project == project:
+		return get(form_params)
+
+	descendants = _descendant_tasks(task)
+	if frappe.db.exists(
+		"Timesheet Detail", {"task": ["in", [task, *descendants]], "to_time": ["is", "not set"]}
+	):
+		frappe.throw(_("Stop the running timers on this task before moving it to another project"))
+
+	Tasks = cast(Table, DocType("Task"))
+	max_idx = (
+		frappe.qb.from_(Tasks)
+		.select(Max(Tasks.idx))
+		.where(Tasks.project == project)
+		.where((Tasks.parent_task.isnull()) | (Tasks.parent_task == ""))
+	).run()[0][0]
+
+	doc.project = project
+	doc.idx = int(max_idx or 0) + 1
+	doc.save()
+
+	for name in descendants:
+		frappe.db.set_value("Task", name, {"project": project, "company": doc.company})
+
+	if old_project:
+		frappe.get_doc("Project", old_project).update_project()
 
 	frappe.db.commit()
 	return get(form_params)
@@ -1408,6 +1541,9 @@ def unpin_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 	Sets ``pin=0`` on the user's open ToDo for this task.  Does **not**
 	remove the assignment — the user remains assigned.
 
+	A task without a project can't be unpinned: TaskView shows such tasks
+	only in the Pinned view, so unpinning would hide it.
+
 	Args:
 		task: Task document name.
 		form_params: Optional list-view form params forwarded to ``get()``.
@@ -1415,6 +1551,9 @@ def unpin_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 	Returns:
 		A fresh :class:`GetResponse`.
 	"""
+	if not frappe.db.get_value("Task", task, "project"):
+		frappe.throw(_("Choose a project for this task before unpinning it"))
+
 	user = frappe.session.user
 	existing = frappe.db.get_value(
 		"ToDo",

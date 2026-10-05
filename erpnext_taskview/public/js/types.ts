@@ -47,6 +47,7 @@ export interface TaskDoc extends BudgetFields {
   doctype: "Task";
   name: string;
   subject: string;
+  /** Empty for a pinned quick-entry task that has no project yet. */
   project: string;
   project_name?: string | null;
   customer?: string | null;
@@ -98,6 +99,14 @@ export interface SaveDocResponse extends GetResponse {
   notice?: string;
 }
 
+/** Mirrors `models.CreatePinnedTaskResponse`. */
+export interface CreatePinnedTaskResponse extends GetResponse {
+  /** The new Task's name. */
+  task: string;
+  /** Its pinned ToDo — the anchor for the next quick-entry task. */
+  todo_name: string;
+}
+
 /** Mirrors `models.Budget`. */
 export interface Budget {
   budget_hours: number;
@@ -119,6 +128,12 @@ export interface TreeNode {
   doc: ProjectDoc | TaskDoc;
   children: TreeNode[];
   _autoFocus?: boolean;
+  /** Stable row key in the Pinned view (see `PinnedView.vue`). */
+  _key?: string;
+  /** Pinned view: a quick-entry task that is still being saved. */
+  _pending?: boolean;
+  /** Pinned view: the quick-entry input row. */
+  _entry?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -322,6 +337,40 @@ export function reorderPinnedTasks(order: string[]): Promise<GetResponse> {
   return new Promise((resolve, reject) => {
     frappe.call({
       method: "erpnext_taskview.erpnext_taskview.api.reorder_pinned_tasks",
+      args,
+      callback: (r: { message: GetResponse }) => resolve(r.message),
+      error: (err: unknown) => reject(err),
+    });
+  });
+}
+
+export function createPinnedTask(
+  subject: string,
+  after: string | null,
+): Promise<CreatePinnedTaskResponse> {
+  const args: Record<string, string> = { subject };
+  if (after) args.after = after;
+  const fp = getFormParams();
+  if (fp) args.form_params = fp;
+
+  return new Promise((resolve, reject) => {
+    frappe.call({
+      method: "erpnext_taskview.erpnext_taskview.api.create_pinned_task",
+      args,
+      callback: (r: { message: CreatePinnedTaskResponse }) => resolve(r.message),
+      error: (err: unknown) => reject(err),
+    });
+  });
+}
+
+export function setTaskProject(task: string, project: string): Promise<GetResponse> {
+  const args: Record<string, string> = { task, project };
+  const fp = getFormParams();
+  if (fp) args.form_params = fp;
+
+  return new Promise((resolve, reject) => {
+    frappe.call({
+      method: "erpnext_taskview.erpnext_taskview.api.set_task_project",
       args,
       callback: (r: { message: GetResponse }) => resolve(r.message),
       error: (err: unknown) => reject(err),

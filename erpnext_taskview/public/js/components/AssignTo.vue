@@ -15,8 +15,9 @@
     <button
       class="task-btn assign-btn--pin"
       :class="{ 'assign-btn--pinned': isPinned }"
+      :disabled="isPinned && pinLocked"
       @click="togglePin"
-      :title="isPinned ? 'Unpin task' : 'Pin task'"
+      :title="pinTitle"
     >
       <Pin :size="14" :fill="isPinned ? 'currentColor' : 'none'" />
     </button>
@@ -129,6 +130,11 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    /** Keep a pinned task pinned: it has no project, so unpinning would hide it. */
+    pinLocked: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   emits: ["assign", "unassign", "pin", "unpin"],
@@ -145,6 +151,11 @@ export default defineComponent({
   computed: {
     assignedUsers(): string[] {
       return this.assignedTo || [];
+    },
+
+    pinTitle(): string {
+      if (!this.isPinned) return "Pin task";
+      return this.pinLocked ? "Choose a project before unpinning" : "Unpin task";
     },
 
     isAssignedToMe(): boolean {
@@ -328,6 +339,10 @@ export default defineComponent({
 .assign-btn--pinned {
   background: var(--bg-blue);
   color: var(--text-on-blue);
+}
+
+.assign-btn--pin:disabled {
+  cursor: not-allowed;
 }
 
 .assign-btn--add {
