@@ -3,10 +3,10 @@
     <section
       v-for="column in columns"
       :key="column"
-      class="flex w-72 shrink-0 flex-col rounded-lg bg-surface-gray-1"
+      class="flex w-72 shrink-0 flex-col rounded-6 bg-surface-gray-1"
     >
       <header class="flex items-center justify-between px-3 py-2.5">
-        <span class="flex items-center gap-2 text-sm font-medium text-ink-gray-7">
+        <span class="flex items-center gap-2 text-sm-medium text-ink-gray-7">
           <span class="h-2 w-2 rounded-full" :class="dots[column]"></span>
           {{ column }}
         </span>
@@ -65,7 +65,7 @@ export default defineComponent({
       columns: BOARD_COLUMNS,
       lists: Object.fromEntries(BOARD_COLUMNS.map((c) => [c, []])) as unknown as Lists,
       dots: {
-        Open: "bg-surface-gray-5",
+        Open: "bg-surface-gray-8",
         Working: "bg-surface-blue-3",
         "Pending Review": "bg-surface-amber-3",
         Completed: "bg-surface-green-3",

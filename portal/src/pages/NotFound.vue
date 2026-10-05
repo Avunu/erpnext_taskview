@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-    <h1 class="text-xl font-semibold text-ink-gray-8">Page not found</h1>
+    <h1 class="text-2xl-semibold text-ink-gray-8">Page not found</h1>
     <p class="text-base text-ink-gray-6">
       This page doesn't exist, or you don't have access to it.
     </p>

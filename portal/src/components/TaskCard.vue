@@ -1,10 +1,10 @@
 <template>
   <article
-    class="cursor-pointer rounded-md border border-outline-gray-1 bg-surface-white p-3 shadow-sm transition hover:border-outline-gray-3"
+    class="cursor-pointer rounded-5 border border-outline-gray-1 bg-surface-base p-3 shadow-sm transition hover:border-outline-gray-3"
     @click="$emit('click')"
   >
     <div v-if="task.phase_subject || task.parent_subject" class="mb-1.5 flex flex-wrap gap-1">
-      <span class="truncate rounded bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-6">
+      <span class="truncate rounded-4 bg-surface-gray-2 px-1.5 py-0.5 text-xs text-ink-gray-6">
         {{ chip }}
       </span>
     </div>
@@ -15,13 +15,13 @@
       <Badge
         v-if="task.priority === 'High' || task.priority === 'Urgent'"
         :label="task.priority"
-        theme="orange"
+        theme="amber"
         size="sm"
       />
       <span
         v-if="task.exp_end_date"
         class="text-xs"
-        :class="task.is_overdue ? 'text-ink-red-4' : 'text-ink-gray-5'"
+        :class="task.is_overdue ? 'text-ink-red-8' : 'text-ink-gray-5'"
       >
         Due {{ formatDate(task.exp_end_date) }}
       </span>

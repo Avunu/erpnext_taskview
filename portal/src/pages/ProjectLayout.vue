@@ -23,7 +23,7 @@
               <span class="mx-1">/</span>
               <span>{{ project }}</span>
             </div>
-            <h1 class="mt-1 truncate text-xl font-semibold text-ink-gray-9">
+            <h1 class="mt-1 truncate text-2xl-semibold text-ink-gray-9">
               {{ ctx.detail?.project.title || project }}
             </h1>
           </div>
@@ -51,7 +51,7 @@
             class="border-b-2 pb-2 transition-colors"
             :class="
               isActiveTab(tab.name)
-                ? 'border-outline-gray-5 font-medium text-ink-gray-9'
+                ? 'border-outline-gray-7 font-medium text-ink-gray-9'
                 : 'border-transparent text-ink-gray-5 hover:text-ink-gray-7'
             "
           >

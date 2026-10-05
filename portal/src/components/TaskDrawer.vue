@@ -1,7 +1,7 @@
 <template>
   <div class="fixed inset-0 z-20 bg-black/20" @click="close"></div>
   <aside
-    class="fixed inset-y-0 right-0 z-30 flex w-full max-w-2xl flex-col border-l border-outline-gray-2 bg-surface-white shadow-xl"
+    class="fixed inset-y-0 right-0 z-30 flex w-full max-w-2xl flex-col border-l border-outline-gray-2 bg-surface-base shadow-xl"
     role="dialog"
     aria-modal="true"
   >
@@ -19,7 +19,7 @@
           </template>
           <span>{{ task }}</span>
         </div>
-        <h2 class="mt-1 text-lg font-semibold text-ink-gray-9">
+        <h2 class="mt-1 text-lg-semibold text-ink-gray-9">
           {{ data?.task.subject || "Loading…" }}
         </h2>
       </div>
@@ -38,7 +38,7 @@
               v-if="!data.task.is_group"
               :value="data.task.status"
               :disabled="savingStatus"
-              class="form-select h-7 w-full rounded border-0 bg-surface-gray-2 py-0 text-base text-ink-gray-8"
+              class="form-select h-7 w-full rounded-4 border-0 bg-surface-gray-2 py-0 text-base text-ink-gray-8"
               @change="changeStatus(($event.target as HTMLSelectElement).value)"
             >
               <option v-for="s in statusOptions" :key="s" :value="s">{{ s }}</option>
@@ -53,7 +53,7 @@
             <div class="mb-1 text-xs text-ink-gray-5">Due</div>
             <div
               class="text-base"
-              :class="data.task.is_overdue ? 'text-ink-red-4' : 'text-ink-gray-8'"
+              :class="data.task.is_overdue ? 'text-ink-red-8' : 'text-ink-gray-8'"
             >
               {{ formatDate(data.task.exp_end_date) }}
             </div>
@@ -78,7 +78,7 @@
         </div>
 
         <section>
-          <h3 class="mb-2 text-sm font-semibold text-ink-gray-8">Description</h3>
+          <h3 class="mb-2 text-sm-semibold text-ink-gray-8">Description</h3>
           <div
             v-if="data.description"
             class="prose prose-sm max-w-none text-ink-gray-8"

@@ -25,8 +25,10 @@ export const FileUploader: AnyComponent;
 export const FormControl: AnyComponent;
 export const FrappeUIProvider: AnyComponent;
 export const Sidebar: AnyComponent;
+export const SidebarHeader: AnyComponent;
+export const SidebarItem: AnyComponent;
+export const SidebarSection: AnyComponent;
 export const TabButtons: AnyComponent;
-export const TextEditor: AnyComponent;
 export const TextInput: AnyComponent;
 
 export const toast: {

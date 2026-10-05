@@ -1,19 +1,17 @@
 <template>
   <section>
     <div class="mb-2 flex items-center justify-between">
-      <h3 class="text-sm font-semibold text-ink-gray-8">
+      <h3 class="text-sm-semibold text-ink-gray-8">
         Files
         <span v-if="attachments.length" class="font-normal text-ink-gray-5">{{
           attachments.length
         }}</span>
       </h3>
       <FileUploader
-        :upload-args="{
-          upload_endpoint: uploadEndpoint,
-          doctype: 'Task',
-          docname: task,
-          private: true,
-        }"
+        :upload-endpoint="uploadEndpoint"
+        doctype="Task"
+        :docname="task"
+        :private="true"
         :validate-file="validateFile"
         @success="onUploaded"
         @failure="onFailed"
@@ -33,13 +31,13 @@
     </div>
 
     <p v-if="!attachments.length" class="text-base text-ink-gray-5">No files yet.</p>
-    <ul v-else class="divide-y divide-outline-gray-1 rounded border border-outline-gray-2">
+    <ul v-else class="divide-y divide-outline-gray-1 rounded-4 border border-outline-gray-2">
       <li v-for="file in attachments" :key="file.name" class="flex items-center gap-3 px-3 py-2">
         <img
           v-if="file.is_image"
           :src="file.url"
           alt=""
-          class="h-9 w-9 shrink-0 rounded object-cover"
+          class="h-9 w-9 shrink-0 rounded-4 object-cover"
           loading="lazy"
         />
         <FileText v-else class="h-5 w-5 shrink-0 text-ink-gray-5" />
@@ -88,9 +86,10 @@ export default defineComponent({
   methods: {
     formatFileSize,
     fromNow,
-    validateFile(file: File): string | undefined {
+    validateFile(file: File): Error | undefined {
       // Frappe's own default cap; the server enforces the site's real limit.
-      if (file.size > 25 * 1024 * 1024) return "Files must be 25 MB or smaller.";
+      // An Error (not a bare string) so `onFailed` can show its message.
+      if (file.size > 25 * 1024 * 1024) return new Error("Files must be 25 MB or smaller.");
       return undefined;
     },
     onUploaded(): void {

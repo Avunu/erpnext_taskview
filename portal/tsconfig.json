@@ -14,6 +14,9 @@
       ],
       "frappe-ui": [
         "./src/types/frappe-ui.d.ts"
+      ],
+      "frappe-ui/editor": [
+        "./src/types/frappe-ui-editor.d.ts"
       ]
     }
   },

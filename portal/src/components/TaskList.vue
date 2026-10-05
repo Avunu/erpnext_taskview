@@ -14,7 +14,7 @@
         <component
           :is="task.is_group ? folderIcon : task.status === 'Completed' ? doneIcon : todoIcon"
           class="h-4 w-4 shrink-0"
-          :class="task.status === 'Completed' ? 'text-ink-green-3' : 'text-ink-gray-5'"
+          :class="task.status === 'Completed' ? 'text-ink-green-6' : 'text-ink-gray-5'"
         />
         <span
           class="min-w-0 flex-1 truncate text-base"
@@ -32,7 +32,7 @@
           <span v-if="task.attachment_count" class="flex items-center gap-1" title="Attachments">
             <Paperclip class="h-3.5 w-3.5" />{{ task.attachment_count }}
           </span>
-          <span v-if="task.exp_end_date" :class="task.is_overdue ? 'text-ink-red-4' : ''">
+          <span v-if="task.exp_end_date" :class="task.is_overdue ? 'text-ink-red-8' : ''">
             {{ formatDate(task.exp_end_date) }}
           </span>
         </span>

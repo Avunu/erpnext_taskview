@@ -26,20 +26,3 @@ export function useProject(): ProjectContext {
   if (!ctx) throw new Error("useProject() outside ProjectLayout");
   return ctx;
 }
-
-/** Rich-text toolbar for customer input: no images, embeds or task lists. */
-export const EDITOR_MENU = [
-  "Paragraph",
-  ["Heading 2", "Heading 3"],
-  "Separator",
-  "Bold",
-  "Italic",
-  "Strikethrough",
-  "Separator",
-  "Bullet List",
-  "Numbered List",
-  "Separator",
-  "Link",
-  "Blockquote",
-  "Code",
-];

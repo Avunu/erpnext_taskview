@@ -1,5 +1,5 @@
 <template>
-  <div class="divide-y divide-outline-gray-1 rounded-lg border border-outline-gray-2">
+  <div class="divide-y divide-outline-gray-1 rounded-6 border border-outline-gray-2">
     <router-link
       v-for="phase in phases"
       :key="phase.name"
@@ -8,7 +8,7 @@
     >
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-2">
-          <span class="truncate text-base font-medium text-ink-gray-8">{{ phase.subject }}</span>
+          <span class="truncate text-base-medium text-ink-gray-8">{{ phase.subject }}</span>
           <Badge v-if="phase.status === 'Completed'" label="Completed" theme="green" />
         </div>
         <div class="mt-0.5 text-sm text-ink-gray-5">

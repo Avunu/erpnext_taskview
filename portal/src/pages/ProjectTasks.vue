@@ -3,11 +3,11 @@
     <div
       class="flex flex-wrap items-center gap-2 border-b border-outline-gray-1 px-5 py-2.5 sm:px-8"
     >
-      <TabButtons v-model="view" :buttons="viewButtons" />
+      <TabButtons v-model="view" :options="viewButtons" />
       <select
         v-if="detail.phases.length"
         v-model="phase"
-        class="form-select h-7 rounded border-0 bg-surface-gray-2 py-0 text-base text-ink-gray-8"
+        class="form-select h-7 rounded-4 border-0 bg-surface-gray-2 py-0 text-base text-ink-gray-8"
       >
         <option value="">All phases</option>
         <option v-for="p in detail.phases" :key="p.name" :value="p.name">{{ p.subject }}</option>

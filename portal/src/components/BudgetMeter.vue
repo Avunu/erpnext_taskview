@@ -10,7 +10,7 @@
       class="whitespace-nowrap tabular-nums"
       :class="[
         size === 'lg' ? 'text-sm' : 'text-xs',
-        state === 'over' ? 'font-medium text-ink-red-4' : 'text-ink-gray-6',
+        state === 'over' ? 'font-medium text-ink-red-8' : 'text-ink-gray-6',
       ]"
     >
       {{ label }}
@@ -36,10 +36,10 @@ import {
 import type { Budget } from "../types";
 
 const FILL: Record<BudgetState, string> = {
-  none: "bg-surface-gray-5",
+  none: "bg-surface-gray-8",
   ok: "bg-surface-blue-3",
   warn: "bg-surface-amber-3",
-  over: "bg-surface-red-5",
+  over: "bg-surface-red-7",
 };
 
 /** Hours logged vs. budget — same maths and thresholds as the desk TaskView meter. */

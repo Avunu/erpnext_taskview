@@ -1,6 +1,6 @@
 <template>
   <section>
-    <h3 class="mb-2 flex items-baseline justify-between text-sm font-semibold text-ink-gray-8">
+    <h3 class="mb-2 flex items-baseline justify-between text-sm-semibold text-ink-gray-8">
       <span>Time logged</span>
       <span class="font-normal tabular-nums text-ink-gray-6">
         {{ formatHours(total) }} h<span v-if="notBilled > 0">
@@ -10,7 +10,7 @@
     </h3>
 
     <p v-if="!logs.length" class="text-base text-ink-gray-5">No time logged yet.</p>
-    <div v-else class="overflow-x-auto rounded border border-outline-gray-2">
+    <div v-else class="overflow-x-auto rounded-4 border border-outline-gray-2">
       <table class="w-full text-left text-sm">
         <thead class="bg-surface-gray-1 text-xs text-ink-gray-5">
           <tr>

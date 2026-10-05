@@ -29,12 +29,12 @@ export function formatFileSize(bytes: number): string {
 }
 
 /** frappe-ui Badge theme per board column / task status. */
-export function statusTheme(status: string): "gray" | "blue" | "green" | "orange" | "red" {
+export function statusTheme(status: string): "gray" | "blue" | "green" | "amber" | "red" {
   switch (status as BoardColumn | "Overdue" | "Cancelled") {
     case "Working":
       return "blue";
     case "Pending Review":
-      return "orange";
+      return "amber";
     case "Completed":
       return "green";
     case "Overdue":

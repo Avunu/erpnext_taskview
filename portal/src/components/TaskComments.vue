@@ -1,6 +1,6 @@
 <template>
   <section>
-    <h3 class="mb-3 text-sm font-semibold text-ink-gray-8">
+    <h3 class="mb-3 text-sm-semibold text-ink-gray-8">
       Comments
       <span v-if="comments.length" class="font-normal text-ink-gray-5">{{ comments.length }}</span>
     </h3>
@@ -19,15 +19,8 @@
       </li>
     </ol>
 
-    <div class="rounded border border-outline-gray-2">
-      <TextEditor
-        :key="editorKey"
-        :content="draft"
-        placeholder="Write a comment…"
-        :fixed-menu="menu"
-        editor-class="prose-sm min-h-[5rem] max-w-none px-3 py-2"
-        @change="draft = $event"
-      />
+    <div class="rounded-4 border border-outline-gray-2">
+      <RichTextEditor v-model="draft" placeholder="Write a comment…" content-class="min-h-[5rem]" />
       <div class="flex justify-end border-t border-outline-gray-1 p-2">
         <Button
           variant="solid"
@@ -43,23 +36,23 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
-import { Avatar, Badge, Button, TextEditor, toast } from "frappe-ui";
+import { Avatar, Badge, Button, toast } from "frappe-ui";
 import { addComment, errorMessage } from "../api";
-import { EDITOR_MENU } from "../projectContext";
+import RichTextEditor from "./RichTextEditor.vue";
 import type { PortalComment } from "../types";
 import { fromNow } from "../utils";
 
 /** Every comment on the task (staff and customer alike), plus a composer. */
 export default defineComponent({
   name: "TaskComments",
-  components: { Avatar, Badge, Button, TextEditor },
+  components: { Avatar, Badge, Button, RichTextEditor },
   props: {
     task: { type: String, required: true },
     comments: { type: Array as PropType<PortalComment[]>, required: true },
   },
   emits: ["added"],
   data() {
-    return { draft: "", saving: false, editorKey: 0, menu: EDITOR_MENU };
+    return { draft: "", saving: false };
   },
   computed: {
     isBlank(): boolean {
@@ -76,7 +69,6 @@ export default defineComponent({
       try {
         const comment = await addComment(this.task, this.draft);
         this.draft = "";
-        this.editorKey++;
         this.$emit("added", comment);
       } catch (error) {
         toast.error(errorMessage(error));

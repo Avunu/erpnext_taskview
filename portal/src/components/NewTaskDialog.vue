@@ -1,6 +1,6 @@
 <template>
-  <Dialog v-model="open" :options="{ title: 'New task', size: 'xl' }">
-    <template #body-content>
+  <Dialog v-model:open="open" title="New task" size="xl">
+    <template #default>
       <form class="flex flex-col gap-4" @submit.prevent="submit">
         <FormControl
           v-model="subject"
@@ -16,7 +16,7 @@
             <span class="text-xs text-ink-gray-5">Phase</span>
             <select
               v-model="phase"
-              class="form-select rounded border-outline-gray-2 bg-surface-gray-2 text-base text-ink-gray-8"
+              class="form-select rounded-4 border-outline-gray-2 bg-surface-gray-2 text-base text-ink-gray-8"
             >
               <option :value="''">No phase</option>
               <option v-for="p in phases" :key="p.name" :value="p.name">{{ p.label }}</option>
@@ -26,7 +26,7 @@
             <span class="text-xs text-ink-gray-5">Priority</span>
             <select
               v-model="priority"
-              class="form-select rounded border-outline-gray-2 bg-surface-gray-2 text-base text-ink-gray-8"
+              class="form-select rounded-4 border-outline-gray-2 bg-surface-gray-2 text-base text-ink-gray-8"
             >
               <option v-for="p in priorities" :key="p" :value="p">{{ p }}</option>
             </select>
@@ -35,14 +35,11 @@
 
         <div class="flex flex-col gap-1.5">
           <span class="text-xs text-ink-gray-5">Description</span>
-          <TextEditor
-            :key="editorKey"
-            :content="description"
+          <RichTextEditor
+            v-model="description"
             placeholder="Details, links, acceptance criteria…"
-            :fixed-menu="menu"
-            editor-class="prose-sm min-h-[8rem] max-w-none px-3 py-2"
-            class="rounded border border-outline-gray-2"
-            @change="description = $event"
+            content-class="min-h-[8rem]"
+            class="rounded-4 border border-outline-gray-2"
           />
         </div>
 
@@ -66,15 +63,15 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
-import { Button, Dialog, ErrorMessage, FormControl, TextEditor, toast } from "frappe-ui";
+import { Button, Dialog, ErrorMessage, FormControl, toast } from "frappe-ui";
 import { createTask, errorMessage } from "../api";
-import { EDITOR_MENU } from "../projectContext";
+import RichTextEditor from "./RichTextEditor.vue";
 import type { PortalTaskCard } from "../types";
 
 /** Add a task to the project, optionally under one of its open phases (group tasks). */
 export default defineComponent({
   name: "NewTaskDialog",
-  components: { Button, Dialog, ErrorMessage, FormControl, TextEditor },
+  components: { Button, Dialog, ErrorMessage, FormControl, RichTextEditor },
   props: {
     modelValue: { type: Boolean, required: true },
     project: { type: String, required: true },
@@ -89,10 +86,8 @@ export default defineComponent({
       phase: "",
       priority: "Medium",
       priorities: ["Low", "Medium", "High", "Urgent"],
-      menu: EDITOR_MENU,
       saving: false,
       error: "",
-      editorKey: 0,
     };
   },
   computed: {
@@ -126,7 +121,6 @@ export default defineComponent({
       this.phase = this.defaultPhase || "";
       this.priority = "Medium";
       this.error = "";
-      this.editorKey++;
     },
     async submit(): Promise<void> {
       if (!this.subject.trim() || this.saving) return;

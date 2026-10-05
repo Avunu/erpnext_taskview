@@ -1,10 +1,29 @@
 <template>
-  <Sidebar :header="header" :sections="sections" />
+  <Sidebar>
+    <SidebarHeader
+      :title="header.title"
+      :subtitle="header.subtitle"
+      :logo="header.logo"
+      :menu-items="header.menuItems"
+    />
+    <div class="flex-1 overflow-y-auto">
+      <SidebarSection v-for="section in sections" :key="section.label" :label="section.label">
+        <SidebarItem
+          v-for="item in section.items"
+          :key="item.label"
+          :label="item.label"
+          :icon="item.icon"
+          :active="item.active"
+          @click="item.onClick"
+        />
+      </SidebarSection>
+    </div>
+  </Sidebar>
 </template>
 
 <script lang="ts">
 import { defineComponent, markRaw, type Component } from "vue";
-import { Sidebar } from "frappe-ui";
+import { Sidebar, SidebarHeader, SidebarItem, SidebarSection } from "frappe-ui";
 import {
   Clock,
   ExternalLink,
@@ -28,13 +47,21 @@ const PORTAL_ICONS: Record<string, Component> = {
   "/timesheets": Clock,
 };
 
+/** One row of the navigation. */
+interface NavItem {
+  label: string;
+  icon: Component;
+  onClick: () => unknown;
+  active?: boolean;
+}
+
 /**
  * Left navigation: the user's projects, then the rest of the customer portal
  * (Portal Settings menu, so Orders / Invoices / Issues stay one click away).
  */
 export default defineComponent({
   name: "AppSidebar",
-  components: { Sidebar },
+  components: { Sidebar, SidebarHeader, SidebarItem, SidebarSection },
   computed: {
     header() {
       return {
@@ -64,7 +91,7 @@ export default defineComponent({
         ],
       };
     },
-    sections() {
+    sections(): { label: string; items: NavItem[] }[] {
       const current = this.$route.params.project;
       return [
         {
@@ -74,14 +101,13 @@ export default defineComponent({
               label: "All projects",
               icon: markRaw(LayoutDashboard),
               onClick: () => this.$router.push({ name: "projects" }),
-              isActive: this.$route.name === "projects",
+              active: this.$route.name === "projects",
             },
             ...projectsStore.list.map((p) => ({
               label: p.title,
               icon: markRaw(FolderKanban),
-              // push, not the Sidebar's own `to` (which replaces history)
               onClick: () => this.$router.push({ name: "overview", params: { project: p.name } }),
-              isActive: current === p.name,
+              active: current === p.name,
             })),
           ],
         },
