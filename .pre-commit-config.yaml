@@ -31,6 +31,9 @@ repos:
       - id: validate_frappe_project
       - id: validate_copyright
         files: '\.(js|ts|py|md)$'
+        # The documentation site is not part of the app: its Markdown starts with frontmatter,
+        # and its scripts belong to the shared docs template.
+        exclude: '^(docs|docs-site)/'
         args: ['--app', 'erpnext_taskview']
       - id: bylines
         exclude: 'README.md|CHANGELOG.md'
@@ -77,6 +80,7 @@ repos:
         args: ["--quiet"]
         exclude: |
           (?x)^(
+              docs-site/.*|
               erpnext_taskview/public/dist/.*|
               cypress/.*|
               .*node_modules.*|

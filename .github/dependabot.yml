@@ -28,3 +28,34 @@ updates:
       # and blocks a transitive jump during a security update.
       - dependency-name: tailwindcss
         versions: [">= 4"]
+
+  # The documentation site (docs-site/, built from docs/): the pinned actions of
+  # .github/workflows/docs.yml and the site's own npm packages. The cooldown holds a new release
+  # back for a week so a bad one can be yanked before it reaches the site.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      exclude:
+        - Avunu/docusystem
+    groups:
+      docs-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: npm
+    directory: /docs-site
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+      exclude:
+        - "@avunu/docusystem"
+    groups:
+      docs-site-packages:
+        patterns: ["*"]
+    commit-message:
+      prefix: chore
