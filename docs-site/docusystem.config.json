@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/@avunu/docusystem/config.schema.json",
   "name": "ERPNext TaskView",
   "tagline": "A project and task workspace for ERPNext, with timers and hour budgets for staff and a portal where customers follow and work on their projects.",
   "slug": "erpnext_taskview",
