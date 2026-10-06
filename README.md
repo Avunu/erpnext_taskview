@@ -5,6 +5,8 @@ For license information, please see license.txt-->
 
 A task workspace for ERPNext (Frappe v16). Staff get a project and task tree in the desk with timers and hour budgets. Customers get a portal where they can follow and work on their projects.
 
+**Documentation:** [erpnext-taskview.avunu.net](https://erpnext-taskview.avunu.net). The Markdown source is in [`docs/`](docs/README.md) and reads well on GitHub too: [install](docs/install.md), [Task View](docs/task-view/README.md), [timers](docs/task-view/timers.md), [hour budgets](docs/task-view/hour-budgets.md), [the client portal](docs/client-portal/README.md) and [development](docs/development/README.md).
+
 ## Features
 
 ### Task View (desk)
@@ -22,7 +24,7 @@ A **Task View** list view for Task and Project, which is the default view for bo
 
 Start, pause and stop a timer on any task. Time is logged to a draft Timesheet as you go, and a timer dock on every desk page shows the running timers.
 
-Apps can choose which Timesheet a log is added to through the `taskview_find_timesheet` hook.
+Apps can choose which Timesheet a log is added to through the `taskview_find_timesheet` hook. See [Timers and timesheets](docs/task-view/timers.md) and [Configuration](docs/configuration.md#choose-which-timesheet-receives-time).
 
 ### Hour budgets
 
@@ -32,36 +34,19 @@ Tasks and projects with a budget show a meter such as `12.5 / 20 h`. It turns am
 - **Project budget:** the project's *Budgeted Hours*. If that's blank, it uses the sum of its top-level tasks' budgets.
 - **Logged hours** are live. They count draft and submitted timesheets plus running timers, and include all subtasks.
 
+See [Hour budgets](docs/task-view/hour-budgets.md).
+
 ### Customer portal (`/projects`)
 
-A portal for customers, linked from the standard portal menu. Guests are sent to the login page.
-
-| Route | Page |
-| --- | --- |
-| `/projects` | The projects you can open |
-| `/projects/<project>` | Project overview: budget per phase, task counts and recent activity |
-| `/projects/<project>/tasks` | Tasks as a list or a kanban board |
-| `/projects/<project>/tasks/<task>` | A task's description, comments, time log and files |
-
-Old ERPNext links such as `/projects?project=<project>` redirect to the project's page.
-
-Customers can:
+A portal for customers, linked from the standard portal menu. Guests are sent to the login page. Customers see only their own projects: an overview with a budget per phase, tasks as a list or a kanban board, time logs, comments and files. They can:
 
 - drag cards between the board columns (Open, Working, Pending Review, Completed); phases move with their tasks and can't be dragged;
 - add tasks, optionally under an open phase, unless the project is Completed or Cancelled;
 - comment on tasks and attach files (JPG, PNG, GIF, PDF, TXT, CSV or Microsoft documents).
 
-Cancelled projects and template tasks are not shown on the portal.
+A portal user sees a project when their Contact is linked to the project's customer, they are in the customer's *Portal Users*, or they are listed in the project's *Users*. Cancelled projects and template tasks are not shown. Staff can open the portal too, and see what their own permissions allow. When a customer adds a task, comments, moves a task or attaches a file, the team gets a "Client Portal" notification.
 
-A portal user sees a project when one of these is true:
-
-- their Contact is linked to the project's customer;
-- they are in the customer's *Portal Users*;
-- they are listed in the project's *Users*.
-
-Staff can open the portal too, and see what their own permissions allow.
-
-When a customer adds a task, comments, moves a task or attaches a file, the team gets a "Client Portal" notification (emailed per each user's notification settings). It goes to the task's assignees; if there are none, to the parent phase's assignees; if there are none, to the project team.
+See [The client portal](docs/client-portal/README.md), [Using the client portal](docs/client-portal/using-the-portal.md) and [Giving customers access](docs/client-portal/administering-access.md).
 
 ## Installation
 
@@ -71,10 +56,15 @@ bench --site <site> install-app erpnext_taskview
 bench build --app erpnext_taskview
 ```
 
-`bench migrate` runs a one-time patch that does the following:
+`bench build` runs the app's `yarn build`, which builds the desk bundles and the portal. See [Install and upgrade](docs/install.md).
+
+On a site that already had the app, `bench migrate` runs a one-time patch that does the following:
 
 - points the portal's Projects menu and default home at `/projects`;
-- removes any redirect from `/projects` to the old `/project` list.
+- removes any redirect from `/projects` to the old `/project` list;
+- opts existing users into the Client Portal notification emails.
+
+A fresh `install-app` marks the app's patches as done without running them, so on a new site make those settings by hand: [Finish the portal set-up](docs/install.md#finish-the-portal-set-up).
 
 ## Development
 
@@ -96,7 +86,7 @@ Where things live:
 - `erpnext_taskview/erpnext_taskview/api.py`, `budget.py`: the desk API and the budget calculations.
 - `erpnext_taskview/portal/`: the portal API. Every endpoint checks access in `access.py` first.
 
-Server code uses the Frappe ORM and Query Builder only, never raw SQL.
+Server code uses the Frappe ORM and Query Builder only, never raw SQL. More in [Develop ERPNext TaskView](docs/development/README.md) and [How it works](docs/development/architecture.md).
 
 ## License
 
