@@ -34,12 +34,24 @@ Tasks and projects with a budget show a meter such as `12.5 / 20 h`. It turns am
 
 ### Customer portal (`/projects`)
 
-A portal for customers, linked from the standard portal menu. Customers can:
+A portal for customers, linked from the standard portal menu. Guests are sent to the login page.
 
-- see their projects with an overview: budget per phase, task counts and recent activity;
-- browse tasks as a list or a kanban board, and drag cards between statuses;
-- open a task to see its description, comments, time log and files;
-- add tasks, comment and attach files. Staff get a "Client Portal" notification.
+| Route | Page |
+| --- | --- |
+| `/projects` | The projects you can open |
+| `/projects/<project>` | Project overview: budget per phase, task counts and recent activity |
+| `/projects/<project>/tasks` | Tasks as a list or a kanban board |
+| `/projects/<project>/tasks/<task>` | A task's description, comments, time log and files |
+
+Old ERPNext links such as `/projects?project=<project>` redirect to the project's page.
+
+Customers can:
+
+- drag cards between the board columns (Open, Working, Pending Review, Completed); phases move with their tasks and can't be dragged;
+- add tasks, optionally under an open phase, unless the project is Completed or Cancelled;
+- comment on tasks and attach files (JPG, PNG, GIF, PDF, TXT, CSV or Microsoft documents).
+
+Cancelled projects and template tasks are not shown on the portal.
 
 A portal user sees a project when one of these is true:
 
@@ -48,6 +60,8 @@ A portal user sees a project when one of these is true:
 - they are listed in the project's *Users*.
 
 Staff can open the portal too, and see what their own permissions allow.
+
+When a customer adds a task, comments, moves a task or attaches a file, the team gets a "Client Portal" notification (emailed per each user's notification settings). It goes to the task's assignees; if there are none, to the parent phase's assignees; if there are none, to the project team.
 
 ## Installation
 
@@ -86,4 +100,4 @@ Server code uses the Frappe ORM and Query Builder only, never raw SQL.
 
 ## License
 
-MIT
+[MIT](license.txt), Copyright (c) 2026 Avunu LLC.
