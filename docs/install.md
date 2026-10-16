@@ -3,7 +3,7 @@ title: Install and upgrade
 description: Install ERPNext TaskView on a Frappe v16 bench, build its assets, and finish the portal set-up that a fresh install leaves to you.
 nav_title: Install
 order: 1
-updated: 2026-10-06
+updated: 2026-10-16
 ---
 
 ERPNext TaskView installs like any Frappe app. Two things are specific to it: the assets have to be built, and a fresh install does not run the migration patch that points the portal at `/projects`, so a few portal settings are yours to set.
@@ -53,6 +53,20 @@ This table shows what the patch does and what to do by hand on a fresh install.
 > [!NOTE]
 > These behaviours were read from the app and from Frappe 16.34 and ERPNext 16.35: `install_app` calls `set_all_patches_as_completed`, and the Notification Type form carries the **Enable Email Notifications for All Users** action. Check both against your own version after a major upgrade.
 
+## Allow overlapping time logs
+
+Task View's timers overlap by design. A paused timer keeps the time it started, and stopping it logs its hours from that time, so a timer you paused to run another ends up with a time log that overlaps the other one. ERPNext refuses a Timesheet whose logs overlap for the same user or Employee unless Projects Settings tells it not to check. With the checks on, stopping the timers still works, but the next timer you start on that project and submitting the Timesheet both fail with "From Time and To Time of … is overlapping with …".
+
+In **Projects Settings**, tick both:
+
+- **Ignore User Time Overlap**
+- **Ignore Employee Time Overlap**
+
+The app does not change these settings for you, and both are unticked in a new ERPNext site.
+
+> [!NOTE]
+> Since ERPNext 16.51.0 the user check applies to every Timesheet, because ERPNext now fills in the Timesheet's user (the Employee's user, or else whoever created it). Before that, Timesheets without an Employee were never checked for overlap, so a site that ran Task View fine on an older ERPNext can start hitting this error after an upgrade.
+
 ## Check the install
 
 1. In the desk, open **Project** or **Task** in list view. It opens as Task View. The view menu next to the title also offers **List**.
@@ -71,6 +85,8 @@ bench build --app erpnext_taskview
 ```
 
 `bench migrate` re-syncs the custom fields and property settings and creates the Client Portal Notification Type if it is missing. It also runs any new patch the app has shipped since you last migrated.
+
+After upgrading ERPNext to 16.51.0 or later, check that both overlap settings in **Projects Settings** are ticked: see [Allow overlapping time logs](#allow-overlapping-time-logs).
 
 ## Next
 

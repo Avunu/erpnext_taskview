@@ -3,7 +3,7 @@ title: Configuration
 description: The settings that shape ERPNext TaskView, the hook that chooses which Timesheet receives time, and a reference of everything the app adds to a site.
 nav_title: Configuration
 order: 2
-updated: 2026-10-06
+updated: 2026-10-16
 ---
 
 TaskView has no settings page of its own. It is configured through fields on documents you already use, a few standard ERPNext settings, and one hook for developers. This page lists them, then lists everything the app adds to your site.
@@ -27,6 +27,7 @@ The side panel in Task View opens the Task or Project form, so these are one cli
 | **Default Portal Home**, **Portal Menu** | Portal Settings | Where customers land after signing in, and whether ERPNext's own **Projects** row (`/project`) is still listed. A fresh install leaves both to you: see [Install and upgrade](install.md#finish-the-portal-set-up). |
 | **Client Portal** Notification Type | Notification Type | The kind of notification the team receives when a customer acts on the portal. Whether it also goes out by email follows each user's **Notification Settings**. |
 | Outgoing email | Email Account | Notification emails need your site's outgoing email to be set up. This was not tested for these docs. |
+| **Ignore User Time Overlap**, **Ignore Employee Time Overlap** | Projects Settings | Both must be ticked for timers to work. A paused timer's time log overlaps the timer that ran in the meantime, and ERPNext otherwise refuses the Timesheet. See [Allow overlapping time logs](install.md#allow-overlapping-time-logs). |
 | File size limit | Site configuration | The portal rejects files over 25 MB in the browser and leaves the real limit to your site's own file size setting. |
 
 Some behaviour is fixed in the code and cannot be changed from the desk: the four board columns (Open, Working, Pending Review, Completed), the portal's list of accepted file types for customers, the limits of 60 new tasks, 60 comments and 60 uploads per hour from one IP address, and the one-minute refresh of an open project. [The client portal](client-portal/README.md) describes each.
