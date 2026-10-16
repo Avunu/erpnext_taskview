@@ -107,7 +107,7 @@ The `check` workflow (`.github/workflows/check.yml`) runs on every pull request 
 
 Dependabot updates the JavaScript dependencies daily, in one group, and a workflow turns on auto-merge for its pull requests, so a pull request merges once its required checks pass.
 
-The `Docs` workflow (`.github/workflows/docs.yml`) builds this documentation when `docs/` or `docs-site/` changes. It is described below.
+The `Docs` workflow (`.github/workflows/docs.yml`) checks this documentation when `docs/` changes. It is described below.
 
 ## Conventions
 
@@ -119,17 +119,17 @@ The `Docs` workflow (`.github/workflows/docs.yml`) builds this documentation whe
 
 ### Pre-commit
 
-`.pre-commit-config.yaml` runs ruff, ssort, oxlint and oxfmt, the standard file checks, and Frappe's `test_utils` hooks (`validate_copyright`, `bylines`, `validate_patches` and others). The documentation is excluded from the hooks that would otherwise rewrite it: `validate_copyright` stamps a copyright comment above the frontmatter of every Markdown file, so it skips `docs/`, and the formatters and linters skip `docs-site/`.
+`.pre-commit-config.yaml` runs ruff, ssort, oxlint and oxfmt, the standard file checks, and Frappe's `test_utils` hooks (`validate_copyright`, `bylines`, `validate_patches` and others). The documentation is excluded from the hooks that would otherwise rewrite it: `validate_copyright` stamps a copyright comment above the frontmatter of every Markdown file, so it skips `docs/`.
 
 ## Working on these docs
 
-The documentation is Markdown in `docs/`, built by the shared Avunu docs site in `docs-site/` and published at [erpnext-taskview.avunu.net](https://erpnext-taskview.avunu.net). Write the files so that they read well on GitHub too: frontmatter, GitHub alerts and relative links.
+The documentation is Markdown in `docs/`. It is published with the other Avunu projects at [docs.avunu.net/erpnext-taskview/](https://docs.avunu.net/erpnext-taskview/) by [Avunu/site-docs](https://github.com/Avunu/site-docs), which picks up the latest release of this repository. Write the files so that they read well on GitHub too: frontmatter, GitHub alerts and relative links.
+
+To check a change as the pull request check does, clone Avunu/site-docs beside this repository and, from its folder (Node 22.19 or newer), run:
 
 ```bash
-cd docs-site
-bun install
-bun run dev --port 3417
-bun run check
+npm ci --ignore-scripts && npm run build
+node build/cli.js check --only erpnext-taskview --source erpnext-taskview=../erpnext_taskview
 ```
 
-`bun run dev` serves the site with live reload and `bun run check` is what the `Docs` workflow runs: tests, a strict build and a link check. While Jx has not published the release that carries the features the site needs, the site's build stops with a message that says how to use a Jx checkout. `docs-site/README.md` has the details, the list of Markdown the site cannot render, and how to update the site from its template.
+Use `build --lenient` instead of `check` to write a preview of the site into `dist/`. See [previewing](https://github.com/Avunu/site-docs/blob/main/docs/guide/previewing.md).

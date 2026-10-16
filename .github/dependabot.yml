@@ -29,9 +29,9 @@ updates:
       - dependency-name: tailwindcss
         versions: [">= 4"]
 
-  # The documentation site (docs-site/, built from docs/): the pinned actions of
-  # .github/workflows/docs.yml and the site's own npm packages. The cooldown holds a new release
-  # back for a week so a bad one can be yanked before it reaches the site.
+  # The pinned actions of .github/workflows/docs.yml, the shared documentation check of
+  # Avunu/site-docs. The cooldown holds a new release back for a week so a bad one can be yanked
+  # before it reaches the repository.
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -39,23 +39,9 @@ updates:
     cooldown:
       default-days: 7
       exclude:
-        - Avunu/docusystem
+        - Avunu/site-docs
     groups:
       docs-actions:
         patterns: ["*"]
     commit-message:
       prefix: ci
-
-  - package-ecosystem: npm
-    directory: /docs-site
-    schedule:
-      interval: weekly
-    cooldown:
-      default-days: 7
-      exclude:
-        - "@avunu/docusystem"
-    groups:
-      docs-site-packages:
-        patterns: ["*"]
-    commit-message:
-      prefix: chore
