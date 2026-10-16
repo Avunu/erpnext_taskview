@@ -1,9 +1,9 @@
 ---
 title: Work the task tree
-description: Open Task View, switch between All Tasks, My Tasks and Pinned, add, reorder and complete tasks in the tree, and copy a selection as Markdown.
+description: Open Task View, switch between All Tasks, My Tasks and Pinned, add, reorder and complete tasks in the tree, and copy tasks as Markdown.
 nav_title: Task View
 order: 3
-updated: 2026-10-06
+updated: 2026-10-16
 ---
 
 Task View is how staff plan and work through projects in the ERPNext desk. This page covers arranging projects and tasks. Timing work is in [Timers and timesheets](timers.md) and budgets are in [Hour budgets](hour-budgets.md).
@@ -52,21 +52,31 @@ Drag a row to change its position, or drop it inside another task to make it a s
 
 The expanded and collapsed state of the tree is remembered in your browser, per user.
 
-## Copy a selection as Markdown
+## Copy tasks as Markdown
 
-Select rows, then copy them as a nested outline to paste into a note or a message.
+Copy a task with its subtasks as a nested Markdown checklist, to paste into a note, an issue or a message. Each task's description comes along under it.
 
-1. Ctrl-click (Cmd-click on a Mac) rows to add or remove them. Shift-click selects the range of visible tasks from the last row you clicked.
-2. Press Ctrl+C or Cmd+C. A notice confirms "Copied N task(s) to clipboard".
-3. Press Escape to clear the selection.
+- **One task.** Click the copy button on its row (two overlapping squares, next to the trash button). The notice confirms "Copied N task(s) to clipboard".
+- **Several.** Ctrl-click (Cmd-click on a Mac) rows to add or remove them, or Shift-click to select the range of visible tasks from the last row you clicked. Then click the copy button on any selected row, or press Ctrl+C or Cmd+C. Press Escape to clear the selection.
+- **A whole project.** The copy button on a project row copies all of its tasks.
 
-Selecting a task includes all of its subtasks. A project appears as a plain line without a checkbox (its ID and title, as on its row) when anything under it is selected, and tasks appear as checklist items, ticked when they are Completed.
+The copy button on a row outside the selection copies just that row, and leaves the selection as it is.
+
+What is copied:
+
+- Every subtask of a copied task, at any depth, including collapsed ones. The copy holds the same tasks as the tree, so Completed and Cancelled tasks and anything your list filters hide are left out, and in **My Tasks** only your tasks and their parents are included.
+- Tasks appear as checklist items, ticked if you completed them since the last refresh. Each copied task or selected row is a top-level item; a project appears as a plain line (its ID and title, as on its row) only when you copy the project itself.
+- A task's description follows it as an indented paragraph, converted to Markdown. Images and links to files on the site become full URLs, so they still work where you paste them.
 
 ```markdown
-- PROJ-0001: Website redesign
-  - [x] Agree the sitemap
-  - [ ] Draft the home page
-    - [ ] Write the hero copy
+- [ ] Draft the home page
+
+  Use the layout agreed at the workshop. Keep the hero short.
+
+  - [ ] Write the hero copy
+  - [ ] Pick the photo
+
+    Two options, one bold and one muted.
 ```
 
 Ctrl+C does nothing while you are typing in a field, so click a row first.
@@ -103,7 +113,7 @@ Choosing a project moves the task and all of its subtasks into it, at the end of
 | Escape | Renaming | Cancels the edit |
 | Ctrl or Cmd, click | A row | Adds the row to the selection |
 | Shift, click | A row | Selects the range of visible tasks |
-| Ctrl+C or Cmd+C | With a selection | Copies it as Markdown |
+| Ctrl+C or Cmd+C | With a selection | Copies it as Markdown, with descriptions |
 | Escape | With a selection | Clears it |
 
 ## Next

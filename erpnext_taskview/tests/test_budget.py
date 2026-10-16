@@ -19,10 +19,11 @@ class TestBudget(IntegrationTestCase):
 		a = make_task(project, parent=phase, expected_time=4)
 		b = make_task(project, parent=phase, expected_time=6)
 		cancelled = make_task(project, parent=phase, expected_time=5)
-		frappe.db.set_value("Task", cancelled, "status", "Cancelled")
 		log_time(project, a, 1.5)  # draft counts
 		log_time(project, b, 2, submit=True)
+		# Logged before the task was cancelled: ERPNext refuses new time on a cancelled task.
 		log_time(project, cancelled, 1)
+		frappe.db.set_value("Task", cancelled, "status", "Cancelled")
 
 		budgets = compute_budgets([project])
 

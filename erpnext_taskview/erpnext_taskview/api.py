@@ -3,7 +3,7 @@
 
 """Backend API for the ERPNext Task View.
 
-This module exposes **three** whitelisted endpoints consumed by the Vue
+These are the main whitelisted endpoints consumed by the Vue
 frontend:
 
 ``get()``
@@ -15,6 +15,10 @@ frontend:
 	current user regardless of project filter.  Each row is enriched
 	with ``task_subject`` and ``project_name`` so the global timer dock
 	can render without additional round-trips.
+
+``get_task_descriptions(tasks)``
+	Returns the given tasks' descriptions converted to Markdown, for the
+	"Copy as Markdown" button and Ctrl+C.
 
 ``save_doc(payload)``
 	Accepts a JSON-serialised :class:`SaveDocRequest` and routes the
@@ -41,17 +45,19 @@ Design principles
 
 import datetime
 import json
+import re
 from dataclasses import dataclass
 from typing import Any, Literal, cast
 
 import frappe
 from erpnext.projects.doctype.timesheet.timesheet import Timesheet
 from frappe import _
+from frappe.core.utils import html2text
 from frappe.desk.reportview import get_form_params
 from frappe.query_builder import DocType, Table
 from frappe.query_builder.functions import Max
 from frappe.types.frappedict import _dict
-from frappe.utils.data import get_datetime
+from frappe.utils.data import expand_relative_urls, get_datetime
 from pypika.enums import Order
 
 from .budget import compute_budgets
@@ -64,6 +70,7 @@ from .models import (
 	ProjectDoc,
 	SaveDocRequest,
 	SaveDocResponse,
+	TaskDescriptions,
 	TaskDoc,
 	TimesheetDetailDoc,
 )
@@ -414,6 +421,48 @@ def get_active_timers() -> dict[str, Any]:
 
 	timers = [ActiveTimerDoc(**r) for r in rows]
 	return ActiveTimersResponse(timers=timers).model_dump()
+
+
+# ─────────────────────────────────────────────────────────────
+#  GET_TASK_DESCRIPTIONS — descriptions as Markdown, for copying
+# ─────────────────────────────────────────────────────────────
+
+
+def _description_to_markdown(html: str | None) -> str:
+	"""Convert a Text Editor description to Markdown, or ``""`` if it is empty.
+
+	Relative URLs (``/files/...`` images and links) are made absolute first,
+	so they still resolve once the Markdown is pasted somewhere else.  Line
+	wrapping is off: the copy is pasted into editors that wrap for themselves.
+	"""
+	if not html:
+		return ""
+	markdown = html2text(expand_relative_urls(html), wrap=False)
+	return re.sub(r"\n{3,}", "\n\n", markdown).strip()
+
+
+@frappe.whitelist()
+@frappe.read_only()
+def get_task_descriptions(tasks: str | list[str]) -> dict[str, Any]:
+	"""Fetch the descriptions of the given tasks as Markdown.
+
+	Used by "Copy as Markdown": the tree already holds each task's subject
+	and status, so only the descriptions are fetched, when a copy is made.
+	Tasks the user may not read are left out, as are empty descriptions.
+
+	Args:
+		tasks: Task names, as a list or a JSON-encoded list.
+
+	Returns:
+		A :class:`TaskDescriptions` keyed by task name.
+	"""
+	names = frappe.parse_json(tasks) if isinstance(tasks, str) else tasks
+	if not names:
+		return TaskDescriptions().model_dump()
+
+	rows = frappe.get_list("Task", filters={"name": ["in", names]}, fields=["name", "description"], limit=0)
+	descriptions = {r.name: md for r in rows if (md := _description_to_markdown(r.description))}
+	return TaskDescriptions(descriptions=descriptions).model_dump()
 
 
 # ── Project ───────────────────────────────────────────────────
@@ -1520,12 +1569,16 @@ def set_task_project(task: str, project: str, form_params: str | None = None) ->
 		.where((Tasks.parent_task.isnull()) | (Tasks.parent_task == ""))
 	).run()[0][0]
 
+	# Subtasks move first: ERPNext refuses to save a task into a project its
+	# children are not in.  Their company follows the project, as the
+	# parent's does through ``fetch_from``.
+	company = frappe.db.get_value("Project", project, "company")
+	for name in descendants:
+		frappe.db.set_value("Task", name, {"project": project, "company": company})
+
 	doc.project = project
 	doc.idx = int(max_idx or 0) + 1
 	doc.save()
-
-	for name in descendants:
-		frappe.db.set_value("Task", name, {"project": project, "company": doc.company})
 
 	if old_project:
 		frappe.get_doc("Project", old_project).update_project()

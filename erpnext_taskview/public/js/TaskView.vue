@@ -36,6 +36,7 @@
             :sideTimersElement="sideTimersElement"
             :isOpened="isOpened"
             :viewMode="viewMode"
+            :selectionSize="isSelected(node) ? selectedTasks.size : 0"
             class="mtl-ml"
             @task-interaction="handleTaskInteraction(node, $event)"
             @add-sibling-task="addSiblingTask(node)"
@@ -44,6 +45,7 @@
             @blank-saved="handleBlankSaved"
             @open-sidebar="openSidebar"
             @request-expand="expandAncestors(stat)"
+            @copy-markdown="copyFromRow(node)"
           />
         </div>
       </template>
@@ -56,6 +58,7 @@
       @catch-success="premount"
       @catch-error="catchError"
       @open-sidebar="openSidebar"
+      @copy-markdown="copyFromRow"
     />
   </div>
   <div>
@@ -138,7 +141,7 @@ import {
 import { refreshTimers, timers } from "./timerStore";
 import { setBudgetTree } from "./budgetLive";
 import { treeNodes } from "./treeState";
-import { selectionToMarkdown } from "./taskMarkdown";
+import { copyNodesAsMarkdown, selectionRoots, subtreeFromDocs } from "./taskMarkdown";
 
 // ── Types used only by this component ────────────────────────
 
@@ -957,44 +960,24 @@ export default defineComponent({
       for (let i = lo; i <= hi; i++) this.selectedTasks.add(order[i]);
     },
 
-    /** Serialize the selection to a markdown tree and copy it to the clipboard. */
-    async copySelectionToClipboard(): Promise<void> {
-      const markdown = selectionToMarkdown(this.treeData, this.selectedTasks);
-      if (!markdown) return;
-      const count = this.selectedTasks.size;
-      const notifyOk = (): void =>
-        frappe.show_alert({
-          message: __("Copied {0} task(s) to clipboard", { "0": String(count) }),
-          indicator: "green",
-        });
-      try {
-        // `navigator.clipboard` is absent in non-secure contexts; a throw here
-        // (sync or async) falls through to the execCommand fallback.
-        await navigator.clipboard.writeText(markdown);
-        notifyOk();
-      } catch {
-        try {
-          this.copyViaTextarea(markdown);
-          notifyOk();
-        } catch {
-          frappe.show_alert({ message: __("Copy to clipboard failed"), indicator: "red" });
-        }
-      }
+    /** Ctrl/Cmd+C: copy the selection as Markdown (see `taskMarkdown.ts`). */
+    copySelectionToClipboard(): void {
+      copyNodesAsMarkdown(selectionRoots(this.treeData, this.selectedTasks));
     },
 
-    /** Legacy clipboard path for desks served over an insecure origin. */
-    copyViaTextarea(text: string): void {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      try {
-        document.execCommand("copy");
-      } finally {
-        document.body.removeChild(ta);
+    /**
+     * A row's copy button.  On a row inside the multi-selection it copies the
+     * whole selection; otherwise just that row and its subtasks.  Pinned rows
+     * are flat, so their subtasks are rebuilt from the last `get()` snapshot.
+     */
+    copyFromRow(node: TreeData): void {
+      if (this.viewMode === "pinned") {
+        const tasks = this.lastResponse?.tasks ?? [];
+        copyNodesAsMarkdown([subtreeFromDocs(node.doc as TaskDoc, tasks)]);
+      } else if (this.isSelected(node)) {
+        copyNodesAsMarkdown(selectionRoots(this.treeData, this.selectedTasks));
+      } else {
+        copyNodesAsMarkdown([node]);
       }
     },
 

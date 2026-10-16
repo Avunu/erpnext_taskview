@@ -4,11 +4,16 @@
 """Test data builders shared by the erpnext_taskview test modules."""
 
 from datetime import timedelta
+from itertools import count
 
 import frappe
 from frappe.utils import now_datetime
 
 COMPANY = "_Test Company"
+
+# Days back for the next log_time() window.  ERPNext checks a user's
+# timesheets for overlapping time, so every log gets a day of its own.
+_log_days_back = count(2)
 
 
 def unique(prefix: str) -> str:
@@ -84,7 +89,7 @@ def log_time(
 	is_billable: int = 1,
 	completed: int = 0,
 ):
-	"""A timesheet with one closed time log (draft unless ``submit``)."""
+	"""A timesheet with one closed time log (draft unless ``submit``), on a day no other log uses."""
 	ts = frappe.get_doc(
 		{
 			"doctype": "Timesheet",
@@ -93,7 +98,7 @@ def log_time(
 				{
 					"project": project,
 					"task": task,
-					"from_time": now_datetime() - timedelta(days=2),
+					"from_time": now_datetime() - timedelta(days=next(_log_days_back)),
 					"hours": hours,
 					"is_billable": is_billable,
 					"completed": completed,

@@ -80,3 +80,14 @@
 .task-btn--quick-entry:hover {
   background: var(--surface-green-2);
 }
+
+/* Copy as Markdown: neutral, like delete without the red hover.  --bg-gray is
+   --surface-gray-2, so the hover steps one shade further. */
+.task-btn--copy {
+  background: var(--bg-gray);
+  color: var(--text-on-gray);
+}
+
+.task-btn--copy:hover {
+  background: var(--surface-gray-3);
+}

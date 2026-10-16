@@ -3,7 +3,7 @@ title: Changelog
 description: "Where to find what changed in ERPNext TaskView: the merged pull requests and the commit history, since the project has no tagged releases yet."
 nav_title: Changelog
 order: 11
-updated: 2026-10-06
+updated: 2026-10-16
 ---
 
 ERPNext TaskView does not keep a `CHANGELOG` file and has not published a tagged release, so the record of what changed is the repository itself:
@@ -20,6 +20,7 @@ ERPNext TaskView does not keep a `CHANGELOG` file and has not published a tagged
 | 2026-10-05 | The portal moves to frappe-ui 1.0 |
 | 2026-10-05 | Quick task entry and a project picker in the Pinned view |
 | 2026-10-05 | Complete MIT licence text and portal documentation in the README (pull request 30) |
+| 2026-10-16 | A copy button on each Task View row copies tasks as Markdown, with their descriptions |
 
 ## Upgrading
 
