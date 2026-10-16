@@ -5,7 +5,7 @@ For license information, please see license.txt-->
 
 A task workspace for ERPNext (Frappe v16). Staff get a project and task tree in the desk with timers and hour budgets. Customers get a portal where they can follow and work on their projects.
 
-**Documentation:** [erpnext-taskview.avunu.net](https://erpnext-taskview.avunu.net). The Markdown source is in [`docs/`](docs/README.md) and reads well on GitHub too: [install](docs/install.md), [Task View](docs/task-view/README.md), [timers](docs/task-view/timers.md), [hour budgets](docs/task-view/hour-budgets.md), [the client portal](docs/client-portal/README.md) and [development](docs/development/README.md).
+**Documentation:** [docs.avunu.net/erpnext-taskview/](https://docs.avunu.net/erpnext-taskview/). The Markdown source is in [`docs/`](docs/README.md) and reads well on GitHub too: [install](docs/install.md), [Task View](docs/task-view/README.md), [timers](docs/task-view/timers.md), [hour budgets](docs/task-view/hour-budgets.md), [the client portal](docs/client-portal/README.md) and [development](docs/development/README.md).
 
 ## Features
 
