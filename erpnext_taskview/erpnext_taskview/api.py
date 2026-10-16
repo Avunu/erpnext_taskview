@@ -1569,12 +1569,16 @@ def set_task_project(task: str, project: str, form_params: str | None = None) ->
 		.where((Tasks.parent_task.isnull()) | (Tasks.parent_task == ""))
 	).run()[0][0]
 
+	# Subtasks move first: ERPNext refuses to save a task into a project its
+	# children are not in.  Their company follows the project, as the
+	# parent's does through ``fetch_from``.
+	company = frappe.db.get_value("Project", project, "company")
+	for name in descendants:
+		frappe.db.set_value("Task", name, {"project": project, "company": company})
+
 	doc.project = project
 	doc.idx = int(max_idx or 0) + 1
 	doc.save()
-
-	for name in descendants:
-		frappe.db.set_value("Task", name, {"project": project, "company": doc.company})
 
 	if old_project:
 		frappe.get_doc("Project", old_project).update_project()
