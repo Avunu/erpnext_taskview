@@ -35,6 +35,7 @@
           @catch-success="$emit('catch-success', $event)"
           @catch-error="$emit('catch-error', $event)"
           @open-sidebar="$emit('open-sidebar', $event)"
+          @copy-markdown="$emit('copy-markdown', node)"
         />
       </template>
     </Draggable>
@@ -108,7 +109,7 @@ export default defineComponent({
     },
   },
 
-  emits: ["catch-success", "catch-error", "open-sidebar"],
+  emits: ["catch-success", "catch-error", "open-sidebar", "copy-markdown"],
 
   data() {
     return {

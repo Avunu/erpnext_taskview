@@ -3,7 +3,7 @@ title: How it works
 description: "The design behind ERPNext TaskView: how the desk tree and timers talk to the server, how budgets are computed, and how the portal checks access."
 nav_title: How it works
 order: 10
-updated: 2026-10-06
+updated: 2026-10-16
 ---
 
 This page describes the design behind the code, for developers. For commands and the build, see [Develop ERPNext TaskView](README.md).
@@ -35,7 +35,7 @@ The timer operation is inferred from the fields in the payload rather than named
 
 Ordering uses an explicit list. After a drag the browser sends the names of the visible siblings in their new order, and `_write_interleaved_idx` writes a dense 1-based `idx`, re-anchoring hidden siblings (Completed, or filtered out) after the visible row they followed. Re-parenting is done with `frappe.db.set_value`, which leaves the nested set (`lft` and `rgt`) stale, so nothing here relies on it beyond a fallback sort. Walks over descendants follow `parent_task`.
 
-The other endpoints are `bulk_create_tasks`, `delete_task`, `assign_task`, `unassign_task`, `pin_task`, `unpin_task`, `create_pinned_task`, `reorder_pinned_tasks`, `set_task_project`, `get_active_timers` and `budget.get_budget_summary`. They all live in `erpnext_taskview/erpnext_taskview/` and are called as `erpnext_taskview.erpnext_taskview.api.<name>`, apart from the budget summary in `erpnext_taskview.erpnext_taskview.budget`. Pinning is a ToDo for the user with the `pin` field set, created through Frappe's own assignment code, which is why pinning also assigns the task.
+The other endpoints are `bulk_create_tasks`, `delete_task`, `assign_task`, `unassign_task`, `pin_task`, `unpin_task`, `create_pinned_task`, `reorder_pinned_tasks`, `set_task_project`, `get_active_timers`, `get_task_descriptions` and `budget.get_budget_summary`. They all live in `erpnext_taskview/erpnext_taskview/` and are called as `erpnext_taskview.erpnext_taskview.api.<name>`, apart from the budget summary in `erpnext_taskview.erpnext_taskview.budget`. Pinning is a ToDo for the user with the `pin` field set, created through Frappe's own assignment code, which is why pinning also assigns the task.
 
 ### Timers across two bundles
 

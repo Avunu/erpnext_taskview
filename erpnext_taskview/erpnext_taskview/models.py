@@ -311,6 +311,17 @@ class ActiveTimersResponse(BaseModel):
 	timers: list[ActiveTimerDoc]
 
 
+class TaskDescriptions(BaseModel):
+	"""Response from ``get_task_descriptions``.
+
+	Attributes:
+		descriptions: Each task's description as Markdown, keyed by task
+			name.  Tasks with an empty description are left out.
+	"""
+
+	descriptions: dict[str, str] = Field(default_factory=dict)
+
+
 class SaveDocResponse(GetResponse):
 	"""Response from ``save_doc`` augmented with optional status messages.
 

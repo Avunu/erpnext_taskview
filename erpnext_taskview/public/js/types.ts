@@ -120,6 +120,11 @@ export interface BudgetSet {
   tasks: Record<string, Budget>;
 }
 
+/** Mirrors `models.TaskDescriptions` — Markdown descriptions keyed by task name. */
+export interface TaskDescriptions {
+  descriptions: Record<string, string>;
+}
+
 // ---------------------------------------------------------------------------
 // Tree node — minimal wrapper for @he-tree/vue
 // ---------------------------------------------------------------------------
@@ -211,6 +216,18 @@ export function fetchBudgetSummary(projects: string[]): Promise<BudgetSet> {
       method: "erpnext_taskview.erpnext_taskview.budget.get_budget_summary",
       args: { projects: JSON.stringify(projects) },
       callback: (r: { message: BudgetSet }) => resolve(r.message),
+      error: (err: unknown) => reject(err),
+    });
+  });
+}
+
+/** The given tasks' descriptions as Markdown; tasks with none are left out. */
+export function fetchTaskDescriptions(tasks: string[]): Promise<Record<string, string>> {
+  return new Promise((resolve, reject) => {
+    frappe.call({
+      method: "erpnext_taskview.erpnext_taskview.api.get_task_descriptions",
+      args: { tasks: JSON.stringify(tasks) },
+      callback: (r: { message: TaskDescriptions }) => resolve(r.message.descriptions),
       error: (err: unknown) => reject(err),
     });
   });

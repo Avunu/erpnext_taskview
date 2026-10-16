@@ -108,17 +108,33 @@
       >
         <ClipboardList :size="14" />
       </button>
+      <!-- .stop: a row click would count as a plain click, which clears the
+           selection this button is about to copy. -->
+      <button
+        class="task-btn task-btn--copy"
+        @click.stop="$emit('copy-markdown')"
+        :title="copyTitle"
+      >
+        <Copy :size="14" />
+      </button>
       <button class="task-btn task-btn--delete" @click="deleteTask" title="Delete task">
         <Trash2 :size="14" />
       </button>
     </div>
-    <!-- expand sidebar for projects (no timer/delete controls) -->
+    <!-- projects and completed tasks (no timer/delete controls) -->
     <div v-else-if="!isBlank" class="task-controls">
       <button class="task-btn task-btn--quick-entry" @click="quickEntry" title="Quick add subtasks">
         <ClipboardList :size="14" />
       </button>
       <button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
         <PanelRightOpen :size="14" />
+      </button>
+      <button
+        class="task-btn task-btn--copy"
+        @click.stop="$emit('copy-markdown')"
+        :title="copyTitle"
+      >
+        <Copy :size="14" />
       </button>
     </div>
   </div>
@@ -156,6 +172,7 @@ import {
   Square,
   PanelRightOpen,
   ClipboardList,
+  Copy,
   Trash2,
 } from "lucide-vue-next";
 import "../task-controls.css";
@@ -179,6 +196,7 @@ import "../task-controls.css";
  * | `hasBudget`         | `doc.budget_hours > 0`                              |
  * | `hasProject`        | `false` for a pinned quick-entry task with no project |
  * | `liveExtra`         | Own open timers, from `budgetLive.liveExtraByNode`  |
+ * | `copyTitle`         | Copy button tooltip, from the `selectionSize` prop  |
  * | `activeTimerDetail` | `getRunningTimer()` from the global timer store     |
  *
  * ## Events emitted
@@ -191,6 +209,7 @@ import "../task-controls.css";
  * | `catch-success`     | `GetResponse`        | Backend call succeeded                 |
  * | `open-sidebar`      | `{doc, ...}`         | Open form or time-logger in sidebar    |
  * | `request-expand`    | —                    | Timer is active; parent should expand  |
+ * | `copy-markdown`     | —                    | Copy button: copy this row (or the selection it's in) as Markdown |
  *
  * ## Global state
  *
@@ -210,6 +229,7 @@ export default defineComponent({
     Square,
     PanelRightOpen,
     ClipboardList,
+    Copy,
     Trash2,
   },
   props: {
@@ -253,6 +273,15 @@ export default defineComponent({
       required: false,
       default: "all",
     },
+    /**
+     * Size of the multi-selection this row belongs to, or 0 when the row
+     * isn't selected.  The copy button then copies the whole selection.
+     */
+    selectionSize: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
   },
   emits: [
     "task-interaction",
@@ -263,6 +292,7 @@ export default defineComponent({
     "request-expand",
     "quick-entry",
     "blank-saved",
+    "copy-markdown",
   ],
 
   setup() {
@@ -331,6 +361,12 @@ export default defineComponent({
     liveExtra(): number {
       if (this.isBlank) return 0;
       return liveExtraByNode.value.get(this.node.doc.name) ?? 0;
+    },
+    /** Copy button tooltip: names the selection when the row is part of one. */
+    copyTitle(): string {
+      return this.selectionSize > 1
+        ? `Copy ${this.selectionSize} selected as Markdown`
+        : "Copy as Markdown";
     },
     /** Customer name from the project, shown on project rows. */
     customerName(): string {
