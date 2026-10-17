@@ -37,8 +37,8 @@
 		"vue3-side-panel": "^1.3.0"
 	},
 	"devDependencies": {
-		"@tiptap/core": "^3.26.0",
-		"@tiptap/extension-code-block": "^3.26.0",
+		"@tiptap/core": "^3.32.0",
+		"@tiptap/extension-code-block": "^3.32.0",
 		"@types/node": "^26.6.5",
 		"@vitejs/plugin-vue": "^6.0.10",
 		"frappe-types": "^16.5.0",
