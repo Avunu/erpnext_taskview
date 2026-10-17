@@ -8,16 +8,21 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Matches the pkgs.nodejs_22 pinned in flake.nix.
-          node-version: 22
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # package.json's engines.node (>=24), set by the app standards profile.
+          node-version: 24
           cache: yarn
 
       - run: yarn install --frozen-lockfile
@@ -28,14 +33,9 @@ jobs:
 
       - run: yarn format:check
 
-      # Not `yarn build`: that chains update-assets.mjs, which resolves ../../sites and
-      # rewrites a bench's assets.json — there is no bench in CI. Build the Vite
-      # bundles directly instead; they are what a dependency bump can actually break.
-      - run: yarn build:taskview
-
-      - run: yarn build:timerdock
-
-      - run: yarn build:portal
+      # The desk bundles and the portal. The closing scripts/vite-register.mjs step
+      # finds no bench here and skips itself.
+      - run: yarn build
 
       # Frappe renders www/projects.html as a Jinja template and refuses any
       # template containing ".__" (frappe/utils/jinja.py).

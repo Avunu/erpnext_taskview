@@ -294,12 +294,12 @@ def _recent_activity(project: str, tasks: dict[str, frappe._dict], limit: int = 
 			)
 		)
 
-	for t in sorted(tasks.values(), key=lambda t: t.creation, reverse=True)[:limit]:
-		items.append(
-			PortalActivity(
-				kind="created", task=t.name, task_subject=t.subject, by=get_fullname(t.owner), at=t.creation
-			)
+	items.extend(
+		PortalActivity(
+			kind="created", task=t.name, task_subject=t.subject, by=get_fullname(t.owner), at=t.creation
 		)
+		for t in sorted(tasks.values(), key=lambda t: t.creation, reverse=True)[:limit]
+	)
 
 	items.sort(key=lambda a: a.at, reverse=True)
 	return items[:limit]
@@ -392,6 +392,19 @@ def get_project(project: str) -> dict:
 		activity=_recent_activity(project, tasks),
 		can_create=row.status not in CLOSED_PROJECT_STATUSES,
 	).model_dump()
+
+
+def _attachment(f: frappe._dict) -> PortalAttachment:
+	ext = os.path.splitext(f.file_name or "")[1].lower()
+	return PortalAttachment(
+		name=f.name,
+		file_name=f.file_name or f.name,
+		url=f"/api/method/erpnext_taskview.portal.api.download_file?name={f.name}",
+		file_size=cint(f.file_size),
+		is_image=ext in _IMAGE_EXTENSIONS,
+		by=get_fullname(f.owner),
+		creation=f.creation,
+	)
 
 
 @frappe.whitelist()
@@ -538,19 +551,6 @@ def get_task(task: str) -> dict:
 		not_billed_hours=round(sum(tl.hours for tl in time_logs if tl.not_billed), 2),
 		project_title=frappe.db.get_value("Project", project, "project_name") or project,
 	).model_dump()
-
-
-def _attachment(f: frappe._dict) -> PortalAttachment:
-	ext = os.path.splitext(f.file_name or "")[1].lower()
-	return PortalAttachment(
-		name=f.name,
-		file_name=f.file_name or f.name,
-		url=f"/api/method/erpnext_taskview.portal.api.download_file?name={f.name}",
-		file_size=cint(f.file_size),
-		is_image=ext in _IMAGE_EXTENSIONS,
-		by=get_fullname(f.owner),
-		creation=f.creation,
-	)
 
 
 # ─────────────────────────────────────────────────────────────

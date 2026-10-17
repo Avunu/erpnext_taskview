@@ -503,14 +503,12 @@ def _reorder_projects(project_name: str, new_idx: int) -> None:
 	below.sort(key=lambda s: s["idx"])
 	at_or_above.sort(key=lambda s: s["idx"])
 
-	final_order: list[str] = []
-	for s in below:
-		final_order.append(s["name"])
-	final_order.append(project_name)
-	for s in at_or_above:
-		final_order.append(s["name"])
-	for s in unindexed:
-		final_order.append(s["name"])
+	final_order: list[str] = [
+		*(s["name"] for s in below),
+		project_name,
+		*(s["name"] for s in at_or_above),
+		*(s["name"] for s in unindexed),
+	]
 
 	for idx, name in enumerate(final_order, start=1):
 		frappe.db.set_value("Project", name, "idx", idx)
@@ -722,14 +720,12 @@ def _reorder_siblings(
 	at_or_above.sort(key=lambda s: s["idx"])
 
 	# Build the final ordering: below + moved task + at_or_above + unindexed
-	final_order: list[str] = []
-	for s in below:
-		final_order.append(s["name"])
-	final_order.append(task_name)
-	for s in at_or_above:
-		final_order.append(s["name"])
-	for s in unindexed:
-		final_order.append(s["name"])
+	final_order: list[str] = [
+		*(s["name"] for s in below),
+		task_name,
+		*(s["name"] for s in at_or_above),
+		*(s["name"] for s in unindexed),
+	]
 
 	# Write contiguous 1-based idx values
 	for idx, name in enumerate(final_order, start=1):

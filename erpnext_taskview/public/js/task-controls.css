@@ -3,91 +3,91 @@
    Imported via JS `import` so Vite rolls it into each bundle's CSS. */
 
 .task-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: var(--border-radius-tiny);
-  cursor: pointer;
-  font-size: var(--text-xs);
-  transition:
-    background 0.15s,
-    transform 0.1s;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border: none;
+	border-radius: var(--border-radius-tiny);
+	cursor: pointer;
+	font-size: var(--text-xs);
+	transition:
+		background 0.15s,
+		transform 0.1s;
 }
 
 .task-btn:active {
-  transform: scale(0.92);
+	transform: scale(0.92);
 }
 
 .task-btn--pause {
-  background: var(--bg-yellow);
-  color: var(--text-on-yellow);
+	background: var(--bg-yellow);
+	color: var(--text-on-yellow);
 }
 
 .task-btn--pause:hover {
-  /* --surface-*-2 flips per theme (a light tint in light, a dark surface in
+	/* --surface-*-2 flips per theme (a light tint in light, a dark surface in
      dark); the raw --*-200 ramp does not, and flashed a bright pastel in dark. */
-  background: var(--surface-amber-2);
+	background: var(--surface-amber-2);
 }
 
 .task-btn--resume {
-  background: var(--bg-blue);
-  color: var(--text-on-blue);
+	background: var(--bg-blue);
+	color: var(--text-on-blue);
 }
 
 .task-btn--resume:hover {
-  background: var(--surface-blue-2);
+	background: var(--surface-blue-2);
 }
 
 .task-btn--stop {
-  background: var(--bg-red);
-  color: var(--text-on-red);
+	background: var(--bg-red);
+	color: var(--text-on-red);
 }
 
 .task-btn--stop:hover {
-  background: var(--surface-red-2);
+	background: var(--surface-red-2);
 }
 
 .task-btn--expand {
-  background: var(--bg-blue);
-  color: var(--text-on-blue);
-  font-weight: var(--weight-bold);
+	background: var(--bg-blue);
+	color: var(--text-on-blue);
+	font-weight: var(--weight-bold);
 }
 
 .task-btn--expand:hover {
-  background: var(--surface-blue-2);
+	background: var(--surface-blue-2);
 }
 
 .task-btn--delete {
-  background: var(--bg-gray);
-  color: var(--text-on-gray);
-  font-size: var(--text-md);
+	background: var(--bg-gray);
+	color: var(--text-on-gray);
+	font-size: var(--text-md);
 }
 
 .task-btn--delete:hover {
-  background: var(--bg-red);
-  color: var(--text-on-red);
+	background: var(--bg-red);
+	color: var(--text-on-red);
 }
 
 .task-btn--quick-entry {
-  background: var(--bg-green);
-  color: var(--text-on-green);
-  font-size: var(--text-md);
+	background: var(--bg-green);
+	color: var(--text-on-green);
+	font-size: var(--text-md);
 }
 
 .task-btn--quick-entry:hover {
-  background: var(--surface-green-2);
+	background: var(--surface-green-2);
 }
 
 /* Copy as Markdown: neutral, like delete without the red hover.  --bg-gray is
    --surface-gray-2, so the hover steps one shade further. */
 .task-btn--copy {
-  background: var(--bg-gray);
-  color: var(--text-on-gray);
+	background: var(--bg-gray);
+	color: var(--text-on-gray);
 }
 
 .task-btn--copy:hover {
-  background: var(--surface-gray-3);
+	background: var(--surface-gray-3);
 }

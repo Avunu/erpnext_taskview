@@ -15,11 +15,11 @@ Two guides follow this overview:
 
 ## Pages
 
-| Address | Page |
-| --- | --- |
-| `/projects` | The projects you can open |
-| `/projects/<project>` | Project overview: tasks per column, budget per phase and recent activity |
-| `/projects/<project>/tasks` | Tasks as a list or a kanban board |
+| Address                            | Page                                                                     |
+| ---------------------------------- | ------------------------------------------------------------------------ |
+| `/projects`                        | The projects you can open                                                |
+| `/projects/<project>`              | Project overview: tasks per column, budget per phase and recent activity |
+| `/projects/<project>/tasks`        | Tasks as a list or a kanban board                                        |
 | `/projects/<project>/tasks/<task>` | A task's details, time log, files and comments, in a panel over the list |
 
 `<project>` and `<task>` are the document names, such as `PROJ-0001`. Older ERPNext links such as `/projects?project=PROJ-0001` and the old `/project` list redirect to the new portal. Someone who is not signed in is sent to the login page and brought back afterwards.
@@ -44,13 +44,13 @@ A customer holds no permissions on the Project or Task documents themselves. Eve
 
 ## Limits the portal enforces
 
-| Limit | Value |
-| --- | --- |
-| New tasks, comments and file uploads | 60 of each per hour from one IP address |
-| File types a customer can attach | JPG, PNG, GIF, PDF, TXT, CSV and Microsoft Office documents |
-| File size | 25 MB checked in the browser; your site's own limit applies on top |
-| Comment and description formatting | Headings, bold, italic, strikethrough, lists, links, quotes and code blocks. Images cannot be pasted: attach them as files |
-| Refresh | An open project reloads every minute while its tab is visible, and when the tab regains focus |
+| Limit                                | Value                                                                                                                      |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| New tasks, comments and file uploads | 60 of each per hour from one IP address                                                                                    |
+| File types a customer can attach     | JPG, PNG, GIF, PDF, TXT, CSV and Microsoft Office documents                                                                |
+| File size                            | 25 MB checked in the browser; your site's own limit applies on top                                                         |
+| Comment and description formatting   | Headings, bold, italic, strikethrough, lists, links, quotes and code blocks. Images cannot be pasted: attach them as files |
+| Refresh                              | An open project reloads every minute while its tab is visible, and when the tab regains focus                              |
 
 Staff who use the portal are not held to the list of file types.
 

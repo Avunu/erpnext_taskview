@@ -1,59 +1,54 @@
 <template>
-  <div
-    class="timer-widget"
-    :class="{
-      'timer-widget--running': !timer.paused,
-      'timer-widget--paused': !!timer.paused,
-      'timer-widget--expanded': expanded,
-    }"
-  >
-    <div class="timer-widget__header" @click="toggleExpanded">
-      <div class="timer-widget__info">
-        <span class="timer-widget__project">{{ projectLabel }}</span>
-        <span class="timer-widget__task">{{ timer.task_subject || timer.task }}</span>
-      </div>
-      <div class="timer-widget__time">
-        {{ elapsedDisplay }}
-      </div>
-      <div class="timer-widget__controls" @click.stop>
-        <button
-          class="task-btn"
-          :class="timer.paused ? 'task-btn--resume' : 'task-btn--pause'"
-          @click="togglePause"
-          :title="timer.paused ? 'Resume' : 'Pause'"
-        >
-          <Pause v-if="!timer.paused" :size="14" />
-          <Play v-else :size="14" />
-        </button>
-        <button class="task-btn task-btn--stop" @click="stopTimer" title="Stop">
-          <Square :size="14" />
-        </button>
-        <button class="task-btn task-btn--delete" @click="discardTimer" title="Discard timer">
-          <Trash2 :size="14" />
-        </button>
-      </div>
-    </div>
-    <div v-if="expanded" class="timer-widget__detail">
-      <textarea
-        v-model="description"
-        class="timer-widget__description"
-        placeholder="What are you working on?"
-        rows="2"
-        @input="scheduleDescriptionSave"
-        @blur="persistDescription"
-      ></textarea>
-    </div>
-  </div>
+	<div
+		class="timer-widget"
+		:class="{
+			'timer-widget--running': !timer.paused,
+			'timer-widget--paused': !!timer.paused,
+			'timer-widget--expanded': expanded,
+		}"
+	>
+		<div class="timer-widget__header" @click="toggleExpanded">
+			<div class="timer-widget__info">
+				<span class="timer-widget__project">{{ projectLabel }}</span>
+				<span class="timer-widget__task">{{ timer.task_subject || timer.task }}</span>
+			</div>
+			<div class="timer-widget__time">
+				{{ elapsedDisplay }}
+			</div>
+			<div class="timer-widget__controls" @click.stop>
+				<button
+					class="task-btn"
+					:class="timer.paused ? 'task-btn--resume' : 'task-btn--pause'"
+					@click="togglePause"
+					:title="timer.paused ? 'Resume' : 'Pause'"
+				>
+					<Pause v-if="!timer.paused" :size="14" />
+					<Play v-else :size="14" />
+				</button>
+				<button class="task-btn task-btn--stop" @click="stopTimer" title="Stop">
+					<Square :size="14" />
+				</button>
+				<button class="task-btn task-btn--delete" @click="discardTimer" title="Discard timer">
+					<Trash2 :size="14" />
+				</button>
+			</div>
+		</div>
+		<div v-if="expanded" class="timer-widget__detail">
+			<textarea
+				v-model="description"
+				class="timer-widget__description"
+				placeholder="What are you working on?"
+				rows="2"
+				@input="scheduleDescriptionSave"
+				@blur="persistDescription"
+			></textarea>
+		</div>
+	</div>
 </template>
 
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
-import {
-  type ActiveTimer,
-  sendTimerAction,
-  getRunningTimer,
-  saveTimerDescription,
-} from "../timerStore";
+import { type ActiveTimer, sendTimerAction, getRunningTimer, saveTimerDescription } from "../timerStore";
 import { showStopTimerDialog, calcElapsedHrs } from "../timerDialog";
 import { Play, Pause, Square, Trash2 } from "lucide-vue-next";
 import "../task-controls.css";
@@ -68,207 +63,207 @@ import "../task-controls.css";
  * @emits error - When a backend call fails.
  */
 export default defineComponent({
-  name: "TimerWidget",
-  components: { Play, Pause, Square, Trash2 },
-  props: {
-    /** The enriched active timer record from the global store. */
-    timer: {
-      type: Object as PropType<ActiveTimer>,
-      required: true,
-    },
-  },
-  emits: ["error"],
+	name: "TimerWidget",
+	components: { Play, Pause, Square, Trash2 },
+	props: {
+		/** The enriched active timer record from the global store. */
+		timer: {
+			type: Object as PropType<ActiveTimer>,
+			required: true,
+		},
+	},
+	emits: ["error"],
 
-  data() {
-    return {
-      /** Whether the detail/description panel is open. */
-      expanded: false,
-      /** Local copy of description for editing. */
-      description: this.timer.description || "",
-      /** Interval handle for the live clock. */
-      tickInterval: null as ReturnType<typeof setInterval> | null,
-      /** Current tick timestamp for elapsed calculation. */
-      now: Date.now(),
-      /** Debounce timer for persisting description. */
-      descDebounce: null as ReturnType<typeof setTimeout> | null,
-    };
-  },
+	data() {
+		return {
+			/** Whether the detail/description panel is open. */
+			expanded: false,
+			/** Local copy of description for editing. */
+			description: this.timer.description || "",
+			/** Interval handle for the live clock. */
+			tickInterval: null as ReturnType<typeof setInterval> | null,
+			/** Current tick timestamp for elapsed calculation. */
+			now: Date.now(),
+			/** Debounce timer for persisting description. */
+			descDebounce: null as ReturnType<typeof setTimeout> | null,
+		};
+	},
 
-  computed: {
-    /** Project label with customer prefix. */
-    projectLabel(): string {
-      const name = this.timer.project_name || this.timer.project;
-      if (this.timer.customer) {
-        return `${this.timer.customer} · ${name}`;
-      }
-      return name;
-    },
+	computed: {
+		/** Project label with customer prefix. */
+		projectLabel(): string {
+			const name = this.timer.project_name || this.timer.project;
+			if (this.timer.customer) {
+				return `${this.timer.customer} · ${name}`;
+			}
+			return name;
+		},
 
-    /**
-     * Live elapsed time display string (HH:MM:SS).
-     *
-     * For running timers: accumulated paused seconds + current segment.
-     * For paused timers: just the accumulated paused seconds.
-     */
-    elapsedDisplay(): string {
-      const pausedSec = this.timer.paused_time_in_seconds || 0;
-      let totalSeconds = pausedSec;
+		/**
+		 * Live elapsed time display string (HH:MM:SS).
+		 *
+		 * For running timers: accumulated paused seconds + current segment.
+		 * For paused timers: just the accumulated paused seconds.
+		 */
+		elapsedDisplay(): string {
+			const pausedSec = this.timer.paused_time_in_seconds || 0;
+			let totalSeconds = pausedSec;
 
-      if (!this.timer.paused && this.timer.start_time) {
-        const segmentMs = this.now - new Date(this.timer.start_time).getTime();
-        totalSeconds += Math.max(0, Math.floor(segmentMs / 1000));
-      }
+			if (!this.timer.paused && this.timer.start_time) {
+				const segmentMs = this.now - new Date(this.timer.start_time).getTime();
+				totalSeconds += Math.max(0, Math.floor(segmentMs / 1000));
+			}
 
-      const h = Math.floor(totalSeconds / 3600);
-      const m = Math.floor((totalSeconds % 3600) / 60);
-      const s = totalSeconds % 60;
-      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-    },
-  },
+			const h = Math.floor(totalSeconds / 3600);
+			const m = Math.floor((totalSeconds % 3600) / 60);
+			const s = totalSeconds % 60;
+			return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+		},
+	},
 
-  watch: {
-    "timer.description"(val: string) {
-      this.description = val || "";
-    },
-  },
+	watch: {
+		"timer.description"(val: string) {
+			this.description = val || "";
+		},
+	},
 
-  mounted() {
-    this.startTick();
-  },
+	mounted() {
+		this.startTick();
+	},
 
-  beforeUnmount() {
-    this.stopTick();
-    if (this.descDebounce !== null) {
-      clearTimeout(this.descDebounce);
-      this.descDebounce = null;
-    }
-  },
+	beforeUnmount() {
+		this.stopTick();
+		if (this.descDebounce !== null) {
+			clearTimeout(this.descDebounce);
+			this.descDebounce = null;
+		}
+	},
 
-  methods: {
-    /** Start the 1-second interval for the live clock. */
-    startTick(): void {
-      this.stopTick();
-      this.tickInterval = setInterval(() => {
-        this.now = Date.now();
-      }, 1000);
-    },
+	methods: {
+		/** Start the 1-second interval for the live clock. */
+		startTick(): void {
+			this.stopTick();
+			this.tickInterval = setInterval(() => {
+				this.now = Date.now();
+			}, 1000);
+		},
 
-    /** Clear the tick interval. */
-    stopTick(): void {
-      if (this.tickInterval !== null) {
-        clearInterval(this.tickInterval);
-        this.tickInterval = null;
-      }
-    },
+		/** Clear the tick interval. */
+		stopTick(): void {
+			if (this.tickInterval !== null) {
+				clearInterval(this.tickInterval);
+				this.tickInterval = null;
+			}
+		},
 
-    /** Toggle the expanded detail panel. */
-    toggleExpanded(): void {
-      this.expanded = !this.expanded;
-    },
+		/** Toggle the expanded detail panel. */
+		toggleExpanded(): void {
+			this.expanded = !this.expanded;
+		},
 
-    /**
-     * Toggle between pause and resume.
-     *
-     * When resuming, auto-pauses any other running timer first.
-     */
-    async togglePause(): Promise<void> {
-      try {
-        if (this.timer.paused) {
-          // Resume — pause any other running timer first
-          const running = getRunningTimer();
-          if (running && running.name !== this.timer.name) {
-            await sendTimerAction({ name: running.name, paused: 1 });
-          }
-          await sendTimerAction({ name: this.timer.name, paused: 0 });
-        } else {
-          await sendTimerAction({ name: this.timer.name, paused: 1 });
-        }
-      } catch (err) {
-        this.$emit("error", err);
-      }
-    },
+		/**
+		 * Toggle between pause and resume.
+		 *
+		 * When resuming, auto-pauses any other running timer first.
+		 */
+		async togglePause(): Promise<void> {
+			try {
+				if (this.timer.paused) {
+					// Resume — pause any other running timer first
+					const running = getRunningTimer();
+					if (running && running.name !== this.timer.name) {
+						await sendTimerAction({ name: running.name, paused: 1 });
+					}
+					await sendTimerAction({ name: this.timer.name, paused: 0 });
+				} else {
+					await sendTimerAction({ name: this.timer.name, paused: 1 });
+				}
+			} catch (err) {
+				this.$emit("error", err);
+			}
+		},
 
-    /**
-     * Pause immediately then open the shared "Log Timer" dialog.
-     * If cancelled, the timer is resumed.
-     */
-    async stopTimer(): Promise<void> {
-      if (!this.timer.paused) {
-        try {
-          await sendTimerAction({ name: this.timer.name, paused: 1 });
-        } catch (err) {
-          this.$emit("error", err);
-          return;
-        }
-      }
+		/**
+		 * Pause immediately then open the shared "Log Timer" dialog.
+		 * If cancelled, the timer is resumed.
+		 */
+		async stopTimer(): Promise<void> {
+			if (!this.timer.paused) {
+				try {
+					await sendTimerAction({ name: this.timer.name, paused: 1 });
+				} catch (err) {
+					this.$emit("error", err);
+					return;
+				}
+			}
 
-      const timerName = this.timer.name;
-      const currentDesc = this.description;
+			const timerName = this.timer.name;
+			const currentDesc = this.description;
 
-      showStopTimerDialog({
-        elapsedHrs: calcElapsedHrs(
-          this.timer.paused_time_in_seconds,
-          this.timer.paused,
-          this.timer.start_time,
-        ),
-        currentDesc,
-        taskName: this.timer.task,
-        taskSubject: this.timer.task_subject || this.timer.task,
-        project: this.timer.project,
-        projectName: this.timer.project_name || this.timer.project,
-        customer: this.timer.customer,
-        onSubmit: async (values) => {
-          const result = await sendTimerAction({
-            name: timerName,
-            task: values.task,
-            to_time: new Date().toISOString(),
-            hours: values.hrs,
-            description: values.description || currentDesc || "",
-            activity_type: values.activity_type || "",
-            is_billable: values.is_billable ? 1 : 0,
-            completed: values.completed ? 1 : 0,
-          });
-          return { alert: result.alert, notice: result.notice };
-        },
-        onCancel: async () => {
-          try {
-            await sendTimerAction({ name: timerName, paused: 0 });
-          } catch (err) {
-            this.$emit("error", err);
-          }
-        },
-      });
-    },
+			showStopTimerDialog({
+				elapsedHrs: calcElapsedHrs(
+					this.timer.paused_time_in_seconds,
+					this.timer.paused,
+					this.timer.start_time,
+				),
+				currentDesc,
+				taskName: this.timer.task,
+				taskSubject: this.timer.task_subject || this.timer.task,
+				project: this.timer.project,
+				projectName: this.timer.project_name || this.timer.project,
+				customer: this.timer.customer,
+				onSubmit: async (values) => {
+					const result = await sendTimerAction({
+						name: timerName,
+						task: values.task,
+						to_time: new Date().toISOString(),
+						hours: values.hrs,
+						description: values.description || currentDesc || "",
+						activity_type: values.activity_type || "",
+						is_billable: values.is_billable ? 1 : 0,
+						completed: values.completed ? 1 : 0,
+					});
+					return { alert: result.alert, notice: result.notice };
+				},
+				onCancel: async () => {
+					try {
+						await sendTimerAction({ name: timerName, paused: 0 });
+					} catch (err) {
+						this.$emit("error", err);
+					}
+				},
+			});
+		},
 
-    /**
-     * Debounced save of description to the backend.
-     * Limits saves to at most once every 30 seconds.
-     */
-    scheduleDescriptionSave(): void {
-      if (this.descDebounce !== null) return; // already scheduled
-      this.descDebounce = setTimeout(() => {
-        this.descDebounce = null;
-        this.persistDescription();
-      }, 30_000);
-    },
+		/**
+		 * Debounced save of description to the backend.
+		 * Limits saves to at most once every 30 seconds.
+		 */
+		scheduleDescriptionSave(): void {
+			if (this.descDebounce !== null) return; // already scheduled
+			this.descDebounce = setTimeout(() => {
+				this.descDebounce = null;
+				this.persistDescription();
+			}, 30_000);
+		},
 
-    /** Immediately persist the current description to the backend. */
-    async persistDescription(): Promise<void> {
-      try {
-        await saveTimerDescription(this.timer.name, this.description);
-      } catch (err) {
-        this.$emit("error", err);
-      }
-    },
+		/** Immediately persist the current description to the backend. */
+		async persistDescription(): Promise<void> {
+			try {
+				await saveTimerDescription(this.timer.name, this.description);
+			} catch (err) {
+				this.$emit("error", err);
+			}
+		},
 
-    /** Discard the timer entirely (delete the Timesheet Detail row). */
-    async discardTimer(): Promise<void> {
-      try {
-        await sendTimerAction({ name: this.timer.name, delete: 1 });
-      } catch (err) {
-        this.$emit("error", err);
-      }
-    },
-  },
+		/** Discard the timer entirely (delete the Timesheet Detail row). */
+		async discardTimer(): Promise<void> {
+			try {
+				await sendTimerAction({ name: this.timer.name, delete: 1 });
+			} catch (err) {
+				this.$emit("error", err);
+			}
+		},
+	},
 });
 </script>

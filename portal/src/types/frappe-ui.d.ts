@@ -32,10 +32,10 @@ export const TabButtons: AnyComponent;
 export const TextInput: AnyComponent;
 
 export const toast: {
-  success(message: string): void;
-  error(message: string): void;
-  info(message: string): void;
-  warning(message: string): void;
+	success(message: string): void;
+	error(message: string): void;
+	info(message: string): void;
+	warning(message: string): void;
 };
 
 export function dayjs(date?: string | number | Date | Dayjs | null): Dayjs;

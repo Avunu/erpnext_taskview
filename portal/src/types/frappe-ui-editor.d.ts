@@ -21,21 +21,21 @@ export const EditorFixedMenu: AnyComponent;
 
 /** A toolbar button (frappe-ui `menu.ts`). */
 export interface CommandMenuItem {
-  label: string;
-  /** A `lucide-*` icon name or a component. */
-  icon?: AnyComponent | string;
-  action: (editor: TiptapEditor) => boolean | void | Promise<boolean | void>;
-  isActive?: (editor: TiptapEditor) => boolean;
-  isDisabled?: (editor: TiptapEditor) => boolean;
-  isAvailable?: (editor: TiptapEditor) => boolean;
+	label: string;
+	/** A `lucide-*` icon name or a component. */
+	icon?: AnyComponent | string;
+	action: (editor: TiptapEditor) => boolean | void | Promise<boolean | void>;
+	isActive?: (editor: TiptapEditor) => boolean;
+	isDisabled?: (editor: TiptapEditor) => boolean;
+	isAvailable?: (editor: TiptapEditor) => boolean;
 }
 
 /** A dropdown of toolbar buttons. */
 export interface MenuGroupItem {
-  type: "group";
-  icon?: AnyComponent | string;
-  label: string;
-  items: CommandMenuItem[];
+	type: "group";
+	icon?: AnyComponent | string;
+	label: string;
+	items: CommandMenuItem[];
 }
 
 export type MenuItem = CommandMenuItem | MenuGroupItem | { type: "separator" };
@@ -54,5 +54,5 @@ export const Separator: MenuItem;
 
 /** The comment-grade extension bundle; each member takes options or `false`. */
 export const CommentKit: {
-  configure(options: Record<string, unknown>): unknown;
+	configure(options: Record<string, unknown>): unknown;
 };

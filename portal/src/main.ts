@@ -8,7 +8,7 @@ import { applyTheme, loadBoot } from "./boot";
 import "./index.css";
 
 loadBoot().then((boot) => {
-  applyTheme(boot.theme);
-  if (boot.brand.title) document.title = `Projects · ${boot.brand.title}`;
-  createApp(App).use(router).mount("#app");
+	applyTheme(boot.theme);
+	if (boot.brand.title) document.title = `Projects · ${boot.brand.title}`;
+	createApp(App).use(router).mount("#app");
 });

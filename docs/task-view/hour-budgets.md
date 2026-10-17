@@ -17,21 +17,21 @@ You set budgets on the forms, which the side panel button on a row opens (see [W
 
 Both are optional. When you leave one empty (or 0) the budget is added up from what is below it.
 
-| Level | Budget | If left empty |
-| --- | --- | --- |
-| Task | Its Expected Time | The sum of its subtasks' budgets |
+| Level   | Budget             | If left empty                           |
+| ------- | ------------------ | --------------------------------------- |
+| Task    | Its Expected Time  | The sum of its subtasks' budgets        |
 | Project | Its Budgeted Hours | The sum of its top-level tasks' budgets |
 
 A top-level task with subtasks works as a phase. Give it an Expected Time to cap the phase, or leave it empty and let its subtasks add up. An explicit figure always wins: a phase set to 20 hours stays at 20 even when its subtasks add up to more, and a project with Budgeted Hours stays at that figure whatever its tasks add up to. A Cancelled task contributes no budget.
 
 ### Example
 
-| Item | Expected Time | Budget shown | Why |
-| --- | --- | --- | --- |
-| Project `PROJ-0001`, Budgeted Hours empty | | 45 h | The top-level tasks below: 10 + 30 + 5 |
-| Phase "Discovery" | empty | 10 h | Its subtasks: Interviews 6 h and Sitemap 4 h |
-| Phase "Build" | 30 h | 30 h | Its own figure, although Templates (20 h) and Content (15 h) add up to 35 |
-| Task "Launch" | 5 h | 5 h | Its own figure |
+| Item                                      | Expected Time | Budget shown | Why                                                                       |
+| ----------------------------------------- | ------------- | ------------ | ------------------------------------------------------------------------- |
+| Project `PROJ-0001`, Budgeted Hours empty |               | 45 h         | The top-level tasks below: 10 + 30 + 5                                    |
+| Phase "Discovery"                         | empty         | 10 h         | Its subtasks: Interviews 6 h and Sitemap 4 h                              |
+| Phase "Build"                             | 30 h          | 30 h         | Its own figure, although Templates (20 h) and Content (15 h) add up to 35 |
+| Task "Launch"                             | 5 h           | 5 h          | Its own figure                                                            |
 
 ## Read the meters
 
@@ -39,11 +39,11 @@ A task or project with a budget shows a small bar and a label, for example `12.5
 
 The bar changes colour as the budget is used.
 
-| State | When | Colour |
-| --- | --- | --- |
-| Normal | Logged is under 80% of the budget | Blue |
-| Warning | Logged is at least 80% of the budget | Amber |
-| Over | Logged is more than 100% of the budget | Red, with the label in bold |
+| State   | When                                   | Colour                      |
+| ------- | -------------------------------------- | --------------------------- |
+| Normal  | Logged is under 80% of the budget      | Blue                        |
+| Warning | Logged is at least 80% of the budget   | Amber                       |
+| Over    | Logged is more than 100% of the budget | Red, with the label in bold |
 
 The bar fills to 100% and stops, so use the label and the hover text to see how far over you are. Hours show with one decimal below 100 (a trailing `.0` is dropped) and as whole hours from 100.
 

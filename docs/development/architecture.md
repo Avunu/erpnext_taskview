@@ -10,14 +10,14 @@ This page describes the design behind the code, for developers. For commands and
 
 ## The pieces
 
-| Piece | Built with | Entry point |
-| --- | --- | --- |
-| Task View | Vue 3 and `@he-tree/vue` for the tree, `vue3-side-panel` for the side panel, mounted inside Frappe's list view | `erpnext_taskview/public/js/taskview.bundle.ts` |
-| Timer dock | Vue 3, mounted once on every desk page | `erpnext_taskview/public/js/timerdock.bundle.ts` |
-| Client portal | Vue 3, Vue Router, frappe-ui and Tailwind 3, served at `/projects` | `portal/src/main.ts` |
-| Python API | Frappe whitelisted methods, Pydantic models, the Frappe Query Builder | `erpnext_taskview/erpnext_taskview/api.py` and `erpnext_taskview/portal/api.py` |
+| Piece         | Built with                                                                                                     | Entry point                                                                     |
+| ------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Task View     | Vue 3 and `@he-tree/vue` for the tree, `vue3-side-panel` for the side panel, mounted inside Frappe's list view | `erpnext_taskview/public/js/taskview.entry.ts`                                  |
+| Timer dock    | Vue 3, mounted once on every desk page                                                                         | `erpnext_taskview/public/js/timerdock.entry.ts`                                 |
+| Client portal | Vue 3, Vue Router, frappe-ui and Tailwind 3, served at `/projects`                                             | `portal/src/main.ts`                                                            |
+| Python API    | Frappe whitelisted methods, Pydantic models, the Frappe Query Builder                                          | `erpnext_taskview/erpnext_taskview/api.py` and `erpnext_taskview/portal/api.py` |
 
-`taskview.bundle.ts` registers a list view named `tasks` and subclasses Frappe's `ListView` (`TasksView`) to mount the tree in place of the result list. It also overrides Frappe's view menu so that Task and Project offer **Task View** next to **List**, and relabels the `idx` sort as **Manual**. The two property settings in `custom/task.json` and `custom/project.json` make `Tasks` the default view for each document.
+`taskview.entry.ts` registers a list view named `tasks` and subclasses Frappe's `ListView` (`TasksView`) to mount the tree in place of the result list. It also overrides Frappe's view menu so that Task and Project offer **Task View** next to **List**, and relabels the `idx` sort as **Manual**. The two property settings in `custom/task.json` and `custom/project.json` make `Tasks` the default view for each document.
 
 ## The desk API
 
@@ -25,11 +25,11 @@ This page describes the design behind the code, for developers. For commands and
 
 Every mutation goes through one of a small set of endpoints, and each returns a fresh `get` response so the browser never needs a follow-up read. `save_doc` takes a JSON `SaveDocRequest` and routes on the document's `doctype`:
 
-| Doctype | What it does |
-| --- | --- |
-| Project | Inserts or renames, and rewrites the project order |
-| Task | Inserts or updates, re-parents with its subtasks and rewrites sibling order |
-| Timesheet Detail | Runs every timer operation |
+| Doctype          | What it does                                                                |
+| ---------------- | --------------------------------------------------------------------------- |
+| Project          | Inserts or renames, and rewrites the project order                          |
+| Task             | Inserts or updates, re-parents with its subtasks and rewrites sibling order |
+| Timesheet Detail | Runs every timer operation                                                  |
 
 The timer operation is inferred from the fields in the payload rather than named. No `name` and no `to_time` starts a timer, no `name` with both times is a manual entry, a `name` with `to_time` stops, a `name` with `paused` set to 1 pauses, with `paused` set to 0 resumes, `delete` discards, and `update_description` saves only the text. The backend, not the browser, keeps at most one timer running: starting or resuming pauses the others.
 
@@ -66,16 +66,16 @@ Customers are Website Users and hold no permissions on Project or Task, and `fra
 
 The endpoints are all in `erpnext_taskview.portal.api`:
 
-| Endpoint | Kind | Does |
-| --- | --- | --- |
-| `get_projects` | Read | Accessible projects with budgets and a count per board column |
-| `get_project` | Read | Everything the overview, list and board need in one call: phases, task cards, recent activity and whether tasks can be created |
-| `get_task` | Read | The panel: description, ancestors, comments, time log and attachments |
-| `set_task_status` | Write (POST) | Moves a leaf task between the four board columns |
-| `create_task` | Write (POST) | Adds a task, optionally under an open phase |
-| `add_comment` | Write (POST) | Adds a comment as the current user |
-| `upload_attachment` | Write (POST) | Saves a private file on a task |
-| `download_file` | Read (GET) | Streams a file attached to a task or project the user can open |
+| Endpoint            | Kind         | Does                                                                                                                           |
+| ------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `get_projects`      | Read         | Accessible projects with budgets and a count per board column                                                                  |
+| `get_project`       | Read         | Everything the overview, list and board need in one call: phases, task cards, recent activity and whether tasks can be created |
+| `get_task`          | Read         | The panel: description, ancestors, comments, time log and attachments                                                          |
+| `set_task_status`   | Write (POST) | Moves a leaf task between the four board columns                                                                               |
+| `create_task`       | Write (POST) | Adds a task, optionally under an open phase                                                                                    |
+| `add_comment`       | Write (POST) | Adds a comment as the current user                                                                                             |
+| `upload_attachment` | Write (POST) | Saves a private file on a task                                                                                                 |
+| `download_file`     | Read (GET)   | Streams a file attached to a task or project the user can open                                                                 |
 
 `create_task`, `add_comment` and `upload_attachment` are rate limited to 60 calls per hour. Frappe's `rate_limit` decorator keys on the request's IP address and counts each endpoint separately.
 

@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 /**
- * @module timerdock.bundle
+ * @module timerdock.entry
  *
  * Global desk entry point for the floating timer dock.
  *
@@ -20,8 +20,8 @@ import TimerDock from "./components/TimerDock.vue";
 
 // Mount the dock once the DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
-  const container = document.createElement("div");
-  container.id = "erpnext-taskview-timer-dock";
-  document.body.appendChild(container);
-  createApp(TimerDock).mount(container);
+	const container = document.createElement("div");
+	container.id = "erpnext-taskview-timer-dock";
+	document.body.appendChild(container);
+	createApp(TimerDock).mount(container);
 });

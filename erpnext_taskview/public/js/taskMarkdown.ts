@@ -26,12 +26,12 @@ import { fetchTaskDescriptions, getDisplayText, type TaskDoc, type TreeNode } fr
 
 /** One markdown bullet line for a node at the given indent. */
 function formatLine(node: TreeNode, indent: string): string {
-  if (node.doc.doctype === "Project") {
-    // Projects are context headers, not checkable items.
-    return `${indent}- ${getDisplayText(node)}`;
-  }
-  const done = (node.doc as TaskDoc).status === "Completed";
-  return `${indent}- [${done ? "x" : " "}] ${(node.doc as TaskDoc).subject}`;
+	if (node.doc.doctype === "Project") {
+		// Projects are context headers, not checkable items.
+		return `${indent}- ${getDisplayText(node)}`;
+	}
+	const done = (node.doc as TaskDoc).status === "Completed";
+	return `${indent}- [${done ? "x" : " "}] ${(node.doc as TaskDoc).subject}`;
 }
 
 /**
@@ -40,16 +40,16 @@ function formatLine(node: TreeNode, indent: string): string {
  * is already covered by its ancestor.  Blank placeholder nodes are skipped.
  */
 export function selectionRoots(tree: TreeNode[], selected: Set<string>): TreeNode[] {
-  const roots: TreeNode[] = [];
-  const walk = (nodes: TreeNode[]): void => {
-    for (const node of nodes) {
-      if (!node.doc.name) continue;
-      if (selected.has(node.doc.name)) roots.push(node);
-      else walk(node.children);
-    }
-  };
-  walk(tree);
-  return roots;
+	const roots: TreeNode[] = [];
+	const walk = (nodes: TreeNode[]): void => {
+		for (const node of nodes) {
+			if (!node.doc.name) continue;
+			if (selected.has(node.doc.name)) roots.push(node);
+			else walk(node.children);
+		}
+	};
+	walk(tree);
+	return roots;
 }
 
 /**
@@ -58,33 +58,33 @@ export function selectionRoots(tree: TreeNode[], selected: Set<string>): TreeNod
  * where a pinned row's subtasks come from.
  */
 export function subtreeFromDocs(root: TaskDoc, tasks: TaskDoc[]): TreeNode {
-  const childrenOf = new Map<string, TaskDoc[]>();
-  for (const task of tasks) {
-    if (!task.parent_task) continue;
-    const siblings = childrenOf.get(task.parent_task);
-    if (siblings) siblings.push(task);
-    else childrenOf.set(task.parent_task, [task]);
-  }
-  // Guards against a parent_task cycle in bad data.
-  const seen = new Set<string>();
-  const build = (doc: TaskDoc): TreeNode => {
-    seen.add(doc.name);
-    const children = (childrenOf.get(doc.name) ?? []).filter((c) => !seen.has(c.name));
-    return { doc, children: children.map(build) };
-  };
-  return build(root);
+	const childrenOf = new Map<string, TaskDoc[]>();
+	for (const task of tasks) {
+		if (!task.parent_task) continue;
+		const siblings = childrenOf.get(task.parent_task);
+		if (siblings) siblings.push(task);
+		else childrenOf.set(task.parent_task, [task]);
+	}
+	// Guards against a parent_task cycle in bad data.
+	const seen = new Set<string>();
+	const build = (doc: TaskDoc): TreeNode => {
+		seen.add(doc.name);
+		const children = (childrenOf.get(doc.name) ?? []).filter((c) => !seen.has(c.name));
+		return { doc, children: children.map(build) };
+	};
+	return build(root);
 }
 
 /** Names of every task in the given subtrees, to fetch their descriptions. */
 export function collectTaskNames(nodes: TreeNode[]): string[] {
-  const names: string[] = [];
-  const walk = (node: TreeNode): void => {
-    if (!node.doc.name) return;
-    if (node.doc.doctype === "Task") names.push(node.doc.name);
-    node.children.forEach(walk);
-  };
-  nodes.forEach(walk);
-  return names;
+	const names: string[] = [];
+	const walk = (node: TreeNode): void => {
+		if (!node.doc.name) return;
+		if (node.doc.doctype === "Task") names.push(node.doc.name);
+		node.children.forEach(walk);
+	};
+	nodes.forEach(walk);
+	return names;
 }
 
 /**
@@ -93,55 +93,53 @@ export function collectTaskNames(nodes: TreeNode[]): string[] {
  * `count` is the number of task lines.
  */
 export function renderMarkdown(
-  nodes: TreeNode[],
-  descriptions: Record<string, string>,
+	nodes: TreeNode[],
+	descriptions: Record<string, string>,
 ): { markdown: string; count: number } {
-  const lines: string[] = [];
-  let count = 0;
+	const lines: string[] = [];
+	let count = 0;
 
-  const walk = (node: TreeNode, depth: number): void => {
-    if (!node.doc.name) return; // skip blank "Add task…/Add project…" placeholder nodes
-    const indent = "  ".repeat(depth);
-    lines.push(formatLine(node, indent));
-    if (node.doc.doctype === "Task") {
-      count++;
-      const description = descriptions[node.doc.name];
-      if (description) {
-        // Without the blank line before it, the description would continue
-        // the title's paragraph.  Indenting by the bullet's width keeps it
-        // inside the list item; blank lines stay empty.
-        const body = description
-          .split("\n")
-          .map((line) => (line.trim() ? `${indent}  ${line}` : ""));
-        lines.push("", ...body, "");
-      }
-    }
-    for (const child of node.children) walk(child, depth + 1);
-  };
+	const walk = (node: TreeNode, depth: number): void => {
+		if (!node.doc.name) return; // skip blank "Add task…/Add project…" placeholder nodes
+		const indent = "  ".repeat(depth);
+		lines.push(formatLine(node, indent));
+		if (node.doc.doctype === "Task") {
+			count++;
+			const description = descriptions[node.doc.name];
+			if (description) {
+				// Without the blank line before it, the description would continue
+				// the title's paragraph.  Indenting by the bullet's width keeps it
+				// inside the list item; blank lines stay empty.
+				const body = description.split("\n").map((line) => (line.trim() ? `${indent}  ${line}` : ""));
+				lines.push("", ...body, "");
+			}
+		}
+		for (const child of node.children) walk(child, depth + 1);
+	};
 
-  for (const node of nodes) walk(node, 0);
-  // Adjacent descriptions each add a blank line; keep one.
-  const markdown = lines
-    .join("\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-  return { markdown, count };
+	for (const node of nodes) walk(node, 0);
+	// Adjacent descriptions each add a blank line; keep one.
+	const markdown = lines
+		.join("\n")
+		.replace(/\n{3,}/g, "\n\n")
+		.trim();
+	return { markdown, count };
 }
 
 /** Legacy clipboard path for desks served over an insecure origin. */
 function copyViaTextarea(text: string): void {
-  const ta = document.createElement("textarea");
-  ta.value = text;
-  ta.style.position = "fixed";
-  ta.style.opacity = "0";
-  document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
-  try {
-    if (!document.execCommand("copy")) throw new Error("execCommand copy failed");
-  } finally {
-    document.body.removeChild(ta);
-  }
+	const ta = document.createElement("textarea");
+	ta.value = text;
+	ta.style.position = "fixed";
+	ta.style.opacity = "0";
+	document.body.appendChild(ta);
+	ta.focus();
+	ta.select();
+	try {
+		if (!document.execCommand("copy")) throw new Error("execCommand copy failed");
+	} finally {
+		document.body.removeChild(ta);
+	}
 }
 
 /**
@@ -155,20 +153,20 @@ function copyViaTextarea(text: string): void {
  * through to the next path.  Rejects if the text itself fails to build.
  */
 async function writeToClipboard(text: Promise<string>): Promise<void> {
-  try {
-    const blob = text.then((t) => new Blob([t], { type: "text/plain" }));
-    await navigator.clipboard.write([new ClipboardItem({ "text/plain": blob })]);
-    return;
-  } catch {
-    // fall through
-  }
-  try {
-    await navigator.clipboard.writeText(await text);
-    return;
-  } catch {
-    // fall through
-  }
-  copyViaTextarea(await text);
+	try {
+		const blob = text.then((t) => new Blob([t], { type: "text/plain" }));
+		await navigator.clipboard.write([new ClipboardItem({ "text/plain": blob })]);
+		return;
+	} catch {
+		// fall through
+	}
+	try {
+		await navigator.clipboard.writeText(await text);
+		return;
+	} catch {
+		// fall through
+	}
+	copyViaTextarea(await text);
 }
 
 /**
@@ -177,19 +175,19 @@ async function writeToClipboard(text: Promise<string>): Promise<void> {
  * or keydown handler so the clipboard write still counts as user-initiated.
  */
 export async function copyNodesAsMarkdown(nodes: TreeNode[]): Promise<void> {
-  if (!nodes.some((node) => node.doc.name)) return;
-  const names = collectTaskNames(nodes);
-  const rendered = (names.length ? fetchTaskDescriptions(names) : Promise.resolve({})).then(
-    (descriptions) => renderMarkdown(nodes, descriptions),
-  );
-  try {
-    await writeToClipboard(rendered.then((r) => r.markdown));
-    const { count } = await rendered;
-    frappe.show_alert({
-      message: __("Copied {0} task(s) to clipboard", { "0": String(count) }),
-      indicator: "green",
-    });
-  } catch {
-    frappe.show_alert({ message: __("Copy to clipboard failed"), indicator: "red" });
-  }
+	if (!nodes.some((node) => node.doc.name)) return;
+	const names = collectTaskNames(nodes);
+	const rendered = (names.length ? fetchTaskDescriptions(names) : Promise.resolve({})).then((descriptions) =>
+		renderMarkdown(nodes, descriptions),
+	);
+	try {
+		await writeToClipboard(rendered.then((r) => r.markdown));
+		const { count } = await rendered;
+		frappe.show_alert({
+			message: __("Copied {0} task(s) to clipboard", { "0": String(count) }),
+			indicator: "green",
+		});
+	} catch {
+		frappe.show_alert({ message: __("Copy to clipboard failed"), indicator: "red" });
+	}
 }

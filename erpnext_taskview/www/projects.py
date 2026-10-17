@@ -25,28 +25,6 @@ no_cache = 1
 _OWN_ROUTES = {"/project", "/projects"}
 
 
-def get_context(context):
-	if frappe.session.user == "Guest":
-		frappe.local.flags.redirect_location = "/login?" + urlencode(
-			{"redirect-to": frappe.request.full_path.rstrip("?")}
-		)
-		raise frappe.Redirect(302)
-
-	# Legacy ERPNext links: /projects?project=PROJ-0001 → /projects/PROJ-0001
-	if (legacy := frappe.form_dict.get("project")) and not frappe.form_dict.get("app_path"):
-		frappe.local.flags.redirect_location = f"/projects/{quote(legacy, safe='')}"
-		raise frappe.Redirect(302)
-
-	csrf_token = frappe.sessions.get_csrf_token()
-	# The token is created lazily; persist it before the page renders or the
-	# SPA's first POST fails CSRF validation.
-	frappe.db.commit()  # nosemgrep: frappe-manual-commit
-
-	context.no_cache = 1
-	context.boot = get_boot(csrf_token)
-	return context
-
-
 def get_boot(csrf_token: str | None = None) -> dict:
 	user = frappe.session.user
 	info = frappe.db.get_value("User", user, ["full_name", "user_image", "desk_theme"], as_dict=True) or {}
@@ -73,6 +51,28 @@ def get_boot(csrf_token: str | None = None) -> dict:
 		},
 		"portal_menu": portal_menu,
 	}
+
+
+def get_context(context):
+	if frappe.session.user == "Guest":
+		frappe.local.flags.redirect_location = "/login?" + urlencode(
+			{"redirect-to": frappe.request.full_path.rstrip("?")}
+		)
+		raise frappe.Redirect(302)
+
+	# Legacy ERPNext links: /projects?project=PROJ-0001 → /projects/PROJ-0001
+	if (legacy := frappe.form_dict.get("project")) and not frappe.form_dict.get("app_path"):
+		frappe.local.flags.redirect_location = f"/projects/{quote(legacy, safe='')}"
+		raise frappe.Redirect(302)
+
+	csrf_token = frappe.sessions.get_csrf_token()
+	# The token is created lazily; persist it before the page renders or the
+	# SPA's first POST fails CSRF validation.
+	frappe.db.commit()  # nosemgrep: frappe-manual-commit
+
+	context.no_cache = 1
+	context.boot = get_boot(csrf_token)
+	return context
 
 
 @frappe.whitelist(methods=["POST"])

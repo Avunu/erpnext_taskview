@@ -10,6 +10,9 @@ updates:
     directory: /
     schedule:
       interval: daily
+    # A new release waits a week before it is proposed, so a bad one can be yanked first.
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: chore
     groups:

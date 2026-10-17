@@ -1,15 +1,109 @@
 {
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "typescript",
-    "unicorn",
-    "oxc"
-  ],
-  "categories": {
-    "correctness": "error"
-  },
-  "rules": {},
-  "env": {
-    "builtin": true
-  }
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "unicorn", "oxc", "import"],
+	"categories": {
+		"correctness": "error",
+		"suspicious": "error",
+		"perf": "warn",
+		"pedantic": "off"
+	},
+	"env": {
+		"builtin": true,
+		"es2024": true,
+		"browser": true
+	},
+	"rules": {
+		"typescript/no-explicit-any": "error",
+		"typescript/ban-ts-comment": "error",
+		"typescript/consistent-type-imports": "error",
+		"no-console": [
+			"warn",
+			{
+				"allow": ["error", "warn"]
+			}
+		],
+		"import/no-cycle": "off",
+		"no-underscore-dangle": "off",
+		"unicorn/consistent-function-scoping": "off",
+		"unicorn/no-array-sort": "off"
+	},
+	"ignorePatterns": [
+		"erpnext_taskview/public/dist/**",
+		".frappe-nix/**",
+		".dev-dist/**",
+		"nix/**",
+		"docs-site/**",
+		"types/doctypes.d.ts"
+	],
+	"overrides": [
+		{
+			"files": ["scripts/**", "marketplace/**", "ci/**", "test/**"],
+			"env": {
+				"node": true
+			},
+			"rules": {
+				"no-console": "off",
+				"no-await-in-loop": "off",
+				"import/no-unassigned-import": "off"
+			}
+		},
+		{
+			"files": ["erpnext_taskview/public/js/*.bundle.ts", "erpnext_taskview/public/js/*.bundle.js"],
+			"rules": {
+				"import/no-unassigned-import": "off"
+			}
+		},
+		{
+			"files": [
+				"erpnext_taskview/public/js/TaskView.vue",
+				"erpnext_taskview/public/js/components/AssignTo.vue",
+				"erpnext_taskview/public/js/components/Task.vue",
+				"erpnext_taskview/public/js/taskview.entry.ts",
+				"erpnext_taskview/public/js/timerDialog.ts",
+				"erpnext_taskview/public/js/timerStore.ts",
+				"erpnext_taskview/public/js/types.ts",
+				"erpnext_taskview/public/js/types/frappe.d.ts",
+				"portal/src/types/frappe-ui-editor.d.ts",
+				"portal/src/types/frappe-ui.d.ts",
+				"vite.config.ts"
+			],
+			"rules": {
+				"typescript/no-explicit-any": "off"
+			}
+		},
+		{
+			"files": [
+				"erpnext_taskview/public/js/TaskView.vue",
+				"erpnext_taskview/public/js/components/PinnedView.vue",
+				"erpnext_taskview/public/js/components/Task.vue",
+				"erpnext_taskview/public/js/components/TimerWidget.vue",
+				"portal/src/main.ts",
+				"portal/src/types/frappe-ui.d.ts"
+			],
+			"rules": {
+				"import/no-unassigned-import": "off"
+			}
+		},
+		{
+			"files": [
+				"erpnext_taskview/public/js/components/Task.vue",
+				"erpnext_taskview/public/js/timerDialog.ts"
+			],
+			"rules": {
+				"unicorn/prefer-add-event-listener": "off"
+			}
+		},
+		{
+			"files": ["erpnext_taskview/public/js/taskview.entry.ts"],
+			"rules": {
+				"no-useless-constructor": "off"
+			}
+		},
+		{
+			"files": ["erpnext_taskview/public/js/types/frappe.d.ts"],
+			"rules": {
+				"unicorn/require-module-specifiers": "off"
+			}
+		}
+	]
 }
