@@ -68,7 +68,7 @@ A fresh `install-app` marks the app's patches as done without running them, so o
 
 ## Development
 
-Requires Node 22+ and yarn.
+Requires Node 24+ and yarn.
 
 | Command | What it does |
 | --- | --- |

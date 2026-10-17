@@ -36,7 +36,7 @@ const taskviewConfig = defineConfig({
     outDir: '../dist',
     manifest: 'manifest-taskview.json',
     rollupOptions: {
-      input: resolve(__dirname, 'erpnext_taskview/public/js/taskview.bundle.ts'),
+      input: resolve(__dirname, 'erpnext_taskview/public/js/taskview.entry.ts'),
       external: ['frappe'],
       onwarn,
       output: {
@@ -61,7 +61,7 @@ const timerdockConfig = defineConfig({
     outDir: '../dist',
     manifest: 'manifest-timerdock.json',
     rollupOptions: {
-      input: resolve(__dirname, 'erpnext_taskview/public/js/timerdock.bundle.ts'),
+      input: resolve(__dirname, 'erpnext_taskview/public/js/timerdock.entry.ts'),
       external: ['frappe'],
       onwarn,
       output: {

@@ -7,8 +7,7 @@ This module is the **single source of truth** for the request/response
 contracts shared between the Python backend and the TypeScript frontend.
 The TypeScript interfaces in ``public/js/types.ts`` mirror these models exactly.
 
-Run ``generate-types`` (devenv script) to regenerate the corresponding
-TypeScript interfaces whenever models change.
+Update the corresponding TypeScript interfaces whenever the models change.
 
 Design principles
 -----------------

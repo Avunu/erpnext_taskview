@@ -66,6 +66,9 @@ export default defineConfig({
     },
   },
   build: {
+    // The manifest lets scripts/vite-register.mjs copy public/portal/ into a
+    // bench whose sites/assets/erpnext_taskview is a copy rather than a link.
+    manifest: true,
     rollupOptions: {
       output: {
         entryFileNames: "js/[name]-[hash].js",

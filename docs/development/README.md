@@ -10,7 +10,7 @@ This page is for people changing the app. [How it works](architecture.md) explai
 
 ## Set up
 
-You need a bench with Frappe v16 and ERPNext, plus Node 22 or newer and yarn. Work in the app's folder inside the bench, because the build writes into the bench's `sites/assets`:
+You need a bench with Frappe v16 and ERPNext, plus Node 24 or newer and yarn. Work in the app's folder inside the bench, because the build writes into the bench's `sites/assets`:
 
 ```bash
 cd apps/erpnext_taskview
@@ -18,7 +18,7 @@ yarn install
 yarn build
 ```
 
-`yarn build` builds the desk bundles and the portal, then runs `update-assets.mjs`, which resolves `../../sites` from the app folder, so the app has to live at `apps/erpnext_taskview` of a bench. The first `bench build` of the app installs the dependencies and runs the same command: see [Install and upgrade](../install.md#install).
+`yarn build` builds the desk bundles and the portal, then runs `scripts/vite-register.mjs`, which registers the bundles in the bench's `sites/assets/assets.json`. It finds the bench from the app folder (`apps/erpnext_taskview`) or `$FRAPPE_BENCH_ROOT`, and skips itself outside one. The first `bench build` of the app installs the dependencies and runs the same command: see [Install and upgrade](../install.md#install).
 
 ## Commands
 
@@ -65,12 +65,12 @@ erpnext_taskview/
 portal/                             the portal app (Vue 3, frappe-ui)
 vite.config.ts                      desk bundles
 vite.portal.config.ts               portal build
-update-assets.mjs                   copies the desk bundles into sites/assets
+scripts/vite-register.mjs           registers the Vite bundles in sites/assets/assets.json (managed)
 ```
 
 ## How the build fits together
 
-- **Desk bundles.** `vite.config.ts` builds two IIFE bundles from `erpnext_taskview/public/js`: `taskview.bundle.ts` and `timerdock.bundle.ts`. Frappe is declared external, because the desk provides it as a global. Both write into `erpnext_taskview/public/dist` one after the other, so neither empties the folder. `update-assets.mjs` then copies the hashed files into `sites/assets` and writes the `taskview.bundle.js`, `taskview.bundle.css`, `timerdock.bundle.js` and `timerdock.bundle.css` keys that `hooks.py` lists in `app_include_js` and `app_include_css`.
+- **Desk bundles.** `vite.config.ts` builds two IIFE bundles from `erpnext_taskview/public/js`: `taskview.entry.ts` and `timerdock.entry.ts`. The sources are not named `*.bundle.*`, so Frappe's esbuild leaves them to Vite. Frappe is declared external, because the desk provides it as a global. Both write into `erpnext_taskview/public/dist` one after the other, so neither empties the folder. `scripts/vite-register.mjs`, which frappe-nix manages, then reads the Vite manifests and writes the `taskview.bundle.js`, `taskview.bundle.css`, `timerdock.bundle.js` and `timerdock.bundle.css` keys that `hooks.py` lists in `app_include_js` and `app_include_css` into the bench's `sites/assets/assets.json`. Outside a bench it skips itself, so `yarn build` works in a bare checkout.
 - **Portal.** `vite.portal.config.ts` builds `portal/` into `erpnext_taskview/public/portal/` and copies its `index.html` to `erpnext_taskview/www/projects.html`. Frappe renders that file as a Jinja template with the context from `www/projects.py`, and frappe-ui's build plugin turns every key of `context.boot` into a `window` global. Both outputs are generated and git-ignored. Do not name portal files `*.bundle.*`: Frappe's esbuild compiles every such file under `public/` on its own.
 - **Two TypeScript versions.** The app's `typescript` is the native TypeScript 7 build, which has no JavaScript API. `vue-tsc` and Vue's single-file-component compiler need one, so `typescript5` is an alias of TypeScript 5. `scripts/vue-tsc.cjs` runs `vue-tsc` against it, and `vite.portal.config.ts` registers it with the SFC compiler, which frappe-ui's components need to resolve their prop types.
 - **Tailwind 3.** frappe-ui is still a Tailwind 3 consumer, so Dependabot is told to ignore Tailwind 4 and later.
@@ -98,11 +98,11 @@ There are no JavaScript unit tests. `yarn typecheck`, `yarn lint` and `yarn form
 
 ## Continuous integration
 
-The `check` workflow (`.github/workflows/check.yml`) runs on every pull request and every push to `main`. Its `build` job uses Node 22 and runs, in order:
+The `check` workflow (`.github/workflows/check.yml`) runs on every pull request and every push to `main`. Its `build` job uses Node 24 and runs, in order:
 
 1. `yarn install --frozen-lockfile`
 2. `yarn typecheck`, `yarn lint` and `yarn format:check`
-3. `yarn build:taskview`, `yarn build:timerdock` and `yarn build:portal`, rather than `yarn build`, because `update-assets.mjs` rewrites a bench's `assets.json` and there is no bench in CI
+3. `yarn build`, whose `scripts/vite-register.mjs` step finds no bench in CI and skips itself
 4. A check that `erpnext_taskview/www/projects.html` exists and does not contain `.__`, because Frappe renders it as a Jinja template and refuses any template that does
 
 Dependabot updates the JavaScript dependencies daily, in one group, and a workflow turns on auto-merge for its pull requests, so a pull request merges once its required checks pass.
@@ -119,7 +119,7 @@ The `Docs` workflow (`.github/workflows/docs.yml`) checks this documentation whe
 
 ### Pre-commit
 
-`.pre-commit-config.yaml` runs ruff, ssort, oxlint and oxfmt, the standard file checks, and Frappe's `test_utils` hooks (`validate_copyright`, `bylines`, `validate_patches` and others). The documentation is excluded from the hooks that would otherwise rewrite it: `validate_copyright` stamps a copyright comment above the frontmatter of every Markdown file, so it skips `docs/`.
+`.pre-commit-config.yaml` is managed by frappe-nix (`frappe-init --sync` writes it from the app standards profile) and runs with [prek](https://github.com/j178/prek). It runs ruff, ssort, oxlint and oxfmt, the standard file checks, workflow and shell linting, the conventional-commit check, `frappe-nix compat`, and Frappe's `test_utils` hooks (`validate_copyright`, `validate_patches`, `static_analysis` and others). ruff and the other Python tools are pinned in `tools/uv.lock`, oxlint and oxfmt in `package.json`. The dev shell (`direnv allow`, or `nix develop --no-pure-eval`) installs the hooks; `uv run --frozen --project tools prek run --all-files` runs them by hand. The documentation is excluded from the hooks that would otherwise rewrite it: `validate_copyright` stamps a copyright comment above the frontmatter of every Markdown file, so it skips `docs/`.
 
 ## Working on these docs
 

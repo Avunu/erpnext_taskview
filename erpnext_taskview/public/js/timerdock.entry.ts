@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 /**
- * @module timerdock.bundle
+ * @module timerdock.entry
  *
  * Global desk entry point for the floating timer dock.
  *

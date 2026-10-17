@@ -11,7 +11,7 @@ ERPNext TaskView installs like any Frappe app. Two things are specific to it: th
 ## Before you start
 
 - A bench with Frappe v16 and a site that already has ERPNext installed.
-- Node and yarn on the bench machine. The project is built with Node 22 in CI.
+- Node and yarn on the bench machine. The project is built with Node 24 in CI.
 - A System Manager login on the site.
 
 > [!IMPORTANT]
