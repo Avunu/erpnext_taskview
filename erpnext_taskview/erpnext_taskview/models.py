@@ -298,6 +298,12 @@ class ActiveTimerDoc(BaseModel):
 	paused_time_in_seconds: int = 0
 	description: str = ""
 
+	@field_validator("description", mode="before")
+	@classmethod
+	def empty_description(cls, v: str | None) -> str:
+		"""A timer started outside TaskView (in the desk) can have no description."""
+		return v or ""
+
 
 class ActiveTimersResponse(BaseModel):
 	"""Response from ``get_active_timers``.
