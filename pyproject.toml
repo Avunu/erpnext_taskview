@@ -21,11 +21,9 @@ profile = "github:Avunu/frappe-standards-profile/main"
 frappe-major = 16
 siblings = ["erpnext"]
 integration-branch = "main"
-# The existing CI gate stays until the reusable CI workflows render ci.yml.
-retire-keep = [".github/workflows/check.yml"]
 
 [tool.frappe-nix.dev-shell]
-frappe-nix-url = "github:Avunu/frappe-nix/b4d0f2784987187e6286a957d5cade3a400730ae"
+frappe-nix-url = "github:Avunu/frappe-nix/a216ce95ce051fe0bc5b95f112fcb85529910ede"
 
 # Stylesheet imports are side-effect imports by nature: Vite pulls the CSS into the
 # bundle in import order. Exempt exactly the modules that import a stylesheet, and
@@ -101,7 +99,7 @@ exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError", "@(abc\\.)?abs
 fail_under = 80
 
 [tool.vulture]
-exclude = [".venv/", "node_modules/", ".frappe-nix/", ".dev-dist/"]
+exclude = [".venv/", "node_modules/", ".frappe-nix/", ".dev-dist/", ".devenv/", ".direnv/"]
 
 [tool.test_utils.static-analysis]
 whitelist = ["frappe.*", "erpnext.*"]
