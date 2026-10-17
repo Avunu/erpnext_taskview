@@ -1,9 +1,14 @@
 # Copyright (c) 2026, Avunu LLC and contributors
 # For license information, please see license.txt
 
+import io
+from unittest.mock import patch
+
 import frappe
 from frappe.desk.form.assign_to import add as assign
 from frappe.tests import IntegrationTestCase, set_user
+from werkzeug.test import EnvironBuilder
+from werkzeug.wrappers import Request
 
 from erpnext_taskview.portal import api
 from erpnext_taskview.portal.access import assert_task_access, get_accessible_projects
@@ -220,3 +225,43 @@ class TestPortal(IntegrationTestCase):
 				projects_page.get_context(frappe._dict())
 		self.assertEqual(frappe.local.flags.redirect_location, f"/projects/{self.project}")
 		frappe.local.form_dict = frappe._dict()
+
+	def test_page_render_commits_the_csrf_token(self):
+		frappe.local.flags.commit = False
+		with set_user(self.contact_user):
+			context = projects_page.get_context(frappe._dict())
+		self.assertTrue(frappe.local.flags.commit)
+		self.assertEqual(context.boot["user"], self.contact_user)
+		self.assertTrue(context.boot["csrf_token"])
+		frappe.local.flags.commit = False
+
+	def test_dev_boot_needs_developer_mode(self):
+		with patch.dict(frappe.conf, {"developer_mode": 0}), self.assertRaises(frappe.ValidationError):
+			projects_page.get_context_for_dev()
+		with patch.dict(frappe.conf, {"developer_mode": 1}):
+			self.assertEqual(projects_page.get_context_for_dev()["user"], "Administrator")
+
+	def test_upload_attachment(self):
+		previous = getattr(frappe.local, "request", None)
+		builder = EnvironBuilder(
+			method="POST", data={"file": (io.BytesIO(b"uploaded"), "upload.txt"), "docname": self.task}
+		)
+		try:
+			frappe.local.request = Request(builder.get_environ())
+			frappe.local.request_ip = "127.0.0.1"  # the endpoint is rate limited per IP
+			with set_user(self.contact_user):
+				# set_user starts the request afresh, form_dict included.
+				frappe.local.form_dict = frappe._dict(docname=self.task)
+				attachment = api.upload_attachment()
+				frappe.local.request = Request(EnvironBuilder(method="POST").get_environ())
+				with self.assertRaises(frappe.ValidationError):
+					api.upload_attachment()
+		finally:
+			frappe.local.request = previous
+			frappe.local.form_dict = frappe._dict()
+
+		self.assertEqual(attachment["file_name"], "upload.txt")
+		self.assertEqual(
+			frappe.db.get_value("File", attachment["name"], ["attached_to_doctype", "attached_to_name"]),
+			("Task", self.task),
+		)
