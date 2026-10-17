@@ -16,6 +16,7 @@
 
 import frappe
 from frappe.desk.doctype.notification_type.notification_type import seed_type_into_settings
+from frappe.website.utils import clear_website_cache
 
 from erpnext_taskview.install import ensure_notification_type
 from erpnext_taskview.portal.notify import NOTIFICATION_TYPE
@@ -47,5 +48,5 @@ def execute():
 			website.remove(row)
 		website.save(ignore_permissions=True)
 
-	frappe.cache.delete_key("portal_menu_items")
-	frappe.cache.delete_key("website_redirects")
+	# The portal menu and the redirects are cached; frappe's website cache reset clears both.
+	clear_website_cache()

@@ -50,6 +50,8 @@ from dataclasses import dataclass
 from typing import Any, Literal, cast
 
 import frappe
+from erpnext.projects.doctype.project.project import Project
+from erpnext.projects.doctype.task.task import Task
 from erpnext.projects.doctype.timesheet.timesheet import Timesheet
 from frappe import _
 from frappe.core.utils import html2text
@@ -628,7 +630,7 @@ def _save_project(doc: ProjectDoc, form_params: _dict | None, sibling_order: lis
 		frappe.db.set_value(
 			"Project",
 			doc.name,
-			{  # type: ignore[arg-type]
+			{
 				"project_name": doc.project_name,
 				"status": doc.status,
 			},
@@ -668,7 +670,7 @@ def _update_children_project(children: list[TaskDoc], project: str) -> None:
 	"""
 	for child in children:
 		if child.name:
-			frappe.db.set_value("Task", child.name, {"project": project})  # type: ignore[arg-type]
+			frappe.db.set_value("Task", child.name, {"project": project})
 
 
 def _reorder_siblings(
@@ -842,13 +844,13 @@ def _save_task(
 
 		# If reparenting to a task parent, ensure new parent has is_group=1
 		if doc.parent_task:
-			frappe.db.set_value("Task", doc.parent_task, {"is_group": 1})  # type: ignore[arg-type]
+			frappe.db.set_value("Task", doc.parent_task, {"is_group": 1})
 
 		# If project changed, update descendant tasks
 		if children and doc.project:
 			_update_children_project(children, doc.project)
 
-		frappe.db.set_value("Task", doc.name, update_fields)  # type: ignore[arg-type]
+		frappe.db.set_value("Task", doc.name, update_fields)
 
 		# Reorder siblings when a drag operation supplies a target position.
 		# Prefer the explicit visible order the frontend captured; fall back to
@@ -870,8 +872,8 @@ def _save_task(
 			frappe.db.set_value("Task", doc.parent_task, "is_group", 1)
 		if doc.idx:
 			new_doc["idx"] = doc.idx
-		inserted = frappe.get_doc(new_doc)
-		inserted.insert()
+		inserted = frappe.get_doc(new_doc).insert()
+		assert inserted.name, "Task was not named on insert"
 		if assign_to_me:
 			_assign_to_current_user(inserted.name)
 
@@ -915,7 +917,7 @@ def _pause_running_timers(*, exclude_task: str | None = None) -> None:
 			detail.paused_time_in_seconds = int(
 				(detail.paused_time_in_seconds or 0) + (now - start_time).total_seconds()
 			)
-		detail.paused = True  # type: ignore[assignment]
+		detail.paused = True
 		detail.save(ignore_permissions=True)
 
 
@@ -993,7 +995,7 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 	else:
 		timesheet = cast(Timesheet, frappe.new_doc("Timesheet"))
 		timesheet.doctype = "Timesheet"
-		timesheet.employee = cast(str | None, employee_name)
+		timesheet.employee = employee_name
 		timesheet.parent_project = project
 		timesheet.customer = cast(str | None, frappe.db.get_value("Project", project, "customer"))
 
@@ -1070,13 +1072,9 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 			# is always consistent with what the user confirmed.
 			detail.from_time = _naive_dt(doc.from_time)
 			assert detail.from_time is not None
-			hours = (
-				doc.hours
-				if doc.hours > 0
-				else (
-					(_naive_dt(doc.to_time) - detail.from_time).total_seconds() / 3600  # type: ignore[union-attr,operator]
-				)
-			)
+			to_time = _naive_dt(doc.to_time)
+			assert to_time is not None
+			hours = doc.hours if doc.hours > 0 else (to_time - detail.from_time).total_seconds() / 3600
 			detail.hours = hours
 			detail.to_time = detail.from_time + datetime.timedelta(hours=hours)
 			if doc.activity_type:
@@ -1232,13 +1230,13 @@ def save_doc(payload: str, form_params: str | dict | None = None) -> dict[str, A
 	status: dict[str, str | None] = {"alert": None, "notice": None}
 	match req.doc.doctype:
 		case "Project":
-			_save_project(cast(ProjectDoc, req.doc), form_params, req.sibling_order)
+			_save_project(req.doc, form_params, req.sibling_order)
 		case "Task":
-			_save_task(cast(TaskDoc, req.doc), req.children, req.sibling_order, req.assign_to_me)
+			_save_task(req.doc, req.children, req.sibling_order, req.assign_to_me)
 		case "Timesheet Detail":
-			status = _save_timesheet_detail(cast(TimesheetDetailDoc, req.doc))
+			status = _save_timesheet_detail(req.doc)
 
-	return SaveDocResponse(**_snapshot(form_params), **status).model_dump()  # type: ignore[arg-type]
+	return SaveDocResponse(**_snapshot(form_params), **status).model_dump()
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1276,7 +1274,7 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> dict[str,
 		frappe.throw(_("subjects and project are required"))
 
 	if parent_task:
-		frappe.db.set_value("Task", parent_task, {"is_group": 1})  # type: ignore[arg-type]
+		frappe.db.set_value("Task", parent_task, {"is_group": 1})
 
 	for subject in subjects:
 		subject = subject.strip()
@@ -1291,8 +1289,8 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> dict[str,
 		}
 		if parent_task:
 			new_doc["parent_task"] = parent_task
-		inserted = frappe.get_doc(new_doc)
-		inserted.insert()
+		inserted = frappe.get_doc(new_doc).insert()
+		assert inserted.name, "Task was not named on insert"
 		if assign_to_me:
 			_assign_to_current_user(inserted.name)
 
@@ -1499,8 +1497,10 @@ def create_pinned_task(
 	if not subject:
 		frappe.throw(_("A task needs a subject"))
 
-	task = frappe.get_doc({"doctype": "Task", "subject": subject, "status": "Open", "priority": "Medium"})
-	task.insert()
+	task = frappe.get_doc(
+		{"doctype": "Task", "subject": subject, "status": "Open", "priority": "Medium"}
+	).insert()
+	assert task.name, "Task was not named on insert"
 	todo = _pin_for_current_user(task.name)
 	_place_pin(todo, after)
 
@@ -1543,7 +1543,7 @@ def set_task_project(task: str, project: str, form_params: str | None = None) ->
 	Returns:
 		A fresh :class:`GetResponse`.
 	"""
-	doc = frappe.get_doc("Task", task)
+	doc = cast(Task, frappe.get_doc("Task", task))
 	if doc.parent_task:
 		frappe.throw(_("Only a top-level task can be moved to another project here"))
 	if not frappe.db.exists("Project", project):
@@ -1579,7 +1579,7 @@ def set_task_project(task: str, project: str, form_params: str | None = None) ->
 	doc.save()
 
 	if old_project:
-		frappe.get_doc("Project", old_project).update_project()
+		cast(Project, frappe.get_doc("Project", old_project)).update_project()
 
 	return _snapshot(form_params)
 
@@ -1637,6 +1637,6 @@ def reorder_pinned_tasks(order: str, form_params: str | None = None) -> dict[str
 		# Verify ownership before updating
 		owner = frappe.db.get_value("ToDo", todo_name, "allocated_to")
 		if owner == user:
-			frappe.db.set_value("ToDo", todo_name, {"idx": idx})  # type: ignore[arg-type]
+			frappe.db.set_value("ToDo", todo_name, {"idx": idx})
 
 	return _snapshot(form_params)

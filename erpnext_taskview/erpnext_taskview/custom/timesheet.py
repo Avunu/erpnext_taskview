@@ -1,7 +1,11 @@
 # Copyright (c) 2026, Avunu LLC and contributors
 # For license information, please see license.txt
 
+from typing import cast
+
 import frappe
+from erpnext.projects.doctype.project.project import Project
+from erpnext.projects.doctype.task.task import Task
 from erpnext.projects.doctype.timesheet.timesheet import Timesheet as BaseTimesheet
 
 # Position of each status along a task's lifecycle.  Overdue is set by a
@@ -16,7 +20,7 @@ _STATUS_RANK = {
 }
 
 
-def forward_status(current: str | None, target: str) -> str:
+def forward_status[S: str](current: S | None, target: S) -> S:
 	"""The status a timesheet should leave a task in: ``target`` only if it moves forward."""
 	if current not in _STATUS_RANK:
 		return current or target
@@ -41,7 +45,7 @@ class TaskviewTimesheet(BaseTimesheet):
 
 		for data in self.time_logs:
 			if data.task and data.task not in tasks:
-				task = frappe.get_doc("Task", data.task)
+				task = cast(Task, frappe.get_doc("Task", data.task))
 				task.update_time_and_costing()
 				time_logs_completed = all(tl.completed for tl in self.time_logs if tl.task == task.name)
 				task.status = forward_status(task.status, "Completed" if time_logs_completed else "Working")
@@ -52,6 +56,6 @@ class TaskviewTimesheet(BaseTimesheet):
 				projects.append(data.project)
 
 		for project in projects:
-			project_doc = frappe.get_doc("Project", project)
+			project_doc = cast(Project, frappe.get_doc("Project", project))
 			project_doc.update_project()
 			project_doc.save(ignore_permissions=True)

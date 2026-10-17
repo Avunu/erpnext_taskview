@@ -15,7 +15,7 @@ from erpnext_taskview.erpnext_taskview.api import (
 	unpin_task,
 )
 
-from .fixtures import COMPANY, make_customer, make_project, make_task, start_timer
+from .fixtures import COMPANY, get_task, get_todo, make_customer, make_project, make_task, start_timer
 
 # Matches no project, so get() returns only the user's tasks that have no project.
 NO_PROJECTS = {"doctype": "Project", "filters": [["Project", "name", "=", "_TV no such project"]]}
@@ -59,12 +59,12 @@ class TestPinnedQuickEntry(IntegrationTestCase):
 	def test_create_pins_and_assigns_without_project(self):
 		res = self.create("  Call the printer  ")
 
-		task = frappe.get_doc("Task", res["task"])
+		task = get_task(res["task"])
 		self.assertEqual(task.subject, "Call the printer")
 		self.assertFalse(task.project)
-		self.assertIn(self.user, json.loads(task._assign))
-		todo = frappe.get_doc("ToDo", res["todo_name"])
-		self.assertEqual((todo.allocated_to, todo.status, todo.pin), (self.user, "Open", 1))
+		self.assertIn(self.user, json.loads(task.get("_assign")))
+		todo = get_todo(res["todo_name"])
+		self.assertEqual((todo.allocated_to, todo.status, todo.get("pin")), (self.user, "Open", 1))
 
 		returned = next(t for t in res["tasks"] if t["name"] == res["task"])
 		self.assertEqual(returned["project"], "")
@@ -118,7 +118,7 @@ class TestPinnedQuickEntry(IntegrationTestCase):
 		with set_user(self.user):
 			set_task_project(parent, project)
 
-		parent_doc = frappe.get_doc("Task", parent)
+		parent_doc = get_task(parent)
 		self.assertEqual((parent_doc.project, parent_doc.company, parent_doc.idx), (project, COMPANY, 8))
 		self.assertEqual(frappe.db.get_value("Task", child, ["project", "company"]), (project, COMPANY))
 

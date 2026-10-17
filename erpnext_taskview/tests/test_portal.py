@@ -10,7 +10,7 @@ from erpnext_taskview.portal.access import assert_task_access, get_accessible_pr
 from erpnext_taskview.portal.notify import NOTIFICATION_TYPE
 from erpnext_taskview.www import projects as projects_page
 
-from .fixtures import log_time, make_customer, make_portal_user, make_project, make_task
+from .fixtures import get_task, log_time, make_customer, make_portal_user, make_project, make_task
 
 
 class TestPortal(IntegrationTestCase):
@@ -107,7 +107,7 @@ class TestPortal(IntegrationTestCase):
 
 		with set_user(self.contact_user):
 			api.set_task_status(task, "Completed")
-		doc = frappe.get_doc("Task", task)
+		doc = get_task(task)
 		self.assertEqual(doc.status, "Completed")
 		self.assertEqual(doc.completed_by, self.contact_user)
 		self.assertFalse(
@@ -129,7 +129,7 @@ class TestPortal(IntegrationTestCase):
 
 	def test_dependency_errors_pass_through(self):
 		blocker = make_task(self.project)
-		blocked = frappe.get_doc("Task", make_task(self.project))
+		blocked = get_task(make_task(self.project))
 		blocked.append("depends_on", {"task": blocker})
 		blocked.save()
 
@@ -146,13 +146,13 @@ class TestPortal(IntegrationTestCase):
 				priority="High",
 			)["name"]
 
-		task = frappe.get_doc("Task", name)
+		task = get_task(name)
 		self.assertEqual(task.subject, "Please add a report")
 		self.assertEqual(task.owner, self.contact_user)
 		self.assertEqual(task.priority, "High")
-		self.assertNotIn("script", task.description)
+		self.assertNotIn("script", task.description or "")
 		self.assertEqual(task.company, frappe.db.get_value("Project", self.project, "company"))
-		parent = frappe.get_doc("Task", self.phase)
+		parent = get_task(self.phase)
 		self.assertIn(name, [d.task for d in parent.depends_on])
 		self.assertTrue(
 			frappe.db.exists(

@@ -17,7 +17,9 @@ from mimetypes import guess_type
 from typing import Any, cast
 
 import frappe
+from erpnext.projects.doctype.task.task import Task
 from frappe import _
+from frappe.core.doctype.file.file import File
 from frappe.handler import ALLOWED_MIMETYPES
 from frappe.query_builder import DocType, Order, Table
 from frappe.query_builder.functions import Count, Max
@@ -26,6 +28,7 @@ from frappe.utils import cint, flt, get_fullname, now_datetime, strip_html, toda
 
 from erpnext_taskview.erpnext_taskview.budget import compute_budgets
 from erpnext_taskview.erpnext_taskview.models import Budget, BudgetSet
+from erpnext_taskview.utils import throw
 
 from .access import assert_project_access, assert_task_access, get_accessible_projects, is_staff
 from .html import clean_customer_html, is_blank_html, render_staff_html
@@ -70,20 +73,20 @@ _TASK_FIELDS = (
 # ─────────────────────────────────────────────────────────────
 
 
-def board_column(status: str, logged_hours: float) -> BoardColumn:
+def board_column(status: str | None, logged_hours: float) -> BoardColumn:
 	"""Kanban column for a task status.
 
 	ERPNext's daily job overwrites a late task's status with Overdue (losing
 	the previous one), so Overdue tasks are placed by whether work has started.
 	"""
 	if status in BOARD_COLUMNS:
-		return cast(BoardColumn, status)
+		return status
 	if status == "Overdue":
 		return "Working" if logged_hours > 0 else "Open"
 	return "Open"
 
 
-def _is_overdue(status: str, exp_end_date: datetime | None) -> bool:
+def _is_overdue(status: str | None, exp_end_date: datetime | None) -> bool:
 	if status == "Overdue":
 		return True
 	return bool(exp_end_date) and status not in ("Completed", "Cancelled") and exp_end_date < now_datetime()
@@ -175,7 +178,7 @@ def _make_card(
 
 
 def _column_counts(cards: list[PortalTaskCard]) -> dict[str, int]:
-	counts = dict.fromkeys(BOARD_COLUMNS, 0)
+	counts: dict[str, int] = dict.fromkeys(BOARD_COLUMNS, 0)
 	for c in cards:
 		if not c.is_group:
 			counts[c.column] += 1
@@ -298,7 +301,7 @@ def _recent_activity(project: str, tasks: dict[str, frappe._dict], limit: int = 
 		PortalActivity(
 			kind="created", task=t.name, task_subject=t.subject, by=get_fullname(t.owner), at=t.creation
 		)
-		for t in sorted(tasks.values(), key=lambda t: t.creation, reverse=True)[:limit]
+		for t in sorted(tasks.values(), key=lambda t: t["creation"], reverse=True)[:limit]
 	)
 
 	items.sort(key=lambda a: a.at, reverse=True)
@@ -378,8 +381,8 @@ def get_project(project: str) -> dict:
 			subject=t.subject,
 			status=t.status,
 			budget=budgets.tasks.get(t.name) or Budget(),
-			task_count=len(leaves_by_phase[t.name]),
-			completed_count=sum(1 for c in leaves_by_phase[t.name] if c.status == "Completed"),
+			task_count=len(leaves_by_phase[t["name"]]),
+			completed_count=sum(1 for c in leaves_by_phase[t["name"]] if c.status == "Completed"),
 		)
 		for t in tasks.values()
 		if t.is_group and not t.parent_task
@@ -411,7 +414,7 @@ def _attachment(f: frappe._dict) -> PortalAttachment:
 def get_task(task: str) -> dict:
 	"""Task drawer: description, ancestors, comments, time log and attachments."""
 	ref = assert_task_access(task)
-	project = ref.project
+	project = ref["project"]
 	tasks = _load_project_tasks(project, include_cancelled=True)
 	budgets = compute_budgets([project])
 	t = tasks[task]
@@ -428,7 +431,7 @@ def get_task(task: str) -> dict:
 	seen = {task}
 	parent = tasks.get(t.parent_task) if t.parent_task else None
 	while parent and parent.name not in seen:
-		ancestors.insert(0, {"name": parent.name, "subject": parent.subject})
+		ancestors.insert(0, {"name": parent["name"], "subject": parent["subject"]})
 		seen.add(parent.name)
 		parent = tasks.get(parent.parent_task) if parent.parent_task else None
 
@@ -470,7 +473,7 @@ def get_task(task: str) -> dict:
 	children: dict[str, list[str]] = defaultdict(list)
 	for other in tasks.values():
 		if other.parent_task:
-			children[other.parent_task].append(other.name)
+			children[other.parent_task].append(other["name"])
 	subtree, stack = [], [task]
 	while stack:
 		name = stack.pop()
@@ -563,11 +566,11 @@ def set_task_status(task: str, status: str) -> dict:
 	"""Move a task between board columns (customers may move any leaf task)."""
 	ref = assert_task_access(task)
 	if status not in BOARD_COLUMNS:
-		frappe.throw(_("Tasks can only be moved to {0}.").format(", ".join(BOARD_COLUMNS)))
+		throw(_("Tasks can only be moved to {0}.").format(", ".join(BOARD_COLUMNS)))
 	if ref.is_group:
 		frappe.throw(_("Phases move with their tasks and can't be dragged."))
 
-	doc = frappe.get_doc("Task", task, for_update=True)
+	doc = cast(Task, frappe.get_doc("Task", task, for_update=True))
 	if doc.status == status:
 		return {"name": doc.name, "status": doc.status}
 
@@ -629,20 +632,24 @@ def create_task(
 	max_idx = cint((siblings.run() or [[0]])[0][0])
 
 	description = clean_customer_html(description)
-	doc = frappe.get_doc(
-		{
-			"doctype": "Task",
-			"subject": subject,
-			"project": project,
-			"parent_task": parent_task or None,
-			"priority": priority if priority in PRIORITIES else "Medium",
-			"description": None if is_blank_html(description) else description,
-			"status": "Open",
-			"idx": max_idx + 1,
-		}
+	doc = cast(
+		Task,
+		frappe.get_doc(
+			{
+				"doctype": "Task",
+				"subject": subject,
+				"project": project,
+				"parent_task": parent_task or None,
+				"priority": priority if priority in PRIORITIES else "Medium",
+				"description": None if is_blank_html(description) else description,
+				"status": "Open",
+				"idx": max_idx + 1,
+			}
+		),
 	)
 	staff = is_staff()
 	doc.insert(ignore_permissions=not staff)
+	assert doc.name, "Task was not named on insert"
 	if not staff:
 		notify_team(doc.name, "created", doc.description)
 	return {"name": doc.name}
@@ -681,16 +688,19 @@ def save_attachment(task: str, filename: str, content: bytes) -> PortalAttachmen
 	if not is_staff() and guess_type(filename)[0] not in ALLOWED_MIMETYPES:
 		frappe.throw(_("You can only upload JPG, PNG, GIF, PDF, TXT, CSV or Microsoft documents."))
 
-	file = frappe.get_doc(
-		{
-			"doctype": "File",
-			"attached_to_doctype": "Task",
-			"attached_to_name": task,
-			"folder": "Home/Attachments",
-			"file_name": filename,
-			"is_private": 1,
-			"content": content,
-		}
+	file = cast(
+		File,
+		frappe.get_doc(
+			{
+				"doctype": "File",
+				"attached_to_doctype": "Task",
+				"attached_to_name": task,
+				"folder": "Home/Attachments",
+				"file_name": filename,
+				"is_private": 1,
+				"content": content,
+			}
+		),
 	)
 	file.save(ignore_permissions=True)
 	return _attachment(
@@ -708,12 +718,11 @@ def save_attachment(task: str, filename: str, content: bytes) -> PortalAttachmen
 @rate_limit(limit=60, seconds=60 * 60)
 def upload_attachment() -> dict:
 	"""Multipart upload from frappe-ui's FileUploader (``file`` + ``docname`` = task)."""
-	task = frappe.form_dict.get("docname") or frappe.form_dict.get("task")
-	assert_task_access(task)
+	task = assert_task_access(frappe.form_dict.get("docname") or frappe.form_dict.get("task"))["name"]
 
 	upload = frappe.request.files.get("file") if frappe.request else None
 	if not upload or not upload.filename:
-		frappe.throw(_("No file was uploaded."))
+		throw(_("No file was uploaded."))
 
 	attachment = save_attachment(task, upload.filename, upload.stream.read())
 	if not is_staff():
@@ -752,9 +761,9 @@ def download_file(name: str | None = None, file_url: str | None = None) -> None:
 
 	match = next((f for f in candidates if not f.is_folder and _check_file_access(f)), None)
 	if not match:
-		frappe.throw(_("You do not have access to this file."), frappe.PermissionError)
+		throw(_("You do not have access to this file."), frappe.PermissionError)
 
-	file = frappe.get_doc("File", match.name)
+	file = cast(File, frappe.get_doc("File", match.name))
 	ext = os.path.splitext(file.file_name or "")[1].lower()
 	frappe.local.response.filename = file.file_name
 	frappe.local.response.filecontent = file.get_content()
