@@ -73,6 +73,7 @@ scripts/vite-register.mjs           registers the Vite bundles in sites/assets/a
 - **Desk bundles.** `vite.config.ts` builds two IIFE bundles from `erpnext_taskview/public/js`: `taskview.entry.ts` and `timerdock.entry.ts`. The sources are not named `*.bundle.*`, so Frappe's esbuild leaves them to Vite. Frappe is declared external, because the desk provides it as a global. Both write into `erpnext_taskview/public/dist` one after the other, so neither empties the folder. `scripts/vite-register.mjs`, which frappe-nix manages, then reads the Vite manifests and writes the `taskview.bundle.js`, `taskview.bundle.css`, `timerdock.bundle.js` and `timerdock.bundle.css` keys that `hooks.py` lists in `app_include_js` and `app_include_css` into the bench's `sites/assets/assets.json`. Outside a bench it skips itself, so `yarn build` works in a bare checkout.
 - **Portal.** `vite.portal.config.ts` builds `portal/` into `erpnext_taskview/public/portal/` and copies its `index.html` to `erpnext_taskview/www/projects.html`. Frappe renders that file as a Jinja template with the context from `www/projects.py`, and frappe-ui's build plugin turns every key of `context.boot` into a `window` global. Both outputs are generated and git-ignored. Do not name portal files `*.bundle.*`: Frappe's esbuild compiles every such file under `public/` on its own.
 - **Two TypeScript versions.** The app's `typescript` is the native TypeScript 7 build, which has no JavaScript API. `vue-tsc` and Vue's single-file-component compiler need one, so `typescript5` is an alias of TypeScript 5. `scripts/vue-tsc.cjs` runs `vue-tsc` against it, and `vite.portal.config.ts` registers it with the SFC compiler, which frappe-ui's components need to resolve their prop types.
+- **Frappe's types.** The desk code is checked against [frappe-types](https://github.com/Avunu/frappe-types) (`tsconfig.json` extends its strict preset and loads its `frappe` global). What the app hangs on frappe's namespaces (`frappe.views.TasksView`, `frappe.views.TaskViewSelect`, `frappe.ui.TaskViewSortSelector`) is declared in `types/erpnext_taskview.augment.d.ts`, together with the one frappe member frappe-types does not declare yet.
 - **Tailwind 3.** frappe-ui is still a Tailwind 3 consumer, so Dependabot is told to ignore Tailwind 4 and later.
 
 ## Tests
@@ -81,6 +82,8 @@ The Python tests are Frappe `IntegrationTestCase`s in `erpnext_taskview/tests/`,
 
 | File                      | Covers                                                                                                                                                                                  |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test_api.py`             | The desk endpoints: filters and sorting, every `save_doc` route (projects, tasks, drag and drop, timers, manual logs), bulk creation, deleting, assigning and pinned order              |
+| `test_hooks.py`           | The install hook, the hooks the app registers, and the Task extension's permission bypass                                                                                               |
 | `test_budget.py`          | Rollup of budgets and logged hours, own estimates beating subtask sums, Cancelled Timesheets, open timers, rollup by `parent_task`, and a parent cycle that must not hang               |
 | `test_portal.py`          | Who can open what, template tasks hidden, project and task reads, status changes and closing assignments, creating tasks, comments, attachments, boot data and the legacy link redirect |
 | `test_pinned.py`          | Quick entry, placing after an anchor, giving a task a project, and the cases that are refused                                                                                           |
@@ -93,6 +96,8 @@ bench --site <TEST_SITE> set-config allow_tests true
 bench --site <TEST_SITE> run-tests --app erpnext_taskview
 bench --site <TEST_SITE> run-tests --module erpnext_taskview.tests.test_budget
 ```
+
+In the frappe-nix dev shell, `frappe-test --reuse-site` runs the same tests with coverage of the app alone (the floor is `fail_under` in `pyproject.toml`), checks that every whitelisted method and hook ran, and that the controller extensions compose with other apps'.
 
 There are no JavaScript unit tests. `yarn typecheck`, `yarn lint` and `yarn format:check` are the front-end gates.
 

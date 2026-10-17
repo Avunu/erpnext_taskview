@@ -78,6 +78,7 @@ Requires Node 24+ and yarn.
 | `yarn typecheck`                                       | Type-checks the desk and portal code                                            |
 | `yarn lint` / `yarn format`                            | Runs oxlint and oxfmt                                                           |
 | `bench --site <site> run-tests --app erpnext_taskview` | Runs the Python tests                                                           |
+| `frappe-test --reuse-site`                             | Runs the Python tests with coverage, from the frappe-nix dev shell              |
 
 Where things live:
 
