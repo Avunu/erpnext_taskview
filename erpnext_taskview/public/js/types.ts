@@ -239,7 +239,7 @@ export function fetchTaskDescriptions(tasks: string[]): Promise<Record<string, s
 export function fetchData(): Promise<GetResponse> {
 	const callArgs: Record<string, string> = {};
 	const fp = getFormParams();
-	if (fp) callArgs.args = fp;
+	if (fp) callArgs.form_params = fp;
 	return callMethod<GetResponse>("erpnext_taskview.erpnext_taskview.api.get", callArgs);
 }
 

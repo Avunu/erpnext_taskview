@@ -105,8 +105,8 @@ _PROJECT_SORT_FIELDS = frozenset({"idx", "creation", "modified", "project_name",
 _TASK_SORT_FIELDS = frozenset({"idx", "creation", "modified", "subject", "status", "priority"})
 
 
-def _parse_sort(args: _dict) -> tuple[str, Order]:
-	"""Extract (field_name, Order) from form-params args.
+def _parse_sort(form_params: _dict) -> tuple[str, Order]:
+	"""Extract (field_name, Order) from the list view's form params.
 
 	Handles two sources:
 	- ``sort_by`` / ``sort_order`` sent by our own ``getFormParams()``.
@@ -115,11 +115,11 @@ def _parse_sort(args: _dict) -> tuple[str, Order]:
 
 	Defaults to ``("idx", Order.asc)``.
 	"""
-	if args.get("sort_by"):
-		direction = Order.desc if (args.get("sort_order") or "asc").lower() == "desc" else Order.asc
-		return str(args.sort_by), direction
+	if form_params.get("sort_by"):
+		direction = Order.desc if (form_params.get("sort_order") or "asc").lower() == "desc" else Order.asc
+		return str(form_params.sort_by), direction
 
-	order_by = args.get("order_by")
+	order_by = form_params.get("order_by")
 	if order_by:
 		first = order_by.split(",")[0].strip()
 		if "." in first:
@@ -200,7 +200,7 @@ def _apply_filter(query: Any, table: Table, filter_tuple: list) -> Any:
 # ─────────────────────────────────────────────────────────────
 
 
-def _snapshot(args: str | dict | None = None) -> dict[str, Any]:
+def _snapshot(form_params: str | dict | None = None) -> dict[str, Any]:
 	"""Fetch projects and tasks as flat lists.
 
 	Executes two PyPika queries:
@@ -219,14 +219,14 @@ def _snapshot(args: str | dict | None = None) -> dict[str, Any]:
 	Returns:
 		A :class:`GetResponse` with two flat lists.
 	"""
-	if not args:
-		args = get_form_params()
-	if isinstance(args, str):
-		args = json.loads(args)
-	if isinstance(args, dict):
-		args = _dict(args)
+	if not form_params:
+		form_params = get_form_params()
+	if isinstance(form_params, str):
+		form_params = json.loads(form_params)
+	if isinstance(form_params, dict):
+		form_params = _dict(form_params)
 
-	assert isinstance(args, _dict), "Invalid arguments"
+	assert isinstance(form_params, _dict), "Invalid arguments"
 
 	Projects = cast(Table, DocType("Project"))
 	Tasks = cast(Table, DocType("Task"))
@@ -247,7 +247,7 @@ def _snapshot(args: str | dict | None = None) -> dict[str, Any]:
 		.where(Projects.docstatus == 0)
 	)
 
-	p_sort_field, p_order = _parse_sort(args)
+	p_sort_field, p_order = _parse_sort(form_params)
 	pq = pq.orderby(
 		Projects[p_sort_field] if p_sort_field in _PROJECT_SORT_FIELDS else Projects.idx,
 		order=p_order,
@@ -256,12 +256,12 @@ def _snapshot(args: str | dict | None = None) -> dict[str, Any]:
 	# manual-order anchor in _write_interleaved_idx matches what the user saw.
 	pq = pq.orderby(Projects.creation, order=Order.asc)
 
-	if args.doctype == "Project" and args.filters:
-		for f in args.filters:
+	if form_params.doctype == "Project" and form_params.filters:
+		for f in form_params.filters:
 			pq = _apply_filter(pq, Projects, f)
 
-	if args.doctype == "Task" and args.filters:
-		for f in args.filters:
+	if form_params.doctype == "Task" and form_params.filters:
+		for f in form_params.filters:
 			fieldname = f[1] if isinstance(f, (list, tuple)) else f.get("fieldname", "")
 			if fieldname == "project":
 				pq = _apply_filter(
@@ -326,7 +326,7 @@ def _snapshot(args: str | dict | None = None) -> dict[str, Any]:
 		.where(task_scope)
 	)
 
-	t_sort_field, t_order = _parse_sort(args)
+	t_sort_field, t_order = _parse_sort(form_params)
 	tq = tq.orderby(
 		Tasks[t_sort_field] if t_sort_field in _TASK_SORT_FIELDS else Tasks.lft,
 		order=t_order,
@@ -335,14 +335,14 @@ def _snapshot(args: str | dict | None = None) -> dict[str, Any]:
 	# manual-order anchor in _write_interleaved_idx matches what the user saw.
 	tq = tq.orderby(Tasks.creation, order=Order.asc)
 
-	if args.doctype == "Task" and args.filters:
-		for f in args.filters:
+	if form_params.doctype == "Task" and form_params.filters:
+		for f in form_params.filters:
 			tq = _apply_filter(tq, Tasks, f)
 
 	# Hide closed tasks unless the user explicitly filters by status
-	has_status_filter = args.doctype == "Task" and any(
+	has_status_filter = form_params.doctype == "Task" and any(
 		(f[1] if isinstance(f, (list, tuple)) else f.get("fieldname", "")) == "status"
-		for f in (args.filters or [])
+		for f in (form_params.filters or [])
 	)
 	if not has_status_filter:
 		tq = tq.where(Tasks.status.notin(["Completed", "Cancelled"]))
@@ -371,13 +371,13 @@ def _snapshot(args: str | dict | None = None) -> dict[str, Any]:
 
 @frappe.whitelist()
 @frappe.read_only()
-def get(args: str | dict | None = None) -> dict[str, Any]:
+def get(form_params: str | dict | None = None) -> dict[str, Any]:
 	"""Fetch projects and tasks as flat lists: :func:`_snapshot`, read from a replica when one is set.
 
 	The mutating endpoints return :func:`_snapshot` directly instead, so that
 	their snapshot is read in the same transaction as the write, on the primary.
 	"""
-	return _snapshot(args)
+	return _snapshot(form_params)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -944,6 +944,8 @@ def _find_existing_timesheet(employee: str | None, project: str) -> str | None:
 	"""
 	hooks = frappe.get_hooks("taskview_find_timesheet")
 	if hooks:
+		# The dotted path comes from an installed app's hooks.py, never from the request.
+		# nosemgrep: frappe-codeinjection-eval
 		return frappe.call(hooks[-1], employee=employee, project=project)
 
 	result = frappe.db.exists("Timesheet", {"employee": employee, "docstatus": 0, "parent_project": project})

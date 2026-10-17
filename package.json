@@ -22,7 +22,8 @@
 		"upgrade": "npx npm-check-updates -u && yarn install",
 		"lint:py": "uv run --frozen --project tools ruff check . && uv run --frozen --project tools ruff format --check .",
 		"typecheck:py": "uv run --frozen --project tools ty check --python \"${FRAPPE_BENCH_ROOT:-.frappe-nix/bench}/env\"",
-		"check": "yarn -s format:check && yarn -s lint && yarn -s typecheck"
+		"check": "yarn -s format:check && yarn -s lint && yarn -s typecheck",
+		"ci:typecheck": "yarn -s build && test -f erpnext_taskview/www/projects.html && ! grep -qF '.__' erpnext_taskview/www/projects.html"
 	},
 	"dependencies": {
 		"@he-tree/vue": "^2.10.5",
