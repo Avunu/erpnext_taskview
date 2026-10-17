@@ -37,6 +37,20 @@ class TaskviewTimesheet(BaseTimesheet):
 	(Completed) or that is waiting on them (Pending Review) would silently
 	flip back to Working.  This keeps ERPNext's time/costing refresh and
 	project update, but never moves a status backwards.
+
+	``update_task_and_project`` **fully replaces** ERPNext's method: it does
+	not call ``super()``.  It repeats core's loop (each task's
+	``update_time_and_costing`` and save, then each project's
+	``update_project`` and save) with only the status rule swapped for
+	:func:`forward_status`, so a later change to that loop in ERPNext is not
+	picked up here; compare the two on each ERPNext upgrade.  Since v16.51,
+	core's own rule (``get_task_status``) also keeps Completed and Cancelled,
+	but it still moves Pending Review back to Working.
+
+	It composes with hrms, which replaces the Timesheet class with
+	``EmployeeTimesheet`` through ``override_doctype_class``: that class only
+	overrides ``set_status``, and this extension is built on whichever class
+	is in place (the composition check builds both app orders).
 	"""
 
 	def update_task_and_project(self) -> None:
