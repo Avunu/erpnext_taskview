@@ -1,21 +1,41 @@
 [project]
 name = "erpnext_taskview"
-authors = [
-    { name = "Avunu LLC", email = "mail@avu.nu"}
-]
+authors = [{ name = "Avunu LLC", email = "mail@avu.nu" }]
 description = "task workspace for erpnext"
-requires-python = ">=3.10"
+requires-python = ">=3.14"
 readme = "README.md"
 license = { text = "MIT" }
-classifiers = [
-    "License :: OSI Approved :: MIT License",
-]
+classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version"]
 dependencies = []
 
 [build-system]
 requires = ["flit_core >=3.4,<4"]
 build-backend = "flit_core.buildapi"
+
+[tool.frappe-nix]
+schema = 1
+profile = "github:Avunu/frappe-standards-profile/main"
+frappe-major = 16
+siblings = ["erpnext"]
+integration-branch = "main"
+# The existing CI gate stays until the reusable CI workflows render ci.yml.
+retire-keep = [".github/workflows/check.yml"]
+
+[tool.frappe-nix.dev-shell]
+frappe-nix-url = "github:Avunu/frappe-nix/e95f67f97de1322c89df9ffbc9218c31d4ca83ba"
+
+[[tool.frappe-nix.typescript.spa]]
+root = "."
+include = ["erpnext_taskview/public/js/**"]
+tsconfig = "tsconfig.json"
+check = "node scripts/vue-tsc.cjs --noEmit -p tsconfig.json"
+
+[[tool.frappe-nix.typescript.spa]]
+root = "portal"
+include = ["portal/src/**"]
+tsconfig = "portal/tsconfig.json"
+check = "node scripts/vue-tsc.cjs --noEmit -p portal/tsconfig.json"
 
 # These dependencies are only installed when developer mode is enabled
 [tool.bench.dev-dependencies]
@@ -30,20 +50,13 @@ skip = ["TYPE_CHECKING"]
 
 [tool.ruff]
 line-length = 110
-target-version = "py310"
+target-version = "py314"
 
 [tool.ruff.lint]
-select = [
-    "F",
-    "E",
-    "W",
-    "I",
-    "UP",
-    "B",
-]
+select = ["F", "E", "W", "I", "UP", "B", "RUF", "SIM", "C4", "PIE", "PERF", "T20"]
 ignore = [
-    "E501", # line too long
-    "W191", # indentation contains tabs
+	"E501", # line too long
+	"W191", # indentation contains tabs
 ]
 typing-modules = ["frappe.types.DF"]
 
@@ -51,3 +64,28 @@ typing-modules = ["frappe.types.DF"]
 quote-style = "double"
 indent-style = "tab"
 docstring-code-format = true
+
+[tool.ty.environment]
+python-version = "3.14"
+
+[tool.ty.src]
+include = ["erpnext_taskview"]
+
+[tool.ty.terminal]
+error-on-warning = true
+
+[tool.coverage.run]
+omit = ["*/tests/*", "*/test_*.py", "*/patches/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+precision = 1
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError", "@(abc\\.)?abstractmethod"]
+fail_under = 0
+
+[tool.vulture]
+exclude = [".venv/", "node_modules/", ".frappe-nix/", ".dev-dist/"]
+
+[tool.test_utils.static-analysis]
+whitelist = ["frappe.*", "erpnext.*"]
