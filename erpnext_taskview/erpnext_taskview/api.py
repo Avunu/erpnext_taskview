@@ -198,9 +198,7 @@ def _apply_filter(query: Any, table: Table, filter_tuple: list) -> Any:
 # ─────────────────────────────────────────────────────────────
 
 
-@frappe.whitelist()
-@frappe.read_only()
-def get(args: str | dict | None = None) -> dict[str, Any]:
+def _snapshot(args: str | dict | None = None) -> dict[str, Any]:
 	"""Fetch projects and tasks as flat lists.
 
 	Executes two PyPika queries:
@@ -367,6 +365,17 @@ def get(args: str | dict | None = None) -> dict[str, Any]:
 		projects=projects,
 		tasks=tasks,
 	).model_dump()
+
+
+@frappe.whitelist()
+@frappe.read_only()
+def get(args: str | dict | None = None) -> dict[str, Any]:
+	"""Fetch projects and tasks as flat lists: :func:`_snapshot`, read from a replica when one is set.
+
+	The mutating endpoints return :func:`_snapshot` directly instead, so that
+	their snapshot is read in the same transaction as the write, on the primary.
+	"""
+	return _snapshot(args)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1002,7 +1011,6 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 	else:
 		timesheet.insert(ignore_permissions=True)
 
-	frappe.db.commit()
 	last_log = timesheet.time_logs[-1]
 	assert last_log.name, "Timesheet Detail was not created"
 	return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", last_log.name))
@@ -1186,7 +1194,7 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 # ─────────────────────────────────────────────────────────────
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def save_doc(payload: str, form_params: str | dict | None = None) -> dict[str, Any]:
 	"""Save a document (Project, Task, or Timesheet Detail).
 
@@ -1200,14 +1208,15 @@ def save_doc(payload: str, form_params: str | dict | None = None) -> dict[str, A
 	- ``"Task"``             → :func:`_save_task`
 	- ``"Timesheet Detail"`` → :func:`_save_timesheet_detail`
 
-	After the mutation a ``frappe.db.commit()`` is issued and a fresh
-	:func:`get` response is returned so the frontend can rebuild its tree.
+	The mutation and the fresh :func:`_snapshot` returned with it share the
+	request's transaction, which frappe commits when the POST succeeds, so the
+	frontend can rebuild its tree without a second call.
 
 	Args:
 		payload: JSON-serialised :class:`SaveDocRequest`.
 		form_params: Optional JSON-serialised dict of list-view form
-			params (doctype, filters, etc.) so the subsequent :func:`get`
-			call can apply the user's current filters.
+			params (doctype, filters, etc.) so the returned snapshot
+			applies the user's current filters.
 
 	Returns:
 		A fresh :class:`GetResponse` reflecting the post-mutation state.
@@ -1229,8 +1238,7 @@ def save_doc(payload: str, form_params: str | dict | None = None) -> dict[str, A
 		case "Timesheet Detail":
 			status = _save_timesheet_detail(cast(TimesheetDetailDoc, req.doc))
 
-	frappe.db.commit()
-	return SaveDocResponse(**get(form_params), **status).model_dump()  # type: ignore[arg-type]
+	return SaveDocResponse(**_snapshot(form_params), **status).model_dump()  # type: ignore[arg-type]
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1238,7 +1246,7 @@ def save_doc(payload: str, form_params: str | dict | None = None) -> dict[str, A
 # ─────────────────────────────────────────────────────────────
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def bulk_create_tasks(payload: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Create multiple tasks at once from a list of subjects.
 
@@ -1265,7 +1273,7 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> dict[str,
 	assign_to_me: bool = bool(data.get("assign_to_me"))
 
 	if not subjects or not project:
-		frappe.throw("subjects and project are required")
+		frappe.throw(_("subjects and project are required"))
 
 	if parent_task:
 		frappe.db.set_value("Task", parent_task, {"is_group": 1})  # type: ignore[arg-type]
@@ -1288,8 +1296,7 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> dict[str,
 		if assign_to_me:
 			_assign_to_current_user(inserted.name)
 
-	frappe.db.commit()
-	return get(form_params)
+	return _snapshot(form_params)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1297,7 +1304,7 @@ def bulk_create_tasks(payload: str, form_params: str | None = None) -> dict[str,
 # ─────────────────────────────────────────────────────────────
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def delete_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Delete a Task, cleaning up depends_on references first.
 
@@ -1327,8 +1334,7 @@ def delete_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 		frappe.delete_doc("Task Depends On", link.name, ignore_permissions=True)
 
 	frappe.delete_doc("Task", task)
-	frappe.db.commit()
-	return get(form_params)
+	return _snapshot(form_params)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1336,7 +1342,7 @@ def delete_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 # ─────────────────────────────────────────────────────────────
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def assign_task(task: str, user: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Assign a user to a Task via Frappe's ToDo mechanism.
 
@@ -1360,11 +1366,10 @@ def assign_task(task: str, user: str, form_params: str | None = None) -> dict[st
 			"assign_to": json.dumps([user]),
 		}
 	)
-	frappe.db.commit()
-	return get(form_params)
+	return _snapshot(form_params)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def unassign_task(task: str, user: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Remove a user's assignment from a Task.
 
@@ -1382,8 +1387,7 @@ def unassign_task(task: str, user: str, form_params: str | None = None) -> dict[
 	from frappe.desk.form.assign_to import remove as assign_remove
 
 	assign_remove("Task", task, user)
-	frappe.db.commit()
-	return get(form_params)
+	return _snapshot(form_params)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1452,7 +1456,7 @@ def _place_pin(todo_name: str, after: str | None = None) -> None:
 			frappe.db.set_value("ToDo", name, "idx", idx, update_modified=False)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def pin_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Pin a task for the current user.
 
@@ -1468,11 +1472,10 @@ def pin_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 		A fresh :class:`GetResponse`.
 	"""
 	_place_pin(_pin_for_current_user(task))
-	frappe.db.commit()
-	return get(form_params)
+	return _snapshot(form_params)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def create_pinned_task(
 	subject: str, after: str | None = None, form_params: str | None = None
 ) -> dict[str, Any]:
@@ -1501,8 +1504,7 @@ def create_pinned_task(
 	todo = _pin_for_current_user(task.name)
 	_place_pin(todo, after)
 
-	frappe.db.commit()
-	return CreatePinnedTaskResponse(**get(form_params), task=task.name, todo_name=todo).model_dump()
+	return CreatePinnedTaskResponse(**_snapshot(form_params), task=task.name, todo_name=todo).model_dump()
 
 
 def _descendant_tasks(task: str) -> list[str]:
@@ -1523,7 +1525,7 @@ def _descendant_tasks(task: str) -> list[str]:
 	return found
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def set_task_project(task: str, project: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Move a top-level Task, with all of its subtasks, to a project.
 
@@ -1549,7 +1551,7 @@ def set_task_project(task: str, project: str, form_params: str | None = None) ->
 
 	old_project = doc.project
 	if old_project == project:
-		return get(form_params)
+		return _snapshot(form_params)
 
 	descendants = _descendant_tasks(task)
 	if frappe.db.exists(
@@ -1579,11 +1581,10 @@ def set_task_project(task: str, project: str, form_params: str | None = None) ->
 	if old_project:
 		frappe.get_doc("Project", old_project).update_project()
 
-	frappe.db.commit()
-	return get(form_params)
+	return _snapshot(form_params)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def unpin_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Unpin a task for the current user.
 
@@ -1612,11 +1613,10 @@ def unpin_task(task: str, form_params: str | None = None) -> dict[str, Any]:
 	if existing:
 		frappe.db.set_value("ToDo", str(existing), "pin", 0)
 
-	frappe.db.commit()
-	return get(form_params)
+	return _snapshot(form_params)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def reorder_pinned_tasks(order: str, form_params: str | None = None) -> dict[str, Any]:
 	"""Update the sort order of pinned tasks for the current user.
 
@@ -1639,5 +1639,4 @@ def reorder_pinned_tasks(order: str, form_params: str | None = None) -> dict[str
 		if owner == user:
 			frappe.db.set_value("ToDo", todo_name, {"idx": idx})  # type: ignore[arg-type]
 
-	frappe.db.commit()
-	return get(form_params)
+	return _snapshot(form_params)

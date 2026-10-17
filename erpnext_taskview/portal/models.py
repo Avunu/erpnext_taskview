@@ -8,7 +8,7 @@ Mirrored by hand in ``portal/src/types.ts``; change both together.
 
 from __future__ import annotations
 
-from datetime import date, datetime
+import datetime as dt
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -27,7 +27,7 @@ class _Model(BaseModel):
 	@field_validator("*", mode="before")
 	@classmethod
 	def _isoformat(cls, v: object) -> object:
-		if isinstance(v, datetime | date):
+		if isinstance(v, dt.datetime | dt.date):
 			return v.isoformat()
 		return v
 

@@ -15,6 +15,7 @@ from urllib.parse import quote, urlencode
 
 import frappe
 from frappe.core.doctype.navbar_settings.navbar_settings import get_app_logo
+from frappe.sessions import get_csrf_token
 from frappe.website.utils import get_portal_sidebar_items
 
 from erpnext_taskview.portal.access import is_staff
@@ -37,7 +38,7 @@ def get_boot(csrf_token: str | None = None) -> dict:
 	]
 
 	return {
-		"csrf_token": csrf_token or frappe.sessions.get_csrf_token(),
+		"csrf_token": csrf_token or get_csrf_token(),
 		"site_name": frappe.local.site,
 		"user": user,
 		"user_fullname": info.get("full_name") or user,
@@ -65,10 +66,11 @@ def get_context(context):
 		frappe.local.flags.redirect_location = f"/projects/{quote(legacy, safe='')}"
 		raise frappe.Redirect(302)
 
-	csrf_token = frappe.sessions.get_csrf_token()
-	# The token is created lazily; persist it before the page renders or the
-	# SPA's first POST fails CSRF validation.
-	frappe.db.commit()  # nosemgrep: frappe-manual-commit
+	csrf_token = get_csrf_token()
+	# The token is created lazily, and a GET request is rolled back at its
+	# end: ask frappe to commit this one, or the SPA's first POST fails CSRF
+	# validation.
+	frappe.local.flags.commit = True
 
 	context.no_cache = 1
 	context.boot = get_boot(csrf_token)
