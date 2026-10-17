@@ -25,6 +25,13 @@ integration-branch = "main"
 [tool.frappe-nix.dev-shell]
 frappe-nix-url = "github:Avunu/frappe-nix/a216ce95ce051fe0bc5b95f112fcb85529910ede"
 
+# docs.yml calls Avunu/site-docs' shared check. Its pin gets its own needs-review Dependabot
+# group (a person reads every bump) and skips the cooldown, as before the shared gates.
+[tool.frappe-nix.docs-site]
+enable = true
+action-patterns = ["Avunu/site-docs*"]
+cooldown-exclude-actions = ["Avunu/site-docs"]
+
 # Stylesheet imports are side-effect imports by nature: Vite pulls the CSS into the
 # bundle in import order. Exempt exactly the modules that import a stylesheet, and
 # nothing else, from import/no-unassigned-import.

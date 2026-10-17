@@ -12,6 +12,7 @@ updates:
       interval: daily
     cooldown:
       default-days: 3
+      exclude: ["Avunu/site-docs"]
     commit-message:
       prefix: chore
       include: scope
@@ -20,8 +21,12 @@ updates:
     ignore:
       - dependency-name: Avunu/frappe-nix
     groups:
+      # needs-review: a merge publishes the docs site with the new workflow code
+      docs-actions:
+        patterns: ["Avunu/site-docs*"]
       actions:
         patterns: ["*"]
+        exclude-patterns: ["Avunu/site-docs*"]
   - package-ecosystem: npm
     directory: /
     target-branch: main
