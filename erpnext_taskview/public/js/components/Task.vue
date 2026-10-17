@@ -161,9 +161,7 @@ import {
 	Copy,
 	Trash2,
 } from "lucide-vue-next";
-// Stylesheets are re-exported rather than imported bare: the same place in the
-// bundle's CSS order, without a side-effect import.
-export * from "../task-controls.css";
+import "../task-controls.css";
 
 /** The values of the "Log Time" dialog, keyed by its fieldnames. */
 type LogTimeValues = {

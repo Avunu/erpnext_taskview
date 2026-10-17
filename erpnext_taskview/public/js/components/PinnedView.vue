@@ -48,9 +48,7 @@
 <script lang="ts">
 import { defineComponent, nextTick, type PropType } from "vue";
 import { Draggable } from "@he-tree/vue";
-// Stylesheets are re-exported rather than imported bare: the same place in the
-// bundle's CSS order, without a side-effect import.
-export * from "@he-tree/vue/style/default.css";
+import "@he-tree/vue/style/default.css";
 import { type TaskDoc, type TreeNode, createPinnedTask, reorderPinnedTasks } from "../types";
 import Task from "./Task.vue";
 import { Pin, Plus } from "lucide-vue-next";

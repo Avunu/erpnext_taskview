@@ -119,11 +119,9 @@ import { Draggable, dragContext } from "@he-tree/vue";
 import Task from "./components/Task.vue";
 import PinnedView from "./components/PinnedView.vue";
 import { VueSidePanel } from "vue3-side-panel";
-// Stylesheets are re-exported rather than imported bare: the same place in the
-// bundle's CSS order, without a side-effect import.
-export * from "vue3-side-panel/dist/vue3-side-panel.css";
-export * from "@he-tree/vue/style/default.css";
-export * from "@he-tree/vue/style/material-design.css";
+import "vue3-side-panel/dist/vue3-side-panel.css";
+import "@he-tree/vue/style/default.css";
+import "@he-tree/vue/style/material-design.css";
 import {
 	type GetResponse,
 	type ProjectDoc,

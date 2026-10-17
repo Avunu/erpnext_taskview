@@ -52,6 +52,18 @@
 			"rules": {
 				"import/no-unassigned-import": "off"
 			}
+		},
+		{
+			"files": [
+				"erpnext_taskview/public/js/TaskView.vue",
+				"erpnext_taskview/public/js/components/PinnedView.vue",
+				"erpnext_taskview/public/js/components/Task.vue",
+				"erpnext_taskview/public/js/components/TimerWidget.vue",
+				"portal/src/main.ts"
+			],
+			"rules": {
+				"import/no-unassigned-import": "off"
+			}
 		}
 	]
 }
