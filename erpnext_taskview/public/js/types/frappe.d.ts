@@ -2,11 +2,8 @@
 // For license information, please see license.txt
 
 // Type definitions for Frappe framework
+// The global `var frappe` below also types `window.frappe`. frappe-types will replace this file.
 declare global {
-	interface Window {
-		frappe: typeof frappe;
-	}
-
 	interface FrappeMeta {
 		name: string;
 		doctype: string;
