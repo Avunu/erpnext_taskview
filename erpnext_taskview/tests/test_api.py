@@ -5,10 +5,13 @@
 
 import json
 from datetime import timedelta
+from inspect import isfunction
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import patch
 
 import frappe
+from frappe.handler import execute_cmd, is_valid_http_method
 from frappe.tests import IntegrationTestCase
 from frappe.utils import now_datetime
 
@@ -264,6 +267,49 @@ class TestTaskEndpoints(IntegrationTestCase):
 		self.assertNotEqual(frappe.db.get_value("ToDo", foreign, "idx"), 3)
 
 
+class TestRequestContract(IntegrationTestCase):
+	"""Mutating endpoints take POST only; reads take any method."""
+
+	MUTATING = frozenset(
+		{
+			"assign_task",
+			"bulk_create_tasks",
+			"create_pinned_task",
+			"delete_task",
+			"pin_task",
+			"reorder_pinned_tasks",
+			"save_doc",
+			"set_task_project",
+			"unassign_task",
+			"unpin_task",
+		}
+	)
+	READS = frozenset({"get", "get_active_timers", "get_task_descriptions"})
+
+	def setUp(self):
+		self.endpoints = {
+			name: fn for name, fn in vars(api).items() if isfunction(fn) and fn in frappe.whitelisted
+		}
+		frappe.local.request = SimpleNamespace(method="GET")
+		self.addCleanup(delattr, frappe.local, "request")
+
+	def test_every_endpoint_is_classified(self):
+		self.assertEqual(set(self.endpoints), self.MUTATING | self.READS)
+		for name in self.MUTATING:
+			self.assertEqual(
+				frappe.allowed_http_methods_for_whitelisted_func[self.endpoints[name]], ["POST"], name
+			)
+
+	def test_mutating_endpoints_refuse_get(self):
+		for name in sorted(self.MUTATING):
+			with self.subTest(name), self.assertRaises(frappe.PermissionError):
+				execute_cmd(f"{api.__name__}.{name}")
+
+	def test_reads_accept_get(self):
+		for name in sorted(self.READS):
+			is_valid_http_method(self.endpoints[name])
+
+
 class TestTimers(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -320,6 +366,29 @@ class TestTimers(IntegrationTestCase):
 		self.assertEqual(stopped.to_time, stopped.from_time + timedelta(hours=1.5))
 		self.assertEqual(frappe.db.get_value("Timesheet Detail", timer, "task"), other)
 		self.assertEqual(result["alert"], "Logged 1.50 hrs")
+
+	def test_a_failed_request_keeps_none_of_its_writes(self):
+		task = make_task(self.project)
+		other = make_task(self.project)
+		save({"doctype": "Timesheet Detail", "project": self.project, "task": other})
+		running = open_timer(other)
+
+		frappe.db.savepoint("taskview_request")
+		with (
+			# No endpoint commits on its own; frappe commits a successful request.
+			patch.object(frappe.local.db, "commit", side_effect=AssertionError("committed mid-request")),
+			# Fail once the new timer is started and the running one paused.
+			patch.object(api, "_snapshot", side_effect=frappe.ValidationError("snapshot failed")),
+			self.assertRaises(frappe.ValidationError),
+		):
+			save({"doctype": "Timesheet Detail", "project": self.project, "task": task})
+		self.assertEqual(detail_of(running).paused, 1)
+		self.assertTrue(frappe.db.exists("Timesheet Detail", {"task": task}))
+
+		# What frappe does with a failed request: roll its transaction back.
+		frappe.db.rollback(save_point="taskview_request")
+		self.assertEqual(detail_of(running).paused, 0)
+		self.assertFalse(frappe.db.exists("Timesheet Detail", {"task": task}))
 
 	def test_stop_from_elapsed_time_and_complete(self):
 		project = make_project()
