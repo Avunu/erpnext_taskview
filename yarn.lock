@@ -621,10 +621,15 @@
   dependencies:
     "@tanstack/virtual-core" "3.17.7"
 
-"@tiptap/core@3.31.4", "@tiptap/core@^3.26.0":
+"@tiptap/core@3.31.4":
   version "3.31.4"
   resolved "https://registry.yarnpkg.com/@tiptap/core/-/core-3.31.4.tgz#6deb89d6a7db4e20a7e12ca50784328ed826b410"
   integrity sha512-cIVUQYBycighzsk6GbmCef8ZiEDVxoT5EuAe4xg2q9dNkDqCXVqI4YGr9aavCQEiAS4uHiRwqvcsPqJHipFDfg==
+
+"@tiptap/core@^3.26.0", "@tiptap/core@^3.32.0":
+  version "3.32.0"
+  resolved "https://registry.yarnpkg.com/@tiptap/core/-/core-3.32.0.tgz#b9d1172869fc23637445723878d7d8570d1a20c2"
+  integrity sha512-Ghh2h02GKSqzytQGcLV4espYOG4EHxjj0MsrUB2Vnr47xmlZYRf6r7k2J09H+JpBdaGrWwrTkyBEi5i3c3yy2Q==
 
 "@tiptap/extension-blockquote@3.31.4", "@tiptap/extension-blockquote@^3.26.0":
   version "3.31.4"
@@ -653,10 +658,15 @@
   resolved "https://registry.yarnpkg.com/@tiptap/extension-code-block-lowlight/-/extension-code-block-lowlight-3.31.4.tgz#e0464c15e99d024eded43512efe9672737382a94"
   integrity sha512-OZgBo3IzRpsKpXA+CzGYrNMw9gWP9c6EySl3FfRHO5Utfe9OSU9pcDbJ1rhPfbsVdJP1rw+EMEJQ2r2UxlpRGA==
 
-"@tiptap/extension-code-block@3.31.4", "@tiptap/extension-code-block@^3.26.0":
+"@tiptap/extension-code-block@3.31.4":
   version "3.31.4"
   resolved "https://registry.yarnpkg.com/@tiptap/extension-code-block/-/extension-code-block-3.31.4.tgz#a3b6161b83161fc88625f76e0bb87e4516c42675"
   integrity sha512-su/B/cfQ1HpiHl6JfJ6wa+RVEptiYsV4dCntE8XQNj2dUcII4y6w6PQbbswOoDrU79uXHsAvpy44215rghG4LA==
+
+"@tiptap/extension-code-block@^3.26.0", "@tiptap/extension-code-block@^3.32.0":
+  version "3.32.0"
+  resolved "https://registry.yarnpkg.com/@tiptap/extension-code-block/-/extension-code-block-3.32.0.tgz#2cc7e8e2a8bfc39104f9cbaecb154a3445241c7b"
+  integrity sha512-9NZW/yXP9j9XKr+hRS5m58xiyZI+tQo1PJ7eLHXjGNFWaF601NG/h6741mbKh5uCY51XsbyqG+7que+RavngPA==
 
 "@tiptap/extension-code@3.31.4", "@tiptap/extension-code@^3.26.0":
   version "3.31.4"
@@ -1521,9 +1531,9 @@ frappe-types@^16.5.0:
     "@types/jquery" "^3.5"
 
 frappe-ui@^1.0:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/frappe-ui/-/frappe-ui-1.0.1.tgz#b6e5d80a6f09dc89bd4565cfb9d1025726f4128c"
-  integrity sha512-Vrn9h8MmH2mOdsTCy+0L8lZ4bRn4QgXane9HAhGlppwGNiQtuAkQ3OPzq9gOAhjGqSbTtRbXq4jr4V6W6r7K+Q==
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/frappe-ui/-/frappe-ui-1.0.2.tgz#58acd15eb9abfb5cc0f9eb829a95bd12cb40c893"
+  integrity sha512-ntMLpDpeeigtvb1G/W3osJnYVh6HXHJpqrJLz3lC7WKqBfcAnc4R274j606n7m+3gFvnOWCVnK5t9rsSbQHyKA==
   dependencies:
     "@codemirror/autocomplete" "^6.0.0"
     "@codemirror/commands" "^6.0.0"
