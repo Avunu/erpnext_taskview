@@ -43,12 +43,12 @@ The app also ships a one-time patch, `erpnext_taskview.patches.v1_0.setup_client
 
 This table shows what the patch does and what to do by hand on a fresh install.
 
-| What the patch does | On a fresh install |
-| --- | --- |
+| What the patch does                                                                           | On a fresh install                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Seeds the **Client Portal** email preference into every existing user's Notification Settings | Open the **Client Portal** Notification Type and choose **Actions**, **Enable Email Notifications for All Users** (System Manager). Without it only users created from now on get the emails; the others can switch it on in their own Notification Settings. |
-| Disables ERPNext's stock **Projects** row (route `/project`) in the portal menu | In **Portal Settings**, open the **Portal Menu** table and untick **Enabled** on the row whose route is `/project`. Until you do, the standard portal pages list two Projects entries. |
-| Sets **Default Portal Home** to `/projects` | In **Portal Settings**, set **Default Portal Home** to `/projects` if you want customers to land on their projects after signing in. |
-| Removes a Website Settings redirect from `projects` to `project` | Nothing to do unless your site has such a redirect: delete the row in **Website Settings**, **Route Redirects**. |
+| Disables ERPNext's stock **Projects** row (route `/project`) in the portal menu               | In **Portal Settings**, open the **Portal Menu** table and untick **Enabled** on the row whose route is `/project`. Until you do, the standard portal pages list two Projects entries.                                                                        |
+| Sets **Default Portal Home** to `/projects`                                                   | In **Portal Settings**, set **Default Portal Home** to `/projects` if you want customers to land on their projects after signing in.                                                                                                                          |
+| Removes a Website Settings redirect from `projects` to `project`                              | Nothing to do unless your site has such a redirect: delete the row in **Website Settings**, **Route Redirects**.                                                                                                                                              |
 
 > [!NOTE]
 > These behaviours were read from the app and from Frappe 16.34 and ERPNext 16.35: `install_app` calls `set_all_patches_as_completed`, and the Notification Type form carries the **Enable Email Notifications for All Users** action. Check both against your own version after a major upgrade.

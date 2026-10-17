@@ -12,11 +12,11 @@ This page is for the administrator who gives customers access to the [client por
 
 A portal user sees a project when **any one** of these is true:
 
-| Rule | Where you set it |
-| --- | --- |
+| Rule                                                      | Where you set it                                                                                                    |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | One of their Contacts is linked to the project's customer | A **Contact** with a link to the **Customer**, and with the person's email (or the Contact's **User Id** field set) |
-| They are in the customer's portal users | **Customer**, **Portal Users** tab, **Customer Portal Users** table |
-| They are listed in the project's own users | **Project**, **Users** table |
+| They are in the customer's portal users                   | **Customer**, **Portal Users** tab, **Customer Portal Users** table                                                 |
+| They are listed in the project's own users                | **Project**, **Users** table                                                                                        |
 
 The first rule matches a Contact to a login by the Contact's **User Id** field, its **Email Address**, or any email address in its **Email IDs** table. Email addresses are compared without regard to case. The project must have its **Customer** field set for the first two rules to find it.
 
@@ -42,15 +42,15 @@ To give one person access to a single project without tying them to the customer
 
 A customer who can open a project can see all of the following on it, with no per-task or per-comment setting to hide any of it.
 
-| What | Detail |
-| --- | --- |
-| Projects and tasks | Status, due date, priority and the full names of assignees. Phases appear with their budgets. Cancelled tasks are left out of the lists and counts, and template tasks are never shown. |
-| Descriptions | The task description as written in the desk. Private images and links in it are served through a permission-checked download, not a public address. |
-| Comments | **Every** comment on the task, including those written by staff. Staff replies carry a **Team** badge. |
-| Time entries | Date, the person's name, the work description, the hours, whether it is billable, and whether a timer is still running. Rows on draft and submitted Timesheets are included, for the task and all of its subtasks. |
-| Files | Every file attached to the task, including files staff attached. |
-| Budgets | Hours budgeted and logged for each task, phase and project. Hours only: no rates or amounts. |
-| Recent activity | The latest 20 comments, files, status changes, time entries and new tasks on the project. |
+| What               | Detail                                                                                                                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Projects and tasks | Status, due date, priority and the full names of assignees. Phases appear with their budgets. Cancelled tasks are left out of the lists and counts, and template tasks are never shown.                            |
+| Descriptions       | The task description as written in the desk. Private images and links in it are served through a permission-checked download, not a public address.                                                                |
+| Comments           | **Every** comment on the task, including those written by staff. Staff replies carry a **Team** badge.                                                                                                             |
+| Time entries       | Date, the person's name, the work description, the hours, whether it is billable, and whether a timer is still running. Rows on draft and submitted Timesheets are included, for the task and all of its subtasks. |
+| Files              | Every file attached to the task, including files staff attached.                                                                                                                                                   |
+| Budgets            | Hours budgeted and logged for each task, phase and project. Hours only: no rates or amounts.                                                                                                                       |
+| Recent activity    | The latest 20 comments, files, status changes, time entries and new tasks on the project.                                                                                                                          |
 
 > [!WARNING]
 > Anything written on a task or in a timer's description can be read by the customers of that project. Do not use task comments or time descriptions for internal notes.

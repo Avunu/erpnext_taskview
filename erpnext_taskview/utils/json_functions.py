@@ -136,7 +136,7 @@ class GROUP_CONCAT(AggregateFunction):
 		GROUP_CONCAT(DISTINCT column SEPARATOR ',')
 	"""
 
-	def __init__(self, term, distinct=False, separator=",", alias=None):
+	def __init__(self, term, distinct=False, separator=",", alias=None):  # frappe-vulture:ignore
 		if distinct:
 			# PyPika doesn't easily support DISTINCT in aggregate, so we use a workaround
 			super().__init__("GROUP_CONCAT", term, alias=alias)

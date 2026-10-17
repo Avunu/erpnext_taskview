@@ -106,15 +106,15 @@ Choosing a project moves the task and all of its subtasks into it, at the end of
 
 ## Keyboard summary
 
-| Keys | Where | Does |
-| --- | --- | --- |
-| Any printable key | Anywhere in Task View with no field focused | Starts a new task in the highlighted project, or focuses quick entry in **Pinned** |
-| Enter | Adding or renaming | Saves, and in **Add task...** moves on to the next blank row |
-| Escape | Renaming | Cancels the edit |
-| Ctrl or Cmd, click | A row | Adds the row to the selection |
-| Shift, click | A row | Selects the range of visible tasks |
-| Ctrl+C or Cmd+C | With a selection | Copies it as Markdown, with descriptions |
-| Escape | With a selection | Clears it |
+| Keys               | Where                                       | Does                                                                               |
+| ------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Any printable key  | Anywhere in Task View with no field focused | Starts a new task in the highlighted project, or focuses quick entry in **Pinned** |
+| Enter              | Adding or renaming                          | Saves, and in **Add task...** moves on to the next blank row                       |
+| Escape             | Renaming                                    | Cancels the edit                                                                   |
+| Ctrl or Cmd, click | A row                                       | Adds the row to the selection                                                      |
+| Shift, click       | A row                                       | Selects the range of visible tasks                                                 |
+| Ctrl+C or Cmd+C    | With a selection                            | Copies it as Markdown, with descriptions                                           |
+| Escape             | With a selection                            | Clears it                                                                          |
 
 ## Next
 

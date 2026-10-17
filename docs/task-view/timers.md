@@ -30,15 +30,15 @@ Only one timer runs at a time. Starting or resuming a timer pauses whichever one
 
 Stopping pauses the clock first, then asks you to confirm.
 
-| Field | Notes |
-| --- | --- |
-| Task | Defaults to the timed task. You can move the time to another task in the same project. |
-| Activity Type | Optional. |
-| Hrs | Filled from the clock. What you leave here is what gets logged, so edit it if the clock ran while you were away. |
-| Description | What you did. |
-| Is Billable | Marks the entry billable. |
-| Billable Time | Appears when Is Billable is ticked, and starts at the same value as Hrs. |
-| Completed | Marks the log complete and sets the task to Completed. |
+| Field         | Notes                                                                                                            |
+| ------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Task          | Defaults to the timed task. You can move the time to another task in the same project.                           |
+| Activity Type | Optional.                                                                                                        |
+| Hrs           | Filled from the clock. What you leave here is what gets logged, so edit it if the clock ran while you were away. |
+| Description   | What you did.                                                                                                    |
+| Is Billable   | Marks the entry billable.                                                                                        |
+| Billable Time | Appears when Is Billable is ticked, and starts at the same value as Hrs.                                         |
+| Completed     | Marks the log complete and sets the task to Completed.                                                           |
 
 **Cancel** closes the dialog and resumes the timer, even if you had paused it before you pressed stop.
 

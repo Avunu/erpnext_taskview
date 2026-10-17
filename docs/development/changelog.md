@@ -14,12 +14,12 @@ ERPNext TaskView does not keep a `CHANGELOG` file and has not published a tagged
 
 ## Milestones so far
 
-| Date | Change |
-| --- | --- |
-| 2026-10-02 | Hour budgets in Task View and the customer project portal (pull request 27) |
-| 2026-10-05 | The portal moves to frappe-ui 1.0 |
-| 2026-10-05 | Quick task entry and a project picker in the Pinned view |
-| 2026-10-05 | Complete MIT licence text and portal documentation in the README (pull request 30) |
+| Date       | Change                                                                                |
+| ---------- | ------------------------------------------------------------------------------------- |
+| 2026-10-02 | Hour budgets in Task View and the customer project portal (pull request 27)           |
+| 2026-10-05 | The portal moves to frappe-ui 1.0                                                     |
+| 2026-10-05 | Quick task entry and a project picker in the Pinned view                              |
+| 2026-10-05 | Complete MIT licence text and portal documentation in the README (pull request 30)    |
 | 2026-10-16 | A copy button on each Task View row copies tasks as Markdown, with their descriptions |
 
 ## Upgrading

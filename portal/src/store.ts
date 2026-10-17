@@ -8,21 +8,21 @@ import { errorMessage, getProjects } from "./api";
 import type { PortalProject } from "./types";
 
 export const projectsStore = reactive({
-  list: [] as PortalProject[],
-  loading: false,
-  loaded: false,
-  error: "",
+	list: [] as PortalProject[],
+	loading: false,
+	loaded: false,
+	error: "",
 });
 
 export async function loadProjects(): Promise<void> {
-  projectsStore.loading = true;
-  try {
-    projectsStore.list = await getProjects();
-    projectsStore.error = "";
-  } catch (error) {
-    projectsStore.error = errorMessage(error);
-  } finally {
-    projectsStore.loading = false;
-    projectsStore.loaded = true;
-  }
+	projectsStore.loading = true;
+	try {
+		projectsStore.list = await getProjects();
+		projectsStore.error = "";
+	} catch (error) {
+		projectsStore.error = errorMessage(error);
+	} finally {
+		projectsStore.loading = false;
+		projectsStore.loaded = true;
+	}
 }

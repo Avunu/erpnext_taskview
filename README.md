@@ -30,8 +30,8 @@ Apps can choose which Timesheet a log is added to through the `taskview_find_tim
 
 Tasks and projects with a budget show a meter such as `12.5 / 20 h`. It turns amber at 80% and red when over budget.
 
-- **Task budget:** the task's *Expected Time*. A task without one uses the sum of its subtasks' budgets.
-- **Project budget:** the project's *Budgeted Hours*. If that's blank, it uses the sum of its top-level tasks' budgets.
+- **Task budget:** the task's _Expected Time_. A task without one uses the sum of its subtasks' budgets.
+- **Project budget:** the project's _Budgeted Hours_. If that's blank, it uses the sum of its top-level tasks' budgets.
 - **Logged hours** are live. They count draft and submitted timesheets plus running timers, and include all subtasks.
 
 See [Hour budgets](docs/task-view/hour-budgets.md).
@@ -44,7 +44,7 @@ A portal for customers, linked from the standard portal menu. Guests are sent to
 - add tasks, optionally under an open phase, unless the project is Completed or Cancelled;
 - comment on tasks and attach files (JPG, PNG, GIF, PDF, TXT, CSV or Microsoft documents).
 
-A portal user sees a project when their Contact is linked to the project's customer, they are in the customer's *Portal Users*, or they are listed in the project's *Users*. Cancelled projects and template tasks are not shown. Staff can open the portal too, and see what their own permissions allow. When a customer adds a task, comments, moves a task or attaches a file, the team gets a "Client Portal" notification.
+A portal user sees a project when their Contact is linked to the project's customer, they are in the customer's _Portal Users_, or they are listed in the project's _Users_. Cancelled projects and template tasks are not shown. Staff can open the portal too, and see what their own permissions allow. When a customer adds a task, comments, moves a task or attaches a file, the team gets a "Client Portal" notification.
 
 See [The client portal](docs/client-portal/README.md), [Using the client portal](docs/client-portal/using-the-portal.md) and [Giving customers access](docs/client-portal/administering-access.md).
 
@@ -70,14 +70,14 @@ A fresh `install-app` marks the app's patches as done without running them, so o
 
 Requires Node 24+ and yarn.
 
-| Command | What it does |
-| --- | --- |
-| `yarn build` | Builds the desk bundles and the portal, then updates `sites/assets/assets.json` |
-| `yarn dev` / `yarn dev:dock` | Rebuilds the Task View or timer dock bundle on change |
-| `yarn dev:portal` | Runs the portal on the Vite dev server, proxied to the bench |
-| `yarn typecheck` | Type-checks the desk and portal code |
-| `yarn lint` / `yarn format` | Runs oxlint and oxfmt |
-| `bench --site <site> run-tests --app erpnext_taskview` | Runs the Python tests |
+| Command                                                | What it does                                                                    |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `yarn build`                                           | Builds the desk bundles and the portal, then updates `sites/assets/assets.json` |
+| `yarn dev` / `yarn dev:dock`                           | Rebuilds the Task View or timer dock bundle on change                           |
+| `yarn dev:portal`                                      | Runs the portal on the Vite dev server, proxied to the bench                    |
+| `yarn typecheck`                                       | Type-checks the desk and portal code                                            |
+| `yarn lint` / `yarn format`                            | Runs oxlint and oxfmt                                                           |
+| `bench --site <site> run-tests --app erpnext_taskview` | Runs the Python tests                                                           |
 
 Where things live:
 

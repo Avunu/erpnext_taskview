@@ -1,121 +1,115 @@
 <template>
-  <div class="tree-container" v-if="viewMode !== 'pinned'">
-    <Draggable
-      class="mtl-tree"
-      v-model="treeData"
-      treeLine
-      :rootDroppable="true"
-      @after-drop="handleDragEnd"
-    >
-      <template #default="{ node, stat }">
-        <!-- modify node and stat to perpetuate collapse node states -->
-        <div
-          v-if="modifyNodeAndStat(node, stat)"
-          class="outer-task"
-          :class="{
-            'highlighted-project': isHighlightedProject(node),
-            'task-selected': isSelected(node),
-          }"
-        >
-          <!-- expand/collapse button -->
-          <a
-            class="he-tree__open-icon mtl-mr small-icon"
-            @click="toggleNode(node, stat)"
-            :class="{ open: stat.open }"
-          >
-            <div class="taskview-tree-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <title>chevron-right</title>
-                <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"></path>
-              </svg>
-            </div>
-          </a>
-          <!-- task or project -->
-          <Task
-            :node="node"
-            :sideTimersElement="sideTimersElement"
-            :isOpened="isOpened"
-            :viewMode="viewMode"
-            :selectionSize="isSelected(node) ? selectedTasks.size : 0"
-            class="mtl-ml"
-            @task-interaction="handleTaskInteraction(node, $event)"
-            @add-sibling-task="addSiblingTask(node)"
-            @catch-error="catchError"
-            @catch-success="premount"
-            @blank-saved="handleBlankSaved"
-            @open-sidebar="openSidebar"
-            @request-expand="expandAncestors(stat)"
-            @copy-markdown="copyFromRow(node)"
-          />
-        </div>
-      </template>
-    </Draggable>
-  </div>
-  <div v-else class="pinned-container">
-    <PinnedView
-      ref="pinnedView"
-      :pinnedTasks="pinnedTasks"
-      @catch-success="premount"
-      @catch-error="catchError"
-      @open-sidebar="openSidebar"
-      @copy-markdown="copyFromRow"
-    />
-  </div>
-  <div>
-    <!-- The panel's colour, stacking and teleport container are driven through
+	<div class="tree-container" v-if="viewMode !== 'pinned'">
+		<Draggable class="mtl-tree" v-model="treeData" treeLine :rootDroppable="true" @after-drop="handleDragEnd">
+			<template #default="{ node, stat }">
+				<!-- modify node and stat to perpetuate collapse node states -->
+				<div
+					v-if="modifyNodeAndStat(node, stat)"
+					class="outer-task"
+					:class="{
+						'highlighted-project': isHighlightedProject(node),
+						'task-selected': isSelected(node),
+					}"
+				>
+					<!-- expand/collapse button -->
+					<a
+						class="he-tree__open-icon mtl-mr small-icon"
+						@click="toggleNode(node, stat)"
+						:class="{ open: stat.open }"
+					>
+						<div class="taskview-tree-icon">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+								<title>chevron-right</title>
+								<path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"></path>
+							</svg>
+						</div>
+					</a>
+					<!-- task or project -->
+					<Task
+						:node="node"
+						:sideTimersElement="sideTimersElement"
+						:isOpened="isOpened"
+						:viewMode="viewMode"
+						:selectionSize="isSelected(node) ? selectedTasks.size : 0"
+						class="mtl-ml"
+						@task-interaction="handleTaskInteraction(node, $event)"
+						@add-sibling-task="addSiblingTask(node)"
+						@catch-error="catchError"
+						@catch-success="premount"
+						@blank-saved="handleBlankSaved"
+						@open-sidebar="openSidebar"
+						@request-expand="expandAncestors(stat)"
+						@copy-markdown="copyFromRow(node)"
+					/>
+				</div>
+			</template>
+		</Draggable>
+	</div>
+	<div v-else class="pinned-container">
+		<PinnedView
+			ref="pinnedView"
+			:pinnedTasks="pinnedTasks"
+			@catch-success="premount"
+			@catch-error="catchError"
+			@open-sidebar="openSidebar"
+			@copy-markdown="copyFromRow"
+		/>
+	</div>
+	<div>
+		<!-- The panel's colour, stacking and teleport container are driven through
          props rather than CSS: vue3-side-panel writes panelColor/zIndex as
          *inline* styles, which no stylesheet can override without !important.
          Handing it frappe tokens instead keeps the flyout on the active theme
          for free.  See the flyout block in <style> for the geometry. -->
-    <VueSidePanel
-      v-model="isOpened"
-      id-name="tv-flyout"
-      width="930px"
-      hide-close-btn
-      :z-index="FLYOUT_Z_INDEX"
-      panel-color="var(--bg-color)"
-      overlay-color="var(--cds-overlay, rgba(0, 0, 0, 0.5))"
-      :overlay-opacity="1"
-    >
-      <template #header>
-        <div class="page-head flex">
-          <div class="container">
-            <div class="row flex-nowrap align-center page-head-content justify-between">
-              <div class="page-title">
-                <div class="flex fill-width title-area ellipsis">
-                  <!-- frappe's own breadcrumb anatomy (ul.navbar-breadcrumbs >
+		<VueSidePanel
+			v-model="isOpened"
+			id-name="tv-flyout"
+			width="930px"
+			hide-close-btn
+			:z-index="FLYOUT_Z_INDEX"
+			panel-color="var(--bg-color)"
+			overlay-color="var(--cds-overlay, rgba(0, 0, 0, 0.5))"
+			:overlay-opacity="1"
+		>
+			<template #header>
+				<div class="page-head flex">
+					<div class="container">
+						<div class="row flex-nowrap align-center page-head-content justify-between">
+							<div class="page-title">
+								<div class="flex fill-width title-area ellipsis">
+									<!-- frappe's own breadcrumb anatomy (ul.navbar-breadcrumbs >
                        li > a.title-text), so desk themes style it as they style
                        every other page head — and the links double as an escape
                        hatch to the full-page form. -->
-                  <ul class="nav navbar-breadcrumbs d-sm-flex ellipsis">
-                    <li class="ellipsis">
-                      <a class="title-text" :href="sidebarListRoute">{{ sidebarDoctype }}</a>
-                    </li>
-                    <li class="ellipsis">
-                      <a class="title-text-form" :href="sidebarFormRoute">{{ sidebarTitle }}</a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              <div class="flex col page-actions justify-content-end">
-                <button
-                  v-if="sidebarFormInstance"
-                  class="btn btn-primary btn-sm"
-                  :disabled="!sidebarDirty"
-                  @click="saveSidebarForm"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </template>
-      <template #default>
-        <div ref="formWrapper"></div>
-      </template>
-    </VueSidePanel>
-  </div>
+									<ul class="nav navbar-breadcrumbs d-sm-flex ellipsis">
+										<li class="ellipsis">
+											<a class="title-text" :href="sidebarListRoute">{{ sidebarDoctype }}</a>
+										</li>
+										<li class="ellipsis">
+											<a class="title-text-form" :href="sidebarFormRoute">{{ sidebarTitle }}</a>
+										</li>
+									</ul>
+								</div>
+							</div>
+							<div class="flex col page-actions justify-content-end">
+								<button
+									v-if="sidebarFormInstance"
+									class="btn btn-primary btn-sm"
+									:disabled="!sidebarDirty"
+									@click="saveSidebarForm"
+								>
+									Save
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</template>
+			<template #default>
+				<div ref="formWrapper"></div>
+			</template>
+		</VueSidePanel>
+	</div>
 </template>
 
 <script lang="ts">
@@ -128,15 +122,15 @@ import "vue3-side-panel/dist/vue3-side-panel.css";
 import "@he-tree/vue/style/default.css";
 import "@he-tree/vue/style/material-design.css";
 import {
-  type GetResponse,
-  type ProjectDoc,
-  type TaskDoc,
-  type TimesheetDetailDoc,
-  type TreeNode,
-  saveDoc,
-  fetchData,
-  fetchBudgetSummary,
-  getProjectName,
+	type GetResponse,
+	type ProjectDoc,
+	type TaskDoc,
+	type TimesheetDetailDoc,
+	type TreeNode,
+	saveDoc,
+	fetchData,
+	fetchBudgetSummary,
+	getProjectName,
 } from "./types";
 import { refreshTimers, timers } from "./timerStore";
 import { setBudgetTree } from "./budgetLive";
@@ -146,7 +140,7 @@ import { copyNodesAsMarkdown, selectionRoots, subtreeFromDocs } from "./taskMark
 // ── Types used only by this component ────────────────────────
 
 export interface TreeData extends TreeNode {
-  children: TreeData[];
+	children: TreeData[];
 }
 
 /**
@@ -168,1044 +162,1029 @@ const FLYOUT_Z_INDEX = 1025;
 const TIMERS_CHANGED_EVENT = "erpnext_taskview:timers_changed";
 
 interface StatObject {
-  open: boolean;
-  parent?: StatObject | null;
-  data?: TreeData;
-  hidden?: boolean;
-  disableDrag?: boolean;
-  disableDrop?: boolean;
-  draggable?: boolean;
-  droppable?: boolean;
-  dragOpen?: boolean;
-  children?: StatObject[];
+	open: boolean;
+	parent?: StatObject | null;
+	data?: TreeData;
+	hidden?: boolean;
+	disableDrag?: boolean;
+	disableDrop?: boolean;
+	draggable?: boolean;
+	droppable?: boolean;
+	dragOpen?: boolean;
+	children?: StatObject[];
 }
 
 export default defineComponent({
-  name: "TaskView",
-  components: { Draggable, Task, PinnedView, VueSidePanel },
-
-  props: {
-    docs: {
-      type: Object as PropType<GetResponse>,
-      required: true,
-      default: () => ({ projects: [], tasks: [] }),
-    },
-  },
-
-  data() {
-    return {
-      treeData: [] as TreeData[],
-      pinnedTasks: [] as TaskDoc[],
-      viewMode: "all" as "all" | "my_tasks" | "pinned",
-      lastResponse: null as GetResponse | null,
-      highlightedProject: null as TreeData | null,
-      activeNode: null as TreeData | null,
-      /** Names of tasks/projects in the current multi-selection (Ctrl/Shift-click). */
-      selectedTasks: new Set<string>(),
-      /** Last node touched by a plain or Ctrl-click; anchors Shift-range selection. */
-      selectionAnchor: null as string | null,
-      isOpened: false,
-      sidebarTitle: "" as string,
-      /** Translated doctype label, shown in the flyout breadcrumb. */
-      sidebarDoctype: "" as string,
-      /** Untranslated doctype, used to build the breadcrumb routes. */
-      sidebarDoctypeName: "" as string,
-      sidebarDirty: false,
-      sidebarFormInstance: null as any,
-      sideTimersElement: null as HTMLElement | null,
-      manualSort: true,
-      /** Parent doc name whose next blank child should auto-focus after rebuild. */
-      autoFocusParent: null as string | null,
-      /** Open timers seen at the last timer event; a disappearance means time was logged. */
-      knownTimerNames: new Set<string>(),
-      /** When the tree was last rebuilt from a fresh `get()` snapshot. */
-      lastPremountAt: 0,
-    };
-  },
-
-  computed: {
-    /** Exposed to the template; see the constant's doc comment. */
-    FLYOUT_Z_INDEX(): number {
-      return FLYOUT_Z_INDEX;
-    },
-
-    /**
-     * Desk route for the flyout doctype's list view, or `undefined` between
-     * opening the panel and the form finishing its async load — Vue drops the
-     * attribute, so the crumb renders as plain text rather than as a link to
-     * the current page.
-     */
-    sidebarListRoute(): string | undefined {
-      if (!this.sidebarDoctypeName) return undefined;
-      return frappe.router.make_url([frappe.router.slug(this.sidebarDoctypeName)]);
-    },
-
-    /** Desk route for the record open in the flyout; see {@link sidebarListRoute}. */
-    sidebarFormRoute(): string | undefined {
-      if (!this.sidebarDoctypeName || !this.sidebarTitle) return undefined;
-      return frappe.utils.get_form_link(this.sidebarDoctypeName, this.sidebarTitle);
-    },
-  },
-
-  created() {
-    const parent = document.querySelector(".layout-side-section");
-    if (parent) {
-      const el = document.createElement("div");
-      el.id = "sidetimers";
-      parent.appendChild(el);
-      this.sideTimersElement = el;
-    }
-    this.premount();
-  },
-
-  mounted() {
-    this.updateHighlightedProject();
-    document.addEventListener("keydown", this.handleKeydown);
-    document.addEventListener(TIMERS_CHANGED_EVENT, this.handleTimersChanged);
-  },
-
-  beforeUnmount() {
-    document.removeEventListener("keydown", this.handleKeydown);
-    document.removeEventListener(TIMERS_CHANGED_EVENT, this.handleTimersChanged);
-  },
-
-  methods: {
-    // ── Tree assembly ─────────────────────────────────────
-
-    buildTree(data: GetResponse): TreeData[] {
-      // Data arrives pre-sorted from the backend; the two-pass map approach
-      // preserves that order naturally in each node's children array.
-      const nodes = new Map<string, TreeData>();
-      const root: TreeData[] = [];
-      for (const p of data.projects) {
-        const node: TreeData = { doc: p, children: [] };
-        nodes.set(p.name, node);
-        root.push(node);
-      }
-      // First pass: create all task nodes
-      for (const t of data.tasks) {
-        nodes.set(t.name, { doc: t, children: [] });
-      }
-      // Second pass: attach — push order == backend sort order
-      for (const t of data.tasks) {
-        const node = nodes.get(t.name)!;
-        const parentKey = t.parent_task || t.project;
-        const parent = nodes.get(parentKey);
-        if (parent) parent.children.push(node);
-      }
-      return root;
-    },
-
-    premount(data: GetResponse | null = null): void {
-      const source = data || this.docs;
-      this.lastResponse = source;
-      this.pinnedTasks = source.tasks
-        .filter((t) => t.todo_name)
-        .sort((a, b) => (a.pin_idx ?? 0) - (b.pin_idx ?? 0));
-
-      let filtered = source;
-      if (this.viewMode === "my_tasks") {
-        filtered = this.filterMyTasks(source);
-      }
-
-      let docs = this.buildTree(filtered);
-      docs = this.addBlankProject(docs);
-      docs = this.addBlankTasks(docs);
-      this.treeData = docs;
-      setBudgetTree(source.tasks);
-      this.lastPremountAt = Date.now();
-      refreshTimers();
-    },
-
-    // ── Budget meters ─────────────────────────────────────
-
-    /**
-     * Timer store event (either bundle).  When an open timer disappears — it
-     * was stopped or logged, e.g. from the dock — its hours moved from the
-     * live figure into `logged_hours`, so fetch fresh budgets.  Skipped right
-     * after a rebuild (that snapshot already carries them) and on instances
-     * whose DOM the list view has since replaced.
-     */
-    handleTimersChanged(): void {
-      const names = new Set(timers.value.keys());
-      const logged = [...this.knownTimerNames].some((n) => !names.has(n));
-      this.knownTimerNames = names;
-      if (!logged || !(this.$el as Node | null)?.isConnected) return;
-      if (Date.now() - this.lastPremountAt < 3000) return;
-      this.refreshBudgets();
-    },
-
-    /** Patch budget figures onto the current docs without rebuilding the tree. */
-    async refreshBudgets(): Promise<void> {
-      const response = this.lastResponse;
-      if (!response?.projects.length) return;
-      try {
-        const budgets = await fetchBudgetSummary(response.projects.map((p) => p.name));
-        for (const doc of [...response.projects, ...response.tasks]) {
-          const b =
-            doc.doctype === "Project" ? budgets.projects[doc.name] : budgets.tasks[doc.name];
-          if (!b) continue;
-          doc.budget_hours = b.budget_hours;
-          doc.logged_hours = b.logged_hours;
-          doc.budget_source = b.source;
-        }
-      } catch (error) {
-        console.warn("erpnext_taskview: budget refresh failed", error);
-      }
-    },
-
-    /** Filter response to only show tasks assigned to the current user and their ancestor chain. */
-    filterMyTasks(data: GetResponse): GetResponse {
-      const user = frappe.session.user;
-      // Find tasks assigned to me
-      const myTaskNames = new Set<string>();
-      for (const t of data.tasks) {
-        if (t.assigned_to?.includes(user)) {
-          myTaskNames.add(t.name);
-        }
-      }
-      // Walk up parent_task chain to include ancestors
-      const taskMap = new Map(data.tasks.map((t) => [t.name, t]));
-      const includedTasks = new Set<string>();
-      for (const name of myTaskNames) {
-        let current: string | null = name;
-        while (current && !includedTasks.has(current)) {
-          includedTasks.add(current);
-          const task = taskMap.get(current);
-          current = task?.parent_task || null;
-        }
-      }
-      // Include projects that have at least one included task
-      const includedProjects = new Set<string>();
-      for (const name of includedTasks) {
-        const task = taskMap.get(name);
-        if (task) includedProjects.add(task.project);
-      }
-      return {
-        projects: data.projects.filter((p) => includedProjects.has(p.name)),
-        tasks: data.tasks.filter((t) => includedTasks.has(t.name)),
-      };
-    },
-
-    /** Called by the list bundle when the sort selector changes. */
-    setSortMode(isManual: boolean): void {
-      this.manualSort = isManual;
-    },
-
-    setViewMode(mode: "all" | "my_tasks" | "pinned"): void {
-      this.clearSelection();
-      this.selectionAnchor = null;
-      this.viewMode = mode;
-      if (this.lastResponse) {
-        this.premount(this.lastResponse);
-      }
-    },
-
-    async catchError(error: unknown): Promise<void> {
-      this.autoFocusParent = null;
-      console.error("Error updating data:", error);
-      frappe.msgprint(`Error updating data: ${error}`);
-      try {
-        const data = await fetchData();
-        this.premount(data);
-      } catch (fetchErr) {
-        console.error("Error fetching fresh data:", fetchErr);
-      }
-    },
-
-    /** Handle a blank task save: set autoFocusParent so the next blank auto-focuses. */
-    handleBlankSaved(payload: { data: GetResponse; parentName: string }): void {
-      this.autoFocusParent = payload.parentName;
-      treeNodes.value[payload.parentName] = true;
-      this.premount(payload.data);
-    },
-
-    async saveAndRebuild(
-      doc: Partial<ProjectDoc> | Partial<TaskDoc> | Partial<TimesheetDetailDoc>,
-      children?: TaskDoc[],
-      siblingOrder?: string[],
-    ): Promise<void> {
-      try {
-        const data = await saveDoc(doc, children, siblingOrder);
-        this.premount(data);
-      } catch (error) {
-        this.catchError(error);
-      }
-    },
-
-    // ── Ancestor expansion ────────────────────────────────
-
-    expandAncestors(stat: StatObject): void {
-      let current: StatObject | null | undefined = stat;
-      while (current) {
-        current.open = true;
-        if (current.data?.doc?.name) {
-          treeNodes.value[current.data.doc.name] = true;
-        }
-        current = current.parent;
-      }
-    },
-
-    // ── Drag and drop ─────────────────────────────────────
-
-    async handleDragEnd(): Promise<void> {
-      const draggedStat = (dragContext as any).dragNode;
-      if (!draggedStat?.data?.doc) {
-        await this.catchError(new Error("Invalid drop target"));
-        return;
-      }
-
-      const draggedDoc = draggedStat.data.doc;
-      const draggedIsProject = draggedDoc.doctype === "Project";
-
-      // ── Project reorder: dropped at root level ────────────
-      if (draggedIsProject) {
-        const realRoots = (this.treeData as TreeData[]).filter((n) => n.doc?.name);
-        const newIdx = realRoots.findIndex((n) => n.doc.name === draggedDoc.name) + 1;
-        if (newIdx > 0) {
-          (draggedDoc as ProjectDoc).idx = newIdx;
-          // Send the explicit, authoritative order of all real projects so the
-          // backend persists exactly what's on screen (see saveDoc / _apply_project_order).
-          const siblingOrder = realRoots.map((n) => n.doc.name);
-          await this.saveAndRebuild(draggedDoc as ProjectDoc, undefined, siblingOrder);
-        }
-        return;
-      }
-
-      // ── Task reorder / reparent ───────────────────────────
-      if (!draggedStat?.parent?.data?.doc) {
-        // Dropped at root level — invalid for tasks
-        await this.catchError(new Error("Invalid drop target"));
-        return;
-      }
-
-      const parentData = draggedStat.parent.data as TreeData;
-      const parentDoc = parentData.doc;
-
-      // Don't allow dropping onto blank placeholder nodes
-      if (!parentDoc.name) {
-        await this.catchError(new Error("Cannot drop onto a blank node"));
-        return;
-      }
-
-      draggedStat.parent.open = true;
-
-      const taskDoc = draggedStat.data.doc as TaskDoc;
-      const parentIsProject = parentDoc.doctype === "Project";
-
-      taskDoc.parent_task = parentIsProject ? null : parentDoc.name;
-
-      // Determine 1-based position among real (non-blank) siblings after drop
-      const postDropSiblings = ((draggedStat.parent.children || []) as StatObject[]).filter(
-        (s) => s.data?.doc?.name,
-      );
-      const newIdx = postDropSiblings.indexOf(draggedStat) + 1;
-      if (newIdx > 0) taskDoc.idx = newIdx;
-
-      // Capture the explicit, authoritative order of the destination sibling
-      // group (the dragged node is already at its dropped slot here) so the
-      // backend persists exactly what's on screen (see _apply_sibling_order).
-      const siblingOrder = postDropSiblings.map((s) => (s.data!.doc as TaskDoc).name);
-
-      const draggedProject = getProjectName(draggedStat.data);
-      const parentProject = getProjectName(parentData);
-      if (draggedProject !== parentProject) {
-        taskDoc.project = parentProject;
-      }
-
-      const collectChildren = (node: TreeData): TaskDoc[] => {
-        const result: TaskDoc[] = [];
-        for (const child of node.children) {
-          if (!child.doc.name) continue;
-          result.push(child.doc as TaskDoc);
-          result.push(...collectChildren(child));
-        }
-        return result;
-      };
-
-      const children = collectChildren(draggedStat.data);
-      await this.saveAndRebuild(taskDoc, children.length > 0 ? children : undefined, siblingOrder);
-      this.handleTaskInteraction(draggedStat.data);
-    },
-
-    // ── Per-node render hook ──────────────────────────────
-
-    modifyNodeAndStat(node: TreeData, stat: StatObject): { node: TreeData; stat: StatObject } {
-      // During drag @he-tree temporarily inserts a placeholder node into
-      // treeData that has no `doc`. Return early and leave the stat untouched.
-      if (!node.doc) return { node, stat };
-
-      const isProject = node.doc.doctype === "Project";
-      const isBlank = !node.doc.name;
-
-      let pleaseExpandMe = false;
-
-      if (isProject && node.doc.name) {
-        const projectDoc = node.doc as ProjectDoc;
-        if (projectDoc.project_name in treeNodes.value) {
-          const value = treeNodes.value[projectDoc.project_name];
-          stat.open = value;
-          treeNodes.value[node.doc.name] = value;
-          delete treeNodes.value[projectDoc.project_name];
-          pleaseExpandMe = value;
-        }
-      }
-
-      if (treeNodes.value?.[node.doc.name || ""] === false) {
-        stat.open = false;
-      }
-
-      if (treeNodes.value?.[node.doc.name || ""] === true || pleaseExpandMe) {
-        stat.open = true;
-        this.updateHighlightedProject();
-      }
-
-      if (isBlank) {
-        stat.disableDrag = true;
-        stat.disableDrop = true;
-        stat.draggable = false;
-        stat.droppable = false;
-        stat.dragOpen = false;
-      } else if (isProject) {
-        // Projects are only draggable in Manual sort mode
-        stat.disableDrag = !this.manualSort;
-        stat.disableDrop = false;
-        stat.draggable = this.manualSort;
-        stat.droppable = true;
-        stat.dragOpen = true;
-      } else {
-        // Tasks are only draggable in Manual sort mode
-        stat.disableDrag = !this.manualSort;
-        stat.disableDrop = false;
-        stat.draggable = this.manualSort;
-        stat.droppable = true;
-        stat.dragOpen = true;
-      }
-
-      return { node, stat };
-    },
-
-    // ── Node factories and blank placeholders ─────────────
-
-    createNode(doc: Partial<ProjectDoc> | Partial<TaskDoc>): TreeData {
-      if (!doc.doctype) doc.doctype = "Task";
-      if (!doc.name) doc.name = "";
-      if (!doc.status) doc.status = "Open";
-      return { doc: doc as ProjectDoc | TaskDoc, children: [] };
-    },
-
-    addBlankProject(docs: TreeData[]): TreeData[] {
-      docs.push(
-        this.createNode({
-          doctype: "Project",
-          name: "",
-          project_name: "Add project...",
-          status: "Open",
-        } as ProjectDoc),
-      );
-      return docs;
-    },
-
-    /** Remove all blank task nodes from the tree. */
-    stripBlanks(nodes: TreeData[]): void {
-      for (const node of nodes) {
-        if (node.children) {
-          node.children = node.children.filter((c) => !!c.doc?.name);
-          this.stripBlanks(node.children);
-        }
-      }
-    },
-
-    addBlankTasks(docs: TreeData[]): TreeData[] {
-      this.stripBlanks(docs);
-
-      // Determine which parent should get the blank node.
-      let targetParent: TreeData | null = null;
-
-      if (this.activeNode) {
-        const isProject = this.activeNode.doc.doctype === "Project";
-        if (isProject) {
-          // Active node is a project → blank as its immediate child
-          targetParent = docs.find((p) => p.doc.name === this.activeNode!.doc.name) || null;
-        } else {
-          // Active node is a task → blank as its child
-          targetParent = this.findParentNode(docs, this.activeNode.doc.name);
-        }
-      } else if (this.highlightedProject?.doc.name) {
-        targetParent = docs.find((p) => p.doc.name === this.highlightedProject!.doc.name) || null;
-      }
-
-      if (targetParent) {
-        this.ensureBlankChild(targetParent);
-        // Auto-focus the blank if typewriter mode is active for this parent
-        if (this.autoFocusParent && targetParent.doc.name === this.autoFocusParent) {
-          const blankChild = targetParent.children.find((c) => !c.doc.name);
-          if (blankChild) blankChild._autoFocus = true;
-          this.autoFocusParent = null;
-        }
-      }
-
-      // When a task is selected, also keep a sibling "Add task..." directly
-      // below it (in addition to the child blank above).
-      if (this.activeNode && this.activeNode.doc.doctype !== "Project") {
-        const taskNode = this.findParentNode(docs, this.activeNode.doc.name);
-        if (taskNode) {
-          const siblingBlank = this.ensureBlankSibling(docs, taskNode);
-          // Typewriter mode: a saved sibling sets autoFocusParent to the task's
-          // parent, so focus the freshly re-created sibling blank.
-          const taskDoc = taskNode.doc as TaskDoc;
-          const parentName = taskDoc.parent_task || taskDoc.project;
-          if (siblingBlank && this.autoFocusParent === parentName) {
-            siblingBlank._autoFocus = true;
-            this.autoFocusParent = null;
-          }
-        }
-      }
-      return docs;
-    },
-
-    /** Add a single blank "Add task..." child to `node` if not already present. Non-recursive. */
-    ensureBlankChild(node: TreeData): void {
-      if (node.doc.status === "Completed") return;
-      if (!node.children) node.children = [];
-      if (node.children.some((child) => !child.doc.name)) return;
-
-      const isProject = node.doc.doctype === "Project";
-      const projectName = getProjectName(node);
-      const parentTask = isProject ? null : node.doc.name;
-      // Calculate next available idx: count real (non-blank) siblings + 1
-      const realChildren = node.children.filter((c) => !!c.doc?.name);
-      const nextIdx = realChildren.length + 1;
-
-      const blankTask = this.createNode({
-        doctype: "Task",
-        name: "",
-        subject: "Add task...",
-        project: projectName,
-        parent_task: parentTask,
-        status: "Open",
-        is_group: 0,
-        priority: "Medium",
-        idx: nextIdx,
-      } as TaskDoc);
-      node.children = [...node.children, blankTask];
-      this.treeData = [...this.treeData];
-    },
-
-    /**
-     * Add a single blank "Add task..." sibling directly below `task` (same
-     * parent), if that parent doesn't already hold a blank.  Complements
-     * {@link ensureBlankChild}: a selected task offers both a child placeholder
-     * (new subtask) and a sibling placeholder (new task at the same level).
-     * Returns the inserted blank node, or `null` if none was added.
-     */
-    ensureBlankSibling(tree: TreeData[], task: TreeData): TreeData | null {
-      const taskDoc = task.doc as TaskDoc;
-      const parentName = taskDoc.parent_task || taskDoc.project;
-      const parent = this.findParentNode(tree, parentName);
-      if (!parent || !parent.children) return null;
-      if (parent.children.some((c) => !c.doc.name)) return null;
-
-      const at = parent.children.findIndex((c) => c.doc.name === taskDoc.name);
-      if (at === -1) return null;
-
-      const blankTask = this.createNode({
-        doctype: "Task",
-        name: "",
-        subject: "Add task...",
-        project: taskDoc.project,
-        parent_task: taskDoc.parent_task || null,
-        status: "Open",
-        is_group: 0,
-        priority: "Medium",
-        // Same idx as the selected task so the saved sibling sorts directly
-        // below it — the creation tiebreaker in get() places the newer row after.
-        idx: taskDoc.idx || 0,
-      } as TaskDoc);
-
-      parent.children = [
-        ...parent.children.slice(0, at + 1),
-        blankTask,
-        ...parent.children.slice(at + 1),
-      ];
-      this.treeData = [...this.treeData];
-      return blankTask;
-    },
-
-    // ── Highlight and navigation ──────────────────────────
-
-    isHighlightedProject(node: TreeData): boolean {
-      try {
-        return !!(
-          node.doc.doctype === "Project" && node.doc.name === this.highlightedProject?.doc.name
-        );
-      } catch {
-        return !!(node.doc.doctype === "Project" && node === this.highlightedProject);
-      }
-    },
-
-    toggleNode(node: TreeData, stat: StatObject): void {
-      if (!node.doc.name) return;
-
-      stat.open = !stat.open;
-      treeNodes.value[node.doc.name] = stat.open;
-
-      if (stat.open) {
-        stat.children?.forEach((child) => {
-          child.hidden = !stat.open;
-        });
-      }
-
-      const isProject = node.doc.doctype === "Project";
-      if (!isProject) {
-        const parentProject = this.findParentProject(node);
-        if (parentProject) {
-          this.highlightedProject = parentProject;
-        }
-      } else if (stat.open) {
-        this.highlightedProject = node;
-      } else {
-        const nextExpandedProject = this.treeData.find(
-          (project) =>
-            project.doc.doctype === "Project" &&
-            project.doc.name &&
-            treeNodes.value?.[project.doc.name],
-        );
-        if (nextExpandedProject) {
-          this.highlightedProject = nextExpandedProject;
-        } else {
-          this.updateHighlightedProject();
-        }
-      }
-    },
-
-    findParentProject(node: TreeData): TreeData | undefined {
-      const projectName = getProjectName(node);
-      return this.treeData.find((project) => project.doc.name === projectName);
-    },
-
-    findParentNode(nodes: TreeData[], parentDocName: string): TreeData | null {
-      for (const node of nodes) {
-        if (node.doc.name === parentDocName) {
-          return node;
-        } else if (node.children?.length > 0) {
-          const foundNode = this.findParentNode(node.children, parentDocName);
-          if (foundNode) return foundNode;
-        }
-      }
-      return null;
-    },
-
-    addSiblingTask(node: TreeData): void {
-      const isProject = node.doc.doctype === "Project";
-      const parentDocName = isProject
-        ? ""
-        : (node.doc as TaskDoc).parent_task || (node.doc as TaskDoc).project;
-
-      const projectName = getProjectName(node);
-      const parentTask = isProject ? null : (node.doc as TaskDoc).parent_task;
-
-      const newBlankNode = this.createNode(
-        isProject
-          ? ({
-              doctype: "Project",
-              name: "",
-              project_name: "Add project...",
-              status: "Open",
-            } as ProjectDoc)
-          : ({
-              doctype: "Task",
-              name: "",
-              subject: "Add task...",
-              project: projectName,
-              parent_task: parentTask,
-              status: "Open",
-              is_group: 0,
-              priority: "Medium",
-            } as TaskDoc),
-      );
-
-      const parentNode = this.findParentNode(this.treeData, parentDocName);
-
-      if (parentNode) {
-        parentNode.children = [...parentNode.children, newBlankNode];
-        this.treeData = [...this.treeData];
-      } else {
-        this.treeData = [...this.treeData, newBlankNode];
-      }
-    },
-
-    handleTaskInteraction(node: TreeData, event?: MouseEvent): void {
-      const isProject = node.doc.doctype === "Project";
-      const isBlank = !node.doc.name;
-
-      // Clicking a blank node should never reposition it — the blank is
-      // already in the correct place and the user is about to type into it.
-      if (isBlank) return;
-
-      // ── Multi-selection (Ctrl/Cmd toggles, Shift extends a range) ──────
-      // Modifier-clicks build the copy selection and deliberately skip the
-      // blank-placeholder repositioning that a plain click performs below.
-      if (event && (event.ctrlKey || event.metaKey)) {
-        event.preventDefault();
-        this.toggleSelected(node.doc.name);
-        this.selectionAnchor = node.doc.name;
-        return;
-      }
-      if (event && event.shiftKey) {
-        event.preventDefault(); // suppress native text selection across the range
-        this.selectRange(node.doc.name);
-        this.selectionAnchor = this.selectionAnchor ?? node.doc.name;
-        return;
-      }
-
-      // Plain click clears any multi-selection and anchors the next range.
-      this.clearSelection();
-      this.selectionAnchor = node.doc.name;
-
-      if (isProject) {
-        if (node.doc.status !== "Completed") {
-          this.highlightedProject = node;
-        } else {
-          return;
-        }
-      } else {
-        const parentProject = this.findParentProject(node);
-        if (parentProject) {
-          this.highlightedProject = parentProject;
-        }
-      }
-
-      // Track the active node and re-place the blank as its child
-      this.activeNode = node;
-      this.stripBlanks(this.treeData);
-
-      let targetParent: TreeData | null = null;
-      if (!isProject) {
-        // Task selected → blank as its child
-        targetParent = this.findParentNode(this.treeData, node.doc.name);
-      } else if (this.highlightedProject?.doc.name) {
-        targetParent = this.highlightedProject;
-      }
-
-      if (targetParent) {
-        treeNodes.value[targetParent.doc.name] = true;
-        this.ensureBlankChild(targetParent);
-      }
-
-      // Task selected → also offer a sibling "Add task..." directly below it.
-      if (!isProject) {
-        this.ensureBlankSibling(this.treeData, node);
-      }
-    },
-
-    // ── Multi-selection & copy-to-clipboard ──────────────────
-
-    /** Whether a node is part of the current copy selection. */
-    isSelected(node: TreeData): boolean {
-      return !!node.doc.name && this.selectedTasks.has(node.doc.name);
-    },
-
-    /** Add/remove a single node from the selection. */
-    toggleSelected(name: string): void {
-      if (this.selectedTasks.has(name)) {
-        this.selectedTasks.delete(name);
-      } else {
-        this.selectedTasks.add(name);
-      }
-    },
-
-    /** Drop the whole selection (Escape, plain click, or view switch). */
-    clearSelection(): void {
-      if (this.selectedTasks.size) this.selectedTasks.clear();
-    },
-
-    /**
-     * Flatten `treeData` to the names of visible **task** rows in display
-     * order, honoring collapse state so a Shift-range only spans currently
-     * visible tasks.  Projects are traversed (to reach their tasks) but never
-     * listed — a range must not sweep a whole project subtree into the copy.
-     * Blank placeholder nodes are skipped.
-     */
-    flattenVisibleTaskRows(): string[] {
-      const names: string[] = [];
-      const walk = (nodes: TreeData[]): void => {
-        for (const node of nodes) {
-          const name = node.doc.name;
-          if (!name) continue;
-          if (node.doc.doctype !== "Project") names.push(name);
-          // `treeNodes` stores `false` only for explicitly collapsed nodes.
-          if (treeNodes.value?.[name] !== false) walk(node.children);
-        }
-      };
-      walk(this.treeData);
-      return names;
-    },
-
-    /** Replace the selection with the inclusive task range anchor→target. */
-    selectRange(targetName: string): void {
-      this.clearSelection();
-      if (!this.selectionAnchor) {
-        this.selectedTasks.add(targetName);
-        return;
-      }
-      const order = this.flattenVisibleTaskRows();
-      const a = order.indexOf(this.selectionAnchor);
-      const b = order.indexOf(targetName);
-      if (a === -1 || b === -1) {
-        this.selectedTasks.add(targetName);
-        return;
-      }
-      const [lo, hi] = a <= b ? [a, b] : [b, a];
-      for (let i = lo; i <= hi; i++) this.selectedTasks.add(order[i]);
-    },
-
-    /** Ctrl/Cmd+C: copy the selection as Markdown (see `taskMarkdown.ts`). */
-    copySelectionToClipboard(): void {
-      copyNodesAsMarkdown(selectionRoots(this.treeData, this.selectedTasks));
-    },
-
-    /**
-     * A row's copy button.  On a row inside the multi-selection it copies the
-     * whole selection; otherwise just that row and its subtasks.  Pinned rows
-     * are flat, so their subtasks are rebuilt from the last `get()` snapshot.
-     */
-    copyFromRow(node: TreeData): void {
-      if (this.viewMode === "pinned") {
-        const tasks = this.lastResponse?.tasks ?? [];
-        copyNodesAsMarkdown([subtreeFromDocs(node.doc as TaskDoc, tasks)]);
-      } else if (this.isSelected(node)) {
-        copyNodesAsMarkdown(selectionRoots(this.treeData, this.selectedTasks));
-      } else {
-        copyNodesAsMarkdown([node]);
-      }
-    },
-
-    updateHighlightedProject(): void {
-      if (!this.treeData || !Array.isArray(this.treeData)) {
-        console.warn("Tree data is not initialized or not an array");
-        return;
-      }
-
-      const expandedProjects = this.treeData.filter(
-        (node) =>
-          node.doc.doctype === "Project" &&
-          node.doc.name &&
-          treeNodes.value?.[node.doc.name] !== false,
-      );
-
-      if (expandedProjects.length > 0) {
-        this.highlightedProject = expandedProjects[0];
-      } else {
-        const blankProject = this.treeData.find((node) => !node.doc.name);
-        if (blankProject) {
-          this.highlightedProject = blankProject;
-        }
-      }
-    },
-
-    // ── Keyboard shortcuts ────────────────────────────────
-
-    editRootBlankTask(): void {
-      const project = this.highlightedProject;
-      if (project) {
-        if (!project.doc.name) {
-          project._autoFocus = true;
-        } else {
-          // Ensure there's a blank to focus
-          this.ensureBlankChild(project);
-          const blankTask = project.children.find((task) => !task.doc.name);
-          if (blankTask) {
-            blankTask._autoFocus = true;
-          }
-        }
-      }
-    },
-
-    handleKeydown(event: KeyboardEvent): void {
-      const tag = document.activeElement?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA") return;
-
-      // Ctrl/Cmd+C copies the current selection as a markdown tree.
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        event.key.toLowerCase() === "c" &&
-        this.selectedTasks.size
-      ) {
-        event.preventDefault();
-        this.copySelectionToClipboard();
-        return;
-      }
-
-      // Escape clears the selection.
-      if (event.key === "Escape" && this.selectedTasks.size) {
-        this.clearSelection();
-        return;
-      }
-
-      // "Start typing to create" — but never for Ctrl/Cmd shortcuts.
-      const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}[\]|\\:;'",.<>?/`~\- ]$/;
-      if (allowedKeys.test(event.key) && !event.ctrlKey && !event.metaKey && !this.isOpened) {
-        if (this.viewMode === "pinned") {
-          // Focus synchronously, while the key is still being handled, so the
-          // typed character lands in the quick-entry input.
-          (this.$refs.pinnedView as InstanceType<typeof PinnedView> | undefined)?.focusEntry();
-        } else {
-          this.editRootBlankTask();
-        }
-      }
-    },
-
-    // ── Sidebar ───────────────────────────────────────────
-
-    async loadForm(payload: { doc: ProjectDoc | TaskDoc; isProject: boolean }): Promise<void> {
-      const doctype = payload.isProject ? "Project" : "Task";
-      const docName = payload.doc.name;
-
-      try {
-        const formWrapper = this.$refs.formWrapper as HTMLElement;
-        if (!formWrapper || !document.body.contains(formWrapper)) {
-          console.error("formWrapper is not attached to the DOM");
-          return;
-        }
-
-        await frappe.model.with_doctype(doctype);
-        const meta = frappe.get_meta(doctype);
-        const prev = meta.hide_toolbar;
-        meta.hide_toolbar = 1;
-        formWrapper.innerHTML = "";
-        const formInstance = new frappe.ui.form.Form(doctype, formWrapper, true, "");
-        await frappe.model.with_doc(doctype, docName);
-        formInstance.refresh(docName);
-        formInstance.page.page_head.addClass("hidden");
-        meta.hide_toolbar = prev;
-
-        // Populate our custom header
-        this.sidebarDoctype = __(doctype);
-        this.sidebarDoctypeName = doctype;
-        this.sidebarTitle = docName;
-        this.sidebarDirty = false;
-        this.sidebarFormInstance = formInstance;
-
-        // Track dirty state so the Save button reflects unsaved changes
-        frappe.model.on(doctype, "*", (_field: string, _val: unknown, _changedDoc: any) => {
-          if (formInstance.is_dirty) {
-            this.sidebarDirty = true;
-          } else {
-            this.sidebarDirty = false;
-          }
-        });
-
-        // hide_toolbar suppresses the footer/timeline — restore it manually
-        if (!formInstance.footer && (frappe.boot as any).desk_settings?.timeline) {
-          const footerEl = document.createElement("div");
-          formInstance.page.main[0].parentElement?.appendChild(footerEl);
-          formInstance.footer = new (frappe.ui.form as any).Footer({
-            frm: formInstance,
-            parent: footerEl,
-          });
-          formInstance.footer.refresh();
-          formInstance.parent.removeClass = function () {};
-        }
-      } catch (err) {
-        console.error("Error loading form:", err);
-      }
-    },
-
-    saveSidebarForm(): void {
-      if (!this.sidebarFormInstance) return;
-      this.sidebarFormInstance.save("Save", () => {
-        this.sidebarDirty = false;
-      });
-    },
-
-    openSidebar(payload: any): void {
-      this.isOpened = true;
-      this.sidebarFormInstance = null;
-      this.sidebarTitle = "";
-      this.sidebarDoctype = "";
-      this.sidebarDoctypeName = "";
-      this.sidebarDirty = false;
-      this.loadForm(payload);
-    },
-  },
+	name: "TaskView",
+	components: { Draggable, Task, PinnedView, VueSidePanel },
+
+	props: {
+		docs: {
+			type: Object as PropType<GetResponse>,
+			required: true,
+			default: () => ({ projects: [], tasks: [] }),
+		},
+	},
+
+	data() {
+		return {
+			treeData: [] as TreeData[],
+			pinnedTasks: [] as TaskDoc[],
+			viewMode: "all" as "all" | "my_tasks" | "pinned",
+			lastResponse: null as GetResponse | null,
+			highlightedProject: null as TreeData | null,
+			activeNode: null as TreeData | null,
+			/** Names of tasks/projects in the current multi-selection (Ctrl/Shift-click). */
+			selectedTasks: new Set<string>(),
+			/** Last node touched by a plain or Ctrl-click; anchors Shift-range selection. */
+			selectionAnchor: null as string | null,
+			isOpened: false,
+			sidebarTitle: "" as string,
+			/** Translated doctype label, shown in the flyout breadcrumb. */
+			sidebarDoctype: "" as string,
+			/** Untranslated doctype, used to build the breadcrumb routes. */
+			sidebarDoctypeName: "" as string,
+			sidebarDirty: false,
+			sidebarFormInstance: null as any,
+			sideTimersElement: null as HTMLElement | null,
+			manualSort: true,
+			/** Parent doc name whose next blank child should auto-focus after rebuild. */
+			autoFocusParent: null as string | null,
+			/** Open timers seen at the last timer event; a disappearance means time was logged. */
+			knownTimerNames: new Set<string>(),
+			/** When the tree was last rebuilt from a fresh `get()` snapshot. */
+			lastPremountAt: 0,
+		};
+	},
+
+	computed: {
+		/** Exposed to the template; see the constant's doc comment. */
+		FLYOUT_Z_INDEX(): number {
+			return FLYOUT_Z_INDEX;
+		},
+
+		/**
+		 * Desk route for the flyout doctype's list view, or `undefined` between
+		 * opening the panel and the form finishing its async load — Vue drops the
+		 * attribute, so the crumb renders as plain text rather than as a link to
+		 * the current page.
+		 */
+		sidebarListRoute(): string | undefined {
+			if (!this.sidebarDoctypeName) return undefined;
+			return frappe.router.make_url([frappe.router.slug(this.sidebarDoctypeName)]);
+		},
+
+		/** Desk route for the record open in the flyout; see {@link sidebarListRoute}. */
+		sidebarFormRoute(): string | undefined {
+			if (!this.sidebarDoctypeName || !this.sidebarTitle) return undefined;
+			return frappe.utils.get_form_link(this.sidebarDoctypeName, this.sidebarTitle);
+		},
+	},
+
+	created() {
+		const parent = document.querySelector(".layout-side-section");
+		if (parent) {
+			const el = document.createElement("div");
+			el.id = "sidetimers";
+			parent.appendChild(el);
+			this.sideTimersElement = el;
+		}
+		this.premount();
+	},
+
+	mounted() {
+		this.updateHighlightedProject();
+		document.addEventListener("keydown", this.handleKeydown);
+		document.addEventListener(TIMERS_CHANGED_EVENT, this.handleTimersChanged);
+	},
+
+	beforeUnmount() {
+		document.removeEventListener("keydown", this.handleKeydown);
+		document.removeEventListener(TIMERS_CHANGED_EVENT, this.handleTimersChanged);
+	},
+
+	methods: {
+		// ── Tree assembly ─────────────────────────────────────
+
+		buildTree(data: GetResponse): TreeData[] {
+			// Data arrives pre-sorted from the backend; the two-pass map approach
+			// preserves that order naturally in each node's children array.
+			const nodes = new Map<string, TreeData>();
+			const root: TreeData[] = [];
+			for (const p of data.projects) {
+				const node: TreeData = { doc: p, children: [] };
+				nodes.set(p.name, node);
+				root.push(node);
+			}
+			// First pass: create all task nodes
+			for (const t of data.tasks) {
+				nodes.set(t.name, { doc: t, children: [] });
+			}
+			// Second pass: attach — push order == backend sort order
+			for (const t of data.tasks) {
+				const node = nodes.get(t.name)!;
+				const parentKey = t.parent_task || t.project;
+				const parent = nodes.get(parentKey);
+				if (parent) parent.children.push(node);
+			}
+			return root;
+		},
+
+		premount(data: GetResponse | null = null): void {
+			const source = data || this.docs;
+			this.lastResponse = source;
+			this.pinnedTasks = source.tasks
+				.filter((t) => t.todo_name)
+				.sort((a, b) => (a.pin_idx ?? 0) - (b.pin_idx ?? 0));
+
+			let filtered = source;
+			if (this.viewMode === "my_tasks") {
+				filtered = this.filterMyTasks(source);
+			}
+
+			let docs = this.buildTree(filtered);
+			docs = this.addBlankProject(docs);
+			docs = this.addBlankTasks(docs);
+			this.treeData = docs;
+			setBudgetTree(source.tasks);
+			this.lastPremountAt = Date.now();
+			refreshTimers();
+		},
+
+		// ── Budget meters ─────────────────────────────────────
+
+		/**
+		 * Timer store event (either bundle).  When an open timer disappears — it
+		 * was stopped or logged, e.g. from the dock — its hours moved from the
+		 * live figure into `logged_hours`, so fetch fresh budgets.  Skipped right
+		 * after a rebuild (that snapshot already carries them) and on instances
+		 * whose DOM the list view has since replaced.
+		 */
+		handleTimersChanged(): void {
+			const names = new Set(timers.value.keys());
+			const logged = [...this.knownTimerNames].some((n) => !names.has(n));
+			this.knownTimerNames = names;
+			if (!logged || !(this.$el as Node | null)?.isConnected) return;
+			if (Date.now() - this.lastPremountAt < 3000) return;
+			this.refreshBudgets();
+		},
+
+		/** Patch budget figures onto the current docs without rebuilding the tree. */
+		async refreshBudgets(): Promise<void> {
+			const response = this.lastResponse;
+			if (!response?.projects.length) return;
+			try {
+				const budgets = await fetchBudgetSummary(response.projects.map((p) => p.name));
+				for (const doc of [...response.projects, ...response.tasks]) {
+					const b = doc.doctype === "Project" ? budgets.projects[doc.name] : budgets.tasks[doc.name];
+					if (!b) continue;
+					doc.budget_hours = b.budget_hours;
+					doc.logged_hours = b.logged_hours;
+					doc.budget_source = b.source;
+				}
+			} catch (error) {
+				console.warn("erpnext_taskview: budget refresh failed", error);
+			}
+		},
+
+		/** Filter response to only show tasks assigned to the current user and their ancestor chain. */
+		filterMyTasks(data: GetResponse): GetResponse {
+			const user = frappe.session.user;
+			// Find tasks assigned to me
+			const myTaskNames = new Set<string>();
+			for (const t of data.tasks) {
+				if (t.assigned_to?.includes(user)) {
+					myTaskNames.add(t.name);
+				}
+			}
+			// Walk up parent_task chain to include ancestors
+			const taskMap = new Map(data.tasks.map((t) => [t.name, t]));
+			const includedTasks = new Set<string>();
+			for (const name of myTaskNames) {
+				let current: string | null = name;
+				while (current && !includedTasks.has(current)) {
+					includedTasks.add(current);
+					const task = taskMap.get(current);
+					current = task?.parent_task || null;
+				}
+			}
+			// Include projects that have at least one included task
+			const includedProjects = new Set<string>();
+			for (const name of includedTasks) {
+				const task = taskMap.get(name);
+				if (task) includedProjects.add(task.project);
+			}
+			return {
+				projects: data.projects.filter((p) => includedProjects.has(p.name)),
+				tasks: data.tasks.filter((t) => includedTasks.has(t.name)),
+			};
+		},
+
+		/** Called by the list bundle when the sort selector changes. */
+		setSortMode(isManual: boolean): void {
+			this.manualSort = isManual;
+		},
+
+		setViewMode(mode: "all" | "my_tasks" | "pinned"): void {
+			this.clearSelection();
+			this.selectionAnchor = null;
+			this.viewMode = mode;
+			if (this.lastResponse) {
+				this.premount(this.lastResponse);
+			}
+		},
+
+		async catchError(error: unknown): Promise<void> {
+			this.autoFocusParent = null;
+			console.error("Error updating data:", error);
+			frappe.msgprint(`Error updating data: ${error}`);
+			try {
+				const data = await fetchData();
+				this.premount(data);
+			} catch (fetchErr) {
+				console.error("Error fetching fresh data:", fetchErr);
+			}
+		},
+
+		/** Handle a blank task save: set autoFocusParent so the next blank auto-focuses. */
+		handleBlankSaved(payload: { data: GetResponse; parentName: string }): void {
+			this.autoFocusParent = payload.parentName;
+			treeNodes.value[payload.parentName] = true;
+			this.premount(payload.data);
+		},
+
+		async saveAndRebuild(
+			doc: Partial<ProjectDoc> | Partial<TaskDoc> | Partial<TimesheetDetailDoc>,
+			children?: TaskDoc[],
+			siblingOrder?: string[],
+		): Promise<void> {
+			try {
+				const data = await saveDoc(doc, children, siblingOrder);
+				this.premount(data);
+			} catch (error) {
+				this.catchError(error);
+			}
+		},
+
+		// ── Ancestor expansion ────────────────────────────────
+
+		expandAncestors(stat: StatObject): void {
+			let current: StatObject | null | undefined = stat;
+			while (current) {
+				current.open = true;
+				if (current.data?.doc?.name) {
+					treeNodes.value[current.data.doc.name] = true;
+				}
+				current = current.parent;
+			}
+		},
+
+		// ── Drag and drop ─────────────────────────────────────
+
+		async handleDragEnd(): Promise<void> {
+			const draggedStat = (dragContext as any).dragNode;
+			if (!draggedStat?.data?.doc) {
+				await this.catchError(new Error("Invalid drop target"));
+				return;
+			}
+
+			const draggedDoc = draggedStat.data.doc;
+			const draggedIsProject = draggedDoc.doctype === "Project";
+
+			// ── Project reorder: dropped at root level ────────────
+			if (draggedIsProject) {
+				const realRoots = (this.treeData as TreeData[]).filter((n) => n.doc?.name);
+				const newIdx = realRoots.findIndex((n) => n.doc.name === draggedDoc.name) + 1;
+				if (newIdx > 0) {
+					(draggedDoc as ProjectDoc).idx = newIdx;
+					// Send the explicit, authoritative order of all real projects so the
+					// backend persists exactly what's on screen (see saveDoc / _apply_project_order).
+					const siblingOrder = realRoots.map((n) => n.doc.name);
+					await this.saveAndRebuild(draggedDoc as ProjectDoc, undefined, siblingOrder);
+				}
+				return;
+			}
+
+			// ── Task reorder / reparent ───────────────────────────
+			if (!draggedStat?.parent?.data?.doc) {
+				// Dropped at root level — invalid for tasks
+				await this.catchError(new Error("Invalid drop target"));
+				return;
+			}
+
+			const parentData = draggedStat.parent.data as TreeData;
+			const parentDoc = parentData.doc;
+
+			// Don't allow dropping onto blank placeholder nodes
+			if (!parentDoc.name) {
+				await this.catchError(new Error("Cannot drop onto a blank node"));
+				return;
+			}
+
+			draggedStat.parent.open = true;
+
+			const taskDoc = draggedStat.data.doc as TaskDoc;
+			const parentIsProject = parentDoc.doctype === "Project";
+
+			taskDoc.parent_task = parentIsProject ? null : parentDoc.name;
+
+			// Determine 1-based position among real (non-blank) siblings after drop
+			const postDropSiblings = ((draggedStat.parent.children || []) as StatObject[]).filter(
+				(s) => s.data?.doc?.name,
+			);
+			const newIdx = postDropSiblings.indexOf(draggedStat) + 1;
+			if (newIdx > 0) taskDoc.idx = newIdx;
+
+			// Capture the explicit, authoritative order of the destination sibling
+			// group (the dragged node is already at its dropped slot here) so the
+			// backend persists exactly what's on screen (see _apply_sibling_order).
+			const siblingOrder = postDropSiblings.map((s) => (s.data!.doc as TaskDoc).name);
+
+			const draggedProject = getProjectName(draggedStat.data);
+			const parentProject = getProjectName(parentData);
+			if (draggedProject !== parentProject) {
+				taskDoc.project = parentProject;
+			}
+
+			const collectChildren = (node: TreeData): TaskDoc[] => {
+				const result: TaskDoc[] = [];
+				for (const child of node.children) {
+					if (!child.doc.name) continue;
+					result.push(child.doc as TaskDoc);
+					result.push(...collectChildren(child));
+				}
+				return result;
+			};
+
+			const children = collectChildren(draggedStat.data);
+			await this.saveAndRebuild(taskDoc, children.length > 0 ? children : undefined, siblingOrder);
+			this.handleTaskInteraction(draggedStat.data);
+		},
+
+		// ── Per-node render hook ──────────────────────────────
+
+		modifyNodeAndStat(node: TreeData, stat: StatObject): { node: TreeData; stat: StatObject } {
+			// During drag @he-tree temporarily inserts a placeholder node into
+			// treeData that has no `doc`. Return early and leave the stat untouched.
+			if (!node.doc) return { node, stat };
+
+			const isProject = node.doc.doctype === "Project";
+			const isBlank = !node.doc.name;
+
+			let pleaseExpandMe = false;
+
+			if (isProject && node.doc.name) {
+				const projectDoc = node.doc as ProjectDoc;
+				if (projectDoc.project_name in treeNodes.value) {
+					const value = treeNodes.value[projectDoc.project_name];
+					stat.open = value;
+					treeNodes.value[node.doc.name] = value;
+					delete treeNodes.value[projectDoc.project_name];
+					pleaseExpandMe = value;
+				}
+			}
+
+			if (treeNodes.value?.[node.doc.name || ""] === false) {
+				stat.open = false;
+			}
+
+			if (treeNodes.value?.[node.doc.name || ""] === true || pleaseExpandMe) {
+				stat.open = true;
+				this.updateHighlightedProject();
+			}
+
+			if (isBlank) {
+				stat.disableDrag = true;
+				stat.disableDrop = true;
+				stat.draggable = false;
+				stat.droppable = false;
+				stat.dragOpen = false;
+			} else if (isProject) {
+				// Projects are only draggable in Manual sort mode
+				stat.disableDrag = !this.manualSort;
+				stat.disableDrop = false;
+				stat.draggable = this.manualSort;
+				stat.droppable = true;
+				stat.dragOpen = true;
+			} else {
+				// Tasks are only draggable in Manual sort mode
+				stat.disableDrag = !this.manualSort;
+				stat.disableDrop = false;
+				stat.draggable = this.manualSort;
+				stat.droppable = true;
+				stat.dragOpen = true;
+			}
+
+			return { node, stat };
+		},
+
+		// ── Node factories and blank placeholders ─────────────
+
+		createNode(doc: Partial<ProjectDoc> | Partial<TaskDoc>): TreeData {
+			if (!doc.doctype) doc.doctype = "Task";
+			if (!doc.name) doc.name = "";
+			if (!doc.status) doc.status = "Open";
+			return { doc: doc as ProjectDoc | TaskDoc, children: [] };
+		},
+
+		addBlankProject(docs: TreeData[]): TreeData[] {
+			docs.push(
+				this.createNode({
+					doctype: "Project",
+					name: "",
+					project_name: "Add project...",
+					status: "Open",
+				} as ProjectDoc),
+			);
+			return docs;
+		},
+
+		/** Remove all blank task nodes from the tree. */
+		stripBlanks(nodes: TreeData[]): void {
+			for (const node of nodes) {
+				if (node.children) {
+					node.children = node.children.filter((c) => !!c.doc?.name);
+					this.stripBlanks(node.children);
+				}
+			}
+		},
+
+		addBlankTasks(docs: TreeData[]): TreeData[] {
+			this.stripBlanks(docs);
+
+			// Determine which parent should get the blank node.
+			let targetParent: TreeData | null = null;
+
+			if (this.activeNode) {
+				const isProject = this.activeNode.doc.doctype === "Project";
+				if (isProject) {
+					// Active node is a project → blank as its immediate child
+					targetParent = docs.find((p) => p.doc.name === this.activeNode!.doc.name) || null;
+				} else {
+					// Active node is a task → blank as its child
+					targetParent = this.findParentNode(docs, this.activeNode.doc.name);
+				}
+			} else if (this.highlightedProject?.doc.name) {
+				targetParent = docs.find((p) => p.doc.name === this.highlightedProject!.doc.name) || null;
+			}
+
+			if (targetParent) {
+				this.ensureBlankChild(targetParent);
+				// Auto-focus the blank if typewriter mode is active for this parent
+				if (this.autoFocusParent && targetParent.doc.name === this.autoFocusParent) {
+					const blankChild = targetParent.children.find((c) => !c.doc.name);
+					if (blankChild) blankChild._autoFocus = true;
+					this.autoFocusParent = null;
+				}
+			}
+
+			// When a task is selected, also keep a sibling "Add task..." directly
+			// below it (in addition to the child blank above).
+			if (this.activeNode && this.activeNode.doc.doctype !== "Project") {
+				const taskNode = this.findParentNode(docs, this.activeNode.doc.name);
+				if (taskNode) {
+					const siblingBlank = this.ensureBlankSibling(docs, taskNode);
+					// Typewriter mode: a saved sibling sets autoFocusParent to the task's
+					// parent, so focus the freshly re-created sibling blank.
+					const taskDoc = taskNode.doc as TaskDoc;
+					const parentName = taskDoc.parent_task || taskDoc.project;
+					if (siblingBlank && this.autoFocusParent === parentName) {
+						siblingBlank._autoFocus = true;
+						this.autoFocusParent = null;
+					}
+				}
+			}
+			return docs;
+		},
+
+		/** Add a single blank "Add task..." child to `node` if not already present. Non-recursive. */
+		ensureBlankChild(node: TreeData): void {
+			if (node.doc.status === "Completed") return;
+			if (!node.children) node.children = [];
+			if (node.children.some((child) => !child.doc.name)) return;
+
+			const isProject = node.doc.doctype === "Project";
+			const projectName = getProjectName(node);
+			const parentTask = isProject ? null : node.doc.name;
+			// Calculate next available idx: count real (non-blank) siblings + 1
+			const realChildren = node.children.filter((c) => !!c.doc?.name);
+			const nextIdx = realChildren.length + 1;
+
+			const blankTask = this.createNode({
+				doctype: "Task",
+				name: "",
+				subject: "Add task...",
+				project: projectName,
+				parent_task: parentTask,
+				status: "Open",
+				is_group: 0,
+				priority: "Medium",
+				idx: nextIdx,
+			} as TaskDoc);
+			node.children = [...node.children, blankTask];
+			this.treeData = [...this.treeData];
+		},
+
+		/**
+		 * Add a single blank "Add task..." sibling directly below `task` (same
+		 * parent), if that parent doesn't already hold a blank.  Complements
+		 * {@link ensureBlankChild}: a selected task offers both a child placeholder
+		 * (new subtask) and a sibling placeholder (new task at the same level).
+		 * Returns the inserted blank node, or `null` if none was added.
+		 */
+		ensureBlankSibling(tree: TreeData[], task: TreeData): TreeData | null {
+			const taskDoc = task.doc as TaskDoc;
+			const parentName = taskDoc.parent_task || taskDoc.project;
+			const parent = this.findParentNode(tree, parentName);
+			if (!parent || !parent.children) return null;
+			if (parent.children.some((c) => !c.doc.name)) return null;
+
+			const at = parent.children.findIndex((c) => c.doc.name === taskDoc.name);
+			if (at === -1) return null;
+
+			const blankTask = this.createNode({
+				doctype: "Task",
+				name: "",
+				subject: "Add task...",
+				project: taskDoc.project,
+				parent_task: taskDoc.parent_task || null,
+				status: "Open",
+				is_group: 0,
+				priority: "Medium",
+				// Same idx as the selected task so the saved sibling sorts directly
+				// below it — the creation tiebreaker in get() places the newer row after.
+				idx: taskDoc.idx || 0,
+			} as TaskDoc);
+
+			parent.children = [...parent.children.slice(0, at + 1), blankTask, ...parent.children.slice(at + 1)];
+			this.treeData = [...this.treeData];
+			return blankTask;
+		},
+
+		// ── Highlight and navigation ──────────────────────────
+
+		isHighlightedProject(node: TreeData): boolean {
+			try {
+				return !!(node.doc.doctype === "Project" && node.doc.name === this.highlightedProject?.doc.name);
+			} catch {
+				return !!(node.doc.doctype === "Project" && node === this.highlightedProject);
+			}
+		},
+
+		toggleNode(node: TreeData, stat: StatObject): void {
+			if (!node.doc.name) return;
+
+			stat.open = !stat.open;
+			treeNodes.value[node.doc.name] = stat.open;
+
+			if (stat.open) {
+				stat.children?.forEach((child) => {
+					child.hidden = !stat.open;
+				});
+			}
+
+			const isProject = node.doc.doctype === "Project";
+			if (!isProject) {
+				const parentProject = this.findParentProject(node);
+				if (parentProject) {
+					this.highlightedProject = parentProject;
+				}
+			} else if (stat.open) {
+				this.highlightedProject = node;
+			} else {
+				const nextExpandedProject = this.treeData.find(
+					(project) =>
+						project.doc.doctype === "Project" && project.doc.name && treeNodes.value?.[project.doc.name],
+				);
+				if (nextExpandedProject) {
+					this.highlightedProject = nextExpandedProject;
+				} else {
+					this.updateHighlightedProject();
+				}
+			}
+		},
+
+		findParentProject(node: TreeData): TreeData | undefined {
+			const projectName = getProjectName(node);
+			return this.treeData.find((project) => project.doc.name === projectName);
+		},
+
+		findParentNode(nodes: TreeData[], parentDocName: string): TreeData | null {
+			for (const node of nodes) {
+				if (node.doc.name === parentDocName) {
+					return node;
+				} else if (node.children?.length > 0) {
+					const foundNode = this.findParentNode(node.children, parentDocName);
+					if (foundNode) return foundNode;
+				}
+			}
+			return null;
+		},
+
+		addSiblingTask(node: TreeData): void {
+			const isProject = node.doc.doctype === "Project";
+			const parentDocName = isProject
+				? ""
+				: (node.doc as TaskDoc).parent_task || (node.doc as TaskDoc).project;
+
+			const projectName = getProjectName(node);
+			const parentTask = isProject ? null : (node.doc as TaskDoc).parent_task;
+
+			const newBlankNode = this.createNode(
+				isProject
+					? ({
+							doctype: "Project",
+							name: "",
+							project_name: "Add project...",
+							status: "Open",
+						} as ProjectDoc)
+					: ({
+							doctype: "Task",
+							name: "",
+							subject: "Add task...",
+							project: projectName,
+							parent_task: parentTask,
+							status: "Open",
+							is_group: 0,
+							priority: "Medium",
+						} as TaskDoc),
+			);
+
+			const parentNode = this.findParentNode(this.treeData, parentDocName);
+
+			if (parentNode) {
+				parentNode.children = [...parentNode.children, newBlankNode];
+				this.treeData = [...this.treeData];
+			} else {
+				this.treeData = [...this.treeData, newBlankNode];
+			}
+		},
+
+		handleTaskInteraction(node: TreeData, event?: MouseEvent): void {
+			const isProject = node.doc.doctype === "Project";
+			const isBlank = !node.doc.name;
+
+			// Clicking a blank node should never reposition it — the blank is
+			// already in the correct place and the user is about to type into it.
+			if (isBlank) return;
+
+			// ── Multi-selection (Ctrl/Cmd toggles, Shift extends a range) ──────
+			// Modifier-clicks build the copy selection and deliberately skip the
+			// blank-placeholder repositioning that a plain click performs below.
+			if (event && (event.ctrlKey || event.metaKey)) {
+				event.preventDefault();
+				this.toggleSelected(node.doc.name);
+				this.selectionAnchor = node.doc.name;
+				return;
+			}
+			if (event && event.shiftKey) {
+				event.preventDefault(); // suppress native text selection across the range
+				this.selectRange(node.doc.name);
+				this.selectionAnchor = this.selectionAnchor ?? node.doc.name;
+				return;
+			}
+
+			// Plain click clears any multi-selection and anchors the next range.
+			this.clearSelection();
+			this.selectionAnchor = node.doc.name;
+
+			if (isProject) {
+				if (node.doc.status !== "Completed") {
+					this.highlightedProject = node;
+				} else {
+					return;
+				}
+			} else {
+				const parentProject = this.findParentProject(node);
+				if (parentProject) {
+					this.highlightedProject = parentProject;
+				}
+			}
+
+			// Track the active node and re-place the blank as its child
+			this.activeNode = node;
+			this.stripBlanks(this.treeData);
+
+			let targetParent: TreeData | null = null;
+			if (!isProject) {
+				// Task selected → blank as its child
+				targetParent = this.findParentNode(this.treeData, node.doc.name);
+			} else if (this.highlightedProject?.doc.name) {
+				targetParent = this.highlightedProject;
+			}
+
+			if (targetParent) {
+				treeNodes.value[targetParent.doc.name] = true;
+				this.ensureBlankChild(targetParent);
+			}
+
+			// Task selected → also offer a sibling "Add task..." directly below it.
+			if (!isProject) {
+				this.ensureBlankSibling(this.treeData, node);
+			}
+		},
+
+		// ── Multi-selection & copy-to-clipboard ──────────────────
+
+		/** Whether a node is part of the current copy selection. */
+		isSelected(node: TreeData): boolean {
+			return !!node.doc.name && this.selectedTasks.has(node.doc.name);
+		},
+
+		/** Add/remove a single node from the selection. */
+		toggleSelected(name: string): void {
+			if (this.selectedTasks.has(name)) {
+				this.selectedTasks.delete(name);
+			} else {
+				this.selectedTasks.add(name);
+			}
+		},
+
+		/** Drop the whole selection (Escape, plain click, or view switch). */
+		clearSelection(): void {
+			if (this.selectedTasks.size) this.selectedTasks.clear();
+		},
+
+		/**
+		 * Flatten `treeData` to the names of visible **task** rows in display
+		 * order, honoring collapse state so a Shift-range only spans currently
+		 * visible tasks.  Projects are traversed (to reach their tasks) but never
+		 * listed — a range must not sweep a whole project subtree into the copy.
+		 * Blank placeholder nodes are skipped.
+		 */
+		flattenVisibleTaskRows(): string[] {
+			const names: string[] = [];
+			const walk = (nodes: TreeData[]): void => {
+				for (const node of nodes) {
+					const name = node.doc.name;
+					if (!name) continue;
+					if (node.doc.doctype !== "Project") names.push(name);
+					// `treeNodes` stores `false` only for explicitly collapsed nodes.
+					if (treeNodes.value?.[name] !== false) walk(node.children);
+				}
+			};
+			walk(this.treeData);
+			return names;
+		},
+
+		/** Replace the selection with the inclusive task range anchor→target. */
+		selectRange(targetName: string): void {
+			this.clearSelection();
+			if (!this.selectionAnchor) {
+				this.selectedTasks.add(targetName);
+				return;
+			}
+			const order = this.flattenVisibleTaskRows();
+			const a = order.indexOf(this.selectionAnchor);
+			const b = order.indexOf(targetName);
+			if (a === -1 || b === -1) {
+				this.selectedTasks.add(targetName);
+				return;
+			}
+			const [lo, hi] = a <= b ? [a, b] : [b, a];
+			for (let i = lo; i <= hi; i++) this.selectedTasks.add(order[i]);
+		},
+
+		/** Ctrl/Cmd+C: copy the selection as Markdown (see `taskMarkdown.ts`). */
+		copySelectionToClipboard(): void {
+			copyNodesAsMarkdown(selectionRoots(this.treeData, this.selectedTasks));
+		},
+
+		/**
+		 * A row's copy button.  On a row inside the multi-selection it copies the
+		 * whole selection; otherwise just that row and its subtasks.  Pinned rows
+		 * are flat, so their subtasks are rebuilt from the last `get()` snapshot.
+		 */
+		copyFromRow(node: TreeData): void {
+			if (this.viewMode === "pinned") {
+				const tasks = this.lastResponse?.tasks ?? [];
+				copyNodesAsMarkdown([subtreeFromDocs(node.doc as TaskDoc, tasks)]);
+			} else if (this.isSelected(node)) {
+				copyNodesAsMarkdown(selectionRoots(this.treeData, this.selectedTasks));
+			} else {
+				copyNodesAsMarkdown([node]);
+			}
+		},
+
+		updateHighlightedProject(): void {
+			if (!this.treeData || !Array.isArray(this.treeData)) {
+				console.warn("Tree data is not initialized or not an array");
+				return;
+			}
+
+			const expandedProjects = this.treeData.filter(
+				(node) =>
+					node.doc.doctype === "Project" && node.doc.name && treeNodes.value?.[node.doc.name] !== false,
+			);
+
+			if (expandedProjects.length > 0) {
+				this.highlightedProject = expandedProjects[0];
+			} else {
+				const blankProject = this.treeData.find((node) => !node.doc.name);
+				if (blankProject) {
+					this.highlightedProject = blankProject;
+				}
+			}
+		},
+
+		// ── Keyboard shortcuts ────────────────────────────────
+
+		editRootBlankTask(): void {
+			const project = this.highlightedProject;
+			if (project) {
+				if (!project.doc.name) {
+					project._autoFocus = true;
+				} else {
+					// Ensure there's a blank to focus
+					this.ensureBlankChild(project);
+					const blankTask = project.children.find((task) => !task.doc.name);
+					if (blankTask) {
+						blankTask._autoFocus = true;
+					}
+				}
+			}
+		},
+
+		handleKeydown(event: KeyboardEvent): void {
+			const tag = document.activeElement?.tagName;
+			if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+			// Ctrl/Cmd+C copies the current selection as a markdown tree.
+			if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c" && this.selectedTasks.size) {
+				event.preventDefault();
+				this.copySelectionToClipboard();
+				return;
+			}
+
+			// Escape clears the selection.
+			if (event.key === "Escape" && this.selectedTasks.size) {
+				this.clearSelection();
+				return;
+			}
+
+			// "Start typing to create" — but never for Ctrl/Cmd shortcuts.
+			const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}[\]|\\:;'",.<>?/`~\- ]$/;
+			if (allowedKeys.test(event.key) && !event.ctrlKey && !event.metaKey && !this.isOpened) {
+				if (this.viewMode === "pinned") {
+					// Focus synchronously, while the key is still being handled, so the
+					// typed character lands in the quick-entry input.
+					(this.$refs.pinnedView as InstanceType<typeof PinnedView> | undefined)?.focusEntry();
+				} else {
+					this.editRootBlankTask();
+				}
+			}
+		},
+
+		// ── Sidebar ───────────────────────────────────────────
+
+		async loadForm(payload: { doc: ProjectDoc | TaskDoc; isProject: boolean }): Promise<void> {
+			const doctype = payload.isProject ? "Project" : "Task";
+			const docName = payload.doc.name;
+
+			try {
+				const formWrapper = this.$refs.formWrapper as HTMLElement;
+				if (!formWrapper || !document.body.contains(formWrapper)) {
+					console.error("formWrapper is not attached to the DOM");
+					return;
+				}
+
+				await frappe.model.with_doctype(doctype);
+				const meta = frappe.get_meta(doctype);
+				const prev = meta.hide_toolbar;
+				meta.hide_toolbar = 1;
+				formWrapper.innerHTML = "";
+				const formInstance = new frappe.ui.form.Form(doctype, formWrapper, true, "");
+				await frappe.model.with_doc(doctype, docName);
+				formInstance.refresh(docName);
+				formInstance.page.page_head.addClass("hidden");
+				meta.hide_toolbar = prev;
+
+				// Populate our custom header
+				this.sidebarDoctype = __(doctype);
+				this.sidebarDoctypeName = doctype;
+				this.sidebarTitle = docName;
+				this.sidebarDirty = false;
+				this.sidebarFormInstance = formInstance;
+
+				// Track dirty state so the Save button reflects unsaved changes
+				frappe.model.on(doctype, "*", (_field: string, _val: unknown, _changedDoc: any) => {
+					if (formInstance.is_dirty) {
+						this.sidebarDirty = true;
+					} else {
+						this.sidebarDirty = false;
+					}
+				});
+
+				// hide_toolbar suppresses the footer/timeline — restore it manually
+				if (!formInstance.footer && (frappe.boot as any).desk_settings?.timeline) {
+					const footerEl = document.createElement("div");
+					formInstance.page.main[0].parentElement?.appendChild(footerEl);
+					formInstance.footer = new (frappe.ui.form as any).Footer({
+						frm: formInstance,
+						parent: footerEl,
+					});
+					formInstance.footer.refresh();
+					formInstance.parent.removeClass = function () {};
+				}
+			} catch (err) {
+				console.error("Error loading form:", err);
+			}
+		},
+
+		saveSidebarForm(): void {
+			if (!this.sidebarFormInstance) return;
+			this.sidebarFormInstance.save("Save", () => {
+				this.sidebarDirty = false;
+			});
+		},
+
+		openSidebar(payload: any): void {
+			this.isOpened = true;
+			this.sidebarFormInstance = null;
+			this.sidebarTitle = "";
+			this.sidebarDoctype = "";
+			this.sidebarDoctypeName = "";
+			this.sidebarDirty = false;
+			this.loadForm(payload);
+		},
+	},
 });
 </script>
 
 <style>
 /* ── Sort bar ──────────────────────────────────────────────── */
 .tv-sort-bar {
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-bottom: 1px solid var(--border-color);
+	display: flex;
+	align-items: center;
+	padding: 4px 8px;
+	border-bottom: 1px solid var(--border-color);
 }
 
 .sort-selector {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+	display: flex;
+	align-items: center;
+	gap: 4px;
 }
 
 .tv-sort-select {
-  height: 26px;
-  padding: 2px 6px;
-  font-size: var(--text-xs);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-tiny);
-  background: var(--control-bg);
-  color: var(--text-color);
-  cursor: pointer;
+	height: 26px;
+	padding: 2px 6px;
+	font-size: var(--text-xs);
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius-tiny);
+	background: var(--control-bg);
+	color: var(--text-color);
+	cursor: pointer;
 }
 
 .tv-sort-order {
-  height: 26px;
-  padding: 2px 7px;
-  font-size: var(--text-sm);
-  line-height: 1;
+	height: 26px;
+	padding: 2px 7px;
+	font-size: var(--text-sm);
+	line-height: 1;
 }
 
 /* ── Tree ──────────────────────────────────────────────────── */
 .tree-container {
-  /* Adjusts overall tree font size */
-  font-size: var(--text-md);
+	/* Adjusts overall tree font size */
+	font-size: var(--text-md);
 }
 
 .small-icon {
-  /* Scales down the icon size */
-  font-size: 1.5em;
+	/* Scales down the icon size */
+	font-size: 1.5em;
 }
 
 .outer-task {
-  /* align center */
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
-  /* Shrink below content width (see .task in Task.vue) so a long subject
+	/* align center */
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	width: 100%;
+	/* Shrink below content width (see .task in Task.vue) so a long subject
      truncates rather than pushing the row's controls out of view. */
-  min-width: 0;
+	min-width: 0;
 }
 
 /* The chevron is fixed-width — only the subject should give up space. */
 .outer-task > .he-tree__open-icon {
-  flex-shrink: 0;
+	flex-shrink: 0;
 }
 
 .mtl-tree .tree-node:hover {
-  background-color: var(--fg-hover-color);
+	background-color: var(--fg-hover-color);
 }
 
 /* Multi-selected rows (Ctrl/Shift-click) painted for the copy feature.  The
    inner .outer-task paints over the .tree-node hover background, so selection
    stays visible on hover. */
 .outer-task.task-selected {
-  background-color: var(--highlight-color);
-  border-radius: var(--border-radius);
+	background-color: var(--highlight-color);
+	border-radius: var(--border-radius);
 }
 
 .he-tree__open-icon svg path {
-  fill: var(--text-muted);
+	fill: var(--text-muted);
 }
 
 /* ── Flyout ────────────────────────────────────────────────────
@@ -1228,8 +1207,8 @@ export default defineComponent({
    to offset its own sticky page chrome, so this tracks any theme's bar. */
 #tv-flyout .vsp--right-side,
 #tv-flyout .vsp-overlay {
-  top: var(--navbar-height);
-  height: calc(100% - var(--navbar-height));
+	top: var(--navbar-height);
+	height: calc(100% - var(--navbar-height));
 }
 
 /* vue3-side-panel measures the header once, as the panel opens, and writes
@@ -1243,24 +1222,24 @@ export default defineComponent({
    min-height:0 is what lets a column flex item scroll instead of growing to
    fit its content. */
 #tv-flyout .vsp--right-side {
-  display: flex;
-  flex-direction: column;
+	display: flex;
+	flex-direction: column;
 }
 
 #tv-flyout .vsp__header,
 #tv-flyout .vsp__footer {
-  flex: none;
+	flex: none;
 }
 
 #tv-flyout .vsp__body {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: auto !important;
+	flex: 1 1 auto;
+	min-height: 0;
+	height: auto !important;
 }
 
 /* The tab strip is sticky against the panel body, not against the desk's top
    bar, so it starts at 0 here rather than at --navbar-height. */
 #tv-flyout .form-tabs-list {
-  top: 0;
+	top: 0;
 }
 </style>

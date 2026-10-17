@@ -35,46 +35,46 @@ const require = createRequire(import.meta.url);
 require("vue/compiler-sfc").registerTS(() => require("typescript5"));
 
 export default defineConfig({
-  root: portalRoot,
-  plugins: [
-    frappeui({
-      frappeProxy: true,
-      jinjaBootData: true,
-      lucideIcons: true,
-      // Absolute paths: the plugin's own app-directory detection walks up from
-      // the working directory and can land on the wrong app.
-      buildConfig: {
-        outDir: resolve(__dirname, "erpnext_taskview/public/portal"),
-        indexHtmlPath: resolve(__dirname, "erpnext_taskview/www/projects.html"),
-        baseUrl: "/assets/erpnext_taskview/portal/",
-        emptyOutDir: true,
-        sourcemap: true,
-      },
-    }),
-    vue(),
-  ],
-  css: {
-    postcss: {
-      plugins: [tailwindcss({ config: resolve(portalRoot, "tailwind.config.js") })],
-    },
-  },
-  resolve: {
-    alias: {
-      "@": resolve(portalRoot, "src"),
-      // Pure helpers shared with the desk TaskView (budget meter maths).
-      "@desk": resolve(__dirname, "erpnext_taskview/public/js"),
-    },
-  },
-  build: {
-    // The manifest lets scripts/vite-register.mjs copy public/portal/ into a
-    // bench whose sites/assets/erpnext_taskview is a copy rather than a link.
-    manifest: true,
-    rollupOptions: {
-      output: {
-        entryFileNames: "js/[name]-[hash].js",
-        chunkFileNames: "js/[name]-[hash].js",
-        assetFileNames: "assets/[name]-[hash][extname]",
-      },
-    },
-  },
+	root: portalRoot,
+	plugins: [
+		frappeui({
+			frappeProxy: true,
+			jinjaBootData: true,
+			lucideIcons: true,
+			// Absolute paths: the plugin's own app-directory detection walks up from
+			// the working directory and can land on the wrong app.
+			buildConfig: {
+				outDir: resolve(__dirname, "erpnext_taskview/public/portal"),
+				indexHtmlPath: resolve(__dirname, "erpnext_taskview/www/projects.html"),
+				baseUrl: "/assets/erpnext_taskview/portal/",
+				emptyOutDir: true,
+				sourcemap: true,
+			},
+		}),
+		vue(),
+	],
+	css: {
+		postcss: {
+			plugins: [tailwindcss({ config: resolve(portalRoot, "tailwind.config.js") })],
+		},
+	},
+	resolve: {
+		alias: {
+			"@": resolve(portalRoot, "src"),
+			// Pure helpers shared with the desk TaskView (budget meter maths).
+			"@desk": resolve(__dirname, "erpnext_taskview/public/js"),
+		},
+	},
+	build: {
+		// The manifest lets scripts/vite-register.mjs copy public/portal/ into a
+		// bench whose sites/assets/erpnext_taskview is a copy rather than a link.
+		manifest: true,
+		rollupOptions: {
+			output: {
+				entryFileNames: "js/[name]-[hash].js",
+				chunkFileNames: "js/[name]-[hash].js",
+				assetFileNames: "assets/[name]-[hash][extname]",
+			},
+		},
+	},
 });

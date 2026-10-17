@@ -30,12 +30,12 @@ Customers sign in to `/projects` and see only their own projects: an overview wi
 
 ## Where to start
 
-| You are | Read |
-| --- | --- |
-| Staff working in the desk | [Work the task tree](task-view/README.md), then [Timers and timesheets](task-view/timers.md) and [Hour budgets](task-view/hour-budgets.md) |
-| A client with a portal login | [Using the client portal](client-portal/using-the-portal.md) |
-| The administrator setting it up | [Install and upgrade](install.md), [Configuration](configuration.md) and [Giving customers access](client-portal/administering-access.md) |
-| A developer changing the app | [Development](development/README.md) and [How it works](development/architecture.md) |
+| You are                         | Read                                                                                                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Staff working in the desk       | [Work the task tree](task-view/README.md), then [Timers and timesheets](task-view/timers.md) and [Hour budgets](task-view/hour-budgets.md) |
+| A client with a portal login    | [Using the client portal](client-portal/using-the-portal.md)                                                                               |
+| The administrator setting it up | [Install and upgrade](install.md), [Configuration](configuration.md) and [Giving customers access](client-portal/administering-access.md)  |
+| A developer changing the app    | [Development](development/README.md) and [How it works](development/architecture.md)                                                       |
 
 ## Requirements
 

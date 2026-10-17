@@ -24,18 +24,18 @@ yarn build
 
 Run these from the app folder.
 
-| Command | What it does |
-| --- | --- |
-| `yarn build` | Builds the desk bundles and the portal, then updates `sites/assets/assets.json` |
-| `yarn dev` | Rebuilds the Task View bundle whenever a file changes |
-| `yarn dev:dock` | Rebuilds the timer dock bundle whenever a file changes |
-| `yarn dev:portal` | Runs the portal on the Vite dev server, proxied to the bench |
-| `yarn build:taskview` | Builds the Task View bundle only |
-| `yarn build:timerdock` | Builds the timer dock bundle only |
-| `yarn build:portal` | Builds the portal only |
-| `yarn typecheck` | Type-checks the desk code and the portal code |
-| `yarn lint`, `yarn lint:fix` | Runs oxlint on `erpnext_taskview/public/js` and `portal/src` |
-| `yarn format`, `yarn format:check` | Runs oxfmt on the same two folders |
+| Command                            | What it does                                                                    |
+| ---------------------------------- | ------------------------------------------------------------------------------- |
+| `yarn build`                       | Builds the desk bundles and the portal, then updates `sites/assets/assets.json` |
+| `yarn dev`                         | Rebuilds the Task View bundle whenever a file changes                           |
+| `yarn dev:dock`                    | Rebuilds the timer dock bundle whenever a file changes                          |
+| `yarn dev:portal`                  | Runs the portal on the Vite dev server, proxied to the bench                    |
+| `yarn build:taskview`              | Builds the Task View bundle only                                                |
+| `yarn build:timerdock`             | Builds the timer dock bundle only                                               |
+| `yarn build:portal`                | Builds the portal only                                                          |
+| `yarn typecheck`                   | Type-checks the desk code and the portal code                                   |
+| `yarn lint`, `yarn lint:fix`       | Runs oxlint on `erpnext_taskview/public/js` and `portal/src`                    |
+| `yarn format`, `yarn format:check` | Runs oxfmt on the same two folders                                              |
 
 The Python tests are run with `bench`: see [Tests](#tests).
 
@@ -79,12 +79,12 @@ scripts/vite-register.mjs           registers the Vite bundles in sites/assets/a
 
 The Python tests are Frappe `IntegrationTestCase`s in `erpnext_taskview/tests/`, with record builders in `fixtures.py`:
 
-| File | Covers |
-| --- | --- |
-| `test_budget.py` | Rollup of budgets and logged hours, own estimates beating subtask sums, Cancelled Timesheets, open timers, rollup by `parent_task`, and a parent cycle that must not hang |
-| `test_portal.py` | Who can open what, template tasks hidden, project and task reads, status changes and closing assignments, creating tasks, comments, attachments, boot data and the legacy link redirect |
-| `test_pinned.py` | Quick entry, placing after an anchor, giving a task a project, and the cases that are refused |
-| `test_timesheet_guard.py` | A submitted Timesheet never moves a task backwards |
+| File                      | Covers                                                                                                                                                                                  |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test_budget.py`          | Rollup of budgets and logged hours, own estimates beating subtask sums, Cancelled Timesheets, open timers, rollup by `parent_task`, and a parent cycle that must not hang               |
+| `test_portal.py`          | Who can open what, template tasks hidden, project and task reads, status changes and closing assignments, creating tasks, comments, attachments, boot data and the legacy link redirect |
+| `test_pinned.py`          | Quick entry, placing after an anchor, giving a task a project, and the cases that are refused                                                                                           |
+| `test_timesheet_guard.py` | A submitted Timesheet never moves a task backwards                                                                                                                                      |
 
 Frappe only runs tests on a site that allows them. Use a development or test site, never production:
 
