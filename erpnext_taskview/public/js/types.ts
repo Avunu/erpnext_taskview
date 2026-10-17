@@ -95,8 +95,8 @@ export interface GetResponse {
 }
 
 export interface SaveDocResponse extends GetResponse {
-	alert?: string;
-	notice?: string;
+	alert: string | null;
+	notice: string | null;
 }
 
 /** Mirrors `models.CreatePinnedTaskResponse`. */
@@ -167,16 +167,36 @@ export function getProjectName(node: TreeNode): string {
 // ---------------------------------------------------------------------------
 
 /**
+ * Call a whitelisted method through `frappe.call`.
+ *
+ * Resolves with what the method returned and rejects with frappe's error
+ * response, as the hand-written promise wrappers did.  Every TaskView method
+ * returns a dict, so a response without one is an error too.
+ */
+export function callMethod<T>(method: string, args: Record<string, unknown> = {}): Promise<T> {
+	return new Promise((resolve, reject) => {
+		frappe.call<T>({
+			method,
+			args,
+			callback: (r) => {
+				if (r.message === undefined) reject(new Error(`${method} returned nothing`));
+				else resolve(r.message);
+			},
+			error: (err) => reject(err),
+		});
+	});
+}
+
+/**
  * Capture the current list-view's form params (doctype, filters, sort, etc.)
  * so mutation endpoints can forward them to `get()` on the backend.
  */
 function getFormParams(): string | undefined {
-	const list = (window as any).cur_list;
+	const list = cur_list;
 	if (!list) return undefined;
 	const params: Record<string, unknown> = {};
 	if (list.doctype) params.doctype = list.doctype;
-	if (list.filters) params.filters = list.get_filters_for_args?.() ?? list.filters;
-	if (list.or_filters) params.or_filters = list.or_filters;
+	if (list.filters) params.filters = list.get_filters_for_args();
 	if (list.sort_selector) {
 		params.sort_by = list.sort_selector.sort_by;
 		params.sort_order = list.sort_selector.sort_order;
@@ -199,52 +219,28 @@ export function saveDoc(
 	const fp = getFormParams();
 	if (fp) args.form_params = fp;
 
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.save_doc",
-			args,
-			callback: (r: { message: SaveDocResponse }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	return callMethod<SaveDocResponse>("erpnext_taskview.erpnext_taskview.api.save_doc", args);
 }
 
 /** Fresh budgets for the given projects, without rebuilding the tree. */
 export function fetchBudgetSummary(projects: string[]): Promise<BudgetSet> {
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.budget.get_budget_summary",
-			args: { projects: JSON.stringify(projects) },
-			callback: (r: { message: BudgetSet }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
+	return callMethod<BudgetSet>("erpnext_taskview.erpnext_taskview.budget.get_budget_summary", {
+		projects: JSON.stringify(projects),
 	});
 }
 
 /** The given tasks' descriptions as Markdown; tasks with none are left out. */
 export function fetchTaskDescriptions(tasks: string[]): Promise<Record<string, string>> {
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.get_task_descriptions",
-			args: { tasks: JSON.stringify(tasks) },
-			callback: (r: { message: TaskDescriptions }) => resolve(r.message.descriptions),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	return callMethod<TaskDescriptions>("erpnext_taskview.erpnext_taskview.api.get_task_descriptions", {
+		tasks: JSON.stringify(tasks),
+	}).then((r) => r.descriptions);
 }
 
 export function fetchData(): Promise<GetResponse> {
-	return new Promise((resolve, reject) => {
-		const callArgs: Record<string, string> = {};
-		const fp = getFormParams();
-		if (fp) callArgs.args = fp;
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.get",
-			args: callArgs,
-			callback: (r: { message: GetResponse }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	const callArgs: Record<string, string> = {};
+	const fp = getFormParams();
+	if (fp) callArgs.args = fp;
+	return callMethod<GetResponse>("erpnext_taskview.erpnext_taskview.api.get", callArgs);
 }
 
 export function bulkCreateTasks(
@@ -261,14 +257,7 @@ export function bulkCreateTasks(
 	const fp = getFormParams();
 	if (fp) args.form_params = fp;
 
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.bulk_create_tasks",
-			args,
-			callback: (r: { message: GetResponse }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	return callMethod<GetResponse>("erpnext_taskview.erpnext_taskview.api.bulk_create_tasks", args);
 }
 
 export function deleteTask(task: string): Promise<GetResponse> {
@@ -276,14 +265,7 @@ export function deleteTask(task: string): Promise<GetResponse> {
 	const fp = getFormParams();
 	if (fp) args.form_params = fp;
 
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.delete_task",
-			args,
-			callback: (r: { message: GetResponse }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	return callMethod<GetResponse>("erpnext_taskview.erpnext_taskview.api.delete_task", args);
 }
 
 export function assignTask(task: string, user: string): Promise<GetResponse> {
@@ -291,14 +273,7 @@ export function assignTask(task: string, user: string): Promise<GetResponse> {
 	const fp = getFormParams();
 	if (fp) args.form_params = fp;
 
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.assign_task",
-			args,
-			callback: (r: { message: GetResponse }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	return callMethod<GetResponse>("erpnext_taskview.erpnext_taskview.api.assign_task", args);
 }
 
 export function unassignTask(task: string, user: string): Promise<GetResponse> {
@@ -306,14 +281,7 @@ export function unassignTask(task: string, user: string): Promise<GetResponse> {
 	const fp = getFormParams();
 	if (fp) args.form_params = fp;
 
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.unassign_task",
-			args,
-			callback: (r: { message: GetResponse }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	return callMethod<GetResponse>("erpnext_taskview.erpnext_taskview.api.unassign_task", args);
 }
 
 export function pinTask(task: string): Promise<GetResponse> {
@@ -321,14 +289,7 @@ export function pinTask(task: string): Promise<GetResponse> {
 	const fp = getFormParams();
 	if (fp) args.form_params = fp;
 
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.pin_task",
-			args,
-			callback: (r: { message: GetResponse }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	return callMethod<GetResponse>("erpnext_taskview.erpnext_taskview.api.pin_task", args);
 }
 
 export function unpinTask(task: string): Promise<GetResponse> {
@@ -336,14 +297,7 @@ export function unpinTask(task: string): Promise<GetResponse> {
 	const fp = getFormParams();
 	if (fp) args.form_params = fp;
 
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.unpin_task",
-			args,
-			callback: (r: { message: GetResponse }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	return callMethod<GetResponse>("erpnext_taskview.erpnext_taskview.api.unpin_task", args);
 }
 
 export function reorderPinnedTasks(order: string[]): Promise<GetResponse> {
@@ -351,14 +305,7 @@ export function reorderPinnedTasks(order: string[]): Promise<GetResponse> {
 	const fp = getFormParams();
 	if (fp) args.form_params = fp;
 
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.reorder_pinned_tasks",
-			args,
-			callback: (r: { message: GetResponse }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	return callMethod<GetResponse>("erpnext_taskview.erpnext_taskview.api.reorder_pinned_tasks", args);
 }
 
 export function createPinnedTask(subject: string, after: string | null): Promise<CreatePinnedTaskResponse> {
@@ -367,14 +314,10 @@ export function createPinnedTask(subject: string, after: string | null): Promise
 	const fp = getFormParams();
 	if (fp) args.form_params = fp;
 
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.create_pinned_task",
-			args,
-			callback: (r: { message: CreatePinnedTaskResponse }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	return callMethod<CreatePinnedTaskResponse>(
+		"erpnext_taskview.erpnext_taskview.api.create_pinned_task",
+		args,
+	);
 }
 
 export function setTaskProject(task: string, project: string): Promise<GetResponse> {
@@ -382,12 +325,5 @@ export function setTaskProject(task: string, project: string): Promise<GetRespon
 	const fp = getFormParams();
 	if (fp) args.form_params = fp;
 
-	return new Promise((resolve, reject) => {
-		frappe.call({
-			method: "erpnext_taskview.erpnext_taskview.api.set_task_project",
-			args,
-			callback: (r: { message: GetResponse }) => resolve(r.message),
-			error: (err: unknown) => reject(err),
-		});
-	});
+	return callMethod<GetResponse>("erpnext_taskview.erpnext_taskview.api.set_task_project", args);
 }

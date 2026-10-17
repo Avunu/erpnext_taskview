@@ -19,12 +19,14 @@ Staff (System Users) previewing the portal see what their normal Project
 permissions allow, and write with normal permissions too.
 """
 
-from typing import cast
+from typing import NoReturn, cast
 
 import frappe
 from frappe import _
 from frappe.query_builder import Criterion, DocType, Order, Table
 from frappe.query_builder.functions import Lower
+
+from erpnext_taskview.utils import throw
 
 
 def is_staff(user: str | None = None) -> bool:
@@ -119,13 +121,13 @@ def get_accessible_projects(user: str | None = None) -> list[str]:
 	).run(pluck=True)
 
 
-def _deny() -> None:
+def _deny() -> NoReturn:
 	# One message for "missing" and "not yours", so project / task names
 	# can't be probed from the portal.
-	frappe.throw(_("You do not have access to this project."), frappe.PermissionError)
+	throw(_("You do not have access to this project."), frappe.PermissionError)
 
 
-def assert_project_access(project: str) -> None:
+def assert_project_access(project: str | None) -> None:
 	"""Raise ``frappe.PermissionError`` unless the session user may open ``project``."""
 	if not project or frappe.session.user == "Guest":
 		_deny()
@@ -137,7 +139,7 @@ def assert_project_access(project: str) -> None:
 		_deny()
 
 
-def assert_task_access(task: str) -> frappe._dict:
+def assert_task_access(task: str | None) -> frappe._dict:
 	"""Raise unless the session user may open ``task``; return its key fields.
 
 	Template tasks are never exposed.

@@ -6,30 +6,31 @@
  *
  * frappe-ui ships raw TypeScript / JS sources that don't pass this repo's
  * strict compiler settings, so `portal/tsconfig.json` maps the package to this
- * declaration instead of type-checking the library.  Components are typed
- * loosely; add an export here when the portal starts using another one.
+ * declaration instead of type-checking the library.  Components are typed as
+ * plain Vue components (their props and slots are frappe-ui's own concern);
+ * add an export here when the portal starts using another one.
  */
 
+// frappe-ui's dayjs has the relativeTime plugin; this adds its methods to `Dayjs`.
+/// <reference types="dayjs/plugin/relativeTime" />
+
 import type { Dayjs } from "dayjs";
-import "dayjs/plugin/relativeTime";
+import type { Component } from "vue";
 
-// Untyped on purpose: props and slots are frappe-ui's own concern.
-type AnyComponent = any;
-
-export const Avatar: AnyComponent;
-export const Badge: AnyComponent;
-export const Button: AnyComponent;
-export const Dialog: AnyComponent;
-export const ErrorMessage: AnyComponent;
-export const FileUploader: AnyComponent;
-export const FormControl: AnyComponent;
-export const FrappeUIProvider: AnyComponent;
-export const Sidebar: AnyComponent;
-export const SidebarHeader: AnyComponent;
-export const SidebarItem: AnyComponent;
-export const SidebarSection: AnyComponent;
-export const TabButtons: AnyComponent;
-export const TextInput: AnyComponent;
+export const Avatar: Component;
+export const Badge: Component;
+export const Button: Component;
+export const Dialog: Component;
+export const ErrorMessage: Component;
+export const FileUploader: Component;
+export const FormControl: Component;
+export const FrappeUIProvider: Component;
+export const Sidebar: Component;
+export const SidebarHeader: Component;
+export const SidebarItem: Component;
+export const SidebarSection: Component;
+export const TabButtons: Component;
+export const TextInput: Component;
 
 export const toast: {
 	success(message: string): void;

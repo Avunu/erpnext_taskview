@@ -184,7 +184,7 @@ export async function copyNodesAsMarkdown(nodes: TreeNode[]): Promise<void> {
 		await writeToClipboard(rendered.then((r) => r.markdown));
 		const { count } = await rendered;
 		frappe.show_alert({
-			message: __("Copied {0} task(s) to clipboard", { "0": String(count) }),
+			message: __("Copied {0} task(s) to clipboard", [String(count)]),
 			indicator: "green",
 		});
 	} catch {

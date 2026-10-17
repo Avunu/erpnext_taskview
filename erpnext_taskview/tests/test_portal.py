@@ -1,16 +1,21 @@
 # Copyright (c) 2026, Avunu LLC and contributors
 # For license information, please see license.txt
 
+import io
+from unittest.mock import patch
+
 import frappe
 from frappe.desk.form.assign_to import add as assign
 from frappe.tests import IntegrationTestCase, set_user
+from werkzeug.test import EnvironBuilder
+from werkzeug.wrappers import Request
 
 from erpnext_taskview.portal import api
 from erpnext_taskview.portal.access import assert_task_access, get_accessible_projects
 from erpnext_taskview.portal.notify import NOTIFICATION_TYPE
 from erpnext_taskview.www import projects as projects_page
 
-from .fixtures import log_time, make_customer, make_portal_user, make_project, make_task
+from .fixtures import get_task, log_time, make_customer, make_portal_user, make_project, make_task
 
 
 class TestPortal(IntegrationTestCase):
@@ -107,7 +112,7 @@ class TestPortal(IntegrationTestCase):
 
 		with set_user(self.contact_user):
 			api.set_task_status(task, "Completed")
-		doc = frappe.get_doc("Task", task)
+		doc = get_task(task)
 		self.assertEqual(doc.status, "Completed")
 		self.assertEqual(doc.completed_by, self.contact_user)
 		self.assertFalse(
@@ -129,7 +134,7 @@ class TestPortal(IntegrationTestCase):
 
 	def test_dependency_errors_pass_through(self):
 		blocker = make_task(self.project)
-		blocked = frappe.get_doc("Task", make_task(self.project))
+		blocked = get_task(make_task(self.project))
 		blocked.append("depends_on", {"task": blocker})
 		blocked.save()
 
@@ -146,13 +151,13 @@ class TestPortal(IntegrationTestCase):
 				priority="High",
 			)["name"]
 
-		task = frappe.get_doc("Task", name)
+		task = get_task(name)
 		self.assertEqual(task.subject, "Please add a report")
 		self.assertEqual(task.owner, self.contact_user)
 		self.assertEqual(task.priority, "High")
-		self.assertNotIn("script", task.description)
+		self.assertNotIn("script", task.description or "")
 		self.assertEqual(task.company, frappe.db.get_value("Project", self.project, "company"))
-		parent = frappe.get_doc("Task", self.phase)
+		parent = get_task(self.phase)
 		self.assertIn(name, [d.task for d in parent.depends_on])
 		self.assertTrue(
 			frappe.db.exists(
@@ -220,3 +225,43 @@ class TestPortal(IntegrationTestCase):
 				projects_page.get_context(frappe._dict())
 		self.assertEqual(frappe.local.flags.redirect_location, f"/projects/{self.project}")
 		frappe.local.form_dict = frappe._dict()
+
+	def test_page_render_commits_the_csrf_token(self):
+		frappe.local.flags.commit = False
+		with set_user(self.contact_user):
+			context = projects_page.get_context(frappe._dict())
+		self.assertTrue(frappe.local.flags.commit)
+		self.assertEqual(context.boot["user"], self.contact_user)
+		self.assertTrue(context.boot["csrf_token"])
+		frappe.local.flags.commit = False
+
+	def test_dev_boot_needs_developer_mode(self):
+		with patch.dict(frappe.conf, {"developer_mode": 0}), self.assertRaises(frappe.ValidationError):
+			projects_page.get_context_for_dev()
+		with patch.dict(frappe.conf, {"developer_mode": 1}):
+			self.assertEqual(projects_page.get_context_for_dev()["user"], "Administrator")
+
+	def test_upload_attachment(self):
+		previous = getattr(frappe.local, "request", None)
+		builder = EnvironBuilder(
+			method="POST", data={"file": (io.BytesIO(b"uploaded"), "upload.txt"), "docname": self.task}
+		)
+		try:
+			frappe.local.request = Request(builder.get_environ())
+			frappe.local.request_ip = "127.0.0.1"  # the endpoint is rate limited per IP
+			with set_user(self.contact_user):
+				# set_user starts the request afresh, form_dict included.
+				frappe.local.form_dict = frappe._dict(docname=self.task)
+				attachment = api.upload_attachment()
+				frappe.local.request = Request(EnvironBuilder(method="POST").get_environ())
+				with self.assertRaises(frappe.ValidationError):
+					api.upload_attachment()
+		finally:
+			frappe.local.request = previous
+			frappe.local.form_dict = frappe._dict()
+
+		self.assertEqual(attachment["file_name"], "upload.txt")
+		self.assertEqual(
+			frappe.db.get_value("File", attachment["name"], ["attached_to_doctype", "attached_to_name"]),
+			("Task", self.task),
+		)

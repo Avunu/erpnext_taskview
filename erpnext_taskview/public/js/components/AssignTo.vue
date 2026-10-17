@@ -66,6 +66,13 @@ interface UserOption {
 	label: string;
 }
 
+/** A row of the `frappe.client.get_list` call below. */
+interface UserRow {
+	name: string;
+	full_name: string | null;
+	user_image: string | null;
+}
+
 // Module-level cache: shared across all instances and Vue app re-creations.
 // The promise ensures only one API call is ever in-flight.
 let _userCache: { users: UserOption[]; images: Record<string, string> } | null = null;
@@ -77,7 +84,7 @@ function fetchUsersOnce(): Promise<{ users: UserOption[]; images: Record<string,
 
 	_userCachePromise = new Promise<{ users: UserOption[]; images: Record<string, string> }>(
 		(resolve, reject) => {
-			frappe.call({
+			frappe.call<UserRow[]>({
 				method: "frappe.client.get_list",
 				args: {
 					doctype: "User",
@@ -85,8 +92,8 @@ function fetchUsersOnce(): Promise<{ users: UserOption[]; images: Record<string,
 					fields: ["name", "full_name", "user_image"],
 					limit_page_length: 0,
 				},
-				callback: (r: any) => {
-					const result = r.message || [];
+				callback: (r) => {
+					const result = r.message ?? [];
 					const users: UserOption[] = [];
 					const images: Record<string, string> = {};
 					for (const u of result) {
@@ -97,7 +104,7 @@ function fetchUsersOnce(): Promise<{ users: UserOption[]; images: Record<string,
 					_userCache = { users, images };
 					resolve(_userCache);
 				},
-				error: (err: any) => {
+				error: (err) => {
 					_userCachePromise = null; // allow retry on failure
 					reject(err);
 				},
@@ -154,7 +161,8 @@ export default defineComponent({
 		},
 
 		isAssignedToMe(): boolean {
-			return this.assignedUsers.includes(frappe.session.user);
+			const user = frappe.session.user;
+			return !!user && this.assignedUsers.includes(user);
 		},
 
 		filteredUsers(): UserOption[] {
@@ -189,9 +197,9 @@ export default defineComponent({
 		initials(email: string): string {
 			const user = this.allUsers.find((u) => u.value === email);
 			const name = user?.label || email;
-			const parts = name.split(/[\s@.]+/).filter(Boolean);
-			if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-			return (parts[0]?.[0] || "?").toUpperCase();
+			const [first, second] = name.split(/[\s@.]+/).filter(Boolean);
+			if (first && second) return (first.charAt(0) + second.charAt(0)).toUpperCase();
+			return (first?.charAt(0) || "?").toUpperCase();
 		},
 
 		togglePin(): void {
@@ -225,20 +233,21 @@ export default defineComponent({
 			this.dropdownOpen = false;
 			this.search = "";
 		},
-	},
 
-	mounted() {
-		const onClickOutside = (e: MouseEvent) => {
+		onClickOutside(e: MouseEvent): void {
 			if (this.dropdownOpen && !(this.$el as HTMLElement).contains(e.target as Node)) {
 				this.closeDropdown();
 			}
-		};
-		document.addEventListener("click", onClickOutside);
-		(this as any)._onClickOutside = onClickOutside;
+		},
+	},
+
+	mounted() {
+		// Vue binds each method to the instance once, so the same function is removed below.
+		document.addEventListener("click", this.onClickOutside);
 	},
 
 	beforeUnmount() {
-		document.removeEventListener("click", (this as any)._onClickOutside);
+		document.removeEventListener("click", this.onClickOutside);
 	},
 });
 </script>

@@ -7,7 +7,9 @@ readme = "README.md"
 license = { text = "MIT" }
 classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version"]
-dependencies = []
+# frappe and erpnext come from the bench ([tool.bench.frappe-dependencies]); these are the
+# libraries the app imports itself, within the ranges frappe v16 pins.
+dependencies = ["beautifulsoup4>=4.13,<5", "nh3>=0.3,<1", "pydantic>=2.12,<3"]
 
 [build-system]
 requires = ["flit_core >=3.4,<4"]
@@ -22,30 +24,12 @@ integration-branch = "main"
 # The existing CI gate stays until the reusable CI workflows render ci.yml.
 retire-keep = [".github/workflows/check.yml"]
 
-# Until PR B types the desk code against frappe-types: these files still use `any` (most of it for
-# frappe's untyped desk API and frappe-ui's untyped components), which the locked
-# typescript/no-explicit-any rule refuses. Restore the lock with that PR.
-[tool.frappe-nix.js]
-locked-rules = false
+[tool.frappe-nix.dev-shell]
+frappe-nix-url = "github:Avunu/frappe-nix/b4d0f2784987187e6286a957d5cade3a400730ae"
 
-[[tool.frappe-nix.js.oxlint.overrides]]
-files = [
-	"erpnext_taskview/public/js/TaskView.vue",
-	"erpnext_taskview/public/js/components/AssignTo.vue",
-	"erpnext_taskview/public/js/components/Task.vue",
-	"erpnext_taskview/public/js/taskview.entry.ts",
-	"erpnext_taskview/public/js/timerDialog.ts",
-	"erpnext_taskview/public/js/timerStore.ts",
-	"erpnext_taskview/public/js/types.ts",
-	"erpnext_taskview/public/js/types/frappe.d.ts",
-	"portal/src/types/frappe-ui-editor.d.ts",
-	"portal/src/types/frappe-ui.d.ts",
-	"vite.config.ts",
-]
-rules = { "typescript/no-explicit-any" = "off" }
-
-# Stylesheet imports in the SFCs and the portal entry, and the dayjs plugin types the frappe-ui
-# shim augments: side-effect imports by design.
+# Stylesheet imports are side-effect imports by nature: Vite pulls the CSS into the
+# bundle in import order. Exempt exactly the modules that import a stylesheet, and
+# nothing else, from import/no-unassigned-import.
 [[tool.frappe-nix.js.oxlint.overrides]]
 files = [
 	"erpnext_taskview/public/js/TaskView.vue",
@@ -53,29 +37,8 @@ files = [
 	"erpnext_taskview/public/js/components/Task.vue",
 	"erpnext_taskview/public/js/components/TimerWidget.vue",
 	"portal/src/main.ts",
-	"portal/src/types/frappe-ui.d.ts",
 ]
 rules = { "import/no-unassigned-import" = "off" }
-
-# `df.onchange` on a frappe dialog field is frappe's callback, not a DOM event handler.
-[[tool.frappe-nix.js.oxlint.overrides]]
-files = ["erpnext_taskview/public/js/components/Task.vue", "erpnext_taskview/public/js/timerDialog.ts"]
-rules = { "unicorn/prefer-add-event-listener" = "off" }
-
-# The constructor only calls super, but the base is cast to `any`, so it is what gives
-# `new TaskViewSortSelector(opts)` its parameter for the type checker.
-[[tool.frappe-nix.js.oxlint.overrides]]
-files = ["erpnext_taskview/public/js/taskview.entry.ts"]
-rules = { "no-useless-constructor" = "off" }
-
-# The hand-written frappe globals: `export {}` makes the file a module for its `declare global`.
-# PR B replaces the file with frappe-types.
-[[tool.frappe-nix.js.oxlint.overrides]]
-files = ["erpnext_taskview/public/js/types/frappe.d.ts"]
-rules = { "unicorn/require-module-specifiers" = "off" }
-
-[tool.frappe-nix.dev-shell]
-frappe-nix-url = "github:Avunu/frappe-nix/b4d0f2784987187e6286a957d5cade3a400730ae"
 
 [[tool.frappe-nix.typescript.spa]]
 root = "."
@@ -95,6 +58,7 @@ check = "node scripts/vue-tsc.cjs --noEmit -p portal/tsconfig.json"
 
 [tool.bench.frappe-dependencies]
 frappe = ">=16.0.0,<17.0.0"
+erpnext = ">=16.0.0,<17.0.0"
 
 [tool.ssort]
 # Skip sorting within TYPE_CHECKING blocks
@@ -134,7 +98,7 @@ show_missing = true
 skip_covered = true
 precision = 1
 exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError", "@(abc\\.)?abstractmethod"]
-fail_under = 0
+fail_under = 80
 
 [tool.vulture]
 exclude = [".venv/", "node_modules/", ".frappe-nix/", ".dev-dist/"]

@@ -46,8 +46,8 @@
 		<ProjectPicker
 			v-if="showProjectPicker"
 			:project="taskDoc.project"
-			:projectName="taskDoc.project_name"
-			:customer="taskDoc.customer"
+			:projectName="taskDoc.project_name ?? null"
+			:customer="taskDoc.customer ?? null"
 			:recentProjects="recentProjects"
 			@select="handleSetProject"
 		/>
@@ -147,7 +147,7 @@ import {
 import { timersByTask, getRunningTimer, type ActiveTimer } from "../timerStore";
 import { liveExtraByNode } from "../budgetLive";
 import { treeNodes } from "../treeState";
-import { showStopTimerDialog, calcElapsedHrs } from "../timerDialog";
+import { showStopTimerDialog, calcElapsedHrs, seedBillableTime } from "../timerDialog";
 import AssignTo from "./AssignTo.vue";
 import BudgetMeter from "./BudgetMeter.vue";
 import ProjectPicker from "./ProjectPicker.vue";
@@ -162,6 +162,16 @@ import {
 	Trash2,
 } from "lucide-vue-next";
 import "../task-controls.css";
+
+/** The values of the "Log Time" dialog, keyed by its fieldnames. */
+type LogTimeValues = {
+	activity_type?: string;
+	hrs?: number;
+	description?: string;
+	is_billable?: 0 | 1;
+	billing_hrs?: number;
+	completed?: 0 | 1;
+};
 
 /**
  * Task / Project tree row component.
@@ -595,7 +605,13 @@ export default defineComponent({
 					},
 					{ label: "Hrs", fieldname: "hrs", fieldtype: "Float", reqd: 1 },
 					{ label: "Description", fieldname: "description", fieldtype: "Small Text" },
-					{ label: "Is Billable", fieldname: "is_billable", fieldtype: "Check" },
+					{
+						label: "Is Billable",
+						fieldname: "is_billable",
+						fieldtype: "Check",
+						// When Is Billable is toggled on, seed Billable Time from current Hrs
+						onchange: () => seedBillableTime(d),
+					},
 					{
 						label: "Billable Time",
 						fieldname: "billing_hrs",
@@ -607,7 +623,9 @@ export default defineComponent({
 				],
 				size: "small",
 				primary_action_label: "Submit",
-				primary_action: async (values: any) => {
+				primary_action: async (dialogValues) => {
+					// The dialog's values, keyed by the fieldnames above.
+					const values = dialogValues as LogTimeValues;
 					if (!values.hrs) {
 						frappe.throw(__("Hours is required"));
 						return;
@@ -635,12 +653,6 @@ export default defineComponent({
 					}
 				},
 			});
-			// When Is Billable is toggled on, seed Billable Time from current Hrs
-			d.fields_dict.is_billable.df.onchange = () => {
-				if (d.get_value("is_billable") && !d.get_value("billing_hrs")) {
-					d.set_value("billing_hrs", d.get_value("hrs") || 0);
-				}
-			};
 			d.show();
 		},
 		/** Click on the subject text: emit interaction; blanks also enter edit mode. */
@@ -741,8 +753,8 @@ export default defineComponent({
 						// UPDATE existing Task or Project
 						let text = this.editedText;
 						if (this.isProject) {
-							const parts = text.split(":", 2);
-							if (parts.length === 2) text = parts[1].trim();
+							const [, title] = text.split(":", 2);
+							if (title !== undefined) text = title.trim();
 							try {
 								const data = await saveDoc({ ...this.node.doc, project_name: text } as ProjectDoc);
 								this.$emit("catch-success", data);

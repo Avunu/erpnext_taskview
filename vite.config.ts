@@ -1,7 +1,7 @@
 // Copyright (c) 2026, Avunu LLC and contributors
 // For license information, please see license.txt
 
-import { defineConfig } from "vite";
+import { defineConfig, type Rolldown } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { resolve } from "path";
 import { fileURLToPath } from "url";
@@ -24,7 +24,7 @@ const target = process.env.BUNDLE;
 // Drop noisy "/* #__PURE__ */" INVALID_ANNOTATION warnings from third-party deps
 // (e.g. @vueuse/core) — not actionable in our code. Anything outside node_modules
 // still surfaces normally.
-const onwarn = (warning: any, warn: (w: any) => void): void => {
+const onwarn = (warning: Rolldown.RolldownLog, warn: (w: Rolldown.RolldownLog) => void): void => {
 	const where = String(warning.id ?? warning.loc?.file ?? warning.message ?? "");
 	if (warning.code === "INVALID_ANNOTATION" && where.includes("node_modules")) return;
 	warn(warning);

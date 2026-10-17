@@ -78,12 +78,12 @@ def render_staff_html(html: str | None) -> str:
 	soup = BeautifulSoup(html, "html.parser")
 	changed = False
 	for tag, attr in (("img", "src"), ("a", "href")):
-		for el in soup.find_all(tag):
+		for el in soup.select(tag):
 			url = el.get(attr)
 			if isinstance(url, str) and url.startswith(_PRIVATE_PREFIXES):
 				el[attr] = download_url(url)
 				changed = True
-	for el in soup.find_all("a"):
+	for el in soup.select("a"):
 		el["target"] = "_blank"
 		el["rel"] = "noopener noreferrer"
 		changed = True

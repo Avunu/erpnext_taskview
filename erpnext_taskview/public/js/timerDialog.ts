@@ -13,6 +13,20 @@
  * {@link StopTimerDialogOptions.onCancel} hooks.
  */
 
+import type { Dialog } from "frappe-types";
+import type { SaveDocResponse } from "./types";
+
+/**
+ * The Is Billable field's `onchange`: once it is ticked, seed Billable Time
+ * from Hrs.  Both the stop dialog and Task's "Log Time" dialog have the three
+ * fields.
+ */
+export function seedBillableTime(d: Dialog): void {
+	if (d.get_value("is_billable") && !d.get_value("billing_hrs")) {
+		void d.set_value("billing_hrs", d.get_value("hrs") || 0);
+	}
+}
+
 export interface StopTimerValues {
 	task: string;
 	activity_type: string;
@@ -39,7 +53,7 @@ export interface StopTimerDialogOptions {
 	/** Customer name for the context header (optional). */
 	customer?: string | null;
 	/** Called when the user submits the form. Should stop the timer and return status messages. */
-	onSubmit: (values: StopTimerValues) => Promise<{ alert?: string; notice?: string }>;
+	onSubmit: (values: StopTimerValues) => Promise<Pick<SaveDocResponse, "alert" | "notice">>;
 	/** Called when the user cancels. Should resume the timer. */
 	onCancel: () => Promise<void>;
 }
@@ -121,7 +135,13 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 				fieldtype: "Small Text",
 				default: currentDesc,
 			},
-			{ label: "Is Billable", fieldname: "is_billable", fieldtype: "Check" },
+			{
+				label: "Is Billable",
+				fieldname: "is_billable",
+				fieldtype: "Check",
+				// When Is Billable is toggled on, seed Billable Time from current Hrs
+				onchange: () => seedBillableTime(d),
+			},
 			{
 				label: "Billable Time",
 				fieldname: "billing_hrs",
@@ -133,9 +153,10 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 		],
 		size: "small",
 		primary_action_label: "Submit",
-		primary_action: async (values: Record<string, any>) => {
+		primary_action: async (values) => {
 			try {
-				const status = await onSubmit(values as StopTimerValues);
+				// The dialog's values, keyed by the fieldnames above.
+				const status = await onSubmit(values as unknown as StopTimerValues);
 				d.hide();
 				if (status?.alert) {
 					frappe.show_alert({ message: status.alert, indicator: "green" });
@@ -153,13 +174,6 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 			d.hide();
 		},
 	});
-
-	// When Is Billable is toggled on, seed Billable Time from current Hrs
-	d.fields_dict.is_billable.df.onchange = () => {
-		if (d.get_value("is_billable") && !d.get_value("billing_hrs")) {
-			d.set_value("billing_hrs", d.get_value("hrs") || 0);
-		}
-	};
 
 	d.show();
 }

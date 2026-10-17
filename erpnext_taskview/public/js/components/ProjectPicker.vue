@@ -67,7 +67,7 @@ let _projectsPromise: Promise<ProjectOption[]> | null = null;
 function fetchOpenProjects(): Promise<ProjectOption[]> {
 	if (_projectsPromise) return _projectsPromise;
 	_projectsPromise = new Promise<ProjectOption[]>((resolve, reject) => {
-		frappe.call({
+		frappe.call<ProjectOption[]>({
 			method: "frappe.client.get_list",
 			args: {
 				doctype: "Project",
@@ -76,11 +76,11 @@ function fetchOpenProjects(): Promise<ProjectOption[]> {
 				order_by: "idx asc, creation asc",
 				limit_page_length: 0,
 			},
-			callback: (r: { message: ProjectOption[] }) => {
-				_projects = r.message || [];
+			callback: (r) => {
+				_projects = r.message ?? [];
 				resolve(_projects);
 			},
-			error: (err: unknown) => reject(err),
+			error: (err) => reject(err),
 		});
 	}).finally(() => {
 		_projectsPromise = null;

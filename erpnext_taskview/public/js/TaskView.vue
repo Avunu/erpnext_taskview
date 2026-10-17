@@ -113,6 +113,7 @@
 </template>
 
 <script lang="ts">
+import type { Form } from "frappe-types";
 import { defineComponent, type PropType } from "vue";
 import { Draggable, dragContext } from "@he-tree/vue";
 import Task from "./components/Task.vue";
@@ -161,6 +162,12 @@ const FLYOUT_Z_INDEX = 1025;
 /** Dispatched by `timerStore.ts` whenever either bundle's timer list changes. */
 const TIMERS_CHANGED_EVENT = "erpnext_taskview:timers_changed";
 
+/**
+ * `frappe.ui.form.Footer` (form/footer/footer.js), which frappe-types 16.5.0
+ * types as `unknown`: the form's comment box and activity timeline.
+ */
+type FormFooterClass = new (opts: { frm: Form; parent: JQuery<HTMLElement> }) => { refresh(): void };
+
 interface StatObject {
 	open: boolean;
 	parent?: StatObject | null;
@@ -205,7 +212,7 @@ export default defineComponent({
 			/** Untranslated doctype, used to build the breadcrumb routes. */
 			sidebarDoctypeName: "" as string,
 			sidebarDirty: false,
-			sidebarFormInstance: null as any,
+			sidebarFormInstance: null as Form | null,
 			sideTimersElement: null as HTMLElement | null,
 			manualSort: true,
 			/** Parent doc name whose next blank child should auto-focus after rebuild. */
@@ -353,7 +360,7 @@ export default defineComponent({
 			// Find tasks assigned to me
 			const myTaskNames = new Set<string>();
 			for (const t of data.tasks) {
-				if (t.assigned_to?.includes(user)) {
+				if (user && t.assigned_to?.includes(user)) {
 					myTaskNames.add(t.name);
 				}
 			}
@@ -442,7 +449,7 @@ export default defineComponent({
 		// ── Drag and drop ─────────────────────────────────────
 
 		async handleDragEnd(): Promise<void> {
-			const draggedStat = (dragContext as any).dragNode;
+			const draggedStat = dragContext.dragNode as StatObject | null;
 			if (!draggedStat?.data?.doc) {
 				await this.catchError(new Error("Invalid drop target"));
 				return;
@@ -536,7 +543,7 @@ export default defineComponent({
 			if (isProject && node.doc.name) {
 				const projectDoc = node.doc as ProjectDoc;
 				if (projectDoc.project_name in treeNodes.value) {
-					const value = treeNodes.value[projectDoc.project_name];
+					const value = treeNodes.value[projectDoc.project_name] ?? false;
 					stat.open = value;
 					treeNodes.value[node.doc.name] = value;
 					delete treeNodes.value[projectDoc.project_name];
@@ -942,7 +949,7 @@ export default defineComponent({
 				return;
 			}
 			const [lo, hi] = a <= b ? [a, b] : [b, a];
-			for (let i = lo; i <= hi; i++) this.selectedTasks.add(order[i]);
+			for (const name of order.slice(lo, hi + 1)) this.selectedTasks.add(name);
 		},
 
 		/** Ctrl/Cmd+C: copy the selection as Markdown (see `taskMarkdown.ts`). */
@@ -978,7 +985,7 @@ export default defineComponent({
 			);
 
 			if (expandedProjects.length > 0) {
-				this.highlightedProject = expandedProjects[0];
+				this.highlightedProject = expandedProjects[0] ?? null;
 			} else {
 				const blankProject = this.treeData.find((node) => !node.doc.name);
 				if (blankProject) {
@@ -1050,6 +1057,7 @@ export default defineComponent({
 
 				await frappe.model.with_doctype(doctype);
 				const meta = frappe.get_meta(doctype);
+				if (!meta) throw new Error(`No meta for ${doctype}`);
 				const prev = meta.hide_toolbar;
 				meta.hide_toolbar = 1;
 				formWrapper.innerHTML = "";
@@ -1057,7 +1065,7 @@ export default defineComponent({
 				await frappe.model.with_doc(doctype, docName);
 				formInstance.refresh(docName);
 				formInstance.page.page_head.addClass("hidden");
-				meta.hide_toolbar = prev;
+				meta.hide_toolbar = prev ?? 0;
 
 				// Populate our custom header
 				this.sidebarDoctype = __(doctype);
@@ -1067,24 +1075,20 @@ export default defineComponent({
 				this.sidebarFormInstance = formInstance;
 
 				// Track dirty state so the Save button reflects unsaved changes
-				frappe.model.on(doctype, "*", (_field: string, _val: unknown, _changedDoc: any) => {
-					if (formInstance.is_dirty) {
-						this.sidebarDirty = true;
-					} else {
-						this.sidebarDirty = false;
-					}
+				frappe.model.on(doctype, "*", () => {
+					this.sidebarDirty = formInstance.is_dirty();
 				});
 
 				// hide_toolbar suppresses the footer/timeline — restore it manually
-				if (!formInstance.footer && (frappe.boot as any).desk_settings?.timeline) {
-					const footerEl = document.createElement("div");
-					formInstance.page.main[0].parentElement?.appendChild(footerEl);
-					formInstance.footer = new (frappe.ui.form as any).Footer({
+				// (as frappe's Form.setup does: its parent is a jQuery-wrapped div after the page).
+				if (!formInstance.footer && frappe.boot.desk_settings.timeline) {
+					const Footer = frappe.ui.form.Footer as FormFooterClass;
+					const footer = new Footer({
 						frm: formInstance,
-						parent: footerEl,
+						parent: $("<div>").appendTo(formInstance.page.main.parent()),
 					});
-					formInstance.footer.refresh();
-					formInstance.parent.removeClass = function () {};
+					formInstance.footer = footer;
+					footer.refresh();
 				}
 			} catch (err) {
 				console.error("Error loading form:", err);
@@ -1098,7 +1102,7 @@ export default defineComponent({
 			});
 		},
 
-		openSidebar(payload: any): void {
+		openSidebar(payload: { doc: ProjectDoc | TaskDoc; isProject: boolean }): void {
 			this.isOpened = true;
 			this.sidebarFormInstance = null;
 			this.sidebarTitle = "";

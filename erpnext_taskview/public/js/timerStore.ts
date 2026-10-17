@@ -19,7 +19,7 @@
  */
 
 import { computed, ref, type Ref } from "vue";
-import { type SaveDocResponse } from "./types";
+import { callMethod, type SaveDocResponse } from "./types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -46,17 +46,23 @@ export interface ActiveTimer {
 // Cross-bundle communication
 // ---------------------------------------------------------------------------
 
-const CACHE_KEY = "__erpnext_taskview_timers__";
+declare global {
+	interface Window {
+		/** The timer list both bundles (taskview and timerdock) share; whichever fetched last set it. */
+		__erpnext_taskview_timers__?: ActiveTimer[];
+	}
+}
+
 const EVENT_NAME = "erpnext_taskview:timers_changed";
 
 /** Write the timer list to a window-level cache for other bundles. */
 function publishToCache(list: ActiveTimer[]): void {
-	(window as any)[CACHE_KEY] = list;
+	window.__erpnext_taskview_timers__ = list;
 }
 
 /** Read the timer list from the window-level cache (set by any bundle). */
 function readFromCache(): ActiveTimer[] | null {
-	return (window as any)[CACHE_KEY] ?? null;
+	return window.__erpnext_taskview_timers__ ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -90,13 +96,9 @@ document.addEventListener(EVENT_NAME, () => {
 export async function fetchTimers(): Promise<void> {
 	loading.value = true;
 	try {
-		const result = await new Promise<{ timers: ActiveTimer[] }>((resolve, reject) => {
-			frappe.call({
-				method: "erpnext_taskview.erpnext_taskview.api.get_active_timers",
-				callback: (r: { message: { timers: ActiveTimer[] } }) => resolve(r.message),
-				error: (err: unknown) => reject(err),
-			});
-		});
+		const result = await callMethod<{ timers: ActiveTimer[] }>(
+			"erpnext_taskview.erpnext_taskview.api.get_active_timers",
+		);
 		hydrateFromList(result.timers);
 		// Share with other bundles — cache + event
 		publishToCache(result.timers);
@@ -110,13 +112,8 @@ export async function sendTimerAction(detail: Record<string, unknown>): Promise<
 	loading.value = true;
 	try {
 		const payload = JSON.stringify({ doc: { doctype: "Timesheet Detail", ...detail } });
-		const result = await new Promise<SaveDocResponse>((resolve, reject) => {
-			frappe.call({
-				method: "erpnext_taskview.erpnext_taskview.api.save_doc",
-				args: { payload },
-				callback: (r: { message: SaveDocResponse }) => resolve(r.message),
-				error: (err: unknown) => reject(err),
-			});
+		const result = await callMethod<SaveDocResponse>("erpnext_taskview.erpnext_taskview.api.save_doc", {
+			payload,
 		});
 		await fetchTimers();
 		return result;

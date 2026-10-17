@@ -5,8 +5,12 @@
 
 from datetime import timedelta
 from itertools import count
+from typing import Any, cast
 
 import frappe
+from erpnext.projects.doctype.task.task import Task
+from erpnext.projects.doctype.timesheet.timesheet import Timesheet
+from frappe.desk.doctype.todo.todo import ToDo
 from frappe.utils import now_datetime
 
 COMPANY = "_Test Company"
@@ -20,36 +24,43 @@ def unique(prefix: str) -> str:
 	return f"{prefix} {frappe.generate_hash(length=8)}"
 
 
+def insert(values: dict[str, Any]) -> str:
+	"""Insert a document and return its name."""
+	doc = frappe.get_doc(values).insert()
+	assert doc.name
+	return doc.name
+
+
+def get_task(name: str) -> Task:
+	return cast(Task, frappe.get_doc("Task", name))
+
+
+def get_todo(name: str) -> ToDo:
+	return cast(ToDo, frappe.get_doc("ToDo", name))
+
+
 def make_customer() -> str:
-	return (
-		frappe.get_doc(
-			{
-				"doctype": "Customer",
-				"customer_name": unique("_TV Customer"),
-				"customer_type": "Company",
-				"customer_group": "_Test Customer Group",
-				"territory": "_Test Territory",
-			}
-		)
-		.insert()
-		.name
+	return insert(
+		{
+			"doctype": "Customer",
+			"customer_name": unique("_TV Customer"),
+			"customer_type": "Company",
+			"customer_group": "_Test Customer Group",
+			"territory": "_Test Territory",
+		}
 	)
 
 
 def make_project(customer: str | None = None, budgeted_hours: float = 0, users: tuple[str, ...] = ()) -> str:
-	return (
-		frappe.get_doc(
-			{
-				"doctype": "Project",
-				"project_name": unique("_TV Project"),
-				"company": COMPANY,
-				"customer": customer,
-				"budgeted_hours": budgeted_hours,
-				"users": [{"user": u, "welcome_email_sent": 1} for u in users],
-			}
-		)
-		.insert()
-		.name
+	return insert(
+		{
+			"doctype": "Project",
+			"project_name": unique("_TV Project"),
+			"company": COMPANY,
+			"customer": customer,
+			"budgeted_hours": budgeted_hours,
+			"users": [{"user": u, "welcome_email_sent": 1} for u in users],
+		}
 	)
 
 
@@ -62,21 +73,17 @@ def make_task(
 	status: str = "Open",
 	is_template: int = 0,
 ) -> str:
-	return (
-		frappe.get_doc(
-			{
-				"doctype": "Task",
-				"subject": unique("_TV Task"),
-				"project": project,
-				"parent_task": parent,
-				"is_group": is_group,
-				"expected_time": expected_time,
-				"status": status,
-				"is_template": is_template,
-			}
-		)
-		.insert()
-		.name
+	return insert(
+		{
+			"doctype": "Task",
+			"subject": unique("_TV Task"),
+			"project": project,
+			"parent_task": parent,
+			"is_group": is_group,
+			"expected_time": expected_time,
+			"status": status,
+			"is_template": is_template,
+		}
 	)
 
 
@@ -111,7 +118,7 @@ def log_time(
 	return ts
 
 
-def start_timer(project: str, task: str, *, elapsed: timedelta = timedelta(hours=1)):
+def start_timer(project: str, task: str, *, elapsed: timedelta = timedelta(hours=1)) -> Timesheet:
 	"""A running TaskView timer: open row (no ``to_time``) started ``elapsed`` ago."""
 	started = now_datetime() - elapsed
 	ts = frappe.get_doc(
@@ -130,6 +137,7 @@ def start_timer(project: str, task: str, *, elapsed: timedelta = timedelta(hours
 			],
 		}
 	).insert()
+	ts = cast(Timesheet, ts)
 	# The timesheet controller derives to_time from hours; keep the row open.
 	frappe.db.set_value("Timesheet Detail", ts.time_logs[0].name, {"to_time": None, "hours": 0})
 	return ts
