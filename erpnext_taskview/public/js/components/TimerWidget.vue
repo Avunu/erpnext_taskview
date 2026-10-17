@@ -51,7 +51,9 @@ import { defineComponent, type PropType } from "vue";
 import { type ActiveTimer, sendTimerAction, getRunningTimer, saveTimerDescription } from "../timerStore";
 import { showStopTimerDialog, calcElapsedHrs } from "../timerDialog";
 import { Play, Pause, Square, Trash2 } from "lucide-vue-next";
-import "../task-controls.css";
+// Stylesheets are re-exported rather than imported bare: the same place in the
+// bundle's CSS order, without a side-effect import.
+export * from "../task-controls.css";
 
 /**
  * Individual timer card within the {@link TimerDock}.

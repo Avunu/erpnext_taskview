@@ -5,7 +5,9 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import { router } from "./router";
 import { applyTheme, loadBoot } from "./boot";
-import "./index.css";
+// Re-exported rather than imported bare, which keeps the stylesheet first in
+// the bundle without a side-effect import.
+export * from "./index.css";
 
 loadBoot().then((boot) => {
 	applyTheme(boot.theme);

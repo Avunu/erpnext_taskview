@@ -15,13 +15,15 @@ const METHOD = "erpnext_taskview.portal.api.";
 
 /** A failed API call, carrying Frappe's user-facing messages. */
 export class ApiError extends Error {
-	constructor(
-		message: string,
-		readonly status: number,
-		readonly messages: string[],
-		readonly excType?: string,
-	) {
+	readonly status: number;
+	readonly messages: string[];
+	readonly excType: string | undefined;
+
+	constructor(message: string, status: number, messages: string[], excType?: string) {
 		super(message);
+		this.status = status;
+		this.messages = messages;
+		this.excType = excType;
 	}
 }
 

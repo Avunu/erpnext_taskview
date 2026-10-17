@@ -6,24 +6,29 @@
  *
  * Mapped in `portal/tsconfig.json` for the same reason as `frappe-ui.d.ts`:
  * the library's sources don't pass this repo's strict compiler settings.
- * Components and the TipTap editor instance are typed loosely; add an export
- * here when the portal starts using another one.
+ * Components are typed as plain Vue components (their props are frappe-ui's
+ * own concern); add an export here when the portal starts using another one.
  */
 
-// Untyped on purpose: props and slots are frappe-ui's own concern.
-type AnyComponent = any;
-/** TipTap's `Editor` instance, as passed to menu item callbacks. */
-type TiptapEditor = any;
+// The code-block extension adds `toggleCodeBlock`, which the portal's toolbar
+// chains, to TipTap's `Commands`.
+/// <reference types="@tiptap/extension-code-block" />
 
-export const Editor: AnyComponent;
-export const EditorContent: AnyComponent;
-export const EditorFixedMenu: AnyComponent;
+import type { Editor as CoreEditor } from "@tiptap/core";
+import type { Component } from "vue";
+
+/** TipTap's `Editor` instance, as passed to menu item callbacks. */
+type TiptapEditor = CoreEditor;
+
+export const Editor: Component;
+export const EditorContent: Component;
+export const EditorFixedMenu: Component;
 
 /** A toolbar button (frappe-ui `menu.ts`). */
 export interface CommandMenuItem {
 	label: string;
 	/** A `lucide-*` icon name or a component. */
-	icon?: AnyComponent | string;
+	icon?: Component | string;
 	action: (editor: TiptapEditor) => boolean | void | Promise<boolean | void>;
 	isActive?: (editor: TiptapEditor) => boolean;
 	isDisabled?: (editor: TiptapEditor) => boolean;
@@ -33,7 +38,7 @@ export interface CommandMenuItem {
 /** A dropdown of toolbar buttons. */
 export interface MenuGroupItem {
 	type: "group";
-	icon?: AnyComponent | string;
+	icon?: Component | string;
 	label: string;
 	items: CommandMenuItem[];
 }

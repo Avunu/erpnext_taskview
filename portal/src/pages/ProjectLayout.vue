@@ -96,8 +96,11 @@ export default defineComponent({
 			detail: null,
 			loading: false,
 			error: "",
-			reload: () => this.load(),
-			newTask: (phase?: string | null) => this.openNewTask(phase ?? null),
+			// Vue sets the methods up before it calls data(), but types them as optional here.
+			reload: async () => {
+				await this.load?.();
+			},
+			newTask: (phase?: string | null) => this.openNewTask?.(phase ?? null),
 		});
 		return {
 			ctx,

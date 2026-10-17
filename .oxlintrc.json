@@ -52,58 +52,6 @@
 			"rules": {
 				"import/no-unassigned-import": "off"
 			}
-		},
-		{
-			"files": [
-				"erpnext_taskview/public/js/TaskView.vue",
-				"erpnext_taskview/public/js/components/AssignTo.vue",
-				"erpnext_taskview/public/js/components/Task.vue",
-				"erpnext_taskview/public/js/taskview.entry.ts",
-				"erpnext_taskview/public/js/timerDialog.ts",
-				"erpnext_taskview/public/js/timerStore.ts",
-				"erpnext_taskview/public/js/types.ts",
-				"erpnext_taskview/public/js/types/frappe.d.ts",
-				"portal/src/types/frappe-ui-editor.d.ts",
-				"portal/src/types/frappe-ui.d.ts",
-				"vite.config.ts"
-			],
-			"rules": {
-				"typescript/no-explicit-any": "off"
-			}
-		},
-		{
-			"files": [
-				"erpnext_taskview/public/js/TaskView.vue",
-				"erpnext_taskview/public/js/components/PinnedView.vue",
-				"erpnext_taskview/public/js/components/Task.vue",
-				"erpnext_taskview/public/js/components/TimerWidget.vue",
-				"portal/src/main.ts",
-				"portal/src/types/frappe-ui.d.ts"
-			],
-			"rules": {
-				"import/no-unassigned-import": "off"
-			}
-		},
-		{
-			"files": [
-				"erpnext_taskview/public/js/components/Task.vue",
-				"erpnext_taskview/public/js/timerDialog.ts"
-			],
-			"rules": {
-				"unicorn/prefer-add-event-listener": "off"
-			}
-		},
-		{
-			"files": ["erpnext_taskview/public/js/taskview.entry.ts"],
-			"rules": {
-				"no-useless-constructor": "off"
-			}
-		},
-		{
-			"files": ["erpnext_taskview/public/js/types/frappe.d.ts"],
-			"rules": {
-				"unicorn/require-module-specifiers": "off"
-			}
 		}
 	]
 }
