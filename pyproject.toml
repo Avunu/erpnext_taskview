@@ -7,7 +7,9 @@ readme = "README.md"
 license = { text = "MIT" }
 classifiers = ["License :: OSI Approved :: MIT License"]
 dynamic = ["version"]
-dependencies = []
+# frappe and erpnext come from the bench ([tool.bench.frappe-dependencies]); these are the
+# libraries the app imports itself, within the ranges frappe v16 pins.
+dependencies = ["beautifulsoup4>=4.13,<5", "nh3>=0.3,<1", "pydantic>=2.12,<3"]
 
 [build-system]
 requires = ["flit_core >=3.4,<4"]
@@ -95,6 +97,7 @@ check = "node scripts/vue-tsc.cjs --noEmit -p portal/tsconfig.json"
 
 [tool.bench.frappe-dependencies]
 frappe = ">=16.0.0,<17.0.0"
+erpnext = ">=16.0.0,<17.0.0"
 
 [tool.ssort]
 # Skip sorting within TYPE_CHECKING blocks

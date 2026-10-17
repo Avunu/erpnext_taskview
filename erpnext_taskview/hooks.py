@@ -7,6 +7,8 @@ app_publisher = "Avunu LLC"
 app_description = "Project and Task workspace for ERPNext"
 app_email = "mail@avu.nu"
 app_license = "mit"
+# Task, Timesheet and Project are ERPNext doctypes; the app extends their controllers.
+required_apps = ["erpnext"]
 app_include_js = ["taskview.bundle.js", "timerdock.bundle.js"]
 app_include_css = ["taskview.bundle.css", "timerdock.bundle.css"]
 extend_doctype_class = {
