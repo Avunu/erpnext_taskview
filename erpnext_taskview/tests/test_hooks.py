@@ -40,6 +40,36 @@ class TestInstall(IntegrationTestCase):
 		)
 
 
+@contextmanager
+def _old_core() -> Generator[None]:
+	"""Hold ERPNext's Task controller to its pre-16.51 behaviour.
+
+	Before 16.51.1 core closed and cleared assignments and saved dependent
+	tasks without carrying ``ignore_permissions``.  Its ``validate_status``
+	(which the extension extends rather than replaces) gets that behaviour back,
+	and the three methods the extension replaces under ``ignore_permissions``
+	fail outright if they are reached.
+	"""
+	core = "erpnext.projects.doctype.task.task"
+
+	def close_checking_permissions(doctype: str, name: str, ignore_permissions: bool = False) -> bool:
+		return close_all_assignments(doctype, name)
+
+	def unreachable(method: str):
+		def fail(self: Any) -> None:
+			raise AssertionError(f"core Task.{method} ran under ignore_permissions")
+
+		return fail
+
+	with (
+		patch(f"{core}.close_all_assignments", close_checking_permissions),
+		patch(f"{core}.Task.unassign_todo", unreachable("unassign_todo")),
+		patch(f"{core}.Task.populate_depends_on", unreachable("populate_depends_on")),
+		patch(f"{core}.Task.reschedule_dependent_tasks", unreachable("reschedule_dependent_tasks")),
+	):
+		yield
+
+
 class TestTaskPermissionBypass(IntegrationTestCase):
 	"""Portal saves (``save(ignore_permissions=True)`` by a user with no Task or ToDo rights).
 
@@ -167,33 +197,3 @@ class TestTaskPermissionBypass(IntegrationTestCase):
 		unassign_todo.assert_called_once_with()
 		populate_depends_on.assert_called_once_with()
 		reschedule_dependent_tasks.assert_called_once_with()
-
-
-@contextmanager
-def _old_core() -> Generator[None]:
-	"""Hold ERPNext's Task controller to its pre-16.51 behaviour.
-
-	Before 16.51.1 core closed and cleared assignments and saved dependent
-	tasks without carrying ``ignore_permissions``.  Its ``validate_status``
-	(which the extension extends rather than replaces) gets that behaviour back,
-	and the three methods the extension replaces under ``ignore_permissions``
-	fail outright if they are reached.
-	"""
-	core = "erpnext.projects.doctype.task.task"
-
-	def close_checking_permissions(doctype: str, name: str, ignore_permissions: bool = False) -> bool:
-		return close_all_assignments(doctype, name)
-
-	def unreachable(method: str):
-		def fail(self: Any) -> None:
-			raise AssertionError(f"core Task.{method} ran under ignore_permissions")
-
-		return fail
-
-	with (
-		patch(f"{core}.close_all_assignments", close_checking_permissions),
-		patch(f"{core}.Task.unassign_todo", unreachable("unassign_todo")),
-		patch(f"{core}.Task.populate_depends_on", unreachable("populate_depends_on")),
-		patch(f"{core}.Task.reschedule_dependent_tasks", unreachable("reschedule_dependent_tasks")),
-	):
-		yield
