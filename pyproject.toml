@@ -22,9 +22,6 @@ frappe-major = 16
 siblings = ["erpnext"]
 integration-branch = "main"
 
-[tool.frappe-nix.dev-shell]
-frappe-nix-url = "github:Avunu/frappe-nix/a216ce95ce051fe0bc5b95f112fcb85529910ede"
-
 # docs.yml calls Avunu/site-docs' shared check. Its pin gets its own needs-review Dependabot
 # group (a person reads every bump) and skips the cooldown, as before the shared gates.
 [tool.frappe-nix.docs-site]
