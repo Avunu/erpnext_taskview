@@ -2,11 +2,11 @@
 # For license information, please see license.txt
 
 app_name = "erpnext_taskview"
-app_title = "ERPNext TaskView"
+app_title = "TaskView for ERPNext"
 app_publisher = "Avunu LLC"
-app_description = "Project and Task workspace for ERPNext"
+app_description = "Project task tree with timers, hour budgets and a customer portal for ERPNext"
 app_email = "mail@avu.nu"
-app_license = "mit"
+app_license = "MIT"
 # Task, Timesheet and Project are ERPNext doctypes; the app extends their controllers.
 required_apps = ["erpnext"]
 app_include_js = ["taskview.bundle.js", "timerdock.bundle.js"]

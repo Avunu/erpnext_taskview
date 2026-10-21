@@ -1,6 +1,6 @@
 ---
 title: ERPNext TaskView
-description: A project and task workspace for ERPNext, with timers and hour budgets for staff and a portal where customers follow and work on their projects.
+description: Project task tree with timers, hour budgets and a customer portal for ERPNext
 nav_title: Overview
 order: 0
 updated: 2026-10-06
@@ -8,7 +8,7 @@ updated: 2026-10-06
 
 ERPNext's stock project and task screens are built for record keeping. ERPNext TaskView turns them into a workspace for running a day of work. Your team sees every project as a tree of tasks, starts a timer with one click and watches hours against budget while they work. Your customers get a portal at `/projects` where they follow progress, add tasks, comment and attach files.
 
-It is for service teams that bill by the hour and want clients to see the same picture they do. It runs on Frappe v16 and is free software under the [MIT licence](../LICENSE).
+It is for service teams that bill by the hour and want clients to see the same picture they do. It runs on Frappe v16 and is free software under the [MIT licence](../license.txt).
 
 ## What you get
 

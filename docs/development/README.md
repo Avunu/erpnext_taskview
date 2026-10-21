@@ -103,14 +103,16 @@ There are no JavaScript unit tests. `yarn typecheck`, `yarn lint` and `yarn form
 
 ## Continuous integration
 
-The `check` workflow (`.github/workflows/check.yml`) runs on every pull request and every push to `main`. Its `build` job uses Node 24 and runs, in order:
+`.github/workflows/ci.yml` is managed by frappe-nix (`frappe-init --sync` writes it) and runs the shared quality gates on every pull request, every push to `main` and once a day. Each gate is a check named `ci / <gate>`:
 
-1. `yarn install --frozen-lockfile`
-2. `yarn typecheck`, `yarn lint` and `yarn format:check`
-3. `yarn build`, whose `scripts/vite-register.mjs` step finds no bench in CI and skips itself
-4. A check that `erpnext_taskview/www/projects.html` exists and does not contain `.__`, because Frappe renders it as a Jinja template and refuses any template that does
+- `ci / lint`: the pre-commit hooks below, run with prek.
+- `ci / typecheck`: `yarn typecheck`.
+- `ci / test`: the Python tests with coverage (`frappe-test`), and `ty`.
+- `ci / marketplace`: the registry checks of `frappe-listing check` on `marketplace/listing.toml`, `hooks.py` and the logo.
 
-Dependabot updates the JavaScript dependencies daily, in one group, and a workflow turns on auto-merge for its pull requests, so a pull request merges once its required checks pass.
+`pr-policy.yml` adds `ci / pr-policy`, which checks a pull request's base, title and commits. `nightly.yml` runs the integration suites each night and is never a required check, and `release.yml` runs release-please and moves the release branch forward. The frappe-nix [app standards documentation](https://docs.avunu.net/frappe-nix/docs/app-standards/) describes each.
+
+Dependabot updates the dependencies in groups. `deps.yml` relocks and syncs after a flake bump and turns on auto-merge for those pull requests.
 
 The `Docs` workflow (`.github/workflows/docs.yml`) checks this documentation when `docs/` changes. It is described below.
 

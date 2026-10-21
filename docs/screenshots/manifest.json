@@ -1,0 +1,82 @@
+[
+	{
+		"name": "pinned",
+		"theme": "dark",
+		"alt": "The Pinned view: a personal list of tasks across projects, with quick entry and a task that has no project yet",
+		"featured": true,
+		"readme": "feature",
+		"width": 2880,
+		"height": 1800,
+		"sha256": "dab6851d70a48eb5027db1b6a20c64338d266d9ca7270c3e9da708ace49b7f70"
+	},
+	{
+		"name": "pinned",
+		"theme": "light",
+		"alt": "The Pinned view: a personal list of tasks across projects, with quick entry and a task that has no project yet",
+		"featured": true,
+		"readme": "feature",
+		"width": 2880,
+		"height": 1800,
+		"sha256": "ebc28a2b2dbf95d3a0f1e35c2a091cba73b85b38d2614f5a7593af3f01886d31"
+	},
+	{
+		"name": "portal-board",
+		"theme": "dark",
+		"alt": "The customer portal's kanban board for a project, with Open, Working, Pending Review and Completed columns",
+		"featured": true,
+		"readme": "feature",
+		"width": 2880,
+		"height": 1800,
+		"sha256": "c39a224f0a20b9e54e3cb7f5e8931385e8b83b45a5d3208053bbf6cc1984012e"
+	},
+	{
+		"name": "portal-board",
+		"theme": "light",
+		"alt": "The customer portal's kanban board for a project, with Open, Working, Pending Review and Completed columns",
+		"featured": true,
+		"readme": "feature",
+		"width": 2880,
+		"height": 1800,
+		"sha256": "83b318af0e267443cd182ff0c11a56fe900f9fb320df0ee793d0c60bab35811b"
+	},
+	{
+		"name": "portal-overview",
+		"theme": "dark",
+		"alt": "The customer portal's project overview, with the hour budget per phase and recent activity",
+		"featured": false,
+		"readme": "feature",
+		"width": 2880,
+		"height": 1800,
+		"sha256": "ae6bff8c82d6682f248870c3dd7076103785933d94b70b44b0826036d2481f43"
+	},
+	{
+		"name": "portal-overview",
+		"theme": "light",
+		"alt": "The customer portal's project overview, with the hour budget per phase and recent activity",
+		"featured": false,
+		"readme": "feature",
+		"width": 2880,
+		"height": 1800,
+		"sha256": "60baf96e5354c7b9871a8a64ef2f2477c71f53efc0275fc96bfd0225f54ac5bb"
+	},
+	{
+		"name": "task-view",
+		"theme": "dark",
+		"alt": "Task View: three projects as trees of phases and tasks, with hour budget meters, assignees, timer buttons and the timer dock holding two paused timers",
+		"featured": true,
+		"readme": "hero",
+		"width": 2880,
+		"height": 1800,
+		"sha256": "5eae51d5abc4c98de3d69f27f3e8c378c1a31f15ee8c6aba4fc18d700db7704b"
+	},
+	{
+		"name": "task-view",
+		"theme": "light",
+		"alt": "Task View: three projects as trees of phases and tasks, with hour budget meters, assignees, timer buttons and the timer dock holding two paused timers",
+		"featured": true,
+		"readme": "hero",
+		"width": 2880,
+		"height": 1800,
+		"sha256": "b538e258c794e10b56d1c4fc0e67cc80acc71d2e6d84fef61c231b42f0e7575d"
+	}
+]
