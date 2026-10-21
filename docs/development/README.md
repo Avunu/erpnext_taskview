@@ -1,9 +1,9 @@
 ---
-title: Develop ERPNext TaskView
+title: Develop TaskView for ERPNext
 description: Set up a bench checkout, build the Vue and frappe-ui bundles, run the Python tests and JavaScript checks, and see what CI and pre-commit enforce.
 nav_title: Development
 order: 9
-updated: 2026-10-06
+updated: 2026-10-21
 ---
 
 This page is for people changing the app. [How it works](architecture.md) explains the design behind the code, and the [changelog](changelog.md) says where to find what changed.

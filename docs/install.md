@@ -1,12 +1,12 @@
 ---
 title: Install and upgrade
-description: Install ERPNext TaskView on a Frappe v16 bench, build its assets, and finish the portal set-up that a fresh install leaves to you.
+description: Install TaskView for ERPNext on a Frappe v16 bench, build its assets, and finish the portal set-up that a fresh install leaves to you.
 nav_title: Install
 order: 1
-updated: 2026-10-16
+updated: 2026-10-21
 ---
 
-ERPNext TaskView installs like any Frappe app. Two things are specific to it: the assets have to be built, and a fresh install does not run the migration patch that points the portal at `/projects`, so a few portal settings are yours to set.
+TaskView for ERPNext installs like any Frappe app. Two things are specific to it: the assets have to be built, and a fresh install does not run the migration patch that points the portal at `/projects`, so a few portal settings are yours to set.
 
 ## Before you start
 

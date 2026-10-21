@@ -3,7 +3,7 @@ title: Giving customers access
 description: How to give a customer access to the client portal, the exact rules that decide who sees which project, and what customers can see and change once they are in.
 nav_title: Giving access
 order: 8
-updated: 2026-10-06
+updated: 2026-10-21
 ---
 
 This page is for the administrator who gives customers access to the [client portal](README.md). Three things must be true for a customer to see a project: the person has a login, the login is tied to the right customer or project, and the project belongs to that customer.
@@ -64,7 +64,7 @@ A customer who can open a project can see all of the following on it, with no pe
 - **Comment** on any task and **attach files** to it.
 - **Move a task** to Open, Working, Pending Review or Completed. A customer can move **any** task that is not a phase, not only the ones they added. Moving a task to Completed closes its assignments, as it does in the desk, and is refused when it depends on tasks that are not completed or cancelled.
 
-Files from customers are saved as private files attached to the task. Customers can attach JPG, PNG, GIF, PDF, TXT and CSV files and Microsoft Office documents. Staff using the portal are not held to that list. Descriptions and comments written by a customer are cleaned before they are saved: images, styles and scripts are removed, so a customer cannot paste an image or forge an `@mention`.
+Files from customers are saved as private files attached to the task. Customers can attach JPG, PNG, GIF, PDF, TXT and CSV files, Word and Excel documents, OpenDocument text and spreadsheets, and MP4 and QuickTime videos, the types in Frappe's `ALLOWED_MIMETYPES` (`frappe/handler.py`). Staff using the portal are not held to that list. Descriptions and comments written by a customer are cleaned before they are saved: images, styles and scripts are removed, so a customer cannot paste an image or forge an `@mention`.
 
 Each customer action is limited to 60 new tasks, 60 comments and 60 uploads per hour from one IP address. Customers behind one office network share that count.
 

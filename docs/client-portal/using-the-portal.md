@@ -3,7 +3,7 @@ title: Using the client portal
 description: "A guide for clients to the project portal: sign in, read the overview and the hours meter, work with tasks on a list or board, and comment or attach files."
 nav_title: Using the portal
 order: 7
-updated: 2026-10-06
+updated: 2026-10-21
 ---
 
 The client portal is a page on the ERPNext site of the team you work with, where you can follow your projects, see where the hours are going, and add tasks, comments and files without leaving the browser. This guide is written for a client who has been given access. If you do not have access yet, ask that team: the administrator's steps are in [Giving customers access](administering-access.md).
@@ -90,7 +90,7 @@ The editor offers headings, bold, italic, strikethrough, bulleted and numbered l
 
 ### Attach files
 
-Click **Attach file** in the panel. Files are stored privately and can be opened only by people who can open that task. You can attach JPG, PNG, GIF, PDF, TXT and CSV files and Microsoft Office documents, up to 25 MB each. The site may set a lower limit. Images show a thumbnail, PDFs and images open in the browser, and other types download.
+Click **Attach file** in the panel. Files are stored privately and can be opened only by people who can open that task. You can attach JPG, PNG, GIF, PDF, TXT and CSV files, Word and Excel documents, OpenDocument text and spreadsheets, and MP4 and QuickTime videos, up to 25 MB each. The site may set a lower limit. Images show a thumbnail, PDFs and images open in the browser, and other types download.
 
 ### Move a task between statuses
 

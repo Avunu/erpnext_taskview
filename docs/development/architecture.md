@@ -1,12 +1,12 @@
 ---
 title: How it works
-description: "The design behind ERPNext TaskView: how the desk tree and timers talk to the server, how budgets are computed, and how the portal checks access."
+description: "The design behind TaskView for ERPNext: how the desk tree and timers talk to the server, how budgets are computed, and how the portal checks access."
 nav_title: How it works
 order: 10
-updated: 2026-10-16
+updated: 2026-10-21
 ---
 
-This page describes the design behind the code, for developers. For commands and the build, see [Develop ERPNext TaskView](README.md).
+This page describes the design behind the code, for developers. For commands and the build, see [Develop TaskView for ERPNext](README.md).
 
 ## The pieces
 
@@ -43,7 +43,7 @@ The tree and the dock are separate bundles, each with its own copy of Vue, so th
 
 ## Budgets
 
-`budget.py` is shared by the desk and the portal. `compute_budgets` makes three queries however many projects it is given (tasks, closed time rows aggregated, open timers) and does the rollup in Python, children before parents, safe against cycles in `parent_task`. A task's budget is its `expected_time`, else the sum of its children's budgets, else none, and a Cancelled task contributes none. Logged hours include descendants. A project's budget is `budgeted_hours`, else the sum of its root tasks, and its logged hours are every row on the project.
+`budget.py` is shared by the desk and the portal. `compute_budgets` makes four queries however many projects it is given (tasks, closed time rows aggregated, open timers, project budgets) and does the rollup in Python, children before parents, safe against cycles in `parent_task`. A task's budget is its `expected_time`, else the sum of its children's budgets, else none, and a Cancelled task contributes none. Logged hours include descendants. A project's budget is `budgeted_hours`, else the sum of its root tasks, and its logged hours are every row on the project.
 
 Open timers are rows with `to_time` empty and a `start_time`: they count their accumulated seconds plus the running segment unless paused. The desk passes `exclude_open_owner` so that the current user's own timers are left out of the server figure: the browser adds them live and nothing is counted twice. The user-facing rules are in [Hour budgets](../task-view/hour-budgets.md).
 

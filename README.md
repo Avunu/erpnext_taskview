@@ -112,7 +112,7 @@ There is no settings page. The app works through fields on documents you already
 - The desk bundles (`app_include_js`) register a `Tasks` list view for Task and Project and mount a Vue tree in place of the list, and mount the timer dock once on every desk page. Two property settings make Task View the default view of both.
 - The tree reads everything through one endpoint, `erpnext_taskview.erpnext_taskview.api.get`, and every change goes through a small set of endpoints that return a fresh copy of the data. Timer operations are rows of an ordinary Timesheet: four read-only fields on Timesheet Detail (Paused, Start Time, Paused Time and Task Subject) hold the timer state, and the server keeps at most one timer running.
 - Pins are the current user's ToDos for a task with a **Pinned** (`pin`) field the app adds to ToDo, created through Frappe's assignment code, which is why pinning also assigns.
-- `budget.py` computes budgets and logged hours for any number of projects in three queries and rolls them up by `parent_task`. The desk and the portal share it.
+- `budget.py` computes budgets and logged hours for any number of projects in four queries and rolls them up by `parent_task`. The desk and the portal share it.
 - The portal is a frappe-ui app built into `erpnext_taskview/public/portal/` and served at `/projects` by `www/projects.py`. Customers hold no permission on Project or Task, so every portal endpoint (`erpnext_taskview.portal.api`) checks access in `portal/access.py` first and only then reads or writes on the customer's behalf. Rich text from customers is cleaned with `nh3`.
 - `extend_doctype_class` extends ERPNext's Task (so that a portal save can close assignments and update parent and dependent tasks for a customer), Timesheet (the forward-only status update) and Timesheet Detail.
 
@@ -126,7 +126,7 @@ There is no settings page. The app works through fields on documents you already
 - Stopping a timer from a card in the timer dock does not send **Billable Time**; stop from the task row when it must differ from the hours.
 - Dragging works only while the sort is **Manual**.
 - Task View has no form for adding time without a timer; add a Timesheet row with its **Project** and **Task** in ERPNext. The app adds no reports.
-- In the portal, the board's four columns, the file types customers may attach (JPG, PNG, GIF, PDF, TXT, CSV and Microsoft Office documents) and the limit of 60 new tasks, 60 comments and 60 uploads per hour from one IP address are fixed in the code. Customers cannot paste images into comments; they attach them as files.
+- In the portal, the board's four columns, the file types customers may attach (JPG, PNG, GIF, PDF, TXT, CSV, Word and Excel documents, OpenDocument text and spreadsheets, and MP4 and QuickTime videos) and the limit of 60 new tasks, 60 comments and 60 uploads per hour from one IP address are fixed in the code. Customers cannot paste images into comments; they attach them as files.
 - Customers see the descriptions on time entries and the budget per phase. Do not put anything in a time log description you would not show the customer.
 
 <!-- frappe-nix:begin support -->
@@ -152,7 +152,7 @@ The managed files, checks and release flow are described in the [app standards d
 
 <!-- frappe-nix:end development -->
 
-The yarn commands, the build, the source layout and the tests are described in [Develop ERPNext TaskView](docs/development/README.md).
+The yarn commands, the build, the source layout and the tests are described in [Develop TaskView for ERPNext](docs/development/README.md).
 
 <!-- frappe-nix:begin license -->
 
