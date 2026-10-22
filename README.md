@@ -122,7 +122,6 @@ There is no settings page. The app works through fields on documents you already
 
 - Timers need the two overlap settings in **Projects Settings** ticked, and the app does not tick them for you. Since ERPNext 16.51.0 the user check applies to every Timesheet, so a site that worked on an older ERPNext can start refusing timers after an upgrade.
 - A fresh install does not run the portal patch, so the portal settings above are yours to make, and until you untick ERPNext's `/project` row the portal menu lists **Projects** twice.
-- The checkbox on a task row switches between Open and Completed only: ticking a task in Working sets it to Open.
 - Stopping a timer from a card in the timer dock does not send **Billable Time**; stop from the task row when it must differ from the hours.
 - Dragging works only while the sort is **Manual**.
 - Task View has no form for adding time without a timer; add a Timesheet row with its **Project** and **Task** in ERPNext. The app adds no reports.

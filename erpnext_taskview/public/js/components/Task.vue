@@ -426,7 +426,10 @@ export default defineComponent({
 		},
 
 		/**
-		 * Toggle the task's status between Open and Completed.
+		 * Complete the task, or reopen it when it is already Completed.
+		 *
+		 * The checkbox shows `status === "Completed"`, so ticking it completes a
+		 * task in any other status (Working, Pending Review, Overdue, ...).
 		 *
 		 * The status is applied optimistically and the tree is deliberately **not**
 		 * rebuilt: `get()` hides Completed tasks, so a rebuild would yank this row
@@ -436,7 +439,7 @@ export default defineComponent({
 		 * `catch-error`, which refetches and restores the true state.
 		 */
 		async toggleComplete(): Promise<void> {
-			const newStatus = this.node.doc.status === "Open" ? "Completed" : "Open";
+			const newStatus = this.node.doc.status === "Completed" ? "Open" : "Completed";
 			this.node.doc.status = newStatus;
 			if (this.node.doc.name) {
 				treeNodes.value[this.node.doc.name] = true;
