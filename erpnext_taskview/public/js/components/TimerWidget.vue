@@ -218,6 +218,7 @@ export default defineComponent({
 						task: values.task,
 						to_time: new Date().toISOString(),
 						hours: values.hrs,
+						billing_hours: values.is_billable ? values.billing_hrs || values.hrs : 0,
 						description: values.description || currentDesc || "",
 						activity_type: values.activity_type || "",
 						is_billable: values.is_billable ? 1 : 0,
