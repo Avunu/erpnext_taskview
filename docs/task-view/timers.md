@@ -3,7 +3,7 @@ title: Timers and timesheets
 description: Start, pause and stop a timer on a task, confirm the time in the Log Timer dialog, and see where the hours land in ERPNext Timesheets.
 nav_title: Timers
 order: 4
-updated: 2026-10-16
+updated: 2026-10-22
 ---
 
 Timers live on task rows in [Task View](README.md). Every timer is a row in the time logs of an ordinary ERPNext Timesheet, so submitting, billing and reporting work as they do in stock ERPNext.
@@ -37,7 +37,7 @@ Stopping pauses the clock first, then asks you to confirm.
 | Hrs           | Filled from the clock. What you leave here is what gets logged, so edit it if the clock ran while you were away. |
 | Description   | What you did.                                                                                                    |
 | Is Billable   | Marks the entry billable.                                                                                        |
-| Billable Time | Appears when Is Billable is ticked, and starts at the same value as Hrs.                                         |
+| Billable Time | Appears when Is Billable is ticked, and starts at the same value as Hrs. Left empty, it is saved as Hrs.         |
 | Completed     | Marks the log complete and sets the task to Completed.                                                           |
 
 **Cancel** closes the dialog and resumes the timer, even if you had paused it before you pressed stop.
@@ -45,9 +45,6 @@ Stopping pauses the clock first, then asks you to confirm.
 If you tick **Completed** on a task that still has subtasks that are not Completed, the time is logged, the task is not completed, and a notice tells you how many subtasks are in the way. A Cancelled subtask counts as not Completed.
 
 The row's To Time is set to its From Time plus the hours you confirmed, so the stored time range always agrees with the hours.
-
-> [!NOTE]
-> Stopping from a task row saves the **Billable Time** you enter. Stopping from a card in the dock does not send it. If Billable Time must differ from Hrs, stop from the task row.
 
 ## The timer dock
 
