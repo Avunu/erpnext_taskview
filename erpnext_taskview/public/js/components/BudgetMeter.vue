@@ -89,7 +89,8 @@ export default defineComponent({
 }
 
 .tv-budget--over .tv-budget__label {
-	color: var(--ink-red-3, var(--red-600));
+	/* ink-red-3 is a pale fill shade in light mode; ink-red-8 is the red text shade (frappe's --text-on-red). */
+	color: var(--ink-red-8, var(--red-600));
 	font-weight: var(--weight-semibold);
 }
 </style>
