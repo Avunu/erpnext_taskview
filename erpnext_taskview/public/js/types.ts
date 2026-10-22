@@ -149,7 +149,8 @@ export interface TreeNode {
 export function getDisplayText(node: TreeNode): string {
 	if (node.doc.doctype === "Project") {
 		const doc = node.doc as ProjectDoc;
-		return `${doc.name}: ${doc.project_name}`;
+		// The blank "Add project..." placeholder has no name yet.
+		return doc.name ? `${doc.name}: ${doc.project_name}` : doc.project_name;
 	}
 	return (node.doc as TaskDoc).subject;
 }
