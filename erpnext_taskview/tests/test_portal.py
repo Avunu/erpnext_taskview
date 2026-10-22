@@ -208,6 +208,32 @@ class TestPortal(IntegrationTestCase):
 		self.assertEqual(response.display_content_as, "attachment")
 		self.assertEqual(response.filecontent, "hello portal")
 
+	def test_attachment_types(self):
+		# A task of its own: Task allows only five attachments.
+		task = make_task(self.project, parent=self.phase)
+		with set_user(self.contact_user):
+			for filename in ("notes.odt", "sheet.ods", "clip.mp4", "clip.mov"):
+				api.save_attachment(task, filename, b"allowed")
+			with self.assertRaises(frappe.ValidationError) as refused:
+				api.save_attachment(task, "deck.pptx", b"refused")
+		# The message names every type the check lets through, and no "Microsoft documents".
+		message = str(refused.exception)
+		for named in [
+			"JPG",
+			"PNG",
+			"GIF",
+			"PDF",
+			"TXT",
+			"CSV",
+			"Word",
+			"Excel",
+			"OpenDocument",
+			"MP4",
+			"QuickTime",
+		]:
+			self.assertIn(named, message)
+		self.assertNotIn("Microsoft", message)
+
 	# ── Page shell ────────────────────────────────────────
 
 	def test_boot(self):
