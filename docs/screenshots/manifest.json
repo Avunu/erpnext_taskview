@@ -67,7 +67,7 @@
 		"readme": "hero",
 		"width": 2880,
 		"height": 1800,
-		"sha256": "5eae51d5abc4c98de3d69f27f3e8c378c1a31f15ee8c6aba4fc18d700db7704b"
+		"sha256": "e1fdfdaaa0c6b1fee0e889d6f744d1d98c67c3964fcea541302c7a863a26a41d"
 	},
 	{
 		"name": "task-view",
@@ -77,6 +77,6 @@
 		"readme": "hero",
 		"width": 2880,
 		"height": 1800,
-		"sha256": "b538e258c794e10b56d1c4fc0e67cc80acc71d2e6d84fef61c231b42f0e7575d"
+		"sha256": "53f7d17ac056daa0673483d33a0a33d64876885ea8ca43529e6852907ea64023"
 	}
 ]
