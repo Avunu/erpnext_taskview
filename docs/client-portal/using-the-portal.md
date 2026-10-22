@@ -3,7 +3,7 @@ title: Using the client portal
 description: "A guide for clients to the project portal: sign in, read the overview and the hours meter, work with tasks on a list or board, and comment or attach files."
 nav_title: Using the portal
 order: 7
-updated: 2026-10-21
+updated: 2026-10-22
 ---
 
 The client portal is a page on the ERPNext site of the team you work with, where you can follow your projects, see where the hours are going, and add tasks, comments and files without leaving the browser. This guide is written for a client who has been given access. If you do not have access yet, ask that team: the administrator's steps are in [Giving customers access](administering-access.md).
@@ -104,11 +104,11 @@ When you add a task, comment, attach a file or move a task, the team is notified
 
 ## If something does not work
 
-| You see                                                                           | What it means                                                                                               |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| "You do not have access to this project."                                         | The project does not exist or is not shared with you. Ask the team.                                         |
-| "This project is closed to new tasks."                                            | The project is Completed or Cancelled.                                                                      |
-| "Tasks can only be added under an open phase of this project."                    | Pick a phase that is not Completed, or choose no phase.                                                     |
-| "Files must be 25 MB or smaller."                                                 | Make the file smaller, or share it another way.                                                             |
-| "You can only upload JPG, PNG, GIF, PDF, TXT, CSV or Microsoft documents."        | Convert the file to one of those types.                                                                     |
-| "You hit the rate limit because of too many requests. Please try after sometime." | You, or someone on the same network, added 60 tasks, 60 comments or 60 files within an hour. Wait a little. |
+| You see                                                                                                                                             | What it means                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| "You do not have access to this project."                                                                                                           | The project does not exist or is not shared with you. Ask the team.                                         |
+| "This project is closed to new tasks."                                                                                                              | The project is Completed or Cancelled.                                                                      |
+| "Tasks can only be added under an open phase of this project."                                                                                      | Pick a phase that is not Completed, or choose no phase.                                                     |
+| "Files must be 25 MB or smaller."                                                                                                                   | Make the file smaller, or share it another way.                                                             |
+| "You can only upload JPG, PNG, GIF, PDF, TXT or CSV files, Word, Excel or OpenDocument text and spreadsheet documents, or MP4 or QuickTime videos." | Convert the file to one of those types.                                                                     |
+| "You hit the rate limit because of too many requests. Please try after sometime."                                                                   | You, or someone on the same network, added 60 tasks, 60 comments or 60 files within an hour. Wait a little. |

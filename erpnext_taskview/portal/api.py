@@ -686,7 +686,12 @@ def add_comment(task: str, content: str) -> dict:
 def save_attachment(task: str, filename: str, content: bytes) -> PortalAttachment:
 	"""Attach ``content`` to ``task`` as a private File (caller has checked access)."""
 	if not is_staff() and guess_type(filename)[0] not in ALLOWED_MIMETYPES:
-		frappe.throw(_("You can only upload JPG, PNG, GIF, PDF, TXT, CSV or Microsoft documents."))
+		frappe.throw(
+			_(
+				"You can only upload JPG, PNG, GIF, PDF, TXT or CSV files, Word, Excel or OpenDocument"
+				" text and spreadsheet documents, or MP4 or QuickTime videos."
+			)
+		)
 
 	file = cast(
 		File,

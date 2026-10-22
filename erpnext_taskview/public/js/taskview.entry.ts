@@ -91,7 +91,9 @@ class TasksView extends ListView {
 
 	override setup_defaults(): void {
 		super.setup_defaults();
-		this.page_title = `${this.doctype} Task View`;
+		// "Project Task View", but plain "Task View" on Task rather than "Task Task View".
+		this.page_title =
+			this.doctype === "Task" ? __("Task View") : __("{0} Task View", [__(this.doctype ?? "")]);
 		this.page_name = "task-view";
 		this.list_view_settings = {};
 		this.method = "erpnext_taskview.erpnext_taskview.api.get";

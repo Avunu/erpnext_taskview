@@ -122,7 +122,6 @@ There is no settings page. The app works through fields on documents you already
 
 - Timers need the two overlap settings in **Projects Settings** ticked, and the app does not tick them for you. Since ERPNext 16.51.0 the user check applies to every Timesheet, so a site that worked on an older ERPNext can start refusing timers after an upgrade.
 - A fresh install does not run the portal patch, so the portal settings above are yours to make, and until you untick ERPNext's `/project` row the portal menu lists **Projects** twice.
-- The checkbox on a task row switches between Open and Completed only: ticking a task in Working sets it to Open.
 - Dragging works only while the sort is **Manual**.
 - Task View has no form for adding time without a timer; add a Timesheet row with its **Project** and **Task** in ERPNext. The app adds no reports.
 - In the portal, the board's four columns, the file types customers may attach (JPG, PNG, GIF, PDF, TXT, CSV, Word and Excel documents, OpenDocument text and spreadsheets, and MP4 and QuickTime videos) and the limit of 60 new tasks, 60 comments and 60 uploads per hour from one IP address are fixed in the code. Customers cannot paste images into comments; they attach them as files.

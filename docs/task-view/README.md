@@ -3,7 +3,7 @@ title: Work the task tree
 description: Open Task View, switch between All Tasks, My Tasks and Pinned, add, reorder and complete tasks in the tree, and copy tasks as Markdown.
 nav_title: Task View
 order: 3
-updated: 2026-10-16
+updated: 2026-10-22
 ---
 
 Task View is how staff plan and work through projects in the ERPNext desk. This page covers arranging projects and tasks. Timing work is in [Timers and timesheets](timers.md) and budgets are in [Hour budgets](hour-budgets.md).
@@ -44,11 +44,8 @@ Drag a row to change its position, or drop it inside another task to make it a s
 - **Rename.** Double-click the title, then press Enter to save or Escape to cancel.
 - **Open the full form.** The panel button on a row opens the Task or Project form in a side panel. This is where you set [budgets](hour-budgets.md#set-a-budget). **Save** in the panel header is enabled once you change something, and the breadcrumb links to the list and to the full-page form.
 - **Assign.** The **+** on a task row lists the enabled staff users. Click a name to assign, or the **x** on an assignee's avatar to remove them.
-- **Complete.** Tick the checkbox on an Open task to complete it. The row stays on screen, struck through, until the next refresh, so you can tick several in a row.
+- **Complete.** Tick the checkbox on a task to complete it, whatever its status: Open, Working or Pending Review. The row stays on screen, struck through, until the next refresh, so you can tick several in a row. Untick it before then to set the task back to Open.
 - **Delete.** The trash button on a task row asks you to confirm and then deletes the task.
-
-> [!NOTE]
-> The checkbox switches a task between Open and Completed only. On a task in any other status, such as Working, ticking it sets the status to Open. To complete such a task, change its status in the side panel, or tick **Completed** when you log time with the timer.
 
 The expanded and collapsed state of the tree is remembered in your browser, per user.
 
