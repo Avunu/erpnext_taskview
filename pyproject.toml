@@ -1,7 +1,7 @@
 [project]
 name = "erpnext_taskview"
 authors = [{ name = "Avunu LLC", email = "mail@avu.nu" }]
-description = "task workspace for erpnext"
+description = "Project task tree with timers, hour budgets and a customer portal for ERPNext"
 requires-python = ">=3.14"
 readme = "README.md"
 license = { text = "MIT" }

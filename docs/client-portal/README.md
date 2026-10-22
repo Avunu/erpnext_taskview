@@ -3,7 +3,7 @@ title: The client portal
 description: What the customer portal at /projects shows and lets customers do, the pages it has, the limits it enforces, and how the team is told about customer activity.
 nav_title: Client portal
 order: 6
-updated: 2026-10-06
+updated: 2026-10-21
 ---
 
 The client portal is a page on your ERPNext site, at `/projects`, where customers follow their projects, see where the hours are going, and add tasks, comments and files without needing access to the desk. It ships in the same app as [Task View](../task-view/README.md) and shows the same budgets and time logs.
@@ -47,7 +47,7 @@ A customer holds no permissions on the Project or Task documents themselves. Eve
 | Limit                                | Value                                                                                                                      |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
 | New tasks, comments and file uploads | 60 of each per hour from one IP address                                                                                    |
-| File types a customer can attach     | JPG, PNG, GIF, PDF, TXT, CSV and Microsoft Office documents                                                                |
+| File types a customer can attach     | JPG, PNG, GIF, PDF, TXT, CSV, Word and Excel documents, OpenDocument text and spreadsheets, MP4 and QuickTime videos       |
 | File size                            | 25 MB checked in the browser; your site's own limit applies on top                                                         |
 | Comment and description formatting   | Headings, bold, italic, strikethrough, lists, links, quotes and code blocks. Images cannot be pasted: attach them as files |
 | Refresh                              | An open project reloads every minute while its tab is visible, and when the tab regains focus                              |

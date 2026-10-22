@@ -1,0 +1,10 @@
+# The app's registry listing (docs/app-standards/marketplace.md); frappe-listing check validates it.
+schema = 1
+title = "TaskView for ERPNext"
+tagline = "Project task tree with timers, hour budgets and a customer portal for ERPNext"
+type = "extension"
+category = "Extensions"
+categories = ["Project Management", "Time Tracking", "Customer Portal"]
+website = "https://avunu.net/open-source/erpnext_taskview/"
+documentation = "https://docs.avunu.net/erpnext-taskview/"
+apps_screen = false

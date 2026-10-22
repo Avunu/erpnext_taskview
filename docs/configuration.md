@@ -1,9 +1,9 @@
 ---
 title: Configuration
-description: The settings that shape ERPNext TaskView, the hook that chooses which Timesheet receives time, and a reference of everything the app adds to a site.
+description: The settings that shape TaskView for ERPNext, the hook that chooses which Timesheet receives time, and a reference of everything the app adds to a site.
 nav_title: Configuration
 order: 2
-updated: 2026-10-16
+updated: 2026-10-21
 ---
 
 TaskView has no settings page of its own. It is configured through fields on documents you already use, a few standard ERPNext settings, and one hook for developers. This page lists them, then lists everything the app adds to your site.

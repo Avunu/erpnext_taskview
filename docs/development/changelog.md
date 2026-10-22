@@ -1,12 +1,12 @@
 ---
 title: Changelog
-description: "Where to find what changed in ERPNext TaskView: the merged pull requests and the commit history, since the project has no tagged releases yet."
+description: "Where to find what changed in TaskView for ERPNext: the merged pull requests and the commit history, since the project has no tagged releases yet."
 nav_title: Changelog
 order: 11
-updated: 2026-10-16
+updated: 2026-10-21
 ---
 
-ERPNext TaskView does not keep a `CHANGELOG` file and has not published a tagged release, so the record of what changed is the repository itself:
+TaskView for ERPNext does not keep a `CHANGELOG` file and has not published a tagged release, so the record of what changed is the repository itself:
 
 - [Merged pull requests](https://github.com/Avunu/erpnext_taskview/pulls?q=is%3Apr+is%3Amerged) say what each change did and why.
 - [Commits on `main`](https://github.com/Avunu/erpnext_taskview/commits/main) are written as conventional commits (`feat:`, `fix:`, `chore:`), so the prefix tells you the kind of change.

@@ -14,7 +14,7 @@
 		"build:timerdock": "BUNDLE=timerdock vite build",
 		"build:portal": "vite build -c vite.portal.config.ts",
 		"preview": "vite preview",
-		"typecheck": "node scripts/vue-tsc.cjs --noEmit -p tsconfig.json && node scripts/vue-tsc.cjs --noEmit -p portal/tsconfig.json",
+		"typecheck": "tsc --build tsconfig.solution.json && node scripts/vue-tsc.cjs --noEmit -p tsconfig.json && node scripts/vue-tsc.cjs --noEmit -p portal/tsconfig.json",
 		"lint": "oxlint",
 		"lint:fix": "oxlint --fix erpnext_taskview/public/js portal/src",
 		"format": "oxfmt",
