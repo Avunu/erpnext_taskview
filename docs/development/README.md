@@ -80,15 +80,16 @@ scripts/vite-register.mjs           registers the Vite bundles in sites/assets/a
 
 The Python tests are Frappe `IntegrationTestCase`s in `erpnext_taskview/tests/`, with record builders in `fixtures.py`:
 
-| File                        | Covers                                                                                                                                                                                              |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `test_api.py`               | The desk endpoints: filters and sorting, every `save_doc` route (projects, tasks, drag and drop, timers, manual logs), bulk creation, deleting, assigning and pinned order                          |
-| `test_hooks.py`             | The install hook, the hooks the app registers, and the Task extension's permission bypass                                                                                                           |
-| `test_budget.py`            | Rollup of budgets and logged hours, own estimates beating subtask sums, Cancelled Timesheets, open timers, rollup by `parent_task`, and a parent cycle that must not hang                           |
-| `test_portal.py`            | Who can open what, template tasks hidden, project and task reads, status changes and closing assignments, creating tasks, comments, attachments, boot data and the legacy link redirect             |
-| `test_pinned.py`            | Quick entry, placing after an anchor, giving a task a project, and the cases that are refused                                                                                                       |
-| `test_timesheet_guard.py`   | A submitted Timesheet never moves a task backwards                                                                                                                                                  |
-| `test_timer_permissions.py` | Who may start, pause, stop, discard and log time and complete a task: no Task write, another person's timer or Timesheet, project user permissions, portal users, and Task validation on completion |
+| File                        | Covers                                                                                                                                                                                                                                       |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `test_api.py`               | The desk endpoints: filters and sorting, every `save_doc` route (projects, tasks, drag and drop, timers, manual logs), bulk creation, deleting, assigning and pinned order                                                                   |
+| `test_hooks.py`             | The install hook, the hooks the app registers, and the Task extension's permission bypass                                                                                                                                                    |
+| `test_budget.py`            | Rollup of budgets and logged hours, own estimates beating subtask sums, Cancelled Timesheets, open timers, rollup by `parent_task`, and a parent cycle that must not hang                                                                    |
+| `test_portal.py`            | Who can open what, template tasks hidden, project and task reads, status changes and closing assignments, creating tasks, comments, attachments, boot data and the legacy link redirect                                                      |
+| `test_pinned.py`            | Quick entry, placing after an anchor, giving a task a project, and the cases that are refused                                                                                                                                                |
+| `test_timesheet_guard.py`   | A submitted Timesheet never moves a task backwards                                                                                                                                                                                           |
+| `test_timer_permissions.py` | Who may start, pause, stop, discard and log time and complete a task: no Task write, another person's timer or Timesheet, project user permissions, portal users, and Task validation on completion, the task's project and draft Timesheets |
+| `test_save_permissions.py`  | Who may change a task or project through the Task and Project routes of `save_doc`: status, renames, drags, new parents and children, and new subtasks                                                                                       |
 
 Frappe only runs tests on a site that allows them. Use a development or test site, never production:
 

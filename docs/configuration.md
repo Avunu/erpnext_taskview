@@ -10,13 +10,13 @@ TaskView has no settings page of its own. It is configured through fields on doc
 
 ## For staff and project managers
 
-| Setting                      | Where                              | What it does                                                                                                                          |
-| ---------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Expected Time (in hours)** | Task form                          | The task's hour budget. Without one, the task uses the sum of its subtasks. See [Hour budgets](task-view/hour-budgets.md).            |
-| **Budgeted Hours**           | Project form, below Estimated Cost | The project's hour budget. Without one, the project uses the sum of its top-level tasks.                                              |
-| **User ID**                  | Employee form                      | Timers log to the Employee whose **User ID** is the person's login, so each person who times work needs one.                          |
-| **Roles**                    | User form                          | To time a task or log time on it, a person needs read on its Project and write on the Task. ERPNext's **Projects User** gives both.   |
-| **Customer**                 | Project form                       | Decides which customer's contacts and portal users can see the project in the [client portal](client-portal/administering-access.md). |
+| Setting                      | Where                              | What it does                                                                                                                                                                                                |
+| ---------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Expected Time (in hours)** | Task form                          | The task's hour budget. Without one, the task uses the sum of its subtasks. See [Hour budgets](task-view/hour-budgets.md).                                                                                  |
+| **Budgeted Hours**           | Project form, below Estimated Cost | The project's hour budget. Without one, the project uses the sum of its top-level tasks.                                                                                                                    |
+| **User ID**                  | Employee form                      | Timers log to the Employee whose **User ID** is the person's login, so each person who times work needs one.                                                                                                |
+| **Roles**                    | User form                          | To time a task or log time on it, a person needs read on its Project and write on the Task. To change a task or project in the tree, they need write on it. ERPNext's **Projects User** gives all of these. |
+| **Customer**                 | Project form                       | Decides which customer's contacts and portal users can see the project in the [client portal](client-portal/administering-access.md).                                                                       |
 
 The side panel in Task View opens the Task or Project form, so these are one click from the tree.
 
@@ -79,7 +79,7 @@ This is the complete list, so you can see what a bench migration changes.
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Task              | The Task class is extended so that the portal can save a task, close its assignments and update its parent and dependent tasks on behalf of a customer, who holds no Task permission. Saves that do not ignore permissions take ERPNext's normal path. |
 | Timesheet         | Submitting a Timesheet moves a task **forward only**: Open becomes Working, and a task in Pending Review or Completed stays where it is. ERPNext's own code would set every task back to Working.                                                      |
-| Timesheet Detail  | The class carries the typed timer fields above. Timer calls check read on the Project, write on the Task and access to the Timesheet before they write a row.                                                                                          |
+| Timesheet Detail  | The class carries the typed timer fields above. Timer calls check read on the Project, write on the Task, that a new row's Task is in its Project, and access to the draft Timesheet before they write a row.                                          |
 | Notification Type | A **Client Portal** type is created when the app is installed or the site is migrated, and installing the app adds it to existing users' email preferences.                                                                                            |
 | Website           | `/projects` and everything under it is served by the portal. The portal menu gets a **Projects** entry for users with the Customer role. `/project` redirects to `/projects`.                                                                          |
 | Desk              | The Task View and timer dock bundles load on every desk page.                                                                                                                                                                                          |

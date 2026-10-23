@@ -267,3 +267,65 @@ class TestTimerPermissions(IntegrationTestCase):
 		self.assertEqual(
 			frappe.db.get_value("Timesheet", {"employee": employee}, "parent_project"), self.project
 		)
+
+	# ── the Task must belong to the Project ──────────────────
+
+	def test_a_new_row_needs_its_task_in_the_project(self):
+		"""Project read and Task write are checked apart, so the pair must match."""
+		elsewhere = make_task(make_project())
+		no_project = insert({"doctype": "Task", "subject": "Not in any project"})
+		with set_user(self.staff):
+			for task in (elsewhere, no_project):
+				for log in (
+					lambda task=task: save({"project": self.project, "task": task}),
+					lambda task=task: manual_log(self.project, task),
+				):
+					with self.assertRaisesRegex(frappe.ValidationError, "does not belong to Project"):
+						log()
+		self.assertEqual(rows_on(elsewhere) + rows_on(no_project), [])
+
+	def test_a_stopped_timer_moves_only_to_a_task_of_its_project(self):
+		task = make_task(self.project)
+		sibling = make_task(self.project)
+		elsewhere = make_task(make_project())
+		no_project = insert({"doctype": "Task", "subject": "Not in any project"})
+		with set_user(self.staff):
+			save({"project": self.project, "task": task})
+			(row,) = rows_on(task)
+			for other in (elsewhere, no_project):
+				with self.assertRaisesRegex(frappe.ValidationError, "does not belong to Project"):
+					stop(row.name, task=other)
+			self.assertIsNone(frappe.db.get_value("Timesheet Detail", row.name, "to_time"))
+			stop(row.name, task=sibling)
+		self.assertEqual(
+			frappe.db.get_value("Timesheet Detail", row.name, ["project", "task"]), (self.project, sibling)
+		)
+
+	def test_a_timer_keeps_working_after_its_task_moves(self):
+		"""A row keeps the project it was logged on; only a new pair must match."""
+		task = make_task(self.project)
+		with set_user(self.staff):
+			save({"project": self.project, "task": task})
+			(row,) = rows_on(task)
+		frappe.db.set_value("Task", task, "project", make_project())
+		with set_user(self.staff):
+			save({"name": row.name, "paused": 1})
+			save({"name": row.name, "delete": 1})
+		self.assertEqual(rows_on(task), [])
+
+	# ── only a draft Timesheet ───────────────────────────────
+
+	def test_a_cancelled_timesheet_is_refused(self):
+		task = make_task(self.project)
+		timesheet = log_time(self.project, task, 1, submit=True)
+		timesheet.cancel()
+		frappe.db.set_value(
+			"Timesheet", timesheet.name, {"owner": self.staff, "employee": self.staff_employee}
+		)
+		row = timesheet.time_logs[0].name
+		with set_user(self.staff):
+			for change in ({"delete": 1}, {"update_description": 1, "description": "changed"}):
+				with self.assertRaisesRegex(frappe.ValidationError, "is not a draft"):
+					save({"name": row, **change})
+		self.assertTrue(frappe.db.exists("Timesheet Detail", row))
+		self.assertTrue(frappe.db.exists("Timesheet", timesheet.name))
