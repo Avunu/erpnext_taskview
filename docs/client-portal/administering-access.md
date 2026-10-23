@@ -3,7 +3,7 @@ title: Giving customers access
 description: How to give a customer access to the client portal, the exact rules that decide who sees which project, and what customers can see and change once they are in.
 nav_title: Giving access
 order: 8
-updated: 2026-10-21
+updated: 2026-10-23
 ---
 
 This page is for the administrator who gives customers access to the [client portal](README.md). Three things must be true for a customer to see a project: the person has a login, the login is tied to the right customer or project, and the project belongs to that customer.
@@ -70,7 +70,7 @@ Each customer action is limited to 60 new tasks, 60 comments and 60 uploads per 
 
 ## Notifications for the team
 
-A customer who adds a task, comments, attaches a file or moves a task creates a **Client Portal** notification for the team. See [How the team is told](README.md#how-the-team-is-told) for who receives it. To get the email too, each recipient needs **Client Portal** in their Notification Settings: see [Install and upgrade](../install.md#finish-the-portal-set-up) for turning it on for all users.
+A customer who adds a task, comments, attaches a file or moves a task creates a **Client Portal** notification for the team. See [How the team is told](README.md#how-the-team-is-told) for who receives it. To get the email too, each recipient needs **Client Portal** in their Notification Settings. Installing the app turns it on for every user who exists at the time, and users created later get it by default: see [Install and upgrade](../install.md#what-installing-sets-up). A user can switch it off in their own Notification Settings.
 
 ## Preview the portal as staff
 

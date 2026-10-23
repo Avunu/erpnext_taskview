@@ -105,7 +105,7 @@ There is no settings page. The app works through fields on documents you already
 - **Timers:** each person who times work needs an Employee whose **User ID** is their login. In **Projects Settings**, tick both **Ignore User Time Overlap** and **Ignore Employee Time Overlap**: a paused timer's time log overlaps the one that ran meanwhile, and without these ERPNext refuses the next timer on that project and the Timesheet's submission.
 - **Budgets:** set **Expected Time** on tasks and **Budgeted Hours** on projects.
 - **Portal access:** a portal user sees a project when their Contact is linked to the project's customer, when they are in the customer's **Portal Users**, or when they are in the project's **Users**. See [Giving customers access](docs/client-portal/administering-access.md).
-- **Portal set-up on a fresh install:** `install-app` marks the app's one-time patch as done without running it. On a new site, set **Default Portal Home** to `/projects` and untick ERPNext's own `/project` row in **Portal Settings**, **Portal Menu**, and enable **Client Portal** e-mails for existing users from the Notification Type's **Actions** menu. See [Finish the portal set-up](docs/install.md#finish-the-portal-set-up). On a site that had the app before, `bench migrate` runs the patch.
+- **Portal set-up:** installing the app sets up the portal for you. It sets **Default Portal Home** to `/projects` (unless the site already has another one), unticks ERPNext's own `/project` row in **Portal Settings**, **Portal Menu**, and opts existing users into **Client Portal** e-mails. A site that had the app before gets the same set-up once from `bench migrate`. See [What installing sets up](docs/install.md#what-installing-sets-up).
 - **Choosing the Timesheet:** another app can decide which draft Timesheet a timer adds to with the `taskview_find_timesheet` hook. See [Choose which Timesheet receives time](docs/configuration.md#choose-which-timesheet-receives-time).
 
 ## How It Works
@@ -122,7 +122,6 @@ There is no settings page. The app works through fields on documents you already
 ## Limitations
 
 - Timers need the two overlap settings in **Projects Settings** ticked, and the app does not tick them for you. Since ERPNext 16.51.0 the user check applies to every Timesheet, so a site that worked on an older ERPNext can start refusing timers after an upgrade.
-- A fresh install does not run the portal patch, so the portal settings above are yours to make, and until you untick ERPNext's `/project` row the portal menu lists **Projects** twice.
 - Dragging works only while the sort is **Manual**.
 - **Log time** records hours that end at the moment you submit; to log time on another day, edit the row's From Time in the Timesheet or add the row in ERPNext. The app adds no reports.
 - In the portal, the board's four columns, the file types customers may attach (JPG, PNG, GIF, PDF, TXT, CSV, Word and Excel documents, OpenDocument text and spreadsheets, and MP4 and QuickTime videos) and the limit of 60 new tasks, 60 comments and 60 uploads per hour from one IP address are fixed in the code. Customers cannot paste images into comments; they attach them as files.

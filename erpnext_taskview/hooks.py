@@ -17,7 +17,7 @@ extend_doctype_class = {
 	"Timesheet Detail": "erpnext_taskview.erpnext_taskview.custom.timesheet_detail.TimesheetDetail",
 }
 
-after_install = "erpnext_taskview.install.ensure_notification_type"
+after_install = "erpnext_taskview.install.after_install"
 after_migrate = "erpnext_taskview.install.ensure_notification_type"
 
 # Customer project portal — a frappe-ui SPA served by www/projects.py
