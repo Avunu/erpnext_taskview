@@ -46,10 +46,11 @@ The full documentation is at [docs.avunu.net/erpnext-taskview](https://docs.avun
 
 ### Timers
 
-- Start, pause and stop a timer on any task that has a project. Only one runs at a time: starting one pauses the others.
+- Start, pause and stop a timer on any task that has a project and that you may edit. Only one runs at a time: starting one pauses the others.
 - Time is logged to a draft Timesheet for your Employee and the project, which is created when there is none. Stopping opens a **Log Timer** dialog for the hours, activity type, description and billable time.
 - **Log time** on a task without a timer: the clock-plus button on the row opens the same dialog with Hrs empty, for hours you did not time. The entry ends now and goes to the same draft Timesheet.
 - A timer dock on every desk page shows your open timers with a live clock. Timers are kept on the server, so they survive a reload and follow you between devices.
+- Timers and logged time follow ERPNext's permissions: you need read access to the project and write access to the task, the task must belong to that project, and the Timesheet must be a draft that is your own Employee's or one you may write. Ticking **Completed** saves the task through ERPNext, so its usual checks (such as tasks it depends on) apply.
 - Submitting a Timesheet only moves a task forward (Open to Working). A task in Pending Review or Completed stays where it is.
 
 ### Hour budgets
@@ -102,7 +103,7 @@ Until the first release creates the `version-16` branch, install from `main` ins
 
 There is no settings page. The app works through fields on documents you already use, a few ERPNext settings and one developer hook. [Configuration](docs/configuration.md) lists them all, with everything the app adds to a site.
 
-- **Timers:** each person who times work needs an Employee whose **User ID** is their login. In **Projects Settings**, tick both **Ignore User Time Overlap** and **Ignore Employee Time Overlap**: a paused timer's time log overlaps the one that ran meanwhile, and without these ERPNext refuses the next timer on that project and the Timesheet's submission.
+- **Timers:** each person who times work needs an Employee whose **User ID** is their login, read permission on the project and write permission on the task (ERPNext's **Projects User** role gives both). In **Projects Settings**, tick both **Ignore User Time Overlap** and **Ignore Employee Time Overlap**: a paused timer's time log overlaps the one that ran meanwhile, and without these ERPNext refuses the next timer on that project and the Timesheet's submission.
 - **Budgets:** set **Expected Time** on tasks and **Budgeted Hours** on projects.
 - **Portal access:** a portal user sees a project when their Contact is linked to the project's customer, when they are in the customer's **Portal Users**, or when they are in the project's **Users**. See [Giving customers access](docs/client-portal/administering-access.md).
 - **Portal set-up:** installing the app sets up the portal for you. It sets **Default Portal Home** to `/projects` (unless the site already has another one), unticks ERPNext's own `/project` row in **Portal Settings**, **Portal Menu**, and opts existing users into **Client Portal** e-mails. A site that had the app before gets the same set-up once from `bench migrate`. See [What installing sets up](docs/install.md#what-installing-sets-up).
@@ -111,7 +112,7 @@ There is no settings page. The app works through fields on documents you already
 ## How It Works
 
 - The desk bundles (`app_include_js`) register a `Tasks` list view for Task and Project and mount a Vue tree in place of the list, and mount the timer dock once on every desk page. Two property settings make Task View the default view of both.
-- The tree reads everything through one endpoint, `erpnext_taskview.erpnext_taskview.api.get`, and every change goes through a small set of endpoints that return a fresh copy of the data. Timer operations are rows of an ordinary Timesheet: four read-only fields on Timesheet Detail (Paused, Start Time, Paused Time and Task Subject) hold the timer state, and the server keeps at most one timer running.
+- The tree reads everything through one endpoint, `erpnext_taskview.erpnext_taskview.api.get`, and every change goes through a small set of endpoints that return a fresh copy of the data. Timer operations are rows of an ordinary Timesheet: four read-only fields on Timesheet Detail (Paused, Start Time, Paused Time and Task Subject) hold the timer state, and the server keeps at most one timer running. The rows are written with permission checks off, so every timer call first checks read on the Project, write on the Task, that a new row's Task is in its Project, and access to the draft Timesheet, and completing a task saves the Task document. Renaming or moving a task or project in the tree is written with `frappe.db.set_value`, so those calls check write on every Task or Project they change, and read on the Project a task moves to.
 - Pins are the current user's ToDos for a task with a **Pinned** (`pin`) field the app adds to ToDo, created through Frappe's assignment code, which is why pinning also assigns.
 - `budget.py` computes budgets and logged hours for any number of projects in four queries and rolls them up by `parent_task`. The desk and the portal share it.
 - The portal is a frappe-ui app built into `erpnext_taskview/public/portal/` and served at `/projects` by `www/projects.py`. Customers hold no permission on Project or Task, so every portal endpoint (`erpnext_taskview.portal.api`) checks access in `portal/access.py` first and only then reads or writes on the customer's behalf. Rich text from customers is cleaned with `nh3`.
@@ -122,6 +123,9 @@ There is no settings page. The app works through fields on documents you already
 ## Limitations
 
 - Timers need the two overlap settings in **Projects Settings** ticked, and the app does not tick them for you. Since ERPNext 16.51.0 the user check applies to every Timesheet, so a site that worked on an older ERPNext can start refusing timers after an upgrade.
+- A user who can only see a task (ERPNext's **Employee** role alone gives Task select, not write) cannot time it or log time on it. Give them **Projects User**, or share the task with write access.
+- Customers on the portal cannot log time or run timers; they see the time logs only.
+- A task can be renamed, re-statused, dragged or given subtasks in the tree only by a user who may write it (and, for a drag, the new parent and every subtask that moves with it).
 - Dragging works only while the sort is **Manual**.
 - **Log time** records hours that end at the moment you submit; to log time on another day, edit the row's From Time in the Timesheet or add the row in ERPNext. The app adds no reports.
 - In the portal, the board's four columns, the file types customers may attach (JPG, PNG, GIF, PDF, TXT, CSV, Word and Excel documents, OpenDocument text and spreadsheets, and MP4 and QuickTime videos) and the limit of 60 new tasks, 60 comments and 60 uploads per hour from one IP address are fixed in the code. Customers cannot paste images into comments; they attach them as files.
