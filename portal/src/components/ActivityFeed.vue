@@ -2,7 +2,9 @@
 	<div v-if="!items.length" class="text-base text-ink-gray-5">Nothing yet.</div>
 	<ol v-else class="flex flex-col gap-4">
 		<li v-for="(item, i) in items" :key="i" class="flex gap-3">
-			<div class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-gray-2">
+			<div
+				class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-gray-2"
+			>
 				<component :is="icons[item.kind]" class="h-3.5 w-3.5 text-ink-gray-6" />
 			</div>
 			<div class="min-w-0 flex-1 text-base">
@@ -57,7 +59,11 @@ export default defineComponent({
 	methods: {
 		fromNow,
 		verb(item: PortalActivity): string {
-			return item.task ? this.verbs[item.kind] : item.kind === "time" ? "logged time" : this.verbs[item.kind];
+			return item.task
+				? this.verbs[item.kind]
+				: item.kind === "time"
+					? "logged time"
+					: this.verbs[item.kind];
 		},
 	},
 });

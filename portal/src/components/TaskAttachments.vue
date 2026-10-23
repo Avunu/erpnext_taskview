@@ -3,7 +3,9 @@
 		<div class="mb-2 flex items-center justify-between">
 			<h3 class="text-sm-semibold text-ink-gray-8">
 				Files
-				<span v-if="attachments.length" class="font-normal text-ink-gray-5">{{ attachments.length }}</span>
+				<span v-if="attachments.length" class="font-normal text-ink-gray-5">{{
+					attachments.length
+				}}</span>
 			</h3>
 			<FileUploader
 				:upload-endpoint="uploadEndpoint"
@@ -50,7 +52,9 @@
 					</a>
 					<div class="text-xs text-ink-gray-5">
 						{{
-							[formatFileSize(file.file_size), file.by, fromNow(file.creation)].filter(Boolean).join(" · ")
+							[formatFileSize(file.file_size), file.by, fromNow(file.creation)]
+								.filter(Boolean)
+								.join(" · ")
 						}}
 					</div>
 				</div>

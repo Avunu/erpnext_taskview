@@ -1,6 +1,12 @@
 <template>
 	<div class="tree-container" v-if="viewMode !== 'pinned'">
-		<Draggable class="mtl-tree" v-model="treeData" treeLine :rootDroppable="true" @after-drop="handleDragEnd">
+		<Draggable
+			class="mtl-tree"
+			v-model="treeData"
+			treeLine
+			:rootDroppable="true"
+			@after-drop="handleDragEnd"
+		>
 			<template #default="{ node, stat }">
 				<!-- modify node and stat to perpetuate collapse node states -->
 				<div
@@ -83,10 +89,14 @@
                        hatch to the full-page form. -->
 									<ul class="nav navbar-breadcrumbs d-sm-flex ellipsis">
 										<li class="ellipsis">
-											<a class="title-text" :href="sidebarListRoute">{{ sidebarDoctype }}</a>
+											<a class="title-text" :href="sidebarListRoute">{{
+												sidebarDoctype
+											}}</a>
 										</li>
 										<li class="ellipsis">
-											<a class="title-text-form" :href="sidebarFormRoute">{{ sidebarTitle }}</a>
+											<a class="title-text-form" :href="sidebarFormRoute">{{
+												sidebarTitle
+											}}</a>
 										</li>
 									</ul>
 								</div>
@@ -343,7 +353,8 @@ export default defineComponent({
 			try {
 				const budgets = await fetchBudgetSummary(response.projects.map((p) => p.name));
 				for (const doc of [...response.projects, ...response.tasks]) {
-					const b = doc.doctype === "Project" ? budgets.projects[doc.name] : budgets.tasks[doc.name];
+					const b =
+						doc.doctype === "Project" ? budgets.projects[doc.name] : budgets.tasks[doc.name];
 					if (!b) continue;
 					doc.budget_hours = b.budget_hours;
 					doc.logged_hours = b.logged_hours;
@@ -723,7 +734,11 @@ export default defineComponent({
 				idx: taskDoc.idx || 0,
 			} as TaskDoc);
 
-			parent.children = [...parent.children.slice(0, at + 1), blankTask, ...parent.children.slice(at + 1)];
+			parent.children = [
+				...parent.children.slice(0, at + 1),
+				blankTask,
+				...parent.children.slice(at + 1),
+			];
 			this.treeData = [...this.treeData];
 			return blankTask;
 		},
@@ -732,7 +747,9 @@ export default defineComponent({
 
 		isHighlightedProject(node: TreeData): boolean {
 			try {
-				return !!(node.doc.doctype === "Project" && node.doc.name === this.highlightedProject?.doc.name);
+				return !!(
+					node.doc.doctype === "Project" && node.doc.name === this.highlightedProject?.doc.name
+				);
 			} catch {
 				return !!(node.doc.doctype === "Project" && node === this.highlightedProject);
 			}
@@ -761,7 +778,9 @@ export default defineComponent({
 			} else {
 				const nextExpandedProject = this.treeData.find(
 					(project) =>
-						project.doc.doctype === "Project" && project.doc.name && treeNodes.value?.[project.doc.name],
+						project.doc.doctype === "Project" &&
+						project.doc.name &&
+						treeNodes.value?.[project.doc.name],
 				);
 				if (nextExpandedProject) {
 					this.highlightedProject = nextExpandedProject;
@@ -981,7 +1000,9 @@ export default defineComponent({
 
 			const expandedProjects = this.treeData.filter(
 				(node) =>
-					node.doc.doctype === "Project" && node.doc.name && treeNodes.value?.[node.doc.name] !== false,
+					node.doc.doctype === "Project" &&
+					node.doc.name &&
+					treeNodes.value?.[node.doc.name] !== false,
 			);
 
 			if (expandedProjects.length > 0) {
@@ -1017,7 +1038,11 @@ export default defineComponent({
 			if (tag === "INPUT" || tag === "TEXTAREA") return;
 
 			// Ctrl/Cmd+C copies the current selection as a markdown tree.
-			if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c" && this.selectedTasks.size) {
+			if (
+				(event.ctrlKey || event.metaKey) &&
+				event.key.toLowerCase() === "c" &&
+				this.selectedTasks.size
+			) {
 				event.preventDefault();
 				this.copySelectionToClipboard();
 				return;

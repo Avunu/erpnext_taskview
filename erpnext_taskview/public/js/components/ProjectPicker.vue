@@ -39,7 +39,9 @@
 					</span>
 				</li>
 				<li v-if="loading && !matches.length" class="project-item project-item--empty">Loading...</li>
-				<li v-else-if="!matches.length" class="project-item project-item--empty">No open projects found</li>
+				<li v-else-if="!matches.length" class="project-item project-item--empty">
+					No open projects found
+				</li>
 			</ul>
 		</div>
 	</div>

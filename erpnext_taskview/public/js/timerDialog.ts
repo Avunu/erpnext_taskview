@@ -137,7 +137,13 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 				fieldtype: "Link",
 				options: "Activity Type",
 			},
-			{ label: "Hrs", fieldname: "hrs", fieldtype: "Float", default: elapsedHrs, reqd: requireHours ? 1 : 0 },
+			{
+				label: "Hrs",
+				fieldname: "hrs",
+				fieldtype: "Float",
+				default: elapsedHrs,
+				reqd: requireHours ? 1 : 0,
+			},
 			{
 				label: "Description",
 				fieldname: "description",
