@@ -49,6 +49,28 @@ export default {
 			featured: true,
 		},
 		{
+			name: "log-time",
+			route: TASK_VIEW,
+			alt: "The Log Time dialog, opened from a task row's Log time button, for logging hours without a timer",
+			waitFor: ROW,
+			actions: [
+				...EXPAND_ALL,
+				{ click: `${ROW} .task-btn--log` },
+				{ waitFor: ".modal.show [data-fieldname='hrs'] input" },
+				{ wait: 600 },
+				{ type: { selector: ".modal.show [data-fieldname='hrs'] input", text: "1.5" } },
+				{
+					type: {
+						selector: ".modal.show [data-fieldname='description'] textarea",
+						text: "Call with the client about the launch date",
+					},
+				},
+				{ wait: 400 },
+			],
+			mask: CLOCKS,
+			readme: "feature",
+		},
+		{
 			name: "portal-board",
 			route: `${PROJECT}/tasks?view=board`,
 			alt: "The customer portal's kanban board for a project, with Open, Working, Pending Review and Completed columns",

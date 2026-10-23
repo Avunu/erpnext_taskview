@@ -1,5 +1,25 @@
 [
 	{
+		"name": "log-time",
+		"theme": "dark",
+		"alt": "The Log Time dialog, opened from a task row's Log time button, for logging hours without a timer",
+		"featured": false,
+		"readme": "feature",
+		"width": 2880,
+		"height": 1800,
+		"sha256": "878c533649f2f5b6f0e526ca7872ab7f23f777124df31f2cc969c8fdbdf2f84d"
+	},
+	{
+		"name": "log-time",
+		"theme": "light",
+		"alt": "The Log Time dialog, opened from a task row's Log time button, for logging hours without a timer",
+		"featured": false,
+		"readme": "feature",
+		"width": 2880,
+		"height": 1800,
+		"sha256": "dc677d9d1d4d37e774436f86cb7b2a4db5416838f590390535ec581a28d5a32b"
+	},
+	{
 		"name": "pinned",
 		"theme": "dark",
 		"alt": "The Pinned view: a personal list of tasks across projects, with quick entry and a task that has no project yet",
@@ -7,7 +27,7 @@
 		"readme": "feature",
 		"width": 2880,
 		"height": 1800,
-		"sha256": "dab6851d70a48eb5027db1b6a20c64338d266d9ca7270c3e9da708ace49b7f70"
+		"sha256": "fcd609b2a00b433a2f7423a35f3aff66a7be3a4fc7603233986023b5ed2d9841"
 	},
 	{
 		"name": "pinned",
@@ -17,7 +37,7 @@
 		"readme": "feature",
 		"width": 2880,
 		"height": 1800,
-		"sha256": "ebc28a2b2dbf95d3a0f1e35c2a091cba73b85b38d2614f5a7593af3f01886d31"
+		"sha256": "3603b5686a7e012c1bd09fd1338447f7e6834cf173fc2cf1ffaf4cb14bc2ba5d"
 	},
 	{
 		"name": "portal-board",
@@ -67,7 +87,7 @@
 		"readme": "hero",
 		"width": 2880,
 		"height": 1800,
-		"sha256": "e1fdfdaaa0c6b1fee0e889d6f744d1d98c67c3964fcea541302c7a863a26a41d"
+		"sha256": "1be60b5595d875cbcbdd2065329ae0c5e25419a2bfb940fb3c8d83df011e14c2"
 	},
 	{
 		"name": "task-view",
@@ -77,6 +97,6 @@
 		"readme": "hero",
 		"width": 2880,
 		"height": 1800,
-		"sha256": "53f7d17ac056daa0673483d33a0a33d64876885ea8ca43529e6852907ea64023"
+		"sha256": "93fcb082da1085f6fe91bb1a9bcdb0ce44a6bee2bc1ab02a43cb9bdd79b6cf50"
 	}
 ]
