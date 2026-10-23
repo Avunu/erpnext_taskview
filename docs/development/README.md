@@ -3,7 +3,7 @@ title: Develop TaskView for ERPNext
 description: Set up a bench checkout, build the Vue and frappe-ui bundles, run the Python tests and JavaScript checks, and see what CI and pre-commit enforce.
 nav_title: Development
 order: 9
-updated: 2026-10-21
+updated: 2026-10-23
 ---
 
 This page is for people changing the app. [How it works](architecture.md) explains the design behind the code, and the [changelog](changelog.md) says where to find what changed.
@@ -47,7 +47,7 @@ The Python tests are run with `bench`: see [Tests](#tests).
 erpnext_taskview/
   hooks.py                          app hooks: bundles, class overrides, portal routes
   install.py                        creates the Client Portal Notification Type
-  patches/v1_0/setup_client_portal.py   one-time portal switch-over for existing sites
+  patches/v1_0/setup_client_portal.py   runs install.setup_client_portal once on existing sites
   erpnext_taskview/                 the app's module
     api.py                          desk endpoints: tree data, saves, timers, pinning
     budget.py                       budget and logged-hours rollup
@@ -122,7 +122,7 @@ The `Docs` workflow (`.github/workflows/docs.yml`) checks this documentation whe
 - Python is formatted with ruff: tabs, double quotes and a line length of 110. Every source file starts with the copyright header the `validate_copyright` pre-commit hook checks.
 - The API shapes are written twice, in Pydantic and in TypeScript, and kept in step by hand: `erpnext_taskview/erpnext_taskview/models.py` with `erpnext_taskview/public/js/types.ts`, and `erpnext_taskview/portal/models.py` with `portal/src/types.ts`. Change both together.
 - The Python code declares no dependencies of its own. It uses Pydantic, nh3 and BeautifulSoup, which Frappe v16 already depends on.
-- Patches are listed in `patches.txt`. A fresh install marks every patch as done without running it, so anything a new site needs must also happen in `after_install` (`install.py`): see [Install and upgrade](../install.md#finish-the-portal-set-up).
+- Patches are listed in `patches.txt`. A fresh install marks every patch as done without running it, so anything a new site needs must also happen in `after_install` (`install.py`). The portal set-up is one idempotent function, `install.setup_client_portal`, that both `after_install` and the `setup_client_portal` patch call: see [Install and upgrade](../install.md#what-installing-sets-up).
 
 ### Pre-commit
 

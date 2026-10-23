@@ -10,11 +10,13 @@ from typing import Any
 from unittest.mock import patch
 
 import frappe
+from frappe.desk.doctype.notification_settings.notification_settings import create_notification_settings
 from frappe.desk.form.assign_to import close_all_assignments
 from frappe.tests import IntegrationTestCase, set_user
 from frappe.utils import getdate
 
-from erpnext_taskview.install import ensure_notification_type
+from erpnext_taskview.install import after_install, ensure_notification_type, setup_client_portal
+from erpnext_taskview.patches.v1_0 import setup_client_portal as portal_patch
 from erpnext_taskview.portal.notify import NOTIFICATION_TYPE
 
 from .fixtures import get_task, insert, make_project, make_task
@@ -32,12 +34,92 @@ class TestInstall(IntegrationTestCase):
 		self.assertIn("erpnext", frappe.get_hooks("required_apps", app_name="erpnext_taskview"))
 		self.assertEqual(
 			frappe.get_hooks("after_install", app_name="erpnext_taskview"),
-			["erpnext_taskview.install.ensure_notification_type"],
+			["erpnext_taskview.install.after_install"],
 		)
 		self.assertEqual(
 			frappe.get_hooks("after_migrate", app_name="erpnext_taskview"),
 			["erpnext_taskview.install.ensure_notification_type"],
 		)
+
+
+class TestPortalSetup(IntegrationTestCase):
+	"""``setup_client_portal``: run by ``after_install`` and by the upgrade patch."""
+
+	def setUp(self):
+		super().setUp()
+		portal = frappe.get_single("Portal Settings")
+		if not any(row.route == "/project" for row in portal.menu):
+			portal.append("menu", {"title": "Projects", "route": "/project", "reference_doctype": "Project"})
+		for row in portal.menu:
+			if row.route == "/project":
+				row.enabled = 1
+		portal.default_portal_home = ""
+		portal.save(ignore_permissions=True)
+
+		website = frappe.get_single("Website Settings")
+		website.append("route_redirects", {"source": "projects", "target": "project"})
+		website.append("route_redirects", {"source": "/old-page", "target": "/new-page"})
+		website.save(ignore_permissions=True)
+
+		create_notification_settings("Administrator")
+		frappe.db.delete(
+			"Notification Type Preference",
+			{"parent": "Administrator", "notification_type": NOTIFICATION_TYPE},
+		)
+
+	def tearDown(self):
+		frappe.db.rollback()
+		super().tearDown()
+
+	def assert_portal_is_set_up(self) -> None:
+		portal = frappe.get_single("Portal Settings")
+		self.assertEqual(portal.default_portal_home, "/projects")
+		self.assertFalse([row for row in portal.menu if row.route == "/project" and row.enabled])
+		redirects = [(r.source, r.target) for r in frappe.get_single("Website Settings").route_redirects]
+		self.assertNotIn(("projects", "project"), redirects)
+		self.assertIn(("/old-page", "/new-page"), redirects)  # other redirects are kept
+		self.assertTrue(
+			frappe.db.exists(
+				"Notification Type Preference",
+				{"parent": "Administrator", "notification_type": NOTIFICATION_TYPE},
+			)
+		)
+
+	def test_after_install_sets_up_the_portal(self):
+		after_install()
+		self.assert_portal_is_set_up()
+
+	def test_patch_sets_up_the_portal(self):
+		portal_patch.execute()
+		self.assert_portal_is_set_up()
+
+	def test_second_run_changes_nothing(self):
+		setup_client_portal()
+		portal_modified = frappe.db.get_single_value("Portal Settings", "modified")
+		website_modified = frappe.db.get_single_value("Website Settings", "modified")
+		preferences = frappe.db.count(
+			"Notification Type Preference", {"notification_type": NOTIFICATION_TYPE}
+		)
+
+		setup_client_portal()
+
+		self.assert_portal_is_set_up()
+		self.assertEqual(frappe.db.get_single_value("Portal Settings", "modified"), portal_modified)
+		self.assertEqual(frappe.db.get_single_value("Website Settings", "modified"), website_modified)
+		self.assertEqual(
+			frappe.db.count("Notification Type Preference", {"notification_type": NOTIFICATION_TYPE}),
+			preferences,
+		)
+
+	def test_keeps_a_portal_home_the_site_chose(self):
+		frappe.db.set_single_value("Portal Settings", "default_portal_home", "/orders")
+		setup_client_portal()
+		self.assertEqual(frappe.db.get_single_value("Portal Settings", "default_portal_home"), "/orders")
+
+	def test_replaces_the_legacy_portal_home(self):
+		frappe.db.set_single_value("Portal Settings", "default_portal_home", "/project")
+		setup_client_portal()
+		self.assertEqual(frappe.db.get_single_value("Portal Settings", "default_portal_home"), "/projects")
 
 
 @contextmanager
