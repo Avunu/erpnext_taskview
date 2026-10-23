@@ -22,13 +22,7 @@
 		<div class="rounded-4 border border-outline-gray-2">
 			<RichTextEditor v-model="draft" placeholder="Write a comment…" content-class="min-h-[5rem]" />
 			<div class="flex justify-end border-t border-outline-gray-1 p-2">
-				<Button
-					variant="solid"
-					label="Comment"
-					:loading="saving"
-					:disabled="isBlank"
-					@click="submit"
-				/>
+				<Button variant="solid" label="Comment" :loading="saving" :disabled="isBlank" @click="submit" />
 			</div>
 		</div>
 	</section>

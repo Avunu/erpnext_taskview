@@ -38,9 +38,7 @@
 				class="task-subject-edit"
 			/>
 			<!-- Breadcrumb metadata shown in pinned view (subtasks; top-level tasks get the picker) -->
-			<span v-if="pinned && !showProjectPicker && pinnedMeta" class="task-pinned-meta">{{
-				pinnedMeta
-			}}</span>
+			<span v-if="pinned && !showProjectPicker && pinnedMeta" class="task-pinned-meta">{{ pinnedMeta }}</span>
 		</div>
 
 		<!-- Project selector for top-level pinned tasks.  Outside the subject
@@ -95,12 +93,7 @@
 			</button>
 			<!-- Log hours that were not timed.  Only without a timer: a running or
            paused one is logged through Stop. -->
-			<button
-				v-else-if="hasProject"
-				class="task-btn task-btn--log"
-				@click="logManualTime"
-				title="Log time"
-			>
+			<button v-else-if="hasProject" class="task-btn task-btn--log" @click="logManualTime" title="Log time">
 				<ClockPlus :size="14" />
 			</button>
 			<button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
@@ -364,9 +357,7 @@ export default defineComponent({
 		},
 		/** Copy button tooltip: names the selection when the row is part of one. */
 		copyTitle(): string {
-			return this.selectionSize > 1
-				? `Copy ${this.selectionSize} selected as Markdown`
-				: "Copy as Markdown";
+			return this.selectionSize > 1 ? `Copy ${this.selectionSize} selected as Markdown` : "Copy as Markdown";
 		},
 		/** Customer name from the project, shown on project rows. */
 		customerName(): string {
@@ -407,8 +398,7 @@ export default defineComponent({
 			const parts: string[] = [];
 			const projectLabel = [doc.customer, doc.project_name || doc.project].filter(Boolean).join(" · ");
 			if (projectLabel) parts.push(projectLabel);
-			if (doc.parent_task_subject || doc.parent_task)
-				parts.push(doc.parent_task_subject || doc.parent_task!);
+			if (doc.parent_task_subject || doc.parent_task) parts.push(doc.parent_task_subject || doc.parent_task!);
 			return parts.join(" / ");
 		},
 		/**
@@ -710,8 +700,7 @@ export default defineComponent({
 							if (!this.isProject) {
 								// Emit blank-saved for typewriter-style input: auto-focus next blank
 								const parentName =
-									(this.node.doc as TaskDoc).parent_task ||
-									(this.node.doc as TaskDoc).project;
+									(this.node.doc as TaskDoc).parent_task || (this.node.doc as TaskDoc).project;
 								this.$emit("blank-saved", { data, parentName });
 							} else {
 								this.$emit("catch-success", data);
@@ -786,12 +775,7 @@ export default defineComponent({
 						.filter(Boolean);
 					if (!subjects.length) return;
 					try {
-						const data = await bulkCreateTasks(
-							subjects,
-							project,
-							parentTask,
-							this.viewMode === "my_tasks",
-						);
+						const data = await bulkCreateTasks(subjects, project, parentTask, this.viewMode === "my_tasks");
 						this.$emit("catch-success", data);
 					} catch (error) {
 						this.$emit("catch-error", error);

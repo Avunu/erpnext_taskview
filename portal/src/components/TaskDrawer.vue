@@ -51,10 +51,7 @@
 					</div>
 					<div v-if="data.task.exp_end_date">
 						<div class="mb-1 text-xs text-ink-gray-5">Due</div>
-						<div
-							class="text-base"
-							:class="data.task.is_overdue ? 'text-ink-red-8' : 'text-ink-gray-8'"
-						>
+						<div class="text-base" :class="data.task.is_overdue ? 'text-ink-red-8' : 'text-ink-gray-8'">
 							{{ formatDate(data.task.exp_end_date) }}
 						</div>
 					</div>
@@ -197,8 +194,7 @@ export default defineComponent({
 			this.ctx.reload();
 		},
 		onKeydown(event: KeyboardEvent): void {
-			if (event.key === "Escape" && !document.querySelector("[role=dialog][data-state=open]"))
-				this.close();
+			if (event.key === "Escape" && !document.querySelector("[role=dialog][data-state=open]")) this.close();
 		},
 		close(): void {
 			this.$router.push({
