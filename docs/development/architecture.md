@@ -3,7 +3,7 @@ title: How it works
 description: "The design behind TaskView for ERPNext: how the desk tree and timers talk to the server, how budgets are computed, and how the portal checks access."
 nav_title: How it works
 order: 10
-updated: 2026-10-21
+updated: 2026-10-23
 ---
 
 This page describes the design behind the code, for developers. For commands and the build, see [Develop TaskView for ERPNext](README.md).
@@ -31,7 +31,7 @@ Every mutation goes through one of a small set of endpoints, and each returns a 
 | Task             | Inserts or updates, re-parents with its subtasks and rewrites sibling order |
 | Timesheet Detail | Runs every timer operation                                                  |
 
-The timer operation is inferred from the fields in the payload rather than named. No `name` and no `to_time` starts a timer, no `name` with both times is a manual entry, a `name` with `to_time` stops, a `name` with `paused` set to 1 pauses, with `paused` set to 0 resumes, `delete` discards, and `update_description` saves only the text. The backend, not the browser, keeps at most one timer running: starting or resuming pauses the others.
+The timer operation is inferred from the fields in the payload rather than named. No `name` and no `to_time` starts a timer, no `name` with both times is a manual entry (the **Log time** button; it always appends a new row, never reuses an open timer row, and its times arrive in UTC and are stored in the system time zone), a `name` with `to_time` stops, a `name` with `paused` set to 1 pauses, with `paused` set to 0 resumes, `delete` discards, and `update_description` saves only the text. The backend, not the browser, keeps at most one timer running: starting or resuming pauses the others.
 
 Ordering uses an explicit list. After a drag the browser sends the names of the visible siblings in their new order, and `_write_interleaved_idx` writes a dense 1-based `idx`, re-anchoring hidden siblings (Completed, or filtered out) after the visible row they followed. Re-parenting is done with `frappe.db.set_value`, which leaves the nested set (`lft` and `rgt`) stale, so nothing here relies on it beyond a fallback sort. Walks over descendants follow `parent_task`.
 

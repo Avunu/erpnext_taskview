@@ -59,7 +59,7 @@ from frappe.desk.reportview import get_form_params
 from frappe.query_builder import DocType, Table
 from frappe.query_builder.functions import Max
 from frappe.types.frappedict import _dict
-from frappe.utils.data import expand_relative_urls, get_datetime
+from frappe.utils.data import convert_utc_to_system_timezone, expand_relative_urls, get_datetime
 from pypika.enums import Order
 
 from .budget import compute_budgets
@@ -83,21 +83,25 @@ from .models import (
 
 
 def _naive_dt(val: datetime.datetime | str | None) -> datetime.datetime | None:
-	"""Parse a datetime value and strip timezone info.
+	"""Parse a datetime value into a naive datetime in the system time zone.
 
-	Frappe stores all datetimes as naive (server-local) in the DB, but
-	the frontend sends ISO strings with ``Z`` (UTC) suffixes.  Mixing
-	tz-aware and naive datetimes causes arithmetic errors *and* 4-hour
-	(or whatever the UTC offset is) shifts when saved.
+	Frappe stores all datetimes as naive values in the system time zone
+	(System Settings), but the frontend sends ISO strings with ``Z`` (UTC)
+	suffixes.  Mixing tz-aware and naive datetimes causes arithmetic errors,
+	and dropping the offset without converting shifts the time by the
+	zone's UTC offset.
 
-	This helper converts any input through ``get_datetime()`` and then
-	strips the ``tzinfo`` so the result is always a naive datetime
-	comparable with DB-loaded values.
+	This helper converts any input through ``get_datetime()``, moves an
+	aware value into the system time zone and then strips the ``tzinfo``,
+	so the result is always a naive datetime comparable with DB-loaded
+	values.  A naive input is taken as system time already.
 	"""
 	if val is None:
 		return None
 	dt = get_datetime(val)
 	assert isinstance(dt, datetime.datetime)
+	if dt.tzinfo is not None:
+		dt = convert_utc_to_system_timezone(dt)
 	return dt.replace(tzinfo=None)
 
 
@@ -952,7 +956,9 @@ def _find_existing_timesheet(employee: str | None, project: str) -> str | None:
 	return str(result) if result else None
 
 
-def _get_or_create_timesheet_detail(project: str, task: str, description: str = "") -> TimesheetDetail:
+def _get_or_create_timesheet_detail(
+	project: str, task: str, description: str = "", reuse_open: bool = True
+) -> TimesheetDetail:
 	"""Find an open Timesheet Detail or create a new one.
 
 	Looks for an existing row with ``to_time IS NULL`` for the given
@@ -964,6 +970,9 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 		project: The Frappe Project name.
 		task: The Frappe Task name.
 		description: Optional initial description for the new row.
+		reuse_open: Return the user's open (timer) row for the task when
+			there is one.  A manual log passes ``False`` so that it never
+			takes over a running or paused timer.
 
 	Returns:
 		A :class:`TimesheetDetail` document ready for field assignment
@@ -973,16 +982,20 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 	TD = cast(Table, DocType("Timesheet Detail"))
 	TS = cast(Table, DocType("Timesheet"))
 	existing = (
-		frappe.qb.from_(TD)
-		.join(TS)
-		.on(TD.parent == TS.name)
-		.select(TD.name)
-		.where(TS.owner == frappe.session.user)
-		.where(TD.project == project)
-		.where(TD.task == task)
-		.where(TD.to_time.isnull())
-		.limit(1)
-	).run(pluck="name")
+		(
+			frappe.qb.from_(TD)
+			.join(TS)
+			.on(TD.parent == TS.name)
+			.select(TD.name)
+			.where(TS.owner == frappe.session.user)
+			.where(TD.project == project)
+			.where(TD.task == task)
+			.where(TD.to_time.isnull())
+			.limit(1)
+		).run(pluck="name")
+		if reuse_open
+		else []
+	)
 	if existing:
 		return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", existing[0]))
 
@@ -1021,6 +1034,22 @@ def _get_or_create_timesheet_detail(project: str, task: str, description: str = 
 
 
 # ── Timesheet Detail ─────────────────────────────────────────
+
+
+def _complete_task(detail: TimesheetDetail) -> str | None:
+	"""Mark a stopped or manually logged row complete, and complete its task.
+
+	A task with subtasks that are not Completed stays open: the row is
+	logged without ``completed`` and the returned notice says why.
+	"""
+	if not detail.task:
+		return None
+	open_subtasks = frappe.db.count("Task", {"parent_task": detail.task, "status": ["!=", "Completed"]})
+	if open_subtasks:
+		return f"This task has {open_subtasks} open subtask(s) and cannot be marked as Completed."
+	detail.completed = 1
+	frappe.db.set_value("Task", detail.task, "status", "Completed")
+	return None
 
 
 def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
@@ -1065,27 +1094,36 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 		# Timesheets are kept per project, so a task needs one first.
 		if not doc.project:
 			frappe.throw(_("Choose a project for this task before logging time"))
-		detail = _get_or_create_timesheet_detail(doc.project, doc.task, doc.description)
+		manual = bool(doc.from_time and doc.to_time)
+		notice: str | None = None
+		if manual:
+			# Check the times before a row is added to the Timesheet.
+			from_time = _naive_dt(doc.from_time)
+			to_time = _naive_dt(doc.to_time)
+			assert from_time is not None and to_time is not None
+			hours = doc.hours if doc.hours > 0 else (to_time - from_time).total_seconds() / 3600
+			if hours <= 0:
+				frappe.throw(_("Enter the hours to log"))
+		# A manual log is always a new row: it must not take over an open timer.
+		detail = _get_or_create_timesheet_detail(
+			doc.project, doc.task, doc.description, reuse_open=not manual
+		)
 
-		if doc.from_time and doc.to_time:
+		if manual:
 			# Manual time log — user provided both times.
 			# Use the submitted hours as the authoritative duration and
 			# derive to_time = from_time + hours so the stored time range
 			# is always consistent with what the user confirmed.
-			detail.from_time = _naive_dt(doc.from_time)
-			assert detail.from_time is not None
-			to_time = _naive_dt(doc.to_time)
-			assert to_time is not None
-			hours = doc.hours if doc.hours > 0 else (to_time - detail.from_time).total_seconds() / 3600
+			detail.from_time = from_time
 			detail.hours = hours
-			detail.to_time = detail.from_time + datetime.timedelta(hours=hours)
+			detail.to_time = from_time + datetime.timedelta(hours=hours)
 			if doc.activity_type:
 				detail.activity_type = doc.activity_type
 			detail.is_billable = bool(doc.is_billable)
 			if doc.is_billable and doc.billing_hours > 0:
 				detail.billing_hours = doc.billing_hours
 			if doc.completed:
-				detail.completed = 1
+				notice = _complete_task(detail)
 		else:
 			# Start new timer — auto-pause any other running timer first
 			_pause_running_timers(exclude_task=doc.task)
@@ -1096,12 +1134,12 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 		detail.save(ignore_permissions=True)
 
 		# Force-write billing_hours after save to survive any validation resets
-		if doc.from_time and doc.to_time and doc.is_billable and doc.billing_hours > 0:
+		if manual and doc.is_billable and doc.billing_hours > 0:
 			detail.db_set("billing_hours", doc.billing_hours, update_modified=False)
 
 		return {
-			"alert": f"Logged {detail.hours:.2f} hrs" if doc.from_time and doc.to_time else None,
-			"notice": None,
+			"alert": f"Logged {detail.hours:.2f} hrs" if manual else None,
+			"notice": notice,
 		}
 
 	# Existing detail — load and apply state transition
@@ -1155,16 +1193,7 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 		if detail.is_billable and doc.billing_hours > 0:
 			detail.billing_hours = doc.billing_hours
 
-		notice: str | None = None
-		if doc.completed and detail.task:
-			open_subtasks = frappe.db.count(
-				"Task", {"parent_task": detail.task, "status": ["!=", "Completed"]}
-			)
-			if open_subtasks:
-				notice = f"This task has {open_subtasks} open subtask(s) and cannot be marked as Completed."
-			else:
-				detail.completed = 1
-				frappe.db.set_value("Task", detail.task, "status", "Completed")
+		notice = _complete_task(detail) if doc.completed else None
 
 		detail.save(ignore_permissions=True)
 

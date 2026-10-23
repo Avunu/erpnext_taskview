@@ -4,8 +4,9 @@
 /**
  * @module timerDialog
  *
- * Shared "Log Timer" dialog used by both {@link TimerWidget} and {@link Task}
- * when a running timer is stopped.
+ * Shared time-logging dialog.  {@link TimerWidget} and {@link Task} open it as
+ * "Log Timer" when a running timer is stopped, and {@link Task} opens it as
+ * "Log Time" to log hours on a task that has no timer.
  *
  * The dialog is responsible only for UI (fields, layout, wiring).  The actual
  * backend calls (pause / stop / resume) are delegated to the caller via the
@@ -18,8 +19,7 @@ import type { SaveDocResponse } from "./types";
 
 /**
  * The Is Billable field's `onchange`: once it is ticked, seed Billable Time
- * from Hrs.  Both the stop dialog and Task's "Log Time" dialog have the three
- * fields.
+ * from Hrs.
  */
 export function seedBillableTime(d: Dialog): void {
 	if (d.get_value("is_billable") && !d.get_value("billing_hrs")) {
@@ -38,8 +38,15 @@ export interface StopTimerValues {
 }
 
 export interface StopTimerDialogOptions {
-	/** Pre-computed elapsed hours to pre-fill the Hrs field. */
-	elapsedHrs: number;
+	/** Dialog title.  Defaults to "Log Timer". */
+	title?: string;
+	/** Pre-computed elapsed hours to pre-fill the Hrs field; omit to leave it empty. */
+	elapsedHrs?: number;
+	/**
+	 * Refuse to submit until Hrs is above zero.  For a manual log, which has no
+	 * clock for the server to fall back on.
+	 */
+	requireHours?: boolean;
 	/** Current description to pre-fill the Description field. */
 	currentDesc: string;
 	/** Task name (document name) for the Task field default. */
@@ -54,8 +61,8 @@ export interface StopTimerDialogOptions {
 	customer?: string | null;
 	/** Called when the user submits the form. Should stop the timer and return status messages. */
 	onSubmit: (values: StopTimerValues) => Promise<Pick<SaveDocResponse, "alert" | "notice">>;
-	/** Called when the user cancels. Should resume the timer. */
-	onCancel: () => Promise<void>;
+	/** Called when the user cancels, e.g. to resume the timer.  Optional. */
+	onCancel?: () => Promise<void>;
 }
 
 /**
@@ -79,16 +86,18 @@ export function calcElapsedHrs(
 }
 
 /**
- * Show the "Log Timer" confirmation dialog.
+ * Show the "Log Timer" (or, with a `title`, "Log Time") dialog.
  *
- * The timer should already be paused before this is called.  On submit the
- * caller's {@link StopTimerDialogOptions.onSubmit} hook receives the form
- * values.  On cancel the caller's {@link StopTimerDialogOptions.onCancel}
- * hook is invoked so the timer can be resumed.
+ * When stopping, the timer should already be paused before this is called.
+ * On submit the caller's {@link StopTimerDialogOptions.onSubmit} hook receives
+ * the form values.  On cancel the caller's {@link StopTimerDialogOptions.onCancel}
+ * hook, if any, is invoked so the timer can be resumed.
  */
 export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 	const {
+		title = "Log Timer",
 		elapsedHrs,
+		requireHours = false,
 		currentDesc,
 		taskName,
 		taskSubject,
@@ -111,7 +120,7 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 		</div>`;
 
 	const d = new frappe.ui.Dialog({
-		title: "Log Timer",
+		title,
 		fields: [
 			{ fieldname: "context", fieldtype: "HTML", options: contextHtml },
 			{
@@ -128,7 +137,7 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 				fieldtype: "Link",
 				options: "Activity Type",
 			},
-			{ label: "Hrs", fieldname: "hrs", fieldtype: "Float", default: elapsedHrs },
+			{ label: "Hrs", fieldname: "hrs", fieldtype: "Float", default: elapsedHrs, reqd: requireHours ? 1 : 0 },
 			{
 				label: "Description",
 				fieldname: "description",
@@ -154,9 +163,14 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 		size: "small",
 		primary_action_label: "Submit",
 		primary_action: async (values) => {
+			// The dialog's values, keyed by the fieldnames above.
+			const logValues = values as unknown as StopTimerValues;
+			if (requireHours && !(logValues.hrs > 0)) {
+				frappe.msgprint({ message: "Enter the hours to log.", title: title, indicator: "orange" });
+				return;
+			}
 			try {
-				// The dialog's values, keyed by the fieldnames above.
-				const status = await onSubmit(values as unknown as StopTimerValues);
+				const status = await onSubmit(logValues);
 				d.hide();
 				if (status?.alert) {
 					frappe.show_alert({ message: status.alert, indicator: "green" });
@@ -170,7 +184,7 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 		},
 		secondary_action_label: "Cancel",
 		secondary_action: async () => {
-			await onCancel();
+			await onCancel?.();
 			d.hide();
 		},
 	});

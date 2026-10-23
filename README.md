@@ -48,6 +48,7 @@ The full documentation is at [docs.avunu.net/erpnext-taskview](https://docs.avun
 
 - Start, pause and stop a timer on any task that has a project. Only one runs at a time: starting one pauses the others.
 - Time is logged to a draft Timesheet for your Employee and the project, which is created when there is none. Stopping opens a **Log Timer** dialog for the hours, activity type, description and billable time.
+- **Log time** on a task without a timer: the clock-plus button on the row opens the same dialog with Hrs empty, for hours you did not time. The entry ends now and goes to the same draft Timesheet.
 - A timer dock on every desk page shows your open timers with a live clock. Timers are kept on the server, so they survive a reload and follow you between devices.
 - Submitting a Timesheet only moves a task forward (Open to Working). A task in Pending Review or Completed stays where it is.
 
@@ -123,7 +124,7 @@ There is no settings page. The app works through fields on documents you already
 - Timers need the two overlap settings in **Projects Settings** ticked, and the app does not tick them for you. Since ERPNext 16.51.0 the user check applies to every Timesheet, so a site that worked on an older ERPNext can start refusing timers after an upgrade.
 - A fresh install does not run the portal patch, so the portal settings above are yours to make, and until you untick ERPNext's `/project` row the portal menu lists **Projects** twice.
 - Dragging works only while the sort is **Manual**.
-- Task View has no form for adding time without a timer; add a Timesheet row with its **Project** and **Task** in ERPNext. The app adds no reports.
+- **Log time** records hours that end at the moment you submit; to log time on another day, edit the row's From Time in the Timesheet or add the row in ERPNext. The app adds no reports.
 - In the portal, the board's four columns, the file types customers may attach (JPG, PNG, GIF, PDF, TXT, CSV, Word and Excel documents, OpenDocument text and spreadsheets, and MP4 and QuickTime videos) and the limit of 60 new tasks, 60 comments and 60 uploads per hour from one IP address are fixed in the code. Customers cannot paste images into comments; they attach them as files.
 - Customers see the descriptions on time entries and the budget per phase. Do not put anything in a time log description you would not show the customer.
 

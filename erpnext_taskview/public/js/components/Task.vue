@@ -86,10 +86,15 @@
 			<button
 				class="task-btn task-btn--stop"
 				v-if="timerStatus !== 'stopped'"
-				@click="logOrStopTimer"
+				@click="stopTimer"
 				title="Stop"
 			>
 				<Square :size="14" />
+			</button>
+			<!-- Log hours that were not timed.  Only without a timer: a running or
+           paused one is logged through Stop. -->
+			<button v-else-if="hasProject" class="task-btn task-btn--log" @click="logManualTime" title="Log time">
+				<ClockPlus :size="14" />
 			</button>
 			<button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
 				<PanelRightOpen :size="14" />
@@ -147,7 +152,7 @@ import {
 import { timersByTask, getRunningTimer, type ActiveTimer } from "../timerStore";
 import { liveExtraByNode } from "../budgetLive";
 import { treeNodes } from "../treeState";
-import { showStopTimerDialog, calcElapsedHrs, seedBillableTime } from "../timerDialog";
+import { showStopTimerDialog, calcElapsedHrs } from "../timerDialog";
 import AssignTo from "./AssignTo.vue";
 import BudgetMeter from "./BudgetMeter.vue";
 import ProjectPicker from "./ProjectPicker.vue";
@@ -156,22 +161,13 @@ import {
 	Play,
 	Pause,
 	Square,
+	ClockPlus,
 	PanelRightOpen,
 	ClipboardList,
 	Copy,
 	Trash2,
 } from "lucide-vue-next";
 import "../task-controls.css";
-
-/** The values of the "Log Time" dialog, keyed by its fieldnames. */
-type LogTimeValues = {
-	activity_type?: string;
-	hrs?: number;
-	description?: string;
-	is_billable?: 0 | 1;
-	billing_hrs?: number;
-	completed?: 0 | 1;
-};
 
 /**
  * Task / Project tree row component.
@@ -223,6 +219,7 @@ export default defineComponent({
 		Play,
 		Pause,
 		Square,
+		ClockPlus,
 		PanelRightOpen,
 		ClipboardList,
 		Copy,
@@ -507,7 +504,7 @@ export default defineComponent({
 
 		/**
 		 * Pause immediately then open the shared "Log Timer" dialog.
-		 * If cancelled, the timer is resumed.
+		 * If cancelled, the timer is resumed.  Bound to the Stop button.
 		 */
 		async stopTimer(): Promise<void> {
 			const timer = this.timesheetDetail;
@@ -578,85 +575,44 @@ export default defineComponent({
 		},
 
 		/**
-		 * Either open a manual-log dialog (stopped) or stop the running timer.
+		 * Show the "Log Time" dialog to log hours on this task without a timer.
 		 *
-		 * Bound to the secondary Log/Stop button in the template.
-		 */
-		logOrStopTimer(): void {
-			if (this.timerStatus === "stopped") {
-				this.logManualTime();
-			} else {
-				this.stopTimer();
-			}
-		},
-
-		/**
-		 * Show a dialog to manually log time for this task (no active timer).
+		 * The entry ends now and starts the given hours earlier.  It goes to the
+		 * same draft Timesheet a timer on this project would use.
 		 */
 		logManualTime(): void {
-			const project = getProjectName(this.node);
-			const task = this.node.doc.name;
-
-			const d = new frappe.ui.Dialog({
+			const doc = this.taskDoc;
+			if (!doc.project) return;
+			const project = doc.project;
+			showStopTimerDialog({
 				title: "Log Time",
-				fields: [
-					{
-						label: "Activity Type",
-						fieldname: "activity_type",
-						fieldtype: "Link",
-						options: "Activity Type",
-					},
-					{ label: "Hrs", fieldname: "hrs", fieldtype: "Float", reqd: 1 },
-					{ label: "Description", fieldname: "description", fieldtype: "Small Text" },
-					{
-						label: "Is Billable",
-						fieldname: "is_billable",
-						fieldtype: "Check",
-						// When Is Billable is toggled on, seed Billable Time from current Hrs
-						onchange: () => seedBillableTime(d),
-					},
-					{
-						label: "Billable Time",
-						fieldname: "billing_hrs",
-						fieldtype: "Float",
-						depends_on: "eval:doc.is_billable == 1",
-						description: "Defaults to Hrs when Billable is checked. Edit independently if needed.",
-					},
-					{ label: "Completed", fieldname: "completed", fieldtype: "Check" },
-				],
-				size: "small",
-				primary_action_label: "Submit",
-				primary_action: async (dialogValues) => {
-					// The dialog's values, keyed by the fieldnames above.
-					const values = dialogValues as LogTimeValues;
-					if (!values.hrs) {
-						frappe.throw(__("Hours is required"));
-						return;
-					}
+				requireHours: true,
+				currentDesc: "",
+				taskName: doc.name,
+				taskSubject: doc.subject || doc.name,
+				project,
+				projectName: doc.project_name || project,
+				customer: doc.customer ?? null,
+				onSubmit: async (values) => {
 					const now = new Date();
 					const fromTime = new Date(now.getTime() - values.hrs * 3600 * 1000);
-					try {
-						const data = await saveDoc({
-							doctype: "Timesheet Detail",
-							project,
-							task,
-							from_time: fromTime.toISOString(),
-							to_time: now.toISOString(),
-							hours: values.hrs,
-							description: values.description || "",
-							activity_type: values.activity_type || "",
-							is_billable: values.is_billable ? 1 : 0,
-							billing_hours: values.is_billable ? values.billing_hrs || values.hrs : 0,
-							completed: values.completed ? 1 : 0,
-						});
-						this.$emit("catch-success", data);
-						d.hide();
-					} catch (err) {
-						this.$emit("catch-error", err);
-					}
+					const data = await saveDoc({
+						doctype: "Timesheet Detail",
+						project,
+						task: values.task || doc.name,
+						from_time: fromTime.toISOString(),
+						to_time: now.toISOString(),
+						hours: values.hrs,
+						description: values.description || "",
+						activity_type: values.activity_type || "",
+						is_billable: values.is_billable ? 1 : 0,
+						billing_hours: values.is_billable ? values.billing_hrs || values.hrs : 0,
+						completed: values.completed ? 1 : 0,
+					});
+					this.$emit("catch-success", data);
+					return { alert: data.alert, notice: data.notice };
 				},
 			});
-			d.show();
 		},
 		/** Click on the subject text: emit interaction; blanks also enter edit mode. */
 		handleSubjectClick(event?: MouseEvent): void {

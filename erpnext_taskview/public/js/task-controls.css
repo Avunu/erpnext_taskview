@@ -50,6 +50,16 @@
 	background: var(--surface-red-2);
 }
 
+/* Log time without a timer: takes the Stop button's place on a row with no timer. */
+.task-btn--log {
+	background: var(--bg-purple);
+	color: var(--text-on-purple);
+}
+
+.task-btn--log:hover {
+	background: var(--surface-purple-3);
+}
+
 .task-btn--expand {
 	background: var(--bg-blue);
 	color: var(--text-on-blue);
