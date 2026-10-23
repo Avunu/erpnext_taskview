@@ -956,6 +956,46 @@ def _find_existing_timesheet(employee: str | None, project: str) -> str | None:
 	return str(result) if result else None
 
 
+def _current_employee() -> str | None:
+	"""The Employee whose **User ID** is the current user, if any."""
+	return cast(str | None, frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name"))
+
+
+def _check_timer_access(project: str | None, task: str | None) -> None:
+	"""Refuse a timer or time log on a task the user may not work on.
+
+	Timesheet rows are written with ``ignore_permissions`` (the row is a
+	child of the Timesheet and carries the timer's state), so the permission
+	that matters is checked here first: the user must be able to read the
+	Project and write the Task.  These are the permissions the desk Task View
+	already needs to show and change the task.
+	"""
+	if not project:
+		frappe.throw(_("Choose a project for this task before logging time"))
+	if not task:
+		frappe.throw(_("Choose a task to log time on"))
+	frappe.has_permission("Project", "read", project, throw=True)
+	frappe.has_permission("Task", "write", task, throw=True)
+
+
+def _check_timesheet_access(timesheet: Timesheet, employee: str | None = None) -> None:
+	"""Refuse a write to a Timesheet the user may not change.
+
+	A Timesheet for the user's own Employee, or one the user created, is
+	always theirs to add to: ERPNext gives the Employee role create and write
+	on Timesheet for this, and the app creates the user's draft Timesheet for
+	them.  Any other Timesheet (one a ``taskview_find_timesheet`` hook chose,
+	or another person's timer) needs ERPNext's own create or write permission
+	on it, user permissions included.
+	"""
+	if employee and timesheet.employee == employee:
+		return
+	if not timesheet.is_new() and timesheet.owner == frappe.session.user:
+		return
+	ptype = "create" if timesheet.is_new() else "write"
+	frappe.has_permission("Timesheet", ptype, doc=timesheet, throw=True)
+
+
 def _get_or_create_timesheet_detail(
 	project: str, task: str, description: str = "", reuse_open: bool = True
 ) -> TimesheetDetail:
@@ -996,12 +1036,12 @@ def _get_or_create_timesheet_detail(
 		if reuse_open
 		else []
 	)
-	if existing:
-		return cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", existing[0]))
+	employee_name = _current_employee()
 
-	employee_name = cast(
-		str | None, frappe.db.get_value("Employee", {"user_id": frappe.session.user}, "name")
-	)
+	if existing:
+		detail = cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", existing[0]))
+		_check_timesheet_access(cast(Timesheet, frappe.get_doc("Timesheet", detail.parent)), employee_name)
+		return detail
 
 	existing_timesheet = _find_existing_timesheet(employee_name, project)
 
@@ -1013,6 +1053,8 @@ def _get_or_create_timesheet_detail(
 		timesheet.employee = employee_name
 		timesheet.parent_project = project
 		timesheet.customer = cast(str | None, frappe.db.get_value("Project", project, "customer"))
+
+	_check_timesheet_access(timesheet, employee_name)
 
 	timesheet.append(
 		"time_logs",
@@ -1040,15 +1082,33 @@ def _complete_task(detail: TimesheetDetail) -> str | None:
 	"""Mark a stopped or manually logged row complete, and complete its task.
 
 	A task with subtasks that are not Completed stays open: the row is
-	logged without ``completed`` and the returned notice says why.
+	logged without ``completed`` and the returned notice says why.  The task
+	is completed with ``Task.save()``, which checks the user's Task write
+	permission again and runs ERPNext's validation; a validation error is
+	returned as a notice in the same way.
 	"""
 	if not detail.task:
 		return None
 	open_subtasks = frappe.db.count("Task", {"parent_task": detail.task, "status": ["!=", "Completed"]})
 	if open_subtasks:
 		return f"This task has {open_subtasks} open subtask(s) and cannot be marked as Completed."
+	task = cast(Task, frappe.get_doc("Task", detail.task))
+	if task.status == "Completed":
+		detail.completed = 1
+		return None
+	task.status = "Completed"
+	# Save the Task itself, so that its write permission and ERPNext's
+	# validation apply (dependencies, completion date, progress, closing the
+	# assignments).  If validation refuses, the time is still logged and the
+	# notice says why the task stayed open.
+	frappe.db.savepoint("taskview_complete_task")
+	try:
+		task.save()
+	except frappe.ValidationError as e:
+		frappe.db.rollback(save_point="taskview_complete_task")
+		frappe.clear_last_message()
+		return _("The time is logged, but the task could not be marked as Completed: {0}").format(str(e))
 	detail.completed = 1
-	frappe.db.set_value("Task", detail.task, "status", "Completed")
 	return None
 
 
@@ -1092,8 +1152,7 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 	if not doc.name:
 		# New timesheet detail — either start timer or log manual entry.
 		# Timesheets are kept per project, so a task needs one first.
-		if not doc.project:
-			frappe.throw(_("Choose a project for this task before logging time"))
+		_check_timer_access(doc.project, doc.task)
 		manual = bool(doc.from_time and doc.to_time)
 		notice: str | None = None
 		if manual:
@@ -1144,6 +1203,10 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 
 	# Existing detail — load and apply state transition
 	detail = cast(TimesheetDetail, frappe.get_doc("Timesheet Detail", doc.name))
+	if detail.parenttype != "Timesheet" or not detail.parent:
+		frappe.throw(_("Timesheet Detail {0} is not part of a Timesheet").format(doc.name))
+	_check_timesheet_access(cast(Timesheet, frappe.get_doc("Timesheet", detail.parent)), _current_employee())
+	_check_timer_access(detail.project, detail.task)
 
 	if doc.delete:
 		# Discard — remove the detail row and clean up empty parent
@@ -1171,6 +1234,7 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 
 		# Allow reassigning the task on stop
 		if doc.task and doc.task != detail.task:
+			_check_timer_access(detail.project, doc.task)
 			detail.task = doc.task
 
 		from_time = _naive_dt(detail.from_time)
