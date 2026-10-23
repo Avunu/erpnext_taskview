@@ -106,7 +106,8 @@ export default defineComponent({
 						...projectsStore.list.map((p) => ({
 							label: p.title,
 							icon: markRaw(FolderKanban),
-							onClick: () => this.$router.push({ name: "overview", params: { project: p.name } }),
+							onClick: () =>
+								this.$router.push({ name: "overview", params: { project: p.name } }),
 							active: current === p.name,
 						})),
 					],

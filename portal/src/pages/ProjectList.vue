@@ -25,17 +25,23 @@
 						<div class="min-w-0">
 							<div class="truncate text-base-medium text-ink-gray-9">{{ project.title }}</div>
 							<div class="mt-0.5 truncate text-sm text-ink-gray-5">
-								{{ project.name }}<span v-if="project.customer"> · {{ project.customer }}</span>
+								{{ project.name
+								}}<span v-if="project.customer"> · {{ project.customer }}</span>
 							</div>
 						</div>
-						<Badge :label="project.status" :theme="project.status === 'Completed' ? 'green' : 'gray'" />
+						<Badge
+							:label="project.status"
+							:theme="project.status === 'Completed' ? 'green' : 'gray'"
+						/>
 					</div>
 
 					<BudgetMeter :budget="project.budget" size="lg" show-unbudgeted />
 
 					<div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-gray-6">
 						<span v-for="column in columns" :key="column">
-							<span class="font-medium tabular-nums text-ink-gray-8">{{ project.counts[column] || 0 }}</span>
+							<span class="font-medium tabular-nums text-ink-gray-8">{{
+								project.counts[column] || 0
+							}}</span>
 							{{ column }}
 						</span>
 					</div>

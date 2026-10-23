@@ -177,8 +177,8 @@ async function writeToClipboard(text: Promise<string>): Promise<void> {
 export async function copyNodesAsMarkdown(nodes: TreeNode[]): Promise<void> {
 	if (!nodes.some((node) => node.doc.name)) return;
 	const names = collectTaskNames(nodes);
-	const rendered = (names.length ? fetchTaskDescriptions(names) : Promise.resolve({})).then((descriptions) =>
-		renderMarkdown(nodes, descriptions),
+	const rendered = (names.length ? fetchTaskDescriptions(names) : Promise.resolve({})).then(
+		(descriptions) => renderMarkdown(nodes, descriptions),
 	);
 	try {
 		await writeToClipboard(rendered.then((r) => r.markdown));

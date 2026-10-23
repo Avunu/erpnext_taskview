@@ -46,7 +46,9 @@
 						:src="avatarUrl(user.value)"
 						:alt="user.value"
 					/>
-					<span v-else class="assign-avatar assign-avatar--initials">{{ initials(user.value) }}</span>
+					<span v-else class="assign-avatar assign-avatar--initials">{{
+						initials(user.value)
+					}}</span>
 					<span class="assign-user-label">{{ user.label || user.value }}</span>
 				</li>
 				<li v-if="filteredUsers.length === 0" class="assign-user-item assign-user-item--empty">
@@ -170,7 +172,8 @@ export default defineComponent({
 			const q = this.search.toLowerCase();
 			return this.allUsers.filter(
 				(u) =>
-					!assigned.has(u.value) && (u.value.toLowerCase().includes(q) || u.label.toLowerCase().includes(q)),
+					!assigned.has(u.value) &&
+					(u.value.toLowerCase().includes(q) || u.label.toLowerCase().includes(q)),
 			);
 		},
 	},
