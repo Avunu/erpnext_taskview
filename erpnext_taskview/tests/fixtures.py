@@ -173,3 +173,38 @@ def make_portal_user(customer: str | None = None, *, via: str = "contact") -> st
 		doc.append("portal_users", {"user": email})
 		doc.save()
 	return email
+
+
+def make_staff_user(*roles: str) -> tuple[str, str]:
+	"""A System User with ``roles`` and an Employee whose User ID is them; returns ``(user, employee)``.
+
+	ERPNext gives the new user a User Permission on their own Employee (and its
+	Company), as it does on a real site, so Timesheets of other Employees are
+	out of their reach.
+	"""
+	email = f"tv-staff-{frappe.generate_hash(length=10)}@example.com"
+	frappe.get_doc(
+		{
+			"doctype": "User",
+			"email": email,
+			"first_name": "Staff",
+			"last_name": email.split("@")[0],
+			"send_welcome_email": 0,
+			"user_type": "System User",
+			"roles": [{"role": role} for role in roles],
+		}
+	).insert(ignore_permissions=True)
+	employee = insert(
+		{
+			"doctype": "Employee",
+			"first_name": "Staff",
+			"last_name": email.split("@")[0],
+			"company": COMPANY,
+			"user_id": email,
+			"gender": "Female",
+			"date_of_birth": "1990-05-08",
+			"date_of_joining": "2013-01-01",
+			"status": "Active",
+		}
+	)
+	return email, employee
