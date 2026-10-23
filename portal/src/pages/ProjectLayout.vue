@@ -13,9 +13,7 @@
 				<div class="flex flex-wrap items-start justify-between gap-3">
 					<div class="min-w-0">
 						<div class="text-sm text-ink-gray-5">
-							<router-link :to="{ name: 'projects' }" class="hover:text-ink-gray-7"
-								>Projects</router-link
-							>
+							<router-link :to="{ name: 'projects' }" class="hover:text-ink-gray-7">Projects</router-link>
 							<span class="mx-1">/</span>
 							<span>{{ project }}</span>
 						</div>

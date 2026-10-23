@@ -1,9 +1,6 @@
 <template>
 	<div v-if="visible" ref="dockEl" class="timer-dock" :style="dockStyle">
-		<div
-			class="timer-dock__resize timer-dock__resize--left"
-			@pointerdown="startResize($event, 'left')"
-		></div>
+		<div class="timer-dock__resize timer-dock__resize--left" @pointerdown="startResize($event, 'left')"></div>
 		<div
 			class="timer-dock__resize timer-dock__resize--right"
 			@pointerdown="startResize($event, 'right')"
@@ -11,9 +8,7 @@
 		<div class="timer-dock__handle" @pointerdown="startDrag">
 			<span class="timer-dock__title"> <Timer :size="14" /> Timers ({{ timerCount }}) </span>
 			<span v-if="collapsed && runningTimer" class="timer-dock__running-info">
-				<span class="timer-dock__running-task">{{
-					runningTimer.task_subject || runningTimer.task
-				}}</span>
+				<span class="timer-dock__running-task">{{ runningTimer.task_subject || runningTimer.task }}</span>
 				<span class="timer-dock__running-time">{{ runningElapsed }}</span>
 			</span>
 			<button class="timer-dock__toggle" @click.stop="collapsed = !collapsed">
@@ -221,10 +216,7 @@ export default defineComponent({
 		/** Persist dock position to sessionStorage. */
 		savePosition(): void {
 			try {
-				sessionStorage.setItem(
-					"erpnext_taskview_dock_pos",
-					JSON.stringify({ x: this.posX, y: this.posY }),
-				);
+				sessionStorage.setItem("erpnext_taskview_dock_pos", JSON.stringify({ x: this.posX, y: this.posY }));
 			} catch {
 				/* ignore */
 			}
@@ -244,10 +236,7 @@ export default defineComponent({
 		/** Handle pointer move during drag — clamped to viewport. */
 		onDrag(e: PointerEvent): void {
 			if (!this.dragging) return;
-			this.posX = Math.max(
-				0,
-				Math.min(e.clientX - this.dragOffsetX, window.innerWidth - this.dockWidth),
-			);
+			this.posX = Math.max(0, Math.min(e.clientX - this.dragOffsetX, window.innerWidth - this.dockWidth));
 			this.posY = Math.max(0, Math.min(e.clientY - this.dragOffsetY, window.innerHeight - 60));
 		},
 

@@ -240,9 +240,7 @@ export default defineComponent({
 		},
 
 		async handleReorder(): Promise<void> {
-			const order = this.items
-				.map((item) => (item.doc as TaskDoc).todo_name)
-				.filter(Boolean) as string[];
+			const order = this.items.map((item) => (item.doc as TaskDoc).todo_name).filter(Boolean) as string[];
 			try {
 				const data = await reorderPinnedTasks(order);
 				this.$emit("catch-success", data);
