@@ -84,10 +84,6 @@ The full documentation is at [docs.avunu.net/erpnext-taskview](https://docs.avun
 
 ## Installation
 
-On Frappe Cloud, install TaskView for ERPNext from the [Frappe marketplace](https://cloud.frappe.io/marketplace/apps/erpnext_taskview).
-
-On a bench of your own:
-
 ```bash
 bench get-app https://github.com/Avunu/erpnext_taskview --branch version-16
 bench --site <site> install-app erpnext_taskview
