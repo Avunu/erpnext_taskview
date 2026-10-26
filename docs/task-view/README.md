@@ -3,7 +3,7 @@ title: Work the task tree
 description: Open Task View, switch between All Tasks, My Tasks and Pinned, add, reorder and complete tasks in the tree, and copy tasks as Markdown.
 nav_title: Task View
 order: 3
-updated: 2026-10-22
+updated: 2026-10-26
 ---
 
 Task View is how staff plan and work through projects in the ERPNext desk. This page covers arranging projects and tasks. Timing work is in [Timers and timesheets](timers.md) and budgets are in [Hour budgets](hour-budgets.md).
@@ -57,7 +57,7 @@ Copy a task with its subtasks as a nested Markdown checklist, to paste into a no
 - **Several.** Ctrl-click (Cmd-click on a Mac) rows to add or remove them, or Shift-click to select the range of visible tasks from the last row you clicked. Then click the copy button on any selected row, or press Ctrl+C or Cmd+C. Press Escape to clear the selection.
 - **A whole project.** The copy button on a project row copies all of its tasks.
 
-The copy button on a row outside the selection copies just that row, and leaves the selection as it is.
+The copy button on a row outside the selection copies only that row, and leaves the selection as it is.
 
 What is copied:
 
@@ -99,7 +99,7 @@ A task added this way has **no project yet**. Until it has one it cannot run a t
 
 Click the project chip on a pinned row (it reads **+ Project** while empty) and search the open projects by project ID, title or customer. Every word you type must match. Use the arrow keys and Enter, or click.
 
-Choosing a project moves the task and all of its subtasks into it, at the end of that project's top-level tasks. The row then shows the project's customer. Only a top-level task can be moved this way, and you must stop its running timers first. Time already logged on the task stays on the project it was logged to, as it does when you drag a task to another project in the tree.
+Choosing a project moves the task and all of its subtasks into it, at the end of that project's top-level tasks. The row then shows the project's customer. Only a top-level task can be moved this way, and you must first stop or discard every open timer on it and its subtasks, paused ones included. Time already logged on the task stays on the project it was logged to, as it does when you drag a task to another project in the tree.
 
 ## Keyboard summary
 

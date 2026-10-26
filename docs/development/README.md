@@ -3,10 +3,10 @@ title: Develop TaskView for ERPNext
 description: Set up a bench checkout, build the Vue and frappe-ui bundles, run the Python tests and JavaScript checks, and see what CI and pre-commit enforce.
 nav_title: Development
 order: 9
-updated: 2026-10-23
+updated: 2026-10-26
 ---
 
-This page is for people changing the app. [How it works](architecture.md) explains the design behind the code, and the [changelog](changelog.md) says where to find what changed.
+This page is for people changing the app. [How it works](architecture.md) explains the design behind the code, and [Source and changes](../README.md#source-and-changes) says where to find what changed. The rules every Avunu Frappe app follows (managed files, gates, release flow) are in the frappe-nix [app standards documentation](https://docs.avunu.net/frappe-nix/docs/app-standards/); this page covers what is specific to this repository.
 
 ## Set up
 
@@ -90,6 +90,9 @@ The Python tests are Frappe `IntegrationTestCase`s in `erpnext_taskview/tests/`,
 | `test_timesheet_guard.py`   | A submitted Timesheet never moves a task backwards                                                                                                                                                                                           |
 | `test_timer_permissions.py` | Who may start, pause, stop, discard and log time and complete a task: no Task write, another person's timer or Timesheet, project user permissions, portal users, and Task validation on completion, the task's project and draft Timesheets |
 | `test_save_permissions.py`  | Who may change a task or project through the Task and Project routes of `save_doc`: status, renames, drags, new parents and children, and new subtasks                                                                                       |
+| `test_copy_markdown.py`     | `get_task_descriptions`: HTML descriptions become Markdown, relative URLs become absolute, empty descriptions are left out                                                                                                                   |
+| `test_demo.py`              | The demo data in `demo.py`, which frappe-demo and the screenshots use, and that running it twice changes nothing                                                                                                                             |
+| `test_json_functions.py`    | The Query Builder SQL functions in `utils/json_functions.py`, which other apps import                                                                                                                                                        |
 
 Frappe only runs tests on a site that allows them. Use a development or test site, never production:
 
@@ -116,6 +119,14 @@ There are no JavaScript unit tests. `yarn typecheck`, `yarn lint` and `yarn form
 
 Dependabot updates the dependencies in groups. `deps.yml` relocks and syncs after a flake bump and turns on auto-merge for those pull requests.
 
+## Releases
+
+`release.yml` runs [release-please](https://github.com/googleapis/release-please) on every push to `main` and once a day. It keeps a release pull request open that bumps the version in `package.json` and `erpnext_taskview/__init__.py` and writes `CHANGELOG.md` from the conventional commits since the last release. Merging that pull request tags the release (`v` and the version, for example `v0.1.0`), publishes it on the [releases page](https://github.com/Avunu/erpnext_taskview/releases) and moves the `version-16` branch, the one the [install command](../install.md#install) names, forward to it. No release has been made yet: the manifest is at `0.0.1`.
+
+Commit subjects decide the next version, so write them as conventional commits (`feat:`, `fix:`, `docs:`, `chore:`). `chore: bump` pull requests from Dependabot change `package.json`, `yarn.lock` and the lock files only.
+
+A database change ships as a custom field or property setting in `custom/*.json`, which every `bench migrate` syncs, or as a patch in `patches.txt`, which runs once. See [Upgrade](../install.md#upgrade).
+
 The `Docs` workflow (`.github/workflows/docs.yml`) checks this documentation when `docs/` changes. It is described below.
 
 ## Conventions
@@ -123,7 +134,7 @@ The `Docs` workflow (`.github/workflows/docs.yml`) checks this documentation whe
 - Server code uses the Frappe ORM and Query Builder only, never raw SQL.
 - Python is formatted with ruff: tabs, double quotes and a line length of 110. Every source file starts with the copyright header the `validate_copyright` pre-commit hook checks.
 - The API shapes are written twice, in Pydantic and in TypeScript, and kept in step by hand: `erpnext_taskview/erpnext_taskview/models.py` with `erpnext_taskview/public/js/types.ts`, and `erpnext_taskview/portal/models.py` with `portal/src/types.ts`. Change both together.
-- The Python code declares no dependencies of its own. It uses Pydantic, nh3 and BeautifulSoup, which Frappe v16 already depends on.
+- The Python dependencies are Pydantic, nh3 and BeautifulSoup, declared in `pyproject.toml` within the ranges Frappe v16 pins (`pydantic>=2.12,<3`, `nh3>=0.3,<1`, `beautifulsoup4>=4.13,<5`), so they add nothing a v16 bench does not already have. Frappe and ERPNext come from the bench and are declared under `[tool.bench.frappe-dependencies]`.
 - Patches are listed in `patches.txt`. A fresh install marks every patch as done without running it, so anything a new site needs must also happen in `after_install` (`install.py`). The portal set-up is one idempotent function, `install.setup_client_portal`, that both `after_install` and the `setup_client_portal` patch call: see [Install and upgrade](../install.md#what-installing-sets-up).
 
 ### Pre-commit

@@ -1,9 +1,9 @@
 ---
 title: Using the client portal
-description: "A guide for clients to the project portal: sign in, read the overview and the hours meter, work with tasks on a list or board, and comment or attach files."
+description: "For clients: sign in to the project portal, read the overview and hours meter, work with tasks on a list or board, and comment or attach files."
 nav_title: Using the portal
 order: 7
-updated: 2026-10-22
+updated: 2026-10-26
 ---
 
 The client portal is a page on the ERPNext site of the team you work with, where you can follow your projects, see where the hours are going, and add tasks, comments and files without leaving the browser. This guide is written for a client who has been given access. If you do not have access yet, ask that team: the administrator's steps are in [Giving customers access](administering-access.md).

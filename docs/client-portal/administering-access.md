@@ -1,9 +1,9 @@
 ---
 title: Giving customers access
-description: How to give a customer access to the client portal, the exact rules that decide who sees which project, and what customers can see and change once they are in.
+description: Give a customer access to the client portal, the rules that decide who sees which project, and what customers can see and change there.
 nav_title: Giving access
 order: 8
-updated: 2026-10-23
+updated: 2026-10-26
 ---
 
 This page is for the administrator who gives customers access to the [client portal](README.md). Three things must be true for a customer to see a project: the person has a login, the login is tied to the right customer or project, and the project belongs to that customer.
