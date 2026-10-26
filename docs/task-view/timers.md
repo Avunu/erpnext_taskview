@@ -1,9 +1,9 @@
 ---
 title: Timers and timesheets
-description: Start, pause and stop a timer on a task, confirm the time in the Log Timer dialog, log hours you did not time, and see where the hours land in ERPNext Timesheets.
+description: Start, pause and stop a timer on a task, confirm the time in the Log Timer dialog, log hours you did not time, and see where they land in Timesheets.
 nav_title: Timers
 order: 4
-updated: 2026-10-23
+updated: 2026-10-26
 ---
 
 Timers live on task rows in [Task View](README.md). Every timer is a row in the time logs of an ordinary ERPNext Timesheet, so submitting, billing and reporting work as they do in stock ERPNext.
@@ -12,7 +12,7 @@ Timers live on task rows in [Task View](README.md). Every timer is a row in the 
 
 - The task needs a project. Project rows have no timer buttons, because time is always logged against a task. A pinned task that has no project yet cannot be timed until you [give it one](README.md#give-a-task-a-project).
 - Your user must be the **User ID** of an Employee. Timesheets are created for that Employee.
-- You need read access to the task's project and write access to the task itself, and time is always logged on the task's own project: ERPNext's **Projects User** role gives both. A user who can only see the task gets **Insufficient Permission** when they start, stop or log time on it. The Timesheet must be your Employee's, one you created, or one your role lets you write, so you cannot stop or discard someone else's timer unless you may edit their Timesheet in ERPNext. A submitted or cancelled Timesheet is never changed from here. When you stop a timer, you can move it only to another task of the same project.
+- You need read access to the task's project and write access to the task itself, and time is always logged on the task's own project: ERPNext's **Projects User** role gives both. A user who can only see the task gets a **Not permitted** message, "No permission for Task" followed by the task's name, when they start, stop or log time on it. The Timesheet must be your Employee's, one you created, or one your role lets you write, so you cannot stop or discard someone else's timer unless you may edit their Timesheet in ERPNext. A submitted or cancelled Timesheet is never changed from here. When you stop a timer, you can move it only to another task of the same project.
 - An administrator must tick **Ignore User Time Overlap** and **Ignore Employee Time Overlap** in Projects Settings. Pausing one timer to run another makes their time logs overlap, and without these settings ERPNext refuses the next timer on that project and the Timesheet's submission. See [Allow overlapping time logs](../install.md#allow-overlapping-time-logs).
 
 ## Time a task

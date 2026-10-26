@@ -31,7 +31,9 @@ ERPNext's stock Project and Task screens are built for keeping records, not for 
 
 It is for service teams that bill by the hour and want their clients to see the same picture they do. It needs ERPNext on Frappe v16 and adds no DocTypes of its own: it works on ERPNext's Project, Task and Timesheet.
 
-The full documentation is at [docs.avunu.net/erpnext-taskview](https://docs.avunu.net/erpnext-taskview/). Its Markdown source is in [`docs/`](docs/README.md).
+The documentation's Markdown source is in [`docs/`](docs/README.md).
+
+Full documentation: [docs.avunu.net/erpnext-taskview/docs/](https://docs.avunu.net/erpnext-taskview/docs/).
 
 ## Features
 
@@ -107,12 +109,11 @@ There is no settings page. The app works through fields on documents you already
 
 ## How It Works
 
-- The desk bundles (`app_include_js`) register a `Tasks` list view for Task and Project and mount a Vue tree in place of the list, and mount the timer dock once on every desk page. Two property settings make Task View the default view of both.
-- The tree reads everything through one endpoint, `erpnext_taskview.erpnext_taskview.api.get`, and every change goes through a small set of endpoints that return a fresh copy of the data. Timer operations are rows of an ordinary Timesheet: four read-only fields on Timesheet Detail (Paused, Start Time, Paused Time and Task Subject) hold the timer state, and the server keeps at most one timer running. The rows are written with permission checks off, so every timer call first checks read on the Project, write on the Task, that a new row's Task is in its Project, and access to the draft Timesheet, and completing a task saves the Task document. Renaming or moving a task or project in the tree is written with `frappe.db.set_value`, so those calls check write on every Task or Project they change, and read on the Project a task moves to.
-- Pins are the current user's ToDos for a task with a **Pinned** (`pin`) field the app adds to ToDo, created through Frappe's assignment code, which is why pinning also assigns.
-- `budget.py` computes budgets and logged hours for any number of projects in four queries and rolls them up by `parent_task`. The desk and the portal share it.
-- The portal is a frappe-ui app built into `erpnext_taskview/public/portal/` and served at `/projects` by `www/projects.py`. Customers hold no permission on Project or Task, so every portal endpoint (`erpnext_taskview.portal.api`) checks access in `portal/access.py` first and only then reads or writes on the customer's behalf. Rich text from customers is cleaned with `nh3`.
-- `extend_doctype_class` extends ERPNext's Task (so that a portal save can close assignments and update parent and dependent tasks for a customer), Timesheet (the forward-only status update) and Timesheet Detail.
+- The desk bundles register a **Task View** list view for Task and Project, mount a Vue tree in place of the list, and mount the timer dock on every desk page. Two property settings make Task View the default view of both.
+- The tree reads through one endpoint, `erpnext_taskview.erpnext_taskview.api.get`, and every change goes through a small set of endpoints that check ERPNext permissions and return a fresh copy of the data. A timer is a row of an ordinary draft Timesheet, with four read-only fields on Timesheet Detail holding its state. Pins are the user's ToDos with a **Pinned** field.
+- `budget.py` computes budgets and logged hours for the desk and the portal alike.
+- The portal is a frappe-ui app served at `/projects`. Customers hold no permission on Project or Task, so every portal endpoint checks access in `portal/access.py` first and only then reads or writes on the customer's behalf.
+- `extend_doctype_class` extends ERPNext's Task (portal saves on a customer's behalf), Timesheet (the forward-only status update) and Timesheet Detail.
 
 [How it works](docs/development/architecture.md) goes into the details.
 
@@ -126,6 +127,8 @@ There is no settings page. The app works through fields on documents you already
 - **Log time** records hours that end at the moment you submit; to log time on another day, edit the row's From Time in the Timesheet or add the row in ERPNext. The app adds no reports.
 - In the portal, the board's four columns, the file types customers may attach (JPG, PNG, GIF, PDF, TXT, CSV, Word and Excel documents, OpenDocument text and spreadsheets, and MP4 and QuickTime videos) and the limit of 60 new tasks, 60 comments and 60 uploads per hour from one IP address are fixed in the code. Customers cannot paste images into comments; they attach them as files.
 - Customers see the descriptions on time entries and the budget per phase. Do not put anything in a time log description you would not show the customer.
+
+[Limitations and troubleshooting](docs/troubleshooting.md) has the full list, and the messages the app shows with their cause and fix.
 
 <!-- frappe-nix:begin support -->
 
