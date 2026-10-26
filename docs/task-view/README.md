@@ -57,7 +57,7 @@ Copy a task with its subtasks as a nested Markdown checklist, to paste into a no
 - **Several.** Ctrl-click (Cmd-click on a Mac) rows to add or remove them, or Shift-click to select the range of visible tasks from the last row you clicked. Then click the copy button on any selected row, or press Ctrl+C or Cmd+C. Press Escape to clear the selection.
 - **A whole project.** The copy button on a project row copies all of its tasks.
 
-The copy button on a row outside the selection copies just that row, and leaves the selection as it is.
+The copy button on a row outside the selection copies only that row, and leaves the selection as it is.
 
 What is copied:
 

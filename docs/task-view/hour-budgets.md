@@ -3,7 +3,7 @@ title: Hour budgets
 description: Set hour budgets on tasks and projects, understand how budgets roll up and which hours count, and read the budget meters in Task View and the portal.
 nav_title: Hour budgets
 order: 5
-updated: 2026-10-06
+updated: 2026-10-26
 ---
 
 A budget meter compares the hours logged on a task or project with the hours set aside for it. Task View shows meters on task and project rows, and the [client portal](../client-portal/README.md) shows the same figures to customers.
@@ -60,7 +60,7 @@ In the portal, a project card or a phase that has time logged but no budget show
 - Completed tasks, hidden tasks and the time logged on Cancelled tasks still count. Template tasks are ignored.
 
 > [!NOTE]
-> ERPNext's own **Actual Time** on a Task or Project counts only submitted Timesheets, so it can lag by days while your draft Timesheet is still open. The meters count drafts, which is why the two numbers can differ.
+> ERPNext's own **Actual Time in Hours (via Timesheet)** on a Task or Project counts only submitted Timesheets, so it can lag by days while your draft Timesheet is still open. The meters count drafts, which is why the two numbers can differ.
 
 ## Related
 

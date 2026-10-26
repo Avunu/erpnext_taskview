@@ -1,6 +1,6 @@
 ---
 title: Configuration
-description: The settings that shape TaskView for ERPNext, the hook that chooses which Timesheet receives time, and a reference of everything the app adds to a site.
+description: The settings TaskView for ERPNext reads, the hook that picks the Timesheet for a timer, and everything the app adds to a site.
 nav_title: Configuration
 order: 2
 updated: 2026-10-26
@@ -90,15 +90,15 @@ This is the complete list, so you can see what a bench migration changes.
 
 ### Behaviour
 
-| Where             | Change                                                                                                                                                                                                                                                 |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Task              | The Task class is extended so that the portal can save a task, close its assignments and update its parent and dependent tasks on behalf of a customer, who holds no Task permission. Saves that do not ignore permissions take ERPNext's normal path. |
-| Timesheet         | Submitting a Timesheet moves a task **forward only**: Open becomes Working, and a task in Pending Review or Completed stays where it is. ERPNext's own code would set every task back to Working.                                                      |
-| Timesheet Detail  | The class carries the typed timer fields above. Timer calls check read on the Project, write on the Task, that a new row's Task is in its Project, and access to the draft Timesheet before they write a row.                                          |
-| Notification Type | A **Client Portal** type is created when the app is installed or the site is migrated, and installing the app adds it to existing users' email preferences.                                                                                            |
-| Website           | `/projects` and everything under it is served by the portal. The portal menu gets a **Projects** entry for users with the Customer role. `/project` redirects to `/projects`.                                                                          |
-| Desk              | The Task View and timer dock bundles load on every desk page.                                                                                                                                                                                          |
-| Install, migrate  | `after_install` runs the portal set-up described in [Install and upgrade](install.md#what-installing-sets-up). `after_migrate` creates the **Client Portal** Notification Type if it is missing.                                                       |
+| Where             | Change                                                                                                                                                                                                                                                                     |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Task              | The Task class is extended so that the portal can save a task, close its assignments and update its parent and dependent tasks on behalf of a customer, who holds no Task permission. Saves that do not ignore permissions take ERPNext's normal path.                     |
+| Timesheet         | Submitting a Timesheet moves a task **forward only**: Open becomes Working, and a task in Pending Review or Completed stays where it is. ERPNext's own code would move a Pending Review task back to Working, and before ERPNext 16.51 it did the same to a Completed one. |
+| Timesheet Detail  | The class carries the typed timer fields above. Timer calls check read on the Project, write on the Task, that a new row's Task is in its Project, and access to the draft Timesheet before they write a row.                                                              |
+| Notification Type | A **Client Portal** type is created when the app is installed or the site is migrated, and installing the app adds it to existing users' email preferences.                                                                                                                |
+| Website           | `/projects` and everything under it is served by the portal. The portal menu gets a **Projects** entry for users with the Customer role. `/project` redirects to `/projects`.                                                                                              |
+| Desk              | The Task View and timer dock bundles load on every desk page.                                                                                                                                                                                                              |
+| Install, migrate  | `after_install` runs the portal set-up described in [Install and upgrade](install.md#what-installing-sets-up). `after_migrate` creates the **Client Portal** Notification Type if it is missing.                                                                           |
 
 The app adds no DocTypes, roles, reports, workspaces or scheduled jobs, and uses no `doc_events`, `override_doctype_class` or `doctype_js`.
 

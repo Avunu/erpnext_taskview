@@ -1,9 +1,9 @@
 ---
 title: The client portal
-description: What the customer portal at /projects shows and lets customers do, the pages it has, the limits it enforces, and how the team is told about customer activity.
+description: What the customer portal at /projects shows and lets customers do, its pages and limits, and how the team hears about customer activity.
 nav_title: Client portal
 order: 6
-updated: 2026-10-21
+updated: 2026-10-26
 ---
 
 The client portal is a page on your ERPNext site, at `/projects`, where customers follow their projects, see where the hours are going, and add tasks, comments and files without needing access to the desk. It ships in the same app as [Task View](../task-view/README.md) and shows the same budgets and time logs.
