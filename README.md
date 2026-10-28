@@ -15,6 +15,7 @@ Project task tree with timers, hour budgets and a customer portal for ERPNext
 [![Latest release](https://img.shields.io/github/v/release/Avunu/erpnext_taskview)](https://github.com/Avunu/erpnext_taskview/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](license.txt)
 [![Frappe v16](https://img.shields.io/badge/Frappe-v16-blue)](https://github.com/frappe/frappe/tree/version-16)
+[![Documentation](https://img.shields.io/badge/docs-docs.avunu.net-blue)](https://docs.avunu.net/erpnext-taskview/)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/task-view-dark.webp">
@@ -134,6 +135,7 @@ There is no settings page. The app works through fields on documents you already
 
 ## Support
 
+- Documentation: [docs.avunu.net/erpnext-taskview/](https://docs.avunu.net/erpnext-taskview/)
 - Bug reports and questions: [GitHub issues](https://github.com/Avunu/erpnext_taskview/issues)
 - E-mail: <mail@avu.nu>
 
