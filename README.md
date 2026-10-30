@@ -11,7 +11,7 @@ For license information, please see license.txt-->
 
 Project task tree with timers, hour budgets and a customer portal for ERPNext
 
-[![CI](https://github.com/Avunu/erpnext_taskview/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Avunu/erpnext_taskview/actions/workflows/ci.yml)
+[![CI](https://github.com/Avunu/erpnext_taskview/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/Avunu/erpnext_taskview/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/Avunu/erpnext_taskview)](https://github.com/Avunu/erpnext_taskview/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](license.txt)
 [![Frappe v16](https://img.shields.io/badge/Frappe-v16-blue)](https://github.com/frappe/frappe/tree/version-16)
@@ -94,7 +94,7 @@ bench --site <site> install-app erpnext_taskview
 
 <!-- frappe-nix:end installation -->
 
-Until the first release creates the `version-16` branch, install from `main` instead: `bench get-app https://github.com/Avunu/erpnext_taskview --branch main`. Install it on a site that already has ERPNext.
+Until the first release creates the `version-16` branch, install from `develop` instead: `bench get-app https://github.com/Avunu/erpnext_taskview --branch develop`. Install it on a site that already has ERPNext.
 
 `bench get-app` builds the app's assets, which include the portal. If you install from a checkout without building, run `bench build --app erpnext_taskview`: without it `/projects` has nothing to show. See [Install and upgrade](docs/install.md).
 

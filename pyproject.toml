@@ -20,7 +20,6 @@ schema = 1
 profile = "github:Avunu/frappe-standards-profile/main"
 frappe-major = 16
 siblings = ["erpnext"]
-integration-branch = "main"
 
 # docs.yml calls Avunu/site-docs' shared check. Its pin gets its own needs-review Dependabot
 # group (a person reads every bump) and skips the cooldown, as before the shared gates.
