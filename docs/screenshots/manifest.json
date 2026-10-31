@@ -17,7 +17,7 @@
 		"readme": "feature",
 		"width": 2880,
 		"height": 1800,
-		"sha256": "dc677d9d1d4d37e774436f86cb7b2a4db5416838f590390535ec581a28d5a32b"
+		"sha256": "ab082e9de9bb971aaf1334636a4e5ad6e9c3ded70c87a384e159a588aaa71620"
 	},
 	{
 		"name": "pinned",
@@ -27,7 +27,7 @@
 		"readme": "feature",
 		"width": 2880,
 		"height": 1800,
-		"sha256": "fcd609b2a00b433a2f7423a35f3aff66a7be3a4fc7603233986023b5ed2d9841"
+		"sha256": "22c9d03d85f7e96cc52ab27a0488a58c7421decc5ab21acaa7e4abc141f390b5"
 	},
 	{
 		"name": "pinned",
@@ -37,7 +37,7 @@
 		"readme": "feature",
 		"width": 2880,
 		"height": 1800,
-		"sha256": "3603b5686a7e012c1bd09fd1338447f7e6834cf173fc2cf1ffaf4cb14bc2ba5d"
+		"sha256": "0557e411cd50d62b957525d472827126b22714376610ce7808cbf5827eefee2f"
 	},
 	{
 		"name": "portal-board",
@@ -87,7 +87,7 @@
 		"readme": "hero",
 		"width": 2880,
 		"height": 1800,
-		"sha256": "1be60b5595d875cbcbdd2065329ae0c5e25419a2bfb940fb3c8d83df011e14c2"
+		"sha256": "dea2a388cb738962f196f8f1792dc6b79c16437ea7161ce830b3aca594df1768"
 	},
 	{
 		"name": "task-view",
@@ -97,6 +97,6 @@
 		"readme": "hero",
 		"width": 2880,
 		"height": 1800,
-		"sha256": "93fcb082da1085f6fe91bb1a9bcdb0ce44a6bee2bc1ab02a43cb9bdd79b6cf50"
+		"sha256": "2ffb3f4c9551860290596de3837aba074bc11519e3d0ef9c702920030534f010"
 	}
 ]
