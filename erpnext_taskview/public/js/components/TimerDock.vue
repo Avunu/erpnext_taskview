@@ -29,6 +29,34 @@ import { Timer, ChevronDown, ChevronUp } from "lucide-vue-next";
 import { timers, loaded, fetchTimers, getRunningTimer, type ActiveTimer } from "../timerStore";
 
 /**
+ * The desk's top bar in both of its forms: the `<header>` frappe renders at
+ * the top of `.main-section` (a theme may mount its own fixed header into it),
+ * and the `.sticky-top` navbar frappe swaps it for in read-only, impersonation,
+ * announcement and mobile modes.
+ */
+const TOP_BAR_SELECTOR = ".main-section > header, .main-section > .sticky-top";
+
+/** How much of the dock (its header bar) must stay above the viewport's bottom edge. */
+const MIN_VISIBLE_HEIGHT = 60;
+
+/**
+ * The bottom edge of the desk's top bar, or 0 when there is none.
+ *
+ * The bar is pinned to the top of the viewport and stacks above the dock, so a
+ * dock dragged under it has its drag handle covered and can't be dragged back.
+ */
+function topBarBottom(): number {
+	let bottom = 0;
+	for (const el of document.querySelectorAll<HTMLElement>(TOP_BAR_SELECTOR)) {
+		const { position } = getComputedStyle(el);
+		if (position !== "fixed" && position !== "sticky") continue;
+		const rect = el.getBoundingClientRect();
+		if (rect.height > 0 && rect.top <= 1) bottom = Math.max(bottom, rect.bottom);
+	}
+	return bottom;
+}
+
+/**
  * Floating, draggable timer dock — persistent global overlay.
  *
  * Renders a stack of {@link TimerWidget}s showing all active (open)
@@ -68,6 +96,12 @@ export default defineComponent({
 			dragging: false,
 			dragOffsetX: 0,
 			dragOffsetY: 0,
+			/** The top bar's bottom edge, measured once per drag. */
+			dragMinY: 0,
+			/** Watches the top bar, which mounts (or is replaced) after the dock. */
+			topBarObserver: null as ResizeObserver | null,
+			/** The top-bar elements being observed. */
+			topBars: [] as Element[],
 			/** Dock width (resizable). */
 			dockWidth: 320,
 			/** Resize state. */
@@ -139,6 +173,9 @@ export default defineComponent({
 		document.addEventListener("pointerup", this.endResize);
 		window.addEventListener("resize", this.clampToViewport);
 
+		this.topBarObserver = new ResizeObserver(() => this.trackTopBar());
+		this.trackTopBar();
+
 		this.tickInterval = setInterval(() => {
 			this.now = Date.now();
 		}, 1000);
@@ -150,6 +187,10 @@ export default defineComponent({
 		document.removeEventListener("pointerup", this.endDrag);
 		document.removeEventListener("pointerup", this.endResize);
 		window.removeEventListener("resize", this.clampToViewport);
+
+		this.topBarObserver?.disconnect();
+		this.topBarObserver = null;
+		this.topBars = [];
 
 		if (this.tickInterval !== null) {
 			clearInterval(this.tickInterval);
@@ -200,17 +241,49 @@ export default defineComponent({
 			}
 		},
 
-		/** Clamp dock position so it stays within the viewport. */
+		/** Clamp a horizontal position so the whole dock stays in the viewport. */
+		clampX(x: number): number {
+			return Math.max(0, Math.min(x, window.innerWidth - this.dockWidth));
+		},
+
+		/**
+		 * Clamp a vertical position so the dock's header stays on screen: below
+		 * the top bar (`minY`) and above the viewport's bottom edge.  `minY` wins
+		 * in a window too short for both.
+		 */
+		clampY(y: number, minY: number): number {
+			return Math.max(minY, Math.min(y, window.innerHeight - MIN_VISIBLE_HEIGHT));
+		},
+
+		/** Clamp dock position so it stays within the viewport, below the top bar. */
 		clampToViewport(): void {
-			const maxX = Math.max(0, window.innerWidth - this.dockWidth);
-			const maxY = Math.max(0, window.innerHeight - 60);
-			this.posX = Math.max(0, Math.min(this.posX, maxX));
-			this.posY = Math.max(0, Math.min(this.posY, maxY));
-			// Also clamp width if window shrank
+			// Clamp width first if window shrank, so the X clamp uses the final width.
 			if (this.dockWidth > window.innerWidth - 20) {
 				this.dockWidth = Math.max(250, window.innerWidth - 20);
 			}
+			this.posX = this.clampX(this.posX);
+			this.posY = this.clampY(this.posY, topBarBottom());
 			this.savePosition();
+		},
+
+		/**
+		 * Keep the dock below the top bar as the bar changes.  The desk boots
+		 * after the dock mounts, a theme may mount its header later still, and
+		 * frappe can replace the element outright, so the observed set is
+		 * refreshed whenever one of them resizes (a removed element resizes to
+		 * nothing), and the dock is re-clamped.
+		 */
+		trackTopBar(): void {
+			const observer = this.topBarObserver;
+			if (!observer) return;
+			const bars = Array.from(document.querySelectorAll(TOP_BAR_SELECTOR));
+			const changed = bars.length !== this.topBars.length || bars.some((el, i) => el !== this.topBars[i]);
+			if (changed) {
+				observer.disconnect();
+				for (const el of bars) observer.observe(el);
+				this.topBars = bars;
+			}
+			this.clampToViewport();
 		},
 
 		/** Persist dock position to sessionStorage. */
@@ -230,14 +303,15 @@ export default defineComponent({
 			const rect = el.getBoundingClientRect();
 			this.dragOffsetX = e.clientX - rect.left;
 			this.dragOffsetY = e.clientY - rect.top;
+			this.dragMinY = topBarBottom();
 			(e.target as HTMLElement).setPointerCapture?.(e.pointerId);
 		},
 
-		/** Handle pointer move during drag — clamped to viewport. */
+		/** Handle pointer move during drag — clamped to the viewport, below the top bar. */
 		onDrag(e: PointerEvent): void {
 			if (!this.dragging) return;
-			this.posX = Math.max(0, Math.min(e.clientX - this.dragOffsetX, window.innerWidth - this.dockWidth));
-			this.posY = Math.max(0, Math.min(e.clientY - this.dragOffsetY, window.innerHeight - 60));
+			this.posX = this.clampX(e.clientX - this.dragOffsetX);
+			this.posY = this.clampY(e.clientY - this.dragOffsetY, this.dragMinY);
 		},
 
 		/** End drag and persist position. */
