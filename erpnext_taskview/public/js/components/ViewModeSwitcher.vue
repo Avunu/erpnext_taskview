@@ -1,10 +1,15 @@
 <template>
 	<div class="taskview-mode-buttons btn-group btn-group-sm">
+		<!-- One variant class per button: with both btn-default and btn-primary on
+		     the active one, which wins depends on the theme's stylesheet order (a
+		     theme that defines btn-default after btn-primary showed no highlight). -->
 		<button
 			v-for="mode in modes"
 			:key="mode.key"
-			class="btn btn-default btn-sm"
-			:class="{ 'btn-primary': activeMode === mode.key }"
+			type="button"
+			class="btn btn-sm"
+			:class="activeMode === mode.key ? 'btn-primary' : 'btn-default'"
+			:aria-pressed="activeMode === mode.key"
 			@click="select(mode.key)"
 		>
 			<component :is="mode.icon" :size="14" />
