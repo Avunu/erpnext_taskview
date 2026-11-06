@@ -1,5 +1,12 @@
 # Changelog
 
+## [16.0.1](https://github.com/Avunu/erpnext_taskview/compare/v16.0.0...v16.0.1) (2026-11-06)
+
+
+### Bug Fixes
+
+* keep the timer dock below the top bar and highlight the active view mode ([#105](https://github.com/Avunu/erpnext_taskview/issues/105)) ([f146cbc](https://github.com/Avunu/erpnext_taskview/commit/f146cbcfdd9336e30cee205c641938871cf0f723))
+
 ## [16.0.0](https://github.com/Avunu/erpnext_taskview/compare/v0.0.1...v16.0.0) (2026-10-30)
 
 
