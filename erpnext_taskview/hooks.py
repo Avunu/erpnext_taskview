@@ -7,6 +7,18 @@ app_publisher = "Avunu LLC"
 app_description = "Project task tree with timers, hour budgets and a customer portal for ERPNext"
 app_email = "mail@avu.nu"
 app_license = "MIT"
+
+# Frappe's About dialog takes the logo from here. not_listed keeps the app off the apps screen.
+# app_logo_url would change the site's own logo.
+add_to_apps_screen = [
+	{
+		"name": "erpnext_taskview",
+		"logo": "/assets/erpnext_taskview/images/erpnext_taskview-logo.svg",
+		"title": "TaskView for ERPNext",
+		"route": "/desk",
+		"has_permission": "erpnext_taskview.apps_screen.not_listed",
+	}
+]
 # Task, Timesheet and Project are ERPNext doctypes; the app extends their controllers.
 required_apps = ["erpnext"]
 app_include_js = ["taskview.bundle.js", "timerdock.bundle.js"]
