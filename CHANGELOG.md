@@ -1,5 +1,12 @@
 # Changelog
 
+## [16.1.0](https://github.com/Avunu/erpnext_taskview/compare/v16.0.1...v16.1.0) (2026-11-07)
+
+
+### Features
+
+* show the app's logo in the About dialog, on frappe-nix 2.4.0 ([#112](https://github.com/Avunu/erpnext_taskview/issues/112)) ([a20d371](https://github.com/Avunu/erpnext_taskview/commit/a20d371381b6b6eccf4fcef478897aaf6008759e))
+
 ## [16.0.1](https://github.com/Avunu/erpnext_taskview/compare/v16.0.0...v16.0.1) (2026-11-06)
 
 
