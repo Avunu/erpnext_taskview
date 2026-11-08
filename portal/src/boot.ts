@@ -9,6 +9,7 @@
  * same payload is fetched from `get_context_for_dev`.
  */
 
+import type { FrappeResponse } from "frappe-types";
 import { reactive } from "vue";
 
 export interface PortalMenuItem {
@@ -53,7 +54,7 @@ export async function loadBoot(): Promise<PortalBoot> {
 			method: "POST",
 			headers: { Accept: "application/json" },
 		});
-		data = (await res.json()).message ?? {};
+		data = ((await res.json()) as FrappeResponse<Partial<PortalBoot>>).message ?? {};
 		w.csrf_token = data.csrf_token;
 	} else {
 		data = Object.fromEntries(KEYS.map((k) => [k, w[k]])) as Partial<PortalBoot>;
