@@ -83,7 +83,8 @@ export interface TimesheetDetailDoc {
 	billing_hours?: number;
 }
 
-export type FrappeDoc = ProjectDoc | TaskDoc | TimesheetDetailDoc;
+/** A document TaskView edits: a project, a task, or a timer's timesheet row. */
+export type TaskViewDoc = ProjectDoc | TaskDoc | TimesheetDetailDoc;
 
 // ---------------------------------------------------------------------------
 // API response
@@ -206,7 +207,7 @@ function getFormParams(): string | undefined {
 }
 
 export function saveDoc(
-	doc: Partial<FrappeDoc>,
+	doc: Partial<TaskViewDoc>,
 	children?: TaskDoc[],
 	siblingOrder?: string[],
 	assignToMe?: boolean,
