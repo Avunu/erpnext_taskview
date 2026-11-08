@@ -14,7 +14,9 @@ import { useLocalStorage } from "@vueuse/core";
 import type { RemovableRef } from "@vueuse/core";
 
 function treeStorageKey(): string {
-	const user = frappe.session.user ?? "guest";
+	// Evaluated when the bundle loads, before desk.js copies the boot user into
+	// frappe.session (desk.js set_globals); frappe.boot is already set inline.
+	const user = frappe.session.user ?? frappe.boot.user.name;
 	return `erpnext_taskview:tree_state:${user}`;
 }
 
