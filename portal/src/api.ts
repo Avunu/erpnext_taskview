@@ -3,6 +3,7 @@
 
 /** Typed wrappers over `erpnext_taskview.portal.api` (see that module for access rules). */
 
+import type { FrappeResponse, FrappeServerMessage } from "frappe-types";
 import type {
 	NewTaskArgs,
 	PortalComment,
@@ -44,12 +45,7 @@ async function call<T>(method: string, args: Record<string, unknown> = {}): Prom
 		},
 		body: JSON.stringify(args),
 	});
-	let data: {
-		message?: T;
-		_server_messages?: string;
-		exc_type?: string;
-		exception?: string;
-	} | null = null;
+	let data: FrappeResponse<T> | null = null;
 	try {
 		data = await res.json();
 	} catch {
@@ -94,7 +90,8 @@ function serverMessages(raw: string | undefined): string[] {
 	try {
 		return (JSON.parse(raw) as string[]).map((m) => {
 			try {
-				return JSON.parse(m).message as string;
+				// A list for msgprint's `as_list` / `as_table`; shown as text like any other.
+				return String((JSON.parse(m) as FrappeServerMessage).message);
 			} catch {
 				return m;
 			}
