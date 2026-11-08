@@ -14,7 +14,7 @@ import { useLocalStorage } from "@vueuse/core";
 import type { RemovableRef } from "@vueuse/core";
 
 function treeStorageKey(): string {
-	const user = frappe.session?.user ?? "guest";
+	const user = frappe.session.user ?? "guest";
 	return `erpnext_taskview:tree_state:${user}`;
 }
 
