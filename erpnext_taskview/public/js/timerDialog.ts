@@ -21,12 +21,17 @@ import type { SaveDocResponse } from "./types";
  * The Is Billable field's `onchange`: once it is ticked, seed Billable Time
  * from Hrs.
  */
-export function seedBillableTime(d: Dialog): void {
+export function seedBillableTime(d: Dialog<StopTimerValues>): void {
 	if (d.get_value("is_billable") && !d.get_value("billing_hrs")) {
 		void d.set_value("billing_hrs", d.get_value("hrs") || 0);
 	}
 }
 
+/**
+ * The dialog's fields.  A field left empty is absent from the values the
+ * dialog submits, so {@link StopTimerDialogOptions.onSubmit} receives them
+ * `Partial`.
+ */
 export interface StopTimerValues {
 	task: string;
 	activity_type: string;
@@ -60,7 +65,7 @@ export interface StopTimerDialogOptions {
 	/** Customer name for the context header (optional). */
 	customer?: string | null;
 	/** Called when the user submits the form. Should stop the timer and return status messages. */
-	onSubmit: (values: StopTimerValues) => Promise<Pick<SaveDocResponse, "alert" | "notice">>;
+	onSubmit: (values: Partial<StopTimerValues>) => Promise<Pick<SaveDocResponse, "alert" | "notice">>;
 	/** Called when the user cancels, e.g. to resume the timer.  Optional. */
 	onCancel?: () => Promise<void>;
 }
@@ -119,7 +124,7 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 			<div style="margin-top:3px;font-size:var(--text-xs);">${labeledPart("Project", projectName)}${labeledPart("Customer", customer)}</div>
 		</div>`;
 
-	const d = new frappe.ui.Dialog({
+	const d: Dialog<StopTimerValues> = new frappe.ui.Dialog({
 		title,
 		fields: [
 			{ fieldname: "context", fieldtype: "HTML", options: contextHtml },
@@ -168,15 +173,13 @@ export function showStopTimerDialog(options: StopTimerDialogOptions): void {
 		],
 		size: "small",
 		primary_action_label: "Submit",
-		primary_action: async (values) => {
-			// The dialog's values, keyed by the fieldnames above.
-			const logValues = values as unknown as StopTimerValues;
-			if (requireHours && !(logValues.hrs > 0)) {
+		primary_action: async (values: Partial<StopTimerValues>) => {
+			if (requireHours && !((values.hrs ?? 0) > 0)) {
 				frappe.msgprint({ message: "Enter the hours to log.", title: title, indicator: "orange" });
 				return;
 			}
 			try {
-				const status = await onSubmit(logValues);
+				const status = await onSubmit(values);
 				d.hide();
 				if (status?.alert) {
 					frappe.show_alert({ message: status.alert, indicator: "green" });
