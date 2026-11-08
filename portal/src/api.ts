@@ -91,7 +91,9 @@ function serverMessages(raw: string | undefined): string[] {
 		return (JSON.parse(raw) as string[]).map((m) => {
 			try {
 				// A list for msgprint's `as_list` / `as_table`; shown as text like any other.
-				return String((JSON.parse(m) as FrappeServerMessage).message);
+				// `msgprint(None)` sends a null message: keep it falsy so callers fall back.
+				const { message } = JSON.parse(m) as { message?: FrappeServerMessage["message"] | null };
+				return message == null ? "" : String(message);
 			} catch {
 				return m;
 			}
