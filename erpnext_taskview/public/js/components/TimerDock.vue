@@ -360,7 +360,7 @@ export default defineComponent({
 		/** Display backend errors via Frappe toast. */
 		handleError(err: unknown): void {
 			console.error("[TimerDock]", err);
-			frappe.show_alert?.({
+			frappe.show_alert({
 				message: "Timer action failed",
 				indicator: "red",
 			});

@@ -595,7 +595,8 @@ export default defineComponent({
 				customer: doc.customer ?? null,
 				onSubmit: async (values) => {
 					const now = new Date();
-					const fromTime = new Date(now.getTime() - values.hrs * 3600 * 1000);
+					// requireHours: the dialog submits only once Hrs is above zero.
+					const fromTime = new Date(now.getTime() - (values.hrs ?? 0) * 3600 * 1000);
 					const data = await saveDoc({
 						doctype: "Timesheet Detail",
 						project,
@@ -768,8 +769,9 @@ export default defineComponent({
 						reqd: true,
 					},
 				],
-				async (values) => {
-					const subjects = (values.tasks as string)
+				// A required field, so always present (frappe.prompt calls back only once it validates).
+				async (values: { tasks: string }) => {
+					const subjects = values.tasks
 						.split("\n")
 						.map((s) => s.trim())
 						.filter(Boolean);

@@ -162,12 +162,6 @@ const FLYOUT_Z_INDEX = 1025;
 /** Dispatched by `timerStore.ts` whenever either bundle's timer list changes. */
 const TIMERS_CHANGED_EVENT = "erpnext_taskview:timers_changed";
 
-/**
- * `frappe.ui.form.Footer` (form/footer/footer.js), which frappe-types 16.5.0
- * types as `unknown`: the form's comment box and activity timeline.
- */
-type FormFooterClass = new (opts: { frm: Form; parent: JQuery<HTMLElement> }) => { refresh(): void };
-
 interface StatObject {
 	open: boolean;
 	parent?: StatObject | null;
@@ -1082,8 +1076,7 @@ export default defineComponent({
 				// hide_toolbar suppresses the footer/timeline — restore it manually
 				// (as frappe's Form.setup does: its parent is a jQuery-wrapped div after the page).
 				if (!formInstance.footer && frappe.boot.desk_settings.timeline) {
-					const Footer = frappe.ui.form.Footer as FormFooterClass;
-					const footer = new Footer({
+					const footer = new frappe.ui.form.Footer({
 						frm: formInstance,
 						parent: $("<div>").appendTo(formInstance.page.main.parent()),
 					});

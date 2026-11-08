@@ -2,6 +2,7 @@
 // For license information, please see license.txt
 
 import type {
+	FrappeResponse,
 	FrappeViewName,
 	ListViewDBSettings,
 	ListViewSelect as FrappeListViewSelect,
@@ -27,10 +28,9 @@ if (!ListView || !ListViewSelect) {
 /**
  * The "Tasks" view mode: routed as `/desk/<doctype>/view/tasks` (see the
  * router registration below) and offered by the view switcher on the Task and
- * Project lists.  frappe-types closes `FrappeViewName` over frappe's own
- * views, so an app's view is cast into it once, here.
+ * Project lists.  Registered in `FrappeViewModes` by the app's augment.
  */
-const TASKS_VIEW = "Tasks" as FrappeViewName;
+const TASKS_VIEW: FrappeViewName = "Tasks";
 
 class TaskViewSortSelector extends frappe.ui.SortSelector {
 	override get_label(fieldname: string): string {
@@ -81,19 +81,18 @@ class TasksView extends ListView {
 	/** The mounted ViewModeSwitcher instance. */
 	modeSwitcherInstance: InstanceType<typeof ViewModeSwitcher> | undefined;
 
-	override prepare_data(r: { message: GetResponse }): void {
+	override prepare_data(r: FrappeResponse<GetResponse>): void {
 		// Store the structured {projects, tasks} response for the Vue app.
 		this.taskViewData = r.message;
 		// ListView base class expects this.data to be a flat array (for
 		// get_count_str, render_count, etc.).  Feed it the tasks list.
-		this.data = r.message.tasks.map((task) => ({ ...task }));
+		this.data = (r.message?.tasks ?? []).map((task) => ({ ...task }));
 	}
 
 	override setup_defaults(): void {
 		super.setup_defaults();
 		// "Project Task View", but plain "Task View" on Task rather than "Task Task View".
-		this.page_title =
-			this.doctype === "Task" ? __("Task View") : __("{0} Task View", [__(this.doctype ?? "")]);
+		this.page_title = this.doctype === "Task" ? __("Task View") : __("{0} Task View", [__(this.doctype)]);
 		this.page_name = "task-view";
 		this.list_view_settings = {};
 		this.method = "erpnext_taskview.erpnext_taskview.api.get";

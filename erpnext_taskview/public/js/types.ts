@@ -83,7 +83,14 @@ export interface TimesheetDetailDoc {
 	billing_hours?: number;
 }
 
-export type FrappeDoc = ProjectDoc | TaskDoc | TimesheetDetailDoc;
+/** A document TaskView edits: a project, a task, or a timer's timesheet row. */
+export type TaskViewDoc = ProjectDoc | TaskDoc | TimesheetDetailDoc;
+
+/**
+ * The fields of a document that {@link saveDoc} writes.  A field set to
+ * `undefined` is left out of the payload, as `JSON.stringify` drops it.
+ */
+export type DocChanges<T> = { [K in keyof T]?: T[K] | undefined };
 
 // ---------------------------------------------------------------------------
 // API response
@@ -206,7 +213,7 @@ function getFormParams(): string | undefined {
 }
 
 export function saveDoc(
-	doc: Partial<FrappeDoc>,
+	doc: DocChanges<TaskViewDoc>,
 	children?: TaskDoc[],
 	siblingOrder?: string[],
 	assignToMe?: boolean,
