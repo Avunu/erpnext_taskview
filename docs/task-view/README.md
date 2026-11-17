@@ -42,7 +42,7 @@ Drag a row to change its position, or drop it inside another task to make it a s
 ### Edit
 
 - **Rename.** Double-click the title, then press Enter to save or Escape to cancel.
-- **Open the full form.** The panel button on a row opens the Task or Project form in a side panel. This is where you set [budgets](hour-budgets.md#set-a-budget). **Save** in the panel header is enabled once you change something, and the breadcrumb links to the list and to the full-page form.
+- **Open the full form.** The panel button on a row opens the Task or Project in the desk's own side panel, the one that list and report links use. This is where you set [budgets](hour-budgets.md#set-a-budget). With [Data Steward](https://github.com/Avunu/data_steward) installed, the panel is editable and **Save** appears in its header once you change something; without it the panel is read-only. The arrow button opens the full-page form, which has the timeline, comments and connections the panel leaves out.
 - **Assign.** The **+** on a task row lists the enabled staff users. Click a name to assign, or the **x** on an assignee's avatar to remove them.
 - **Complete.** Tick the checkbox on a task to complete it, whatever its status: Open, Working or Pending Review. The row stays on screen, struck through, until the next refresh, so you can tick several in a row. Untick it before then to set the task back to Open.
 - **Delete.** The trash button on a task row asks you to confirm and then deletes the task.

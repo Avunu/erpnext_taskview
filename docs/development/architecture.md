@@ -10,12 +10,12 @@ This page describes the design behind the code, for developers. For commands and
 
 ## The pieces
 
-| Piece         | Built with                                                                                                     | Entry point                                                                     |
-| ------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Task View     | Vue 3 and `@he-tree/vue` for the tree, `vue3-side-panel` for the side panel, mounted inside Frappe's list view | `erpnext_taskview/public/js/taskview.entry.ts`                                  |
-| Timer dock    | Vue 3, mounted once on every desk page                                                                         | `erpnext_taskview/public/js/timerdock.entry.ts`                                 |
-| Client portal | Vue 3, Vue Router, frappe-ui and Tailwind 3, served at `/projects`                                             | `portal/src/main.ts`                                                            |
-| Python API    | Frappe whitelisted methods, Pydantic models, the Frappe Query Builder                                          | `erpnext_taskview/erpnext_taskview/api.py` and `erpnext_taskview/portal/api.py` |
+| Piece         | Built with                                                                                                          | Entry point                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Task View     | Vue 3 and `@he-tree/vue` for the tree, opening rows in the desk's own side panel, mounted inside Frappe's list view | `erpnext_taskview/public/js/taskview.entry.ts`                                  |
+| Timer dock    | Vue 3, mounted once on every desk page                                                                              | `erpnext_taskview/public/js/timerdock.entry.ts`                                 |
+| Client portal | Vue 3, Vue Router, frappe-ui and Tailwind 3, served at `/projects`                                                  | `portal/src/main.ts`                                                            |
+| Python API    | Frappe whitelisted methods, Pydantic models, the Frappe Query Builder                                               | `erpnext_taskview/erpnext_taskview/api.py` and `erpnext_taskview/portal/api.py` |
 
 `taskview.entry.ts` registers a list view named `tasks` and subclasses Frappe's `ListView` (`TasksView`) to mount the tree in place of the result list. It also overrides Frappe's view menu so that Task and Project offer **Task View** next to **List**, and relabels the `idx` sort as **Manual**. The two property settings in `custom/task.json` and `custom/project.json` make `Tasks` the default view for each document.
 
