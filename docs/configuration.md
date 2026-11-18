@@ -18,7 +18,7 @@ TaskView has no settings page of its own. It is configured through fields on doc
 | **Roles**                    | User form                          | To time a task or log time on it, a person needs read on its Project and write on the Task. To change a task or project in the tree, they need write on it. ERPNext's **Projects User** gives all of these. |
 | **Customer**                 | Project form                       | Decides which customer's contacts and portal users can see the project in the [client portal](client-portal/administering-access.md).                                                                       |
 
-The side panel in Task View opens the Task or Project form, so these are one click from the tree.
+The side panel in Task View opens the Task or Project, so these are one click from the tree.
 
 ## For administrators
 

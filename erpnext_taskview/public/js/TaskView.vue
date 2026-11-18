@@ -55,71 +55,13 @@
 			@copy-markdown="copyFromRow"
 		/>
 	</div>
-	<div>
-		<!-- The panel's colour, stacking and teleport container are driven through
-         props rather than CSS: vue3-side-panel writes panelColor/zIndex as
-         *inline* styles, which no stylesheet can override without !important.
-         Handing it frappe tokens instead keeps the flyout on the active theme
-         for free.  See the flyout block in <style> for the geometry. -->
-		<VueSidePanel
-			v-model="isOpened"
-			id-name="tv-flyout"
-			width="930px"
-			hide-close-btn
-			:z-index="FLYOUT_Z_INDEX"
-			panel-color="var(--bg-color)"
-			overlay-color="var(--cds-overlay, rgba(0, 0, 0, 0.5))"
-			:overlay-opacity="1"
-		>
-			<template #header>
-				<div class="page-head flex">
-					<div class="container">
-						<div class="row flex-nowrap align-center page-head-content justify-between">
-							<div class="page-title">
-								<div class="flex fill-width title-area ellipsis">
-									<!-- frappe's own breadcrumb anatomy (ul.navbar-breadcrumbs >
-                       li > a.title-text), so desk themes style it as they style
-                       every other page head — and the links double as an escape
-                       hatch to the full-page form. -->
-									<ul class="nav navbar-breadcrumbs d-sm-flex ellipsis">
-										<li class="ellipsis">
-											<a class="title-text" :href="sidebarListRoute">{{ sidebarDoctype }}</a>
-										</li>
-										<li class="ellipsis">
-											<a class="title-text-form" :href="sidebarFormRoute">{{ sidebarTitle }}</a>
-										</li>
-									</ul>
-								</div>
-							</div>
-							<div class="flex col page-actions justify-content-end">
-								<button
-									v-if="sidebarFormInstance"
-									class="btn btn-primary btn-sm"
-									:disabled="!sidebarDirty"
-									@click="saveSidebarForm"
-								>
-									Save
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
-			</template>
-			<template #default>
-				<div ref="formWrapper"></div>
-			</template>
-		</VueSidePanel>
-	</div>
 </template>
 
 <script lang="ts">
-import type { Form } from "frappe-types";
 import { defineComponent, type PropType } from "vue";
 import { Draggable, dragContext } from "@he-tree/vue";
 import Task from "./components/Task.vue";
 import PinnedView from "./components/PinnedView.vue";
-import { VueSidePanel } from "vue3-side-panel";
-import "vue3-side-panel/dist/vue3-side-panel.css";
 import "@he-tree/vue/style/default.css";
 import "@he-tree/vue/style/material-design.css";
 import {
@@ -144,20 +86,8 @@ export interface TreeData extends TreeNode {
 	children: TreeData[];
 }
 
-/**
- * Where the flyout sits in frappe's stacking order.  frappe's desk uses
- * 1020–1023 for the collapsible left sidebar (scss/desk/sidebar.scss), 1030 for
- * the top bar (frappe's `.navbar`, carbon_frappe's `.cf-shell-header`) and
- * bootstrap's 1040/1050 for modal backdrops and modals.  1025 therefore covers
- * the page and the sidebar, stays *under* the top bar, and still lets dialogs
- * opened from the form inside the flyout (link pickers, quick entry) come out
- * on top of it.
- *
- * Passed as a prop because vue3-side-panel otherwise derives its own z-index by
- * scanning `getComputedStyle` of every element on the page for the maximum —
- * which lands on whatever chrome happens to be mounted.
- */
-const FLYOUT_Z_INDEX = 1025;
+/** Class core's side panel keeps on <body> while it is open (frappe/ui/side_panel.js). */
+const SIDE_PANEL_OPEN_CLASS = "side-panel-open";
 
 /** Dispatched by `timerStore.ts` whenever either bundle's timer list changes. */
 const TIMERS_CHANGED_EVENT = "erpnext_taskview:timers_changed";
@@ -177,7 +107,7 @@ interface StatObject {
 
 export default defineComponent({
 	name: "TaskView",
-	components: { Draggable, Task, PinnedView, VueSidePanel },
+	components: { Draggable, Task, PinnedView },
 
 	props: {
 		docs: {
@@ -199,14 +129,9 @@ export default defineComponent({
 			selectedTasks: new Set<string>(),
 			/** Last node touched by a plain or Ctrl-click; anchors Shift-range selection. */
 			selectionAnchor: null as string | null,
+			/** Whether the desk's side panel is open; mirrors its `side-panel-open` body class. */
 			isOpened: false,
-			sidebarTitle: "" as string,
-			/** Translated doctype label, shown in the flyout breadcrumb. */
-			sidebarDoctype: "" as string,
-			/** Untranslated doctype, used to build the breadcrumb routes. */
-			sidebarDoctypeName: "" as string,
-			sidebarDirty: false,
-			sidebarFormInstance: null as Form | null,
+			panelObserver: null as MutationObserver | null,
 			sideTimersElement: null as HTMLElement | null,
 			manualSort: true,
 			/** Parent doc name whose next blank child should auto-focus after rebuild. */
@@ -216,30 +141,6 @@ export default defineComponent({
 			/** When the tree was last rebuilt from a fresh `get()` snapshot. */
 			lastPremountAt: 0,
 		};
-	},
-
-	computed: {
-		/** Exposed to the template; see the constant's doc comment. */
-		FLYOUT_Z_INDEX(): number {
-			return FLYOUT_Z_INDEX;
-		},
-
-		/**
-		 * Desk route for the flyout doctype's list view, or `undefined` between
-		 * opening the panel and the form finishing its async load — Vue drops the
-		 * attribute, so the crumb renders as plain text rather than as a link to
-		 * the current page.
-		 */
-		sidebarListRoute(): string | undefined {
-			if (!this.sidebarDoctypeName) return undefined;
-			return frappe.router.make_url([frappe.router.slug(this.sidebarDoctypeName)]);
-		},
-
-		/** Desk route for the record open in the flyout; see {@link sidebarListRoute}. */
-		sidebarFormRoute(): string | undefined {
-			if (!this.sidebarDoctypeName || !this.sidebarTitle) return undefined;
-			return frappe.utils.get_form_link(this.sidebarDoctypeName, this.sidebarTitle);
-		},
 	},
 
 	created() {
@@ -257,11 +158,19 @@ export default defineComponent({
 		this.updateHighlightedProject();
 		document.addEventListener("keydown", this.handleKeydown);
 		document.addEventListener(TIMERS_CHANGED_EVENT, this.handleTimersChanged);
+		// The panel is core's and has no open/close event; it toggles this class on <body>.
+		const syncPanelState = () => {
+			this.isOpened = document.body.classList.contains(SIDE_PANEL_OPEN_CLASS);
+		};
+		this.panelObserver = new MutationObserver(syncPanelState);
+		this.panelObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+		syncPanelState();
 	},
 
 	beforeUnmount() {
 		document.removeEventListener("keydown", this.handleKeydown);
 		document.removeEventListener(TIMERS_CHANGED_EVENT, this.handleTimersChanged);
+		this.panelObserver?.disconnect();
 	},
 
 	methods: {
@@ -1038,71 +947,26 @@ export default defineComponent({
 
 		// ── Sidebar ───────────────────────────────────────────
 
-		async loadForm(payload: { doc: ProjectDoc | TaskDoc; isProject: boolean }): Promise<void> {
+		/**
+		 * Opens the row's Task or Project in the desk's side panel, the same one
+		 * report and list links use.  What it can do beyond previewing comes from
+		 * the site: Data Steward makes it read-write.
+		 */
+		async openSidebar(payload: { doc: ProjectDoc | TaskDoc; isProject: boolean }): Promise<void> {
 			const doctype = payload.isProject ? "Project" : "Task";
-			const docName = payload.doc.name;
+			const name = payload.doc.name;
+			if (!name) return;
 
 			try {
-				const formWrapper = this.$refs.formWrapper as HTMLElement;
-				if (!formWrapper || !document.body.contains(formWrapper)) {
-					console.error("formWrapper is not attached to the DOM");
-					return;
-				}
-
-				await frappe.model.with_doctype(doctype);
-				const meta = frappe.get_meta(doctype);
-				if (!meta) throw new Error(`No meta for ${doctype}`);
-				const prev = meta.hide_toolbar;
-				meta.hide_toolbar = 1;
-				formWrapper.innerHTML = "";
-				const formInstance = new frappe.ui.form.Form(doctype, formWrapper, true, "");
-				await frappe.model.with_doc(doctype, docName);
-				formInstance.refresh(docName);
-				formInstance.page.page_head.addClass("hidden");
-				meta.hide_toolbar = prev ?? 0;
-
-				// Populate our custom header
-				this.sidebarDoctype = __(doctype);
-				this.sidebarDoctypeName = doctype;
-				this.sidebarTitle = docName;
-				this.sidebarDirty = false;
-				this.sidebarFormInstance = formInstance;
-
-				// Track dirty state so the Save button reflects unsaved changes
-				frappe.model.on(doctype, "*", () => {
-					this.sidebarDirty = formInstance.is_dirty();
-				});
-
-				// hide_toolbar suppresses the footer/timeline — restore it manually
-				// (as frappe's Form.setup does: its parent is a jQuery-wrapped div after the page).
-				if (!formInstance.footer && frappe.boot.desk_settings.timeline) {
-					const footer = new frappe.ui.form.Footer({
-						frm: formInstance,
-						parent: $("<div>").appendTo(formInstance.page.main.parent()),
-					});
-					formInstance.footer = footer;
-					footer.refresh();
-				}
-			} catch (err) {
-				console.error("Error loading form:", err);
+				// The panel is its own bundle, loaded the first time anything opens it.
+				await frappe.require("side_panel.bundle.js");
+				const panel = frappe.ui.get_side_panel?.();
+				if (!panel) throw new Error("the side panel is not available");
+				panel.open(doctype, name);
+			} catch (error) {
+				console.error("erpnext_taskview: side panel failed, opening the form instead", error);
+				frappe.set_route("Form", doctype, name);
 			}
-		},
-
-		saveSidebarForm(): void {
-			if (!this.sidebarFormInstance) return;
-			this.sidebarFormInstance.save("Save", () => {
-				this.sidebarDirty = false;
-			});
-		},
-
-		openSidebar(payload: { doc: ProjectDoc | TaskDoc; isProject: boolean }): void {
-			this.isOpened = true;
-			this.sidebarFormInstance = null;
-			this.sidebarTitle = "";
-			this.sidebarDoctype = "";
-			this.sidebarDoctypeName = "";
-			this.sidebarDirty = false;
-			this.loadForm(payload);
 		},
 	},
 });
@@ -1182,61 +1046,5 @@ export default defineComponent({
 
 .he-tree__open-icon svg path {
 	fill: var(--text-muted);
-}
-
-/* ── Flyout ────────────────────────────────────────────────────
-   Everything here is scoped to #tv-flyout — the teleport container
-   vue3-side-panel creates from the `id-name` prop.  The vendor's own
-   selectors (.vsp, .vsp-overlay, …) are global and its markup carries no
-   app-specific hook, so unscoped overrides here used to reach frappe's desk
-   chrome: `.form-tabs-list { top: 0 !important }` moved the sticky tab strip
-   on *every* desk form (frappe offsets it by --navbar-height on purpose, see
-   .form-tabs-sticky-* in scss/desk/form.scss), and `.body-sidebar { z-index:
-   500 }` demoted the desk's own left sidebar site-wide.  The `id-name` prop
-   gives the panel an ID selector, which also outranks the vendor's rules
-   without !important. */
-
-/* vue3-side-panel pins a side panel to top:0/height:100% of the *viewport*, so
-   it slides underneath the top bar — frappe's `.navbar` and carbon_frappe's
-   `.cf-shell-header` both live in the top --navbar-height band and both stay
-   above the flyout (z-index 1030 > FLYOUT_Z_INDEX).  Start the panel and its
-   scrim below that band instead: --navbar-height is the same token frappe uses
-   to offset its own sticky page chrome, so this tracks any theme's bar. */
-#tv-flyout .vsp--right-side,
-#tv-flyout .vsp-overlay {
-	top: var(--navbar-height);
-	height: calc(100% - var(--navbar-height));
-}
-
-/* vue3-side-panel measures the header once, as the panel opens, and writes
-   `height: <panel - header - footer>px` onto .vsp__body as an inline style.
-   But the form — and with it the breadcrumb text and the Save button — loads
-   asynchronously *after* that, so the header grows out from under the
-   measurement (49px empty, 77px once populated) and the body ends up taller
-   than the panel: its last rows sit below the viewport and its own scrollbar
-   stops short of them.  Lay the panel out with flexbox instead, which needs no
-   measuring.  !important is the only way to reach an inline style, and
-   min-height:0 is what lets a column flex item scroll instead of growing to
-   fit its content. */
-#tv-flyout .vsp--right-side {
-	display: flex;
-	flex-direction: column;
-}
-
-#tv-flyout .vsp__header,
-#tv-flyout .vsp__footer {
-	flex: none;
-}
-
-#tv-flyout .vsp__body {
-	flex: 1 1 auto;
-	min-height: 0;
-	height: auto !important;
-}
-
-/* The tab strip is sticky against the panel body, not against the desk's top
-   bar, so it starts at 0 here rather than at --navbar-height. */
-#tv-flyout .form-tabs-list {
-	top: 0;
 }
 </style>
