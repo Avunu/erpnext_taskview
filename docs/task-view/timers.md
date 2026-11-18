@@ -27,6 +27,8 @@ The stop button only appears on a row while it has a timer; in its place, a row 
 
 Only one timer runs at a time. Starting or resuming a timer pauses whichever one was running. Paused timers stay in the dock until you stop or discard them.
 
+Your timers also stay in step across tabs and browsers while you work. Start, pause, resume, stop or discard a timer in one and the dock and the task tree in your other open tabs follow within a moment, without a reload. A tab in the background catches up when you switch back to it. If your site has realtime turned off, or a tab lost its connection, it catches up when you switch back to it after a minute away.
+
 ## The Log Timer dialog
 
 Stopping pauses the clock first, then asks you to confirm.

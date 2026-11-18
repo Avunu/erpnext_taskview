@@ -29,6 +29,18 @@ extend_doctype_class = {
 	"Timesheet Detail": "erpnext_taskview.erpnext_taskview.custom.timesheet_detail.TimesheetDetail",
 }
 
+# Open desk sessions refetch their timers on this: see timer_sync.py.
+doc_events = {
+	"Timesheet": {
+		"on_change": "erpnext_taskview.erpnext_taskview.timer_sync.timesheet_changed",
+		"on_trash": "erpnext_taskview.erpnext_taskview.timer_sync.timesheet_changed",
+	},
+	"Timesheet Detail": {
+		"on_change": "erpnext_taskview.erpnext_taskview.timer_sync.timesheet_detail_changed",
+		"on_trash": "erpnext_taskview.erpnext_taskview.timer_sync.timesheet_detail_changed",
+	},
+}
+
 after_install = "erpnext_taskview.install.after_install"
 after_migrate = "erpnext_taskview.install.ensure_notification_type"
 
