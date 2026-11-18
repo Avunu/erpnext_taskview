@@ -72,6 +72,8 @@ function readFromCache(): ActiveTimer[] | null {
 const timers: Ref<Map<string, ActiveTimer>> = ref(new Map());
 const loaded = ref(false);
 const loading = ref(false);
+/** When the timer list was last set, from a fetch here or from the other bundle's. */
+let lastSyncedAt = 0;
 
 /** Rebuild local refs from a timer list (shared or fetched). */
 function hydrateFromList(list: ActiveTimer[]): void {
@@ -81,6 +83,12 @@ function hydrateFromList(list: ActiveTimer[]): void {
 	}
 	timers.value = map;
 	loaded.value = true;
+	lastSyncedAt = Date.now();
+}
+
+/** Milliseconds since the timer list was last set; `Infinity` before the first. */
+export function timersAge(): number {
+	return lastSyncedAt ? Date.now() - lastSyncedAt : Infinity;
 }
 
 // Listen for changes signalled by the other bundle
@@ -93,7 +101,7 @@ document.addEventListener(EVENT_NAME, () => {
 // Server communication
 // ---------------------------------------------------------------------------
 
-export async function fetchTimers(): Promise<void> {
+async function loadTimers(): Promise<void> {
 	loading.value = true;
 	try {
 		const result = await callMethod<{ timers: ActiveTimer[] }>(
@@ -106,6 +114,34 @@ export async function fetchTimers(): Promise<void> {
 	} finally {
 		loading.value = false;
 	}
+}
+
+let fetching: Promise<void> | null = null;
+let fetchAgain: Promise<void> | null = null;
+
+/**
+ * Fetch the user's open timers, one request at a time.
+ *
+ * Timers change from every direction (this tab's actions, other sessions through the realtime
+ * event), so requests overlap, and an older response that lands last would overwrite a newer
+ * one.  A call that arrives while a request is under way therefore waits for it and then makes
+ * its own: the running request may have been read before the caller's change.  Callers that
+ * arrive meanwhile share that one.
+ */
+export function fetchTimers(): Promise<void> {
+	if (!fetching) {
+		fetching = loadTimers().finally(() => {
+			fetching = null;
+		});
+		return fetching;
+	}
+	fetchAgain ??= fetching
+		.catch(() => undefined)
+		.then(() => {
+			fetchAgain = null;
+			return fetchTimers();
+		});
+	return fetchAgain;
 }
 
 export async function sendTimerAction(detail: Record<string, unknown>): Promise<SaveDocResponse> {
