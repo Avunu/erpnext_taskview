@@ -327,6 +327,50 @@ class TaskDescriptions(BaseModel):
 	descriptions: dict[str, str] = Field(default_factory=dict)
 
 
+class RowDetail(BaseModel):
+	"""Response from ``get_row_detail``: the fields the tree's expandable row panel shows.
+
+	Budget and logged hours are not here: the panel reads them from the tree
+	doc, which ``get()`` keeps current.
+
+	Attributes:
+		doctype: ``"Task"`` or ``"Project"``.
+		name: Frappe document name.
+		description: Stored HTML of ``Task.description`` / ``Project.notes``,
+			or ``None`` when empty.
+		start_date: ``Task.exp_start_date`` / ``Project.expected_start_date``
+			as ``"YYYY-MM-DD"``, or ``None``.  The Task fields are Datetime;
+			only their date is sent.
+		end_date: ``Task.exp_end_date`` / ``Project.expected_end_date``, as
+			``start_date``.
+		expected_hours: ``Task.expected_time`` / ``Project.budgeted_hours``
+			(the doc's own estimate, not the rollup).
+		priority: ``Task.priority``; ``None`` for Projects.
+		progress: ``Task.progress`` / ``Project.percent_complete``.
+		can_write: Whether the current user may change the doc.
+	"""
+
+	doctype: Literal["Task", "Project"]
+	name: str
+	description: str | None = None
+	start_date: str | None = None
+	end_date: str | None = None
+	expected_hours: float | None = None
+	priority: str | None = None
+	progress: float | None = None
+	can_write: bool = False
+
+
+class UpdateRowResponse(GetResponse):
+	"""Response from ``update_row``: a fresh tree snapshot plus the saved row's detail.
+
+	Attributes:
+		detail: The updated doc's :class:`RowDetail`.
+	"""
+
+	detail: RowDetail
+
+
 class SaveDocResponse(GetResponse):
 	"""Response from ``save_doc`` augmented with optional status messages.
 

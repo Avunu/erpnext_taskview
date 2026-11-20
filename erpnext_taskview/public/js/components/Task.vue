@@ -6,8 +6,8 @@
 		</span>
 
 		<!-- Spiced-up Checkbox.  Clicks stop here so ticking a task never selects
-         the row: selection injects the "Add task..." placeholders, and that
-         shift moves the next checkbox out from under the cursor. -->
+         the row: selection expands the row's panel, and that shift moves the
+         next checkbox out from under the cursor. -->
 		<div v-if="!isBlank" class="custom-checkbox task-control" @click.stop>
 			<label>
 				<input type="checkbox" :checked="node.doc.status === 'Completed'" @change="toggleComplete" />
@@ -35,6 +35,8 @@
 				@keyup.enter="unfocusInput"
 				@keydown.stop
 				@keydown.esc="cancelEdit"
+				@click.stop
+				@dblclick.stop
 				class="task-subject-edit"
 			/>
 			<!-- Breadcrumb metadata shown in pinned view (subtasks; top-level tasks get the picker) -->
@@ -60,7 +62,8 @@
 			:liveExtra="liveExtra"
 		/>
 
-		<!-- action buttons for non-blank, non-completed tasks -->
+		<!-- action buttons for non-blank, non-completed tasks.  Every button
+		     stops its click: a row click selects the row and toggles its panel. -->
 		<div v-if="!isProject && !isBlank && node.doc.status !== 'Completed'" class="task-controls">
 			<AssignTo
 				:assignedTo="taskAssignedTo"
@@ -77,7 +80,7 @@
 				v-if="hasProject"
 				class="task-btn"
 				:class="timerStatus === 'running' ? 'task-btn--pause' : 'task-btn--resume'"
-				@click="toggleTimer"
+				@click.stop="toggleTimer"
 				:title="timerStatus === 'stopped' ? 'Start' : timerStatus === 'paused' ? 'Resume' : 'Pause'"
 			>
 				<Pause v-if="timerStatus === 'running'" :size="14" />
@@ -86,23 +89,28 @@
 			<button
 				class="task-btn task-btn--stop"
 				v-if="timerStatus !== 'stopped'"
-				@click="stopTimer"
+				@click.stop="stopTimer"
 				title="Stop"
 			>
 				<Square :size="14" />
 			</button>
 			<!-- Log hours that were not timed.  Only without a timer: a running or
            paused one is logged through Stop. -->
-			<button v-else-if="hasProject" class="task-btn task-btn--log" @click="logManualTime" title="Log time">
+			<button
+				v-else-if="hasProject"
+				class="task-btn task-btn--log"
+				@click.stop="logManualTime"
+				title="Log time"
+			>
 				<ClockPlus :size="14" />
 			</button>
-			<button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
+			<button class="task-btn task-btn--expand" @click.stop="emitSidebar" title="Open sidebar">
 				<PanelRightOpen :size="14" />
 			</button>
 			<button
 				v-if="hasProject"
 				class="task-btn task-btn--quick-entry"
-				@click="quickEntry"
+				@click.stop="quickEntry"
 				title="Quick add subtasks"
 			>
 				<ClipboardList :size="14" />
@@ -112,16 +120,16 @@
 			<button class="task-btn task-btn--copy" @click.stop="$emit('copy-markdown')" :title="copyTitle">
 				<Copy :size="14" />
 			</button>
-			<button class="task-btn task-btn--delete" @click="deleteTask" title="Delete task">
+			<button class="task-btn task-btn--delete" @click.stop="deleteTask" title="Delete task">
 				<Trash2 :size="14" />
 			</button>
 		</div>
-		<!-- projects and completed tasks (no timer/delete controls) -->
+		<!-- projects and completed tasks (no timer/delete controls); clicks stop as above -->
 		<div v-else-if="!isBlank" class="task-controls">
-			<button class="task-btn task-btn--quick-entry" @click="quickEntry" title="Quick add subtasks">
+			<button class="task-btn task-btn--quick-entry" @click.stop="quickEntry" title="Quick add subtasks">
 				<ClipboardList :size="14" />
 			</button>
-			<button class="task-btn task-btn--expand" @click="emitSidebar" title="Open sidebar">
+			<button class="task-btn task-btn--expand" @click.stop="emitSidebar" title="Open sidebar">
 				<PanelRightOpen :size="14" />
 			</button>
 			<button class="task-btn task-btn--copy" @click.stop="$emit('copy-markdown')" :title="copyTitle">
@@ -181,7 +189,7 @@ import "../task-controls.css";
  * | Property            | Source                                              |
  * |---------------------|-----------------------------------------------------|
  * | `isProject`         | `doc.doctype === 'Project'`                         |
- * | `isBlank`           | `!doc.name` (placeholder for inline creation)       |
+ * | `isBlank`           | `!doc.name` (the "Add project..." placeholder)      |
  * | `timesheetDetail`   | Looked up from the global `timersByTask` store    |
  * | `timerStatus`       | Derived from `timesheetDetail.paused`               |
  * | `displayText`       | `getDisplayText(node)` helper                       |
@@ -195,8 +203,8 @@ import "../task-controls.css";
  *
  * | Event              | Payload              | When                                   |
  * |--------------------|----------------------|----------------------------------------|
- * | `task-interaction`  | `MouseEvent`         | Any click on the row (carries modifiers)|
- * | `add-sibling-task`  | —                    | (Reserved) sibling creation request    |
+ * | `task-interaction`  | `MouseEvent`         | A click on the row (carries modifiers); selects it and toggles its panel |
+ * | `task-select`       | —                    | Row renamed: select it, panel untouched |
  * | `catch-error`       | `unknown`            | Backend call failed                    |
  * | `catch-success`     | `GetResponse`        | Backend call succeeded                 |
  * | `open-sidebar`      | `{doc, ...}`         | Open form or time-logger in sidebar    |
@@ -278,13 +286,12 @@ export default defineComponent({
 	},
 	emits: [
 		"task-interaction",
-		"add-sibling-task",
+		"task-select",
 		"catch-error",
 		"catch-success",
 		"open-sidebar",
 		"request-expand",
 		"quick-entry",
-		"blank-saved",
 		"copy-markdown",
 	],
 
@@ -312,7 +319,7 @@ export default defineComponent({
 		isProject(): boolean {
 			return this.node.doc.doctype === "Project";
 		},
-		/** True if this is a blank placeholder node for inline creation. */
+		/** True for the "Add project..." placeholder row (the tree's only blank). */
 		isBlank(): boolean {
 			return !this.node.doc.name;
 		},
@@ -661,14 +668,16 @@ export default defineComponent({
 		/**
 		 * Persist the inline edit.
 		 *
-		 * For **blank nodes**, sends an insert (new Project or Task).
+		 * For the **"Add project..." placeholder**, inserts a new Project.
+		 * (Tasks are added from a row's expanded panel, see `RowPanel.vue`.)
 		 * For **existing nodes**, sends an update with the changed field
 		 * (`project_name` for projects, `subject` for tasks).  Projects
 		 * display as `"NAME: Title"` so the user-edited text is split on
 		 * the first colon to extract the title portion.
 		 *
-		 * Emits `catch-success` or `catch-error` and updates `locals.nodes`
-		 * expand state.
+		 * Emits `catch-success` or `catch-error` and updates the persisted
+		 * expand state.  A renamed row is selected (`task-select`) without
+		 * toggling its panel.
 		 */
 		async saveEdit(): Promise<void> {
 			let saved = false;
@@ -677,35 +686,14 @@ export default defineComponent({
 				if (this.editedText !== currentText) {
 					saved = true;
 					if (this.isBlank) {
-						// INSERT a new Task or Project
-						let newDoc: Partial<ProjectDoc> | Partial<TaskDoc>;
-						if (this.isProject) {
-							newDoc = { doctype: "Project", project_name: this.editedText, status: "Open" };
-						} else {
-							const taskDoc = this.node.doc as TaskDoc;
-							newDoc = {
-								doctype: "Task",
-								subject: this.editedText,
-								project: taskDoc.project,
-								parent_task: taskDoc.parent_task || null,
-								status: "Open",
-								priority: "Medium",
-								idx: taskDoc.idx || 0,
-							};
-						}
+						// INSERT a new Project from the placeholder row
 						try {
-							// In "My Tasks" view, self-assign new tasks so they don't get
-							// filtered out the moment they're saved.
-							const assignToMe = !this.isProject && this.viewMode === "my_tasks";
-							const data = await saveDoc(newDoc, undefined, undefined, assignToMe);
-							if (!this.isProject) {
-								// Emit blank-saved for typewriter-style input: auto-focus next blank
-								const parentName =
-									(this.node.doc as TaskDoc).parent_task || (this.node.doc as TaskDoc).project;
-								this.$emit("blank-saved", { data, parentName });
-							} else {
-								this.$emit("catch-success", data);
-							}
+							const data = await saveDoc({
+								doctype: "Project",
+								project_name: this.editedText,
+								status: "Open",
+							});
+							this.$emit("catch-success", data);
 						} catch (error) {
 							this.$emit("catch-error", error);
 						}
@@ -743,7 +731,9 @@ export default defineComponent({
 				treeNodes.value[projectName] = true;
 			}
 			if (!this.isBlank && saved) {
-				this.emitInteraction();
+				// The Pinned view treats any interaction as "move the entry row
+				// below"; the tree selects without toggling the row's panel.
+				this.$emit(this.pinned ? "task-interaction" : "task-select");
 			}
 			this.isEditing = false;
 		},
@@ -853,9 +843,9 @@ export default defineComponent({
 	 * 1. **Timer expansion**: watches `timerStatus` and emits
 	 *    `request-expand` when a timer is running or paused, so the
 	 *    tree auto-opens ancestor nodes to make the active task visible.
-	 * 2. **Auto-focus**: watches `_autoFocus` on the node and enters
-	 *    edit mode when triggered by a keyboard shortcut (see
-	 *    `editRootBlankTask` in `taskview.ts`).
+	 * 2. **Auto-focus**: watches `_autoFocus` on the "Add project..." row
+	 *    and enters edit mode when triggered by a keyboard shortcut (see
+	 *    `startTyping` in `TaskView.vue`).
 	 */
 	mounted() {
 		// When this task has an active timer, emit request-expand so the tree opens ancestors
@@ -869,7 +859,7 @@ export default defineComponent({
 			{ immediate: true },
 		);
 
-		// Auto-focus support for blank nodes (triggered by keyboard shortcut)
+		// Auto-focus support for the "Add project..." row (triggered by keyboard shortcut)
 		this.$watch(
 			() => this.node._autoFocus,
 			(val: boolean | undefined) => {

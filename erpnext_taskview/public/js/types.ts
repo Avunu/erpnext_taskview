@@ -132,6 +132,42 @@ export interface TaskDescriptions {
 	descriptions: Record<string, string>;
 }
 
+/** Doctypes whose rows open an expanded panel (see `components/RowPanel.vue`). */
+export type RowDoctype = "Project" | "Task";
+
+/**
+ * Mirrors `models.RowDetail` — what a row's expanded panel shows beyond the
+ * tree snapshot.  Read lazily, one row at a time, by {@link fetchRowDetail}.
+ */
+export interface RowDetail {
+	doctype: RowDoctype;
+	name: string;
+	/** Raw stored HTML: `Task.description` / `Project.notes`. */
+	description: string | null;
+	/** `"YYYY-MM-DD"`: `Task.exp_start_date` / `Project.expected_start_date`. */
+	start_date: string | null;
+	/** `"YYYY-MM-DD"`: `Task.exp_end_date` / `Project.expected_end_date`. */
+	end_date: string | null;
+	/** The row's own estimate: `Task.expected_time` / `Project.budgeted_hours`. */
+	expected_hours: number | null;
+	/** Task only. */
+	priority: string | null;
+	/** `Task.progress` / `Project.percent_complete`. */
+	progress: number | null;
+	/** Whether the current user may edit the row; the panel is read-only otherwise. */
+	can_write: boolean;
+}
+
+/** The panel fields {@link updateRow} writes; `null` or `""` clears a field. */
+export type RowDetailValues = Partial<
+	Pick<RowDetail, "description" | "start_date" | "end_date" | "expected_hours" | "priority">
+>;
+
+/** Mirrors `models.UpdateRowResponse` — a fresh snapshot plus the row's new detail. */
+export interface UpdateRowResponse extends GetResponse {
+	detail: RowDetail;
+}
+
 // ---------------------------------------------------------------------------
 // Tree node — minimal wrapper for @he-tree/vue
 // ---------------------------------------------------------------------------
@@ -139,6 +175,7 @@ export interface TaskDescriptions {
 export interface TreeNode {
 	doc: ProjectDoc | TaskDoc;
 	children: TreeNode[];
+	/** Start editing on the next render: the "Add project..." row, from "start typing". */
 	_autoFocus?: boolean;
 	/** Stable row key in the Pinned view (see `PinnedView.vue`). */
 	_key?: string;
@@ -334,4 +371,26 @@ export function setTaskProject(task: string, project: string): Promise<GetRespon
 	if (fp) args.form_params = fp;
 
 	return callMethod<GetResponse>("erpnext_taskview.erpnext_taskview.api.set_task_project", args);
+}
+
+/** The expanded panel's fields for one Task or Project (see {@link RowDetail}). */
+export function fetchRowDetail(doctype: RowDoctype, name: string): Promise<RowDetail> {
+	return callMethod<RowDetail>("erpnext_taskview.erpnext_taskview.api.get_row_detail", { doctype, name });
+}
+
+/**
+ * Save panel fields on a Task or Project.  The server saves the whole doc, so
+ * ERPNext's own validation (e.g. start before end) applies, and answers with
+ * a fresh snapshot so budget meters that roll up the change are current.
+ */
+export function updateRow(
+	doctype: RowDoctype,
+	name: string,
+	values: RowDetailValues,
+): Promise<UpdateRowResponse> {
+	const args: Record<string, string> = { doctype, name, values: JSON.stringify(values) };
+	const fp = getFormParams();
+	if (fp) args.form_params = fp;
+
+	return callMethod<UpdateRowResponse>("erpnext_taskview.erpnext_taskview.api.update_row", args);
 }
