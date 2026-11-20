@@ -1,46 +1,94 @@
 <template>
-	<div class="tree-container" v-if="viewMode !== 'pinned'">
-		<Draggable class="mtl-tree" v-model="treeData" treeLine :rootDroppable="true" @after-drop="handleDragEnd">
+	<div
+		class="tree-container"
+		v-if="viewMode !== 'pinned'"
+		@pointerdown.capture="rememberPointer"
+		@keydown.capture="onTreeKeydown"
+	>
+		<!-- nodeKey: rows keyed by doc name, so a rebuild never hands a row's
+		     panel (and its half-typed entry) to another row.  triggerClass: drags
+		     start from the row only, never from inside its panel. -->
+		<Draggable
+			class="mtl-tree"
+			v-model="treeData"
+			treeLine
+			:rootDroppable="true"
+			:nodeKey="nodeKey"
+			triggerClass="tv-row"
+			:ondragstart="onTreeDragStart"
+			@after-drop="handleDragEnd"
+		>
 			<template #default="{ node, stat }">
 				<!-- modify node and stat to perpetuate collapse node states -->
 				<div
 					v-if="modifyNodeAndStat(node, stat)"
-					class="outer-task"
+					class="tv-node"
+					:data-name="node.doc?.name || undefined"
 					:class="{
-						'highlighted-project': isHighlightedProject(node),
-						'task-selected': isSelected(node),
+						'tv-node--expanded': isExpanded(node),
+						'tv-node--parent-open': isExpanded(node) && stat.open && node.children?.length > 0,
 					}"
 				>
-					<!-- expand/collapse button -->
-					<a
-						class="he-tree__open-icon mtl-mr small-icon"
-						@click="toggleNode(node, stat)"
-						:class="{ open: stat.open }"
+					<div
+						class="outer-task tv-row"
+						:class="{
+							'highlighted-project': isHighlightedProject(node),
+							'task-selected': isSelected(node),
+						}"
 					>
-						<div class="taskview-tree-icon">
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-								<title>chevron-right</title>
-								<path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"></path>
-							</svg>
+						<!-- expand/collapse button -->
+						<a
+							class="he-tree__open-icon mtl-mr small-icon"
+							@click="toggleNode(node, stat)"
+							:class="{ open: stat.open }"
+						>
+							<div class="taskview-tree-icon">
+								<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+									<title>chevron-right</title>
+									<path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"></path>
+								</svg>
+							</div>
+						</a>
+						<!-- task or project -->
+						<Task
+							:node="node"
+							:sideTimersElement="sideTimersElement"
+							:isOpened="isOpened"
+							:viewMode="viewMode"
+							:selectionSize="isSelected(node) ? selectedTasks.size : 0"
+							class="mtl-ml"
+							@task-interaction="handleTaskInteraction(node, $event)"
+							@task-select="selectNode(node)"
+							@catch-error="catchError"
+							@catch-success="premount"
+							@open-sidebar="openSidebar"
+							@request-expand="expandAncestors(stat)"
+							@copy-markdown="copyFromRow(node)"
+						/>
+					</div>
+					<!-- The selected row's panel.  The shell animates 0fr → 1fr; the
+					     clip hides overflow only while it does, so the panel's
+					     dropdowns and date pickers are never cut off once open. -->
+					<Transition name="tv-panel">
+						<div v-if="isExpanded(node)" class="tv-panel-shell">
+							<div class="tv-panel-clip">
+								<!-- applySnapshot / reportError are plain callbacks, not
+								     events: Vue drops emits from an unmounted component,
+								     and a save may return after its panel has closed. -->
+								<RowPanel
+									:key="node.doc.name"
+									:node="node"
+									:viewMode="viewMode"
+									:minChildIdx="maxChildIdx(node)"
+									:applySnapshot="premount"
+									:reportError="catchError"
+									@open-sidebar="openSidebar"
+									@collapse="collapsePanel"
+									@editing="onPanelEditing(node.doc.name, $event)"
+								/>
+							</div>
 						</div>
-					</a>
-					<!-- task or project -->
-					<Task
-						:node="node"
-						:sideTimersElement="sideTimersElement"
-						:isOpened="isOpened"
-						:viewMode="viewMode"
-						:selectionSize="isSelected(node) ? selectedTasks.size : 0"
-						class="mtl-ml"
-						@task-interaction="handleTaskInteraction(node, $event)"
-						@add-sibling-task="addSiblingTask(node)"
-						@catch-error="catchError"
-						@catch-success="premount"
-						@blank-saved="handleBlankSaved"
-						@open-sidebar="openSidebar"
-						@request-expand="expandAncestors(stat)"
-						@copy-markdown="copyFromRow(node)"
-					/>
+					</Transition>
 				</div>
 			</template>
 		</Draggable>
@@ -58,9 +106,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from "vue";
+import { defineComponent, nextTick, type PropType } from "vue";
 import { Draggable, dragContext } from "@he-tree/vue";
 import Task from "./components/Task.vue";
+import RowPanel from "./components/RowPanel.vue";
 import PinnedView from "./components/PinnedView.vue";
 import "@he-tree/vue/style/default.css";
 import "@he-tree/vue/style/material-design.css";
@@ -103,11 +152,22 @@ interface StatObject {
 	droppable?: boolean;
 	dragOpen?: boolean;
 	children?: StatObject[];
+	/** Classes he-tree puts on the node's `.tree-node` element. */
+	class?: string;
 }
+
+/**
+ * Where the last press in the tree landed.  he-tree makes its root element
+ * the draggable, so the dragstart event says nothing about which row moves.
+ */
+let lastPointerTarget: Element | null = null;
+
+/** Class on the expanded row's `.tree-node`; the tree-line CSS keys off it. */
+const EXPANDED_NODE_CLASS = "tv-expanded";
 
 export default defineComponent({
 	name: "TaskView",
-	components: { Draggable, Task, PinnedView },
+	components: { Draggable, Task, RowPanel, PinnedView },
 
 	props: {
 		docs: {
@@ -124,7 +184,13 @@ export default defineComponent({
 			viewMode: "all" as "all" | "my_tasks" | "pinned",
 			lastResponse: null as GetResponse | null,
 			highlightedProject: null as TreeData | null,
-			activeNode: null as TreeData | null,
+			/**
+			 * Doc name of the row whose panel is open (`RowPanel.vue`), or `null`.
+			 * A name, not the node: every rebuild replaces the node objects.
+			 */
+			expandedName: null as string | null,
+			/** Doc name of the panel whose description editor is open (unsaved text). */
+			editingPanel: null as string | null,
 			/** Names of tasks/projects in the current multi-selection (Ctrl/Shift-click). */
 			selectedTasks: new Set<string>(),
 			/** Last node touched by a plain or Ctrl-click; anchors Shift-range selection. */
@@ -134,8 +200,6 @@ export default defineComponent({
 			panelObserver: null as MutationObserver | null,
 			sideTimersElement: null as HTMLElement | null,
 			manualSort: true,
-			/** Parent doc name whose next blank child should auto-focus after rebuild. */
-			autoFocusParent: null as string | null,
 			/** Open timers seen at the last timer event; a disappearance means time was logged. */
 			knownTimerNames: new Set<string>(),
 			/** When the tree was last rebuilt from a fresh `get()` snapshot. */
@@ -214,7 +278,6 @@ export default defineComponent({
 
 			let docs = this.buildTree(filtered);
 			docs = this.addBlankProject(docs);
-			docs = this.addBlankTasks(docs);
 			this.treeData = docs;
 			setBudgetTree(source.tasks);
 			this.lastPremountAt = Date.now();
@@ -305,22 +368,17 @@ export default defineComponent({
 		},
 
 		async catchError(error: unknown): Promise<void> {
-			this.autoFocusParent = null;
 			console.error("Error updating data:", error);
-			frappe.msgprint(`Error updating data: ${error}`);
+			// A rejected frappe.call hands over its response object, whose server
+			// messages frappe has already shown; repeating it adds "[object Object]".
+			const shownByFrappe = typeof error === "object" && error !== null && !(error instanceof Error);
+			if (!shownByFrappe) frappe.msgprint(`Error updating data: ${error}`);
 			try {
 				const data = await fetchData();
 				this.premount(data);
 			} catch (fetchErr) {
 				console.error("Error fetching fresh data:", fetchErr);
 			}
-		},
-
-		/** Handle a blank task save: set autoFocusParent so the next blank auto-focuses. */
-		handleBlankSaved(payload: { data: GetResponse; parentName: string }): void {
-			this.autoFocusParent = payload.parentName;
-			treeNodes.value[payload.parentName] = true;
-			this.premount(payload.data);
 		},
 
 		async saveAndRebuild(
@@ -428,7 +486,8 @@ export default defineComponent({
 
 			const children = collectChildren(draggedStat.data);
 			await this.saveAndRebuild(taskDoc, children.length > 0 ? children : undefined, siblingOrder);
-			this.handleTaskInteraction(draggedStat.data);
+			// Select the dropped row, but leave its panel as it was.
+			this.selectNode(draggedStat.data);
 		},
 
 		// ── Per-node render hook ──────────────────────────────
@@ -437,6 +496,11 @@ export default defineComponent({
 			// During drag @he-tree temporarily inserts a placeholder node into
 			// treeData that has no `doc`. Return early and leave the stat untouched.
 			if (!node.doc) return { node, stat };
+
+			// Runs during render: write only on a change, or the write itself
+			// would schedule another render.
+			const nodeClass = this.isExpanded(node) ? EXPANDED_NODE_CLASS : "";
+			if ((stat.class ?? "") !== nodeClass) stat.class = nodeClass;
 
 			const isProject = node.doc.doctype === "Project";
 			const isBlank = !node.doc.name;
@@ -488,7 +552,7 @@ export default defineComponent({
 			return { node, stat };
 		},
 
-		// ── Node factories and blank placeholders ─────────────
+		// ── Node factories and the "Add project..." placeholder ─
 
 		createNode(doc: Partial<ProjectDoc> | Partial<TaskDoc>): TreeData {
 			if (!doc.doctype) doc.doctype = "Task";
@@ -509,128 +573,6 @@ export default defineComponent({
 			return docs;
 		},
 
-		/** Remove all blank task nodes from the tree. */
-		stripBlanks(nodes: TreeData[]): void {
-			for (const node of nodes) {
-				if (node.children) {
-					node.children = node.children.filter((c) => !!c.doc?.name);
-					this.stripBlanks(node.children);
-				}
-			}
-		},
-
-		addBlankTasks(docs: TreeData[]): TreeData[] {
-			this.stripBlanks(docs);
-
-			// Determine which parent should get the blank node.
-			let targetParent: TreeData | null = null;
-
-			if (this.activeNode) {
-				const isProject = this.activeNode.doc.doctype === "Project";
-				if (isProject) {
-					// Active node is a project → blank as its immediate child
-					targetParent = docs.find((p) => p.doc.name === this.activeNode!.doc.name) || null;
-				} else {
-					// Active node is a task → blank as its child
-					targetParent = this.findParentNode(docs, this.activeNode.doc.name);
-				}
-			} else if (this.highlightedProject?.doc.name) {
-				targetParent = docs.find((p) => p.doc.name === this.highlightedProject!.doc.name) || null;
-			}
-
-			if (targetParent) {
-				this.ensureBlankChild(targetParent);
-				// Auto-focus the blank if typewriter mode is active for this parent
-				if (this.autoFocusParent && targetParent.doc.name === this.autoFocusParent) {
-					const blankChild = targetParent.children.find((c) => !c.doc.name);
-					if (blankChild) blankChild._autoFocus = true;
-					this.autoFocusParent = null;
-				}
-			}
-
-			// When a task is selected, also keep a sibling "Add task..." directly
-			// below it (in addition to the child blank above).
-			if (this.activeNode && this.activeNode.doc.doctype !== "Project") {
-				const taskNode = this.findParentNode(docs, this.activeNode.doc.name);
-				if (taskNode) {
-					const siblingBlank = this.ensureBlankSibling(docs, taskNode);
-					// Typewriter mode: a saved sibling sets autoFocusParent to the task's
-					// parent, so focus the freshly re-created sibling blank.
-					const taskDoc = taskNode.doc as TaskDoc;
-					const parentName = taskDoc.parent_task || taskDoc.project;
-					if (siblingBlank && this.autoFocusParent === parentName) {
-						siblingBlank._autoFocus = true;
-						this.autoFocusParent = null;
-					}
-				}
-			}
-			return docs;
-		},
-
-		/** Add a single blank "Add task..." child to `node` if not already present. Non-recursive. */
-		ensureBlankChild(node: TreeData): void {
-			if (node.doc.status === "Completed") return;
-			if (!node.children) node.children = [];
-			if (node.children.some((child) => !child.doc.name)) return;
-
-			const isProject = node.doc.doctype === "Project";
-			const projectName = getProjectName(node);
-			const parentTask = isProject ? null : node.doc.name;
-			// Calculate next available idx: count real (non-blank) siblings + 1
-			const realChildren = node.children.filter((c) => !!c.doc?.name);
-			const nextIdx = realChildren.length + 1;
-
-			const blankTask = this.createNode({
-				doctype: "Task",
-				name: "",
-				subject: "Add task...",
-				project: projectName,
-				parent_task: parentTask,
-				status: "Open",
-				is_group: 0,
-				priority: "Medium",
-				idx: nextIdx,
-			} as TaskDoc);
-			node.children = [...node.children, blankTask];
-			this.treeData = [...this.treeData];
-		},
-
-		/**
-		 * Add a single blank "Add task..." sibling directly below `task` (same
-		 * parent), if that parent doesn't already hold a blank.  Complements
-		 * {@link ensureBlankChild}: a selected task offers both a child placeholder
-		 * (new subtask) and a sibling placeholder (new task at the same level).
-		 * Returns the inserted blank node, or `null` if none was added.
-		 */
-		ensureBlankSibling(tree: TreeData[], task: TreeData): TreeData | null {
-			const taskDoc = task.doc as TaskDoc;
-			const parentName = taskDoc.parent_task || taskDoc.project;
-			const parent = this.findParentNode(tree, parentName);
-			if (!parent || !parent.children) return null;
-			if (parent.children.some((c) => !c.doc.name)) return null;
-
-			const at = parent.children.findIndex((c) => c.doc.name === taskDoc.name);
-			if (at === -1) return null;
-
-			const blankTask = this.createNode({
-				doctype: "Task",
-				name: "",
-				subject: "Add task...",
-				project: taskDoc.project,
-				parent_task: taskDoc.parent_task || null,
-				status: "Open",
-				is_group: 0,
-				priority: "Medium",
-				// Same idx as the selected task so the saved sibling sorts directly
-				// below it — the creation tiebreaker in get() places the newer row after.
-				idx: taskDoc.idx || 0,
-			} as TaskDoc);
-
-			parent.children = [...parent.children.slice(0, at + 1), blankTask, ...parent.children.slice(at + 1)];
-			this.treeData = [...this.treeData];
-			return blankTask;
-		},
-
 		// ── Highlight and navigation ──────────────────────────
 
 		isHighlightedProject(node: TreeData): boolean {
@@ -646,6 +588,11 @@ export default defineComponent({
 
 			stat.open = !stat.open;
 			treeNodes.value[node.doc.name] = stat.open;
+			// Collapsing an ancestor hides the open panel's row (he-tree stops
+			// rendering it), so close the panel too.
+			if (!stat.open && this.expandedName && this.findParentNode(node.children, this.expandedName)) {
+				this.setExpanded(null);
+			}
 
 			if (stat.open) {
 				stat.children?.forEach((child) => {
@@ -691,56 +638,17 @@ export default defineComponent({
 			return null;
 		},
 
-		addSiblingTask(node: TreeData): void {
-			const isProject = node.doc.doctype === "Project";
-			const parentDocName = isProject
-				? ""
-				: (node.doc as TaskDoc).parent_task || (node.doc as TaskDoc).project;
-
-			const projectName = getProjectName(node);
-			const parentTask = isProject ? null : (node.doc as TaskDoc).parent_task;
-
-			const newBlankNode = this.createNode(
-				isProject
-					? ({
-							doctype: "Project",
-							name: "",
-							project_name: "Add project...",
-							status: "Open",
-						} as ProjectDoc)
-					: ({
-							doctype: "Task",
-							name: "",
-							subject: "Add task...",
-							project: projectName,
-							parent_task: parentTask,
-							status: "Open",
-							is_group: 0,
-							priority: "Medium",
-						} as TaskDoc),
-			);
-
-			const parentNode = this.findParentNode(this.treeData, parentDocName);
-
-			if (parentNode) {
-				parentNode.children = [...parentNode.children, newBlankNode];
-				this.treeData = [...this.treeData];
-			} else {
-				this.treeData = [...this.treeData, newBlankNode];
-			}
-		},
-
-		handleTaskInteraction(node: TreeData, event?: MouseEvent): void {
-			const isProject = node.doc.doctype === "Project";
-			const isBlank = !node.doc.name;
-
-			// Clicking a blank node should never reposition it — the blank is
-			// already in the correct place and the user is about to type into it.
-			if (isBlank) return;
+		/**
+		 * A click on a row.  Ctrl/Cmd and Shift build the copy selection and
+		 * nothing else.  A plain click selects the row (see {@link selectNode})
+		 * and toggles its panel: it opens under the row, closing any other, and
+		 * a click on the open row closes it.
+		 */
+		handleTaskInteraction(node: TreeData, event?: MouseEvent | KeyboardEvent): void {
+			// The "Add project..." placeholder is edited in place, never selected.
+			if (!node.doc.name) return;
 
 			// ── Multi-selection (Ctrl/Cmd toggles, Shift extends a range) ──────
-			// Modifier-clicks build the copy selection and deliberately skip the
-			// blank-placeholder repositioning that a plain click performs below.
 			if (event && (event.ctrlKey || event.metaKey)) {
 				event.preventDefault();
 				this.toggleSelected(node.doc.name);
@@ -754,44 +662,130 @@ export default defineComponent({
 				return;
 			}
 
-			// Plain click clears any multi-selection and anchors the next range.
+			this.selectNode(node);
+			// The second click of a double-click (which renames the row) would
+			// undo the first one's toggle.
+			if (event instanceof MouseEvent && event.detail > 1) return;
+			this.setExpanded(this.expandedName === node.doc.name ? null : node.doc.name);
+		},
+
+		/**
+		 * Select a row without touching any panel: clear the multi-selection,
+		 * anchor the next Shift-range here and highlight the row's project.
+		 * Used on its own after a rename or a drop.
+		 */
+		selectNode(node: TreeData): void {
+			if (!node.doc.name) return;
 			this.clearSelection();
 			this.selectionAnchor = node.doc.name;
 
-			if (isProject) {
-				if (node.doc.status !== "Completed") {
-					this.highlightedProject = node;
-				} else {
-					return;
-				}
+			if (node.doc.doctype === "Project") {
+				if (node.doc.status !== "Completed") this.highlightedProject = node;
 			} else {
 				const parentProject = this.findParentProject(node);
-				if (parentProject) {
-					this.highlightedProject = parentProject;
-				}
+				if (parentProject) this.highlightedProject = parentProject;
 			}
+		},
 
-			// Track the active node and re-place the blank as its child
-			this.activeNode = node;
-			this.stripBlanks(this.treeData);
+		// ── Expanded row panel ────────────────────────────────
 
-			let targetParent: TreeData | null = null;
-			if (!isProject) {
-				// Task selected → blank as its child
-				targetParent = this.findParentNode(this.treeData, node.doc.name);
-			} else if (this.highlightedProject?.doc.name) {
-				targetParent = this.highlightedProject;
+		isExpanded(node: TreeData): boolean {
+			return !!node.doc?.name && node.doc.name === this.expandedName;
+		},
+
+		collapsePanel(): void {
+			this.setExpanded(null);
+		},
+
+		/**
+		 * Open a row's panel, or none.  Closing a panel whose description
+		 * editor is open would drop its unsaved text, so ask first.
+		 */
+		setExpanded(name: string | null): void {
+			if (name === this.expandedName) return;
+			const apply = () => {
+				this.editingPanel = null;
+				this.expandedName = name;
+			};
+			if (this.editingPanel && this.editingPanel === this.expandedName) {
+				frappe.confirm(__("Discard your unsaved changes to the description?"), apply);
+				return;
 			}
+			apply();
+		},
 
-			if (targetParent) {
-				treeNodes.value[targetParent.doc.name] = true;
-				this.ensureBlankChild(targetParent);
-			}
+		/** A panel's description editor opened or closed. */
+		onPanelEditing(name: string, editing: boolean): void {
+			if (editing) this.editingPanel = name;
+			else if (this.editingPanel === name) this.editingPanel = null;
+		},
 
-			// Task selected → also offer a sibling "Add task..." directly below it.
-			if (!isProject) {
-				this.ensureBlankSibling(this.treeData, node);
+		/**
+		 * Highest `idx` among a row's children in the full snapshot, so the
+		 * panel appends after every sibling, the ones "My Tasks" hides too.
+		 */
+		maxChildIdx(node: TreeData): number {
+			const name = node.doc.name;
+			const isProject = node.doc.doctype === "Project";
+			let max = 0;
+			for (const t of this.lastResponse?.tasks ?? []) {
+				const isChild = isProject ? t.project === name && !t.parent_task : t.parent_task === name;
+				if (isChild) max = Math.max(max, t.idx ?? 0);
 			}
+			return max;
+		},
+
+		/**
+		 * Enter or Space on a focused row (he-tree's treeitem) toggles its
+		 * panel, as a click does.  he-tree turns both keys into `click:node`,
+		 * which it also emits for every mouse click, so they are caught here.
+		 */
+		onTreeKeydown(event: KeyboardEvent): void {
+			if (event.key !== "Enter" && event.key !== " ") return;
+			if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+			const item = event.target as HTMLElement;
+			if (!item.classList?.contains("tree-node")) return;
+			const name = item.querySelector<HTMLElement>(".tv-node")?.dataset.name;
+			const node = name ? this.findParentNode(this.treeData, name) : null;
+			if (node) this.handleTaskInteraction(node, event);
+		},
+
+		/** he-tree row key: the doc name; the drag placeholder's data is an empty object. */
+		nodeKey(stat: { data: Partial<TreeData> }, index: number): string {
+			return stat.data.doc?.name || `__index_${index}`;
+		},
+
+		/**
+		 * he-tree sets the whole `.tree-node` as the drag image, which for an
+		 * expanded row includes its panel.  This hook runs after that call, and
+		 * the last `setDragImage` wins: drag just the row.
+		 */
+		onTreeDragStart(event: DragEvent): void {
+			const row = lastPointerTarget?.closest<HTMLElement>(".tv-row");
+			if (!row || !event.dataTransfer) return;
+			const rect = row.getBoundingClientRect();
+			event.dataTransfer.setDragImage(row, event.clientX - rect.left, event.clientY - rect.top);
+		},
+
+		rememberPointer(event: PointerEvent): void {
+			lastPointerTarget = event.target instanceof Element ? event.target : null;
+		},
+
+		/** Whether a row's panel is in the DOM (not under a collapsed ancestor). */
+		isPanelRendered(name: string): boolean {
+			return !!(this.$el as HTMLElement).querySelector(`.tv-panel[data-name="${CSS.escape(name)}"]`);
+		},
+
+		/** The child entry input of an open panel, if it is rendered. */
+		panelEntryInput(name: string): HTMLInputElement | null {
+			return (this.$el as HTMLElement).querySelector<HTMLInputElement>(
+				`.tv-panel[data-name="${CSS.escape(name)}"] .tv-panel__entry-input`,
+			);
+		},
+
+		/** Whether a row's panel offers the child entry (mirrors `RowPanel.canAddChildren`). */
+		canTakeChildren(node: TreeData): boolean {
+			return node.doc.status !== "Completed" && !!getProjectName(node);
 		},
 
 		// ── Multi-selection & copy-to-clipboard ──────────────────
@@ -820,7 +814,7 @@ export default defineComponent({
 		 * order, honoring collapse state so a Shift-range only spans currently
 		 * visible tasks.  Projects are traversed (to reach their tasks) but never
 		 * listed — a range must not sweep a whole project subtree into the copy.
-		 * Blank placeholder nodes are skipped.
+		 * The "Add project..." placeholder is skipped.
 		 */
 		flattenVisibleTaskRows(): string[] {
 			const names: string[] = [];
@@ -899,25 +893,64 @@ export default defineComponent({
 
 		// ── Keyboard shortcuts ────────────────────────────────
 
-		editRootBlankTask(): void {
-			const project = this.highlightedProject;
-			if (project) {
+		/**
+		 * "Start typing to create": a printable key with nothing focused goes to
+		 * a child entry input.  The open panel's when it takes children,
+		 * otherwise the highlighted project's (opening its panel), or the
+		 * "Add project..." row when no project is highlighted.
+		 *
+		 * An input that is already there is focused while the key is still
+		 * being handled, so the browser types the character into it.  One that
+		 * has yet to render gets the character by hand once it has.
+		 */
+		startTyping(event: KeyboardEvent): void {
+			// Only a panel on screen can take the key; one hidden under a
+			// collapsed ancestor falls back to the highlighted project.
+			const expandedName = this.expandedName;
+			const expanded =
+				expandedName && this.isPanelRendered(expandedName)
+					? this.findParentNode(this.treeData, expandedName)
+					: null;
+			let target: TreeData | null = expanded && this.canTakeChildren(expanded) ? expanded : null;
+			if (!target) {
+				const project = this.highlightedProject;
+				if (!project) return;
 				if (!project.doc.name) {
 					project._autoFocus = true;
-				} else {
-					// Ensure there's a blank to focus
-					this.ensureBlankChild(project);
-					const blankTask = project.children.find((task) => !task.doc.name);
-					if (blankTask) {
-						blankTask._autoFocus = true;
-					}
+					return;
 				}
+				if (!this.canTakeChildren(project)) return;
+				target = project;
 			}
+
+			const name = target.doc.name;
+			const input = this.expandedName === name ? this.panelEntryInput(name) : null;
+			if (input) {
+				input.focus({ preventScroll: true });
+				return;
+			}
+
+			// Switching panels would ask about an open description editor; leave the key be.
+			if (this.editingPanel) return;
+			event.preventDefault();
+			this.setExpanded(name);
+			const typed = event.key;
+			nextTick(() => {
+				const entry = this.panelEntryInput(name);
+				if (!entry) return;
+				entry.focus({ preventScroll: true });
+				entry.value += typed;
+				entry.dispatchEvent(new Event("input")); // v-model listens for it
+				entry.scrollIntoView({ block: "nearest" });
+			});
 		},
 
 		handleKeydown(event: KeyboardEvent): void {
-			const tag = document.activeElement?.tagName;
-			if (tag === "INPUT" || tag === "TEXTAREA") return;
+			// Fields, editors and anything inside a row panel keep their keys.
+			const active = document.activeElement as HTMLElement | null;
+			const tag = active?.tagName;
+			if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+			if (active?.isContentEditable || active?.closest(".tv-panel")) return;
 
 			// Ctrl/Cmd+C copies the current selection as a markdown tree.
 			if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c" && this.selectedTasks.size) {
@@ -926,21 +959,32 @@ export default defineComponent({
 				return;
 			}
 
-			// Escape clears the selection.
-			if (event.key === "Escape" && this.selectedTasks.size) {
-				this.clearSelection();
+			// Escape clears the selection, or else closes the open panel.
+			// The panel's own Escape guard is skipped when focus has left it (a
+			// click on its text focuses the row), so an open editor is checked here.
+			if (event.key === "Escape") {
+				if (this.selectedTasks.size) this.clearSelection();
+				else if (this.expandedName && this.viewMode !== "pinned" && !this.editingPanel) {
+					this.collapsePanel();
+				}
 				return;
 			}
 
-			// "Start typing to create" — but never for Ctrl/Cmd shortcuts.
+			// "Start typing to create" — but never for Ctrl/Cmd/Alt shortcuts.
 			const allowedKeys = /^[a-zA-Z0-9!@#$%^&*()_+={}[\]|\\:;'",.<>?/`~\- ]$/;
-			if (allowedKeys.test(event.key) && !event.ctrlKey && !event.metaKey && !this.isOpened) {
+			if (
+				allowedKeys.test(event.key) &&
+				!event.ctrlKey &&
+				!event.metaKey &&
+				!event.altKey &&
+				!this.isOpened
+			) {
 				if (this.viewMode === "pinned") {
 					// Focus synchronously, while the key is still being handled, so the
 					// typed character lands in the quick-entry input.
 					(this.$refs.pinnedView as InstanceType<typeof PinnedView> | undefined)?.focusEntry();
 				} else {
-					this.editRootBlankTask();
+					this.startTyping(event);
 				}
 			}
 		},
@@ -1016,6 +1060,30 @@ export default defineComponent({
 	font-size: 1.5em;
 }
 
+/* ── Rows and their expandable panel ───────────────────────────
+   Each tree node is a column: the row (.tv-row) and, for the selected row,
+   its panel.  The expanded node and panel read as one Carbon block: one
+   background, a subtle rule above and below.  Carbon tokens come first, the
+   desk's own variables are the fallback when carbon_theme isn't installed. */
+.mtl-tree {
+	/* Row height: the 28px action buttons.  Tree lines aim at its midpoint. */
+	--tv-row-h: 28px;
+	--tv-panel-bg: var(--cds-layer-01, var(--subtle-fg));
+	/* Not --fg-hover-color: without carbon_theme that is the panel's own grey. */
+	--tv-panel-hover: var(--cds-layer-hover-01, var(--surface-gray-3));
+	--tv-panel-border: var(--cds-border-subtle, var(--border-color));
+	--tv-motion: cubic-bezier(0.2, 0, 0.38, 0.9);
+}
+
+.tv-node {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	width: 100%;
+	min-width: 0;
+}
+
 .outer-task {
 	/* align center */
 	display: flex;
@@ -1032,8 +1100,87 @@ export default defineComponent({
 	flex-shrink: 0;
 }
 
+.outer-task.tv-row {
+	min-height: var(--tv-row-h);
+	cursor: pointer;
+}
+
 .mtl-tree .tree-node:hover {
 	background-color: var(--fg-hover-color);
+}
+
+/* The expanded node carries the block background; hover then marks only the
+   row, never the panel under it. */
+.mtl-tree .tree-node.tv-expanded,
+.mtl-tree .tree-node.tv-expanded:hover {
+	background-color: var(--tv-panel-bg);
+	box-shadow:
+		inset 0 1px var(--tv-panel-border),
+		inset 0 -1px var(--tv-panel-border);
+	transition: background-color 70ms var(--tv-motion);
+}
+
+.mtl-tree .tree-node.tv-expanded .tv-row:hover {
+	background-color: var(--tv-panel-hover);
+}
+
+/* he-tree centres a node's own lines on the whole node, which for an expanded
+   node is mid-panel.  Re-aim them at the row: the elbow (hline), and the
+   vline that stops at the elbow on a last sibling (an inline style, hence
+   !important).  1px is the .tree-node's top padding. */
+.mtl-tree .tree-node.tv-expanded > .tree-hline {
+	top: calc(1px + var(--tv-row-h) / 2);
+}
+
+.mtl-tree .tree-node.tv-expanded > .tree-vline:first-child[style*="bottom: 50%"] {
+	bottom: calc(100% - 1px - var(--tv-row-h) / 2) !important;
+}
+
+/* Children's lines start at their own rows, so draw the stretch from the
+   open parent's chevron down past its panel (he-tree's treeLineOffset, 8px). */
+.tv-node--parent-open::before {
+	content: "";
+	position: absolute;
+	left: 8px;
+	top: var(--tv-row-h);
+	bottom: -2px;
+	width: 1px;
+	background-color: #bbb;
+}
+
+/* Inset the panel to the row's checkbox column: chevron (1.5em) + its 4px
+   margin + Task's 4px margin. */
+.tv-panel-shell {
+	display: grid;
+	grid-template-rows: 1fr;
+	margin-left: calc(1.5em + 8px);
+}
+
+.tv-panel-clip {
+	min-height: 0;
+}
+
+.tv-panel-enter-active,
+.tv-panel-leave-active {
+	transition: grid-template-rows 150ms var(--tv-motion);
+}
+
+.tv-panel-enter-active > .tv-panel-clip,
+.tv-panel-leave-active > .tv-panel-clip {
+	overflow: hidden;
+}
+
+.tv-panel-enter-from,
+.tv-panel-leave-to {
+	grid-template-rows: 0fr;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.tv-panel-enter-active,
+	.tv-panel-leave-active,
+	.mtl-tree .tree-node.tv-expanded {
+		transition: none;
+	}
 }
 
 /* Multi-selected rows (Ctrl/Shift-click) painted for the copy feature.  The

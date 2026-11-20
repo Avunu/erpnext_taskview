@@ -1,9 +1,9 @@
 ---
 title: Work the task tree
-description: Open Task View, switch between All Tasks, My Tasks and Pinned, add, reorder and complete tasks in the tree, and copy tasks as Markdown.
+description: Open Task View, switch between All Tasks, My Tasks and Pinned, add, reorder and complete tasks in the tree, edit them in the row panel, and copy tasks as Markdown.
 nav_title: Task View
 order: 3
-updated: 2026-10-26
+updated: 2026-11-20
 ---
 
 Task View is how staff plan and work through projects in the ERPNext desk. This page covers arranging projects and tasks. Timing work is in [Timers and timesheets](timers.md) and budgets are in [Hour budgets](hour-budgets.md).
@@ -29,9 +29,37 @@ The list's filters and sort selector apply as in any list view. Completed and Ca
 
 Projects are the top level and each row reads `PROJ-0001: Title`. Tasks sit under them, and any task can have subtasks.
 
+### The row panel
+
+Click a task or project row to open its panel directly below it. Click the row again to close it. Only one panel is open at a time, so opening another row closes the first. The buttons on a row (timer, log time, side panel and the others) do their own job and leave the panel as it is. Ctrl-click and Shift-click select rows for copying and do not open a panel. From the keyboard, move to a row with the arrow keys and press Enter or Space. If you are editing a description, opening another row asks before discarding your changes.
+
+The panel shows the row's details on the left and its description on the right, or one above the other when the tree is narrow:
+
+| Field          | Task                                                                    | Project                                     |
+| -------------- | ----------------------------------------------------------------------- | ------------------------------------------- |
+| Status         | Shown with a coloured dot                                               | Shown with a coloured dot                   |
+| Priority       | Low, Medium, High or Urgent                                             |                                             |
+| Customer       |                                                                         | Shown                                       |
+| Expected start | The task's **Expected Start Date**                                      | The project's **Expected Start Date**       |
+| Expected end   | The task's **Expected End Date**                                        | The project's **Expected End Date**         |
+| Budget         | **Expected Time** in hours, with a larger budget meter                  | **Budgeted Hours**, with a larger meter     |
+| Complete       |                                                                         | The project's % complete, read-only         |
+| Assigned to    | Each assignee's name, with an **x** to remove them and **Add** for more |                                             |
+| Description    | The task's description                                                  | The project's **Notes**, under that heading |
+
+Each field saves as soon as you change it. Dates are whole days. ERPNext's own checks apply, so an end date before the start date, or outside the parent task's or project's dates, is refused with ERPNext's message. If you set a task's start date and Expected Time but leave its end date empty (or clear it), ERPNext fills the end date in from the start and the estimate.
+
+The description is shown as the form shows it. Click **Edit** (or **Add description** when there is none) to change it in the desk's text editor, then **Save** or **Cancel**.
+
+**Add** under **Assigned to** opens a list of enabled users. Type to search, use the arrow keys and Enter, or click a name. Escape closes the list.
+
+If you can only read the task or project, the panel shows its details but nothing can be changed, assignments included.
+
+The button at the top right of the panel opens the row in the side panel (see [Edit](#edit)), and the chevron next to it closes the panel. Escape closes it too when no field is focused and no rows are selected.
+
 ### Add
 
-- **A task, inline.** Click a project to get an **Add task...** row at the end of its tasks, or click a task to get one as its last subtask and another directly below it as a sibling. Click the row, type a title and press Enter to save and keep typing the next one. Pressing a letter key with no field focused also opens **Add task...** for typing in the highlighted project.
+- **A task, inline.** Open a project's panel and type in **Add task…** at its foot to add a top-level task, or open a task's panel and type in **Add subtask…**. Press Enter to save and keep typing the next one. New tasks go at the end of the list. Paste several lines to add one task per line, in order. Each new task shows with a spinner below the field until it is saved. Completed tasks, and tasks with no project, have no entry. Pressing a letter key with no field focused starts typing in the open panel's entry, or else opens the highlighted project's panel and types there.
 - **Many subtasks at once.** The clipboard-list button on a row asks for one title per line and adds them under that project or task.
 - **A project.** The **Add project...** row at the bottom of the tree. A project added while the Project list is filtered by customer gets that customer.
 
@@ -41,9 +69,10 @@ Drag a row to change its position, or drop it inside another task to make it a s
 
 ### Edit
 
+- **Details.** Open the [row panel](#the-row-panel) to change dates, priority, budget, assignments and the description.
 - **Rename.** Double-click the title, then press Enter to save or Escape to cancel.
-- **Open the full form.** The panel button on a row opens the Task or Project in the desk's own side panel, the one that list and report links use. This is where you set [budgets](hour-budgets.md#set-a-budget). With [Data Steward](https://github.com/Avunu/data_steward) installed, the panel is editable and **Save** appears in its header once you change something; without it the panel is read-only. The arrow button opens the full-page form, which has the timeline, comments and connections the panel leaves out.
-- **Assign.** The **+** on a task row lists the enabled staff users. Click a name to assign, or the **x** on an assignee's avatar to remove them.
+- **Open the full form.** The panel button on a row opens the Task or Project in the desk's own side panel, the one that list and report links use. It holds every field, including the ones the row panel leaves out. With [Data Steward](https://github.com/Avunu/data_steward) installed, the panel is editable and **Save** appears in its header once you change something; without it the panel is read-only. The arrow button opens the full-page form, which has the timeline, comments and connections the panel leaves out.
+- **Assign.** The **+** on a task row lists the enabled staff users. Click a name to assign, or the **x** on an assignee's avatar to remove them. The row panel does the same with full names.
 - **Complete.** Tick the checkbox on a task to complete it, whatever its status: Open, Working or Pending Review. The row stays on screen, struck through, until the next refresh, so you can tick several in a row. Untick it before then to set the task back to Open.
 - **Delete.** The trash button on a task row asks you to confirm and then deletes the task.
 
@@ -103,15 +132,18 @@ Choosing a project moves the task and all of its subtasks into it, at the end of
 
 ## Keyboard summary
 
-| Keys               | Where                                       | Does                                                                               |
-| ------------------ | ------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Any printable key  | Anywhere in Task View with no field focused | Starts a new task in the highlighted project, or focuses quick entry in **Pinned** |
-| Enter              | Adding or renaming                          | Saves, and in **Add task...** moves on to the next blank row                       |
-| Escape             | Renaming                                    | Cancels the edit                                                                   |
-| Ctrl or Cmd, click | A row                                       | Adds the row to the selection                                                      |
-| Shift, click       | A row                                       | Selects the range of visible tasks                                                 |
-| Ctrl+C or Cmd+C    | With a selection                            | Copies it as Markdown, with descriptions                                           |
-| Escape             | With a selection                            | Clears it                                                                          |
+| Keys               | Where                                       | Does                                                                                                                                                      |
+| ------------------ | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Any printable key  | Anywhere in Task View with no field focused | Types into the open panel's **Add subtask…**, or opens the highlighted project's panel and types into **Add task…**. In **Pinned** it focuses quick entry |
+| Enter              | Adding or renaming                          | Saves, and in **Add task…** or **Add subtask…** keeps the field ready for the next one                                                                    |
+| Escape             | Renaming                                    | Cancels the edit                                                                                                                                          |
+| Escape             | **Add task…** or **Add subtask…**           | Clears the field, or closes the panel when the field is empty                                                                                             |
+| Escape             | With a row panel open and no field focused  | Closes the panel                                                                                                                                          |
+| Enter or Space     | A focused row                               | Opens or closes its panel                                                                                                                                 |
+| Ctrl or Cmd, click | A row                                       | Adds the row to the selection                                                                                                                             |
+| Shift, click       | A row                                       | Selects the range of visible tasks                                                                                                                        |
+| Ctrl+C or Cmd+C    | With a selection                            | Copies it as Markdown, with descriptions                                                                                                                  |
+| Escape             | With a selection                            | Clears it                                                                                                                                                 |
 
 ## Next
 

@@ -1,5 +1,6 @@
 /* ── Shared timer control buttons ──
-   Used by Task.vue (tree row) and TimerWidget.vue (dock card).
+   Used by Task.vue (tree row) and TimerWidget.vue (dock card); the panel
+   buttons at the end by RowPanel.vue and UserPicker.vue.
    Imported via JS `import` so Vite rolls it into each bundle's CSS. */
 
 .task-btn {
@@ -100,4 +101,62 @@
 
 .task-btn--copy:hover {
 	background: var(--surface-gray-3);
+}
+
+/* ── Expanded row panel buttons ──
+   Carbon ghost buttons used by RowPanel.vue and UserPicker.vue.  Kept here
+   (not scoped) so both components share one definition; Task.vue's import
+   puts it in the TaskView bundle that renders them. */
+
+.tv-ghost-btn,
+.tv-icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	border: none;
+	border-radius: var(--border-radius-tiny);
+	background: transparent;
+	color: var(--cds-link-primary, var(--primary));
+	font-size: var(--text-sm);
+	cursor: pointer;
+	transition: background 0.07s cubic-bezier(0.2, 0, 0.38, 0.9);
+}
+
+.tv-ghost-btn {
+	height: 28px;
+	padding: 0 8px;
+}
+
+.tv-icon-btn {
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	color: var(--cds-icon-secondary, var(--text-muted));
+}
+
+.tv-icon-btn--small {
+	width: 22px;
+	height: 22px;
+}
+
+.tv-ghost-btn:hover,
+.tv-icon-btn:hover {
+	background: var(--cds-layer-hover-01, var(--fg-hover-color));
+}
+
+.tv-icon-btn:hover {
+	color: var(--cds-icon-primary, var(--text-color));
+}
+
+.tv-ghost-btn:focus-visible,
+.tv-icon-btn:focus-visible {
+	outline: none;
+	box-shadow: inset 0 0 0 2px var(--cds-focus, var(--primary));
+}
+
+.tv-ghost-btn:disabled,
+.tv-icon-btn:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
 }

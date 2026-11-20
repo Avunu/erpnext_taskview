@@ -3,7 +3,7 @@ title: TaskView for ERPNext
 description: Project task tree with timers, hour budgets and a customer portal for ERPNext
 nav_title: Overview
 order: 0
-updated: 2026-10-26
+updated: 2026-11-20
 ---
 
 ERPNext's stock project and task screens are built for record keeping. TaskView for ERPNext turns them into a workspace for running a day of work. Your team sees every project as a tree of tasks, starts a timer with one click and watches hours against budget while they work. Your customers get a portal at `/projects` where they follow progress, add tasks, comment and attach files.
@@ -14,7 +14,7 @@ It is for service teams that bill by the hour and want clients to see the same p
 
 ### A project and task tree for staff
 
-Task View is the default list view for both Task and Project. Each project is a tree of tasks and subtasks that you can drag to reorder or re-parent, edit in place, and fill with quick entry. **All Tasks**, **My Tasks** and **Pinned** switch between everything, your assignments and your personal shortlist, and a side panel opens the full form without leaving the tree. See [Work the task tree](task-view/README.md).
+Task View is the default list view for both Task and Project. Each project is a tree of tasks and subtasks that you can drag to reorder or re-parent, edit in place, and fill with quick entry. Click a row to open a panel under it with the description, budget, dates and assignees, ready to edit, and an entry for adding subtasks. **All Tasks**, **My Tasks** and **Pinned** switch between everything, your assignments and your personal shortlist, and a side panel opens the full form without leaving the tree. See [Work the task tree](task-view/README.md).
 
 ![Task View: three projects as trees of phases and tasks, with hour budget meters, assignees, timer buttons and the timer dock holding two paused timers](screenshots/task-view-light.webp)
 
@@ -60,10 +60,11 @@ The source is at [github.com/Avunu/erpnext_taskview](https://github.com/Avunu/er
 
 Milestones so far:
 
-| Date       | Change                                                                                                  |
-| ---------- | ------------------------------------------------------------------------------------------------------- |
-| 2026-10-02 | Hour budgets in Task View and the customer project portal (pull request 27)                             |
-| 2026-10-05 | The portal moves to frappe-ui 1.0                                                                       |
-| 2026-10-05 | Quick task entry and a project picker in the Pinned view                                                |
-| 2026-10-06 | Complete MIT licence text and portal documentation in the README (pull request 30)                      |
-| 2026-10-16 | A copy button on each Task View row copies tasks as Markdown, with their descriptions (pull request 38) |
+| Date       | Change                                                                                                    |
+| ---------- | --------------------------------------------------------------------------------------------------------- |
+| 2026-10-02 | Hour budgets in Task View and the customer project portal (pull request 27)                               |
+| 2026-10-05 | The portal moves to frappe-ui 1.0                                                                         |
+| 2026-10-05 | Quick task entry and a project picker in the Pinned view                                                  |
+| 2026-10-06 | Complete MIT licence text and portal documentation in the README (pull request 30)                        |
+| 2026-10-16 | A copy button on each Task View row copies tasks as Markdown, with their descriptions (pull request 38)   |
+| 2026-11-20 | Clicking a Task View row opens a panel for its details and subtasks, in place of the **Add task...** rows |

@@ -282,9 +282,10 @@ class TestRequestContract(IntegrationTestCase):
 			"set_task_project",
 			"unassign_task",
 			"unpin_task",
+			"update_row",
 		}
 	)
-	READS = frozenset({"get", "get_active_timers", "get_task_descriptions"})
+	READS = frozenset({"get", "get_active_timers", "get_row_detail", "get_task_descriptions"})
 
 	def setUp(self):
 		self.endpoints = {

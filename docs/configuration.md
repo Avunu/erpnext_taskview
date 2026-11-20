@@ -3,7 +3,7 @@ title: Configuration
 description: The settings TaskView for ERPNext reads, the hook that picks the Timesheet for a timer, and everything the app adds to a site.
 nav_title: Configuration
 order: 2
-updated: 2026-10-26
+updated: 2026-11-20
 ---
 
 TaskView has no settings page of its own. It is configured through fields on documents you already use, a few standard ERPNext settings, and one hook for developers. This page lists them, then lists everything the app adds to your site.
@@ -44,6 +44,8 @@ The app adds no roles. It checks ERPNext's own permissions, and the portal its o
 | Start, pause, stop, discard or log time                 | Read on the Project and write on the Task. A new row's Task must belong to that Project. The Timesheet must be a draft and be your Employee's, one you created, or one your role lets you write. |
 | Rename, re-status or drag a task or project in the tree | Write on each Task or Project the change touches: for a drag, the task, its new parent and every subtask that moves with it, and read on the Project it moves to.                                |
 | Add a subtask                                           | Write on the parent task. New documents are inserted normally, so ERPNext checks create.                                                                                                         |
+| Open a row panel                                        | Read on the Task or Project.                                                                                                                                                                     |
+| Change a field in a row panel                           | Write on the Task or Project. It is saved as a normal document, so ERPNext's validation applies.                                                                                                 |
 | Tick **Completed** in the timer dialogs                 | The Task is saved as a normal document, so write on it and ERPNext's validation apply.                                                                                                           |
 | Open a project or task on the portal                    | The access rules in [Giving customers access](client-portal/administering-access.md#who-can-open-a-project), for Website Users. System Users get their normal ERPNext permissions.               |
 | See the **Projects** entry in the portal menu           | The **Customer** role.                                                                                                                                                                           |
@@ -114,6 +116,7 @@ These whitelisted methods are what the desk and the portal call. Each checks per
 | `erpnext_taskview.erpnext_taskview.api.pin_task`, `unpin_task`, `create_pinned_task`, `reorder_pinned_tasks`, `set_task_project` | The **Pinned** view                                               |
 | `erpnext_taskview.erpnext_taskview.api.get_active_timers`                                                                        | The timer dock                                                    |
 | `erpnext_taskview.erpnext_taskview.api.get_task_descriptions`                                                                    | Copying tasks as Markdown                                         |
+| `erpnext_taskview.erpnext_taskview.api.get_row_detail`, `update_row`                                                             | Task View: reading and saving the details in a row panel          |
 | `erpnext_taskview.erpnext_taskview.budget.get_budget_summary`                                                                    | Refreshing the budget meters                                      |
 | `erpnext_taskview.portal.api.get_projects`, `get_project`, `get_task`                                                            | The portal's pages                                                |
 | `erpnext_taskview.portal.api.set_task_status`, `create_task`, `add_comment`, `upload_attachment`                                 | The portal's writes (POST only)                                   |

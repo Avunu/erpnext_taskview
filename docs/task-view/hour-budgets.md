@@ -3,19 +3,19 @@ title: Hour budgets
 description: Set hour budgets on tasks and projects, understand how budgets roll up and which hours count, and read the budget meters in Task View and the portal.
 nav_title: Hour budgets
 order: 5
-updated: 2026-10-26
+updated: 2026-11-20
 ---
 
 A budget meter compares the hours logged on a task or project with the hours set aside for it. Task View shows meters on task and project rows, and the [client portal](../client-portal/README.md) shows the same figures to customers.
 
 ## Set a budget
 
-You set budgets on the forms, which the side panel button on a row opens (see [Work the task tree](README.md#edit)):
+Click a row in Task View to open its [row panel](README.md#the-row-panel) and type the hours in **Budget**. The figure saves when you leave the field. The same fields are on the forms, which the side panel button on a row opens:
 
 - **Task:** the standard **Expected Time (in hours)** field.
 - **Project:** **Budgeted Hours**, a field TaskView adds to the Project form below Estimated Cost. Its help text says to leave it at 0 to use the sum of the task estimates.
 
-Both are optional. When you leave one empty (or 0) the budget is added up from what is below it.
+Both are optional. When you leave one empty (or 0) the budget is added up from what is below it. The row panel says so under the meter ("Rolled up from subtasks", or "from its tasks" on a project), and a figure typed there takes over.
 
 | Level   | Budget             | If left empty                           |
 | ------- | ------------------ | --------------------------------------- |
@@ -35,7 +35,7 @@ A top-level task with subtasks works as a phase. Give it an Expected Time to cap
 
 ## Read the meters
 
-A task or project with a budget shows a small bar and a label, for example `12.5 / 20 h`. Rows without a budget show no meter. Hover over a meter for a sentence such as "12.5 of 20 h logged (63%), 7.5 h remaining", or "22 of 20 h logged (110%), 2 h over budget".
+A task or project with a budget shows a small bar and a label, for example `12.5 / 20 h`. Its row panel shows a larger meter with the same figures. Rows without a budget show no meter. Hover over a meter for a sentence such as "12.5 of 20 h logged (63%), 7.5 h remaining", or "22 of 20 h logged (110%), 2 h over budget".
 
 The bar changes colour as the budget is used.
 

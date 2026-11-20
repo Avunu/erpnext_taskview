@@ -3,7 +3,7 @@ title: Limitations and troubleshooting
 description: What TaskView for ERPNext does not do, and the messages it shows in the desk and the portal, with their cause and the fix.
 nav_title: Troubleshooting
 order: 8
-updated: 2026-10-26
+updated: 2026-11-20
 ---
 
 This page lists the known limits of TaskView for ERPNext, then the messages you can see while using it, grouped by where they appear. Messages are quoted as the code writes them; `…` stands for a name or a number the message fills in.
@@ -12,7 +12,7 @@ This page lists the known limits of TaskView for ERPNext, then the messages you 
 
 - Timers need **Ignore User Time Overlap** and **Ignore Employee Time Overlap** ticked in **Projects Settings**, and the app does not tick them for you. Since ERPNext 16.51.0 the user check applies to every Timesheet, so a site that worked on an older ERPNext can start refusing timers after an upgrade. See [Allow overlapping time logs](install.md#allow-overlapping-time-logs).
 - A user who can only see a task cannot time it or log time on it. ERPNext's **Employee** role alone gives select on Task, not write. Give the person **Projects User**, or share the task with write access.
-- A task can be renamed, re-statused, dragged or given subtasks in the tree only by a user who may write it, and for a drag also the new parent and every subtask that moves with it.
+- A task can be renamed, re-statused, dragged, edited in its row panel or given subtasks in the tree only by a user who may write it, and for a drag also the new parent and every subtask that moves with it.
 - Dragging works only while the list's sort is **Manual**.
 - **Log time** records hours that end at the moment you submit. To log time on another day, edit the row's **From Time** in the draft Timesheet, or add the row in ERPNext with its **Project** and **Task**.
 - The app adds no reports. Use the standard Timesheet list and report views.
