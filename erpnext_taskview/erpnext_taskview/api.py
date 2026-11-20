@@ -20,6 +20,10 @@ frontend:
 	Returns the given tasks' descriptions converted to Markdown, for the
 	"Copy as Markdown" button and Ctrl+C.
 
+``get_row_detail(doctype, name)`` / ``update_row(doctype, name, values)``
+	Read and save the description, dates, estimate and priority shown in
+	a tree row's expandable panel.
+
 ``save_doc(payload)``
 	Accepts a JSON-serialised :class:`SaveDocRequest` and routes the
 	enclosed document to the appropriate handler based on its ``doctype``
@@ -59,7 +63,13 @@ from frappe.desk.reportview import get_form_params
 from frappe.query_builder import DocType, Table
 from frappe.query_builder.functions import Max
 from frappe.types.frappedict import _dict
-from frappe.utils.data import convert_utc_to_system_timezone, expand_relative_urls, get_datetime
+from frappe.utils.data import (
+	convert_utc_to_system_timezone,
+	expand_relative_urls,
+	flt,
+	get_datetime,
+	getdate,
+)
 from pypika.enums import Order
 
 from .budget import compute_budgets
@@ -70,11 +80,13 @@ from .models import (
 	CreatePinnedTaskResponse,
 	GetResponse,
 	ProjectDoc,
+	RowDetail,
 	SaveDocRequest,
 	SaveDocResponse,
 	TaskDescriptions,
 	TaskDoc,
 	TimesheetDetailDoc,
+	UpdateRowResponse,
 )
 
 # ─────────────────────────────────────────────────────────────
@@ -478,6 +490,146 @@ def get_task_descriptions(tasks: str | list[str]) -> dict[str, Any]:
 	rows = frappe.get_list("Task", filters={"name": ["in", names]}, fields=["name", "description"], limit=0)
 	descriptions = {r.name: md for r in rows if (md := _description_to_markdown(r.description))}
 	return TaskDescriptions(descriptions=descriptions).model_dump()
+
+
+# ─────────────────────────────────────────────────────────────
+#  ROW PANEL — details shown and edited in a tree row's expandable panel
+# ─────────────────────────────────────────────────────────────
+
+RowDoctype = Literal["Task", "Project"]
+
+# Panel key → doc field, per doctype.  ``update_row`` accepts these keys only.
+_ROW_FIELDS: dict[str, dict[str, str]] = {
+	"Task": {
+		"description": "description",
+		"start_date": "exp_start_date",
+		"end_date": "exp_end_date",
+		"expected_hours": "expected_time",
+		"priority": "priority",
+	},
+	"Project": {
+		"description": "notes",
+		"start_date": "expected_start_date",
+		"end_date": "expected_end_date",
+		"expected_hours": "budgeted_hours",
+	},
+}
+_ROW_PROGRESS_FIELD = {"Task": "progress", "Project": "percent_complete"}
+_ROW_DATE_KEYS = frozenset({"start_date", "end_date"})
+
+
+def _check_row_doctype(doctype: str) -> RowDoctype:
+	if doctype not in _ROW_FIELDS:
+		frappe.throw(_("Only Tasks and Projects have a row panel, not {0}.").format(doctype))
+	return cast(RowDoctype, doctype)
+
+
+def _iso_date(value: datetime.date | str | None) -> str | None:
+	date = getdate(value) if value else None
+	return date.isoformat() if date else None
+
+
+def _row_detail(doctype: RowDoctype, name: str) -> RowDetail:
+	fields = _ROW_FIELDS[doctype]
+	progress_field = _ROW_PROGRESS_FIELD[doctype]
+	row = frappe.db.get_value(doctype, name, [*fields.values(), progress_field], as_dict=True)
+	if not row:
+		raise frappe.DoesNotExistError(_("{0} {1} not found").format(_(doctype), name))
+	expected = row.get(fields["expected_hours"])
+	progress = row.get(progress_field)
+	return RowDetail(
+		doctype=doctype,
+		name=name,
+		description=row.get(fields["description"]) or None,
+		start_date=_iso_date(row.get(fields["start_date"])),
+		end_date=_iso_date(row.get(fields["end_date"])),
+		expected_hours=None if expected is None else flt(expected),
+		priority=row.get("priority") if doctype == "Task" else None,
+		progress=None if progress is None else flt(progress),
+		can_write=bool(frappe.has_permission(doctype, "write", name)),
+	)
+
+
+@frappe.whitelist()
+@frappe.read_only()
+def get_row_detail(doctype: str, name: str) -> dict[str, Any]:
+	"""Fetch what a tree row's expandable panel shows for a Task or Project.
+
+	Fetched lazily, when the panel opens: the tree itself carries no
+	descriptions or dates.
+
+	Args:
+		doctype: ``"Task"`` or ``"Project"``.
+		name: The doc's name.
+
+	Returns:
+		A :class:`RowDetail`.
+
+	Raises:
+		frappe.ValidationError: For any other doctype.
+		frappe.PermissionError: If the user may not read the doc.
+	"""
+	row_doctype = _check_row_doctype(doctype)
+	frappe.has_permission(row_doctype, "read", name, throw=True)
+	return _row_detail(row_doctype, name).model_dump()
+
+
+def _row_value(doctype: RowDoctype, key: str, value: Any) -> Any:
+	"""Convert one panel value to what its doc field stores; empty clears the field."""
+	if value is None or value == "":
+		return None
+	if key in _ROW_DATE_KEYS:
+		day = getdate(value)
+		# Task's expected dates are Datetime fields: a panel date is midnight.
+		return get_datetime(day) if doctype == "Task" else day
+	if key == "expected_hours":
+		return flt(value)
+	return value
+
+
+@frappe.whitelist(methods=["POST"])
+def update_row(
+	doctype: str, name: str, values: str | dict, form_params: str | dict | None = None
+) -> dict[str, Any]:
+	"""Save fields edited in a tree row's expandable panel.
+
+	The doc is saved through its controller, so ERPNext's validation runs
+	(an expected start after the expected end is refused, for one).
+
+	Args:
+		doctype: ``"Task"`` or ``"Project"``.
+		name: The doc's name.
+		values: Panel keys and their new values, as a dict or JSON: any of
+			``description``, ``start_date``, ``end_date`` (``"YYYY-MM-DD"``),
+			``expected_hours`` and, for Tasks, ``priority``.  An empty string
+			or ``null`` clears the field, except where ERPNext derives it on
+			save: a Task with an expected start and expected hours but no end
+			gets end = start + hours, so clearing that end date brings the
+			derived one back (the returned detail shows it).
+		form_params: Optional list-view form params forwarded to ``get()``.
+
+	Returns:
+		An :class:`UpdateRowResponse`: a fresh snapshot, so budget meters
+		reflect a changed estimate, and the saved row's :class:`RowDetail`.
+
+	Raises:
+		frappe.ValidationError: For another doctype or a key the panel does
+			not edit.
+		frappe.PermissionError: If the user may not write the doc.
+	"""
+	row_doctype = _check_row_doctype(doctype)
+	changes = frappe.parse_json(values) if isinstance(values, str) else values
+	if not isinstance(changes, dict):
+		frappe.throw(_("Row values must be an object."))
+	fields = _ROW_FIELDS[row_doctype]
+	if unknown := sorted(set(changes) - set(fields)):
+		frappe.throw(_("A {0} row panel cannot change: {1}").format(_(row_doctype), ", ".join(unknown)))
+
+	doc = frappe.get_doc(row_doctype, name)
+	doc.check_permission("write")
+	doc.update({fields[key]: _row_value(row_doctype, key, value) for key, value in changes.items()})
+	doc.save()
+	return UpdateRowResponse(**_snapshot(form_params), detail=_row_detail(row_doctype, name)).model_dump()
 
 
 # ── Project ───────────────────────────────────────────────────

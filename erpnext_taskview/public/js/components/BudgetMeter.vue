@@ -1,5 +1,5 @@
 <template>
-	<div class="tv-budget" :class="`tv-budget--${state}`" :title="summary">
+	<div class="tv-budget" :class="[`tv-budget--${state}`, { 'tv-budget--large': large }]" :title="summary">
 		<div class="tv-budget__track">
 			<div class="tv-budget__fill" :style="{ width: fillWidth }"></div>
 		</div>
@@ -24,6 +24,8 @@ export default defineComponent({
 		logged: { type: Number, required: true },
 		budget: { type: Number, required: true },
 		liveExtra: { type: Number, required: false, default: 0 },
+		/** The expanded row panel's roomier variant: a longer bar, body-size label. */
+		large: { type: Boolean, required: false, default: false },
 	},
 	computed: {
 		total(): number {
@@ -82,6 +84,22 @@ export default defineComponent({
 
 .tv-budget--warn .tv-budget__fill {
 	background: var(--ink-amber-3, var(--yellow-500));
+}
+
+.tv-budget--large {
+	gap: 8px;
+	margin-right: 0;
+	font-size: var(--text-sm);
+}
+
+.tv-budget--large .tv-budget__track {
+	width: 160px;
+	height: 8px;
+}
+
+.tv-budget--large .tv-budget__label {
+	min-width: 0;
+	text-align: left;
 }
 
 .tv-budget--over .tv-budget__fill {

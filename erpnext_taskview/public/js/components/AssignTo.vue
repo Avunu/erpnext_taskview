@@ -60,60 +60,7 @@
 <script lang="ts">
 import { defineComponent, nextTick, type PropType } from "vue";
 import { Pin } from "lucide-vue-next";
-
-interface UserOption {
-	value: string;
-	label: string;
-}
-
-/** A row of the `frappe.client.get_list` call below. */
-interface UserRow {
-	name: string;
-	full_name: string | null;
-	user_image: string | null;
-}
-
-// Module-level cache: shared across all instances and Vue app re-creations.
-// The promise ensures only one API call is ever in-flight.
-let _userCache: { users: UserOption[]; images: Record<string, string> } | null = null;
-let _userCachePromise: Promise<{ users: UserOption[]; images: Record<string, string> }> | null = null;
-
-function fetchUsersOnce(): Promise<{ users: UserOption[]; images: Record<string, string> }> {
-	if (_userCache) return Promise.resolve(_userCache);
-	if (_userCachePromise) return _userCachePromise;
-
-	_userCachePromise = new Promise<{ users: UserOption[]; images: Record<string, string> }>(
-		(resolve, reject) => {
-			frappe.call<UserRow[]>({
-				method: "frappe.client.get_list",
-				args: {
-					doctype: "User",
-					filters: { enabled: 1, user_type: "System User" },
-					fields: ["name", "full_name", "user_image"],
-					limit_page_length: 0,
-				},
-				callback: (r) => {
-					const result = r.message ?? [];
-					const users: UserOption[] = [];
-					const images: Record<string, string> = {};
-					for (const u of result) {
-						if (u.name === "Administrator" || u.name === "Guest") continue;
-						users.push({ value: u.name, label: u.full_name || u.name });
-						if (u.user_image) images[u.name] = u.user_image;
-					}
-					_userCache = { users, images };
-					resolve(_userCache);
-				},
-				error: (err) => {
-					_userCachePromise = null; // allow retry on failure
-					reject(err);
-				},
-			});
-		},
-	);
-
-	return _userCachePromise;
-}
+import { type UserOption, avatarUrl, fetchUsersOnce, userInitials } from "../users";
 
 export default defineComponent({
 	name: "AssignTo",
@@ -191,15 +138,11 @@ export default defineComponent({
 		},
 
 		avatarUrl(email: string): string | undefined {
-			return this.userImages[email] || undefined;
+			return avatarUrl(this.userImages, email);
 		},
 
 		initials(email: string): string {
-			const user = this.allUsers.find((u) => u.value === email);
-			const name = user?.label || email;
-			const [first, second] = name.split(/[\s@.]+/).filter(Boolean);
-			if (first && second) return (first.charAt(0) + second.charAt(0)).toUpperCase();
-			return (first?.charAt(0) || "?").toUpperCase();
+			return userInitials(this.allUsers, email);
 		},
 
 		togglePin(): void {
