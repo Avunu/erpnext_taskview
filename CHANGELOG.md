@@ -1,5 +1,18 @@
 # Changelog
 
+## [16.2.0](https://github.com/Avunu/erpnext_taskview/compare/v16.1.0...v16.2.0) (2026-11-21)
+
+
+### Features
+
+* expand a row in task view into a panel to edit details and add subtasks ([#146](https://github.com/Avunu/erpnext_taskview/issues/146)) ([a4624da](https://github.com/Avunu/erpnext_taskview/commit/a4624dadbe16b09a6a4acf04cd392ea9b2cb4f59))
+* keep timers in step across tabs and browsers with realtime events ([#140](https://github.com/Avunu/erpnext_taskview/issues/140)) ([9d1fcb6](https://github.com/Avunu/erpnext_taskview/commit/9d1fcb6edc6a19b03197a6cd4716953f672b52e4))
+
+
+### Bug Fixes
+
+* open rows in the desk's own side panel instead of an embedded form ([#137](https://github.com/Avunu/erpnext_taskview/issues/137)) ([6521ff8](https://github.com/Avunu/erpnext_taskview/commit/6521ff8b3b3cebeb4f52dbada82ab9bb5b0f0502))
+
 ## [16.1.0](https://github.com/Avunu/erpnext_taskview/compare/v16.0.1...v16.1.0) (2026-11-09)
 
 
