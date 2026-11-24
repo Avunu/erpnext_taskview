@@ -1313,7 +1313,8 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 	|                       | and ``start_time`` to now.                 |
 	+-----------------------+--------------------------------------------+
 	| ``name`` + ``to_time``| **Stop** — compute final ``hours`` and     |
-	|                       | ``to_time``.                               |
+	|                       | ``to_time``; a ``from_time`` moves the     |
+	|                       | start.                                     |
 	+-----------------------+--------------------------------------------+
 	| ``name`` +            | **Pause** — accumulate elapsed seconds     |
 	| ``paused == 1``       | into ``paused_time_in_seconds``.           |
@@ -1420,8 +1421,10 @@ def _save_timesheet_detail(doc: TimesheetDetailDoc) -> dict[str, str | None]:
 			_check_timer_access(detail.project, doc.task, task_in_project=True)
 			detail.task = doc.task
 
-		from_time = _naive_dt(detail.from_time)
+		# The dialog may move the start; otherwise it is when the timer started.
+		from_time = _naive_dt(doc.from_time or detail.from_time)
 		assert from_time is not None
+		detail.from_time = from_time
 
 		if doc.hours > 0:
 			# User overrode the hours in the dialog — honour it directly

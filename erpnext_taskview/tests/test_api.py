@@ -415,16 +415,55 @@ class TestTimers(IntegrationTestCase):
 		self.assertIsNone(result["notice"])
 		self.assertEqual(frappe.db.get_value("Timesheet Detail", child_timer, "completed"), 1)
 
+	def test_stop_moves_the_start(self):
+		"""A ``from_time`` on stop moves the start, and the end follows it by the confirmed hours."""
+		project = make_project()
+		task = make_task(project)
+		save({"doctype": "Timesheet Detail", "project": project, "task": task})
+		timer = open_timer(task)
+		# What the Log Timer dialog sends: system time, the duration in whole minutes.
+		start = (now_datetime() - timedelta(days=41)).replace(second=0, microsecond=0)
+		save(
+			{
+				"doctype": "Timesheet Detail",
+				"name": timer,
+				"from_time": start.strftime("%Y-%m-%d %H:%M:%S"),
+				"to_time": (start + timedelta(minutes=95)).strftime("%Y-%m-%d %H:%M:%S"),
+				"hours": 95 / 60,
+			}
+		)
+		stopped = detail_of(timer)
+		self.assertEqual(stopped.from_time, start)
+		self.assertEqual(stopped.to_time, start + timedelta(minutes=95))
+
+	def test_stop_without_from_time_keeps_the_start(self):
+		project = make_project()
+		task = make_task(project)
+		save({"doctype": "Timesheet Detail", "project": project, "task": task})
+		timer = open_timer(task)
+		started = detail_of(timer).from_time
+		save(
+			{
+				"doctype": "Timesheet Detail",
+				"name": timer,
+				"to_time": now_datetime().isoformat(),
+				"hours": 0.5,
+			}
+		)
+		stopped = detail_of(timer)
+		self.assertEqual(stopped.from_time, started)
+		self.assertEqual(stopped.to_time, started + timedelta(minutes=30))
+
 	def manual_log(self, project: str, task: str, span: float, **fields: Any) -> dict[str, Any]:
-		"""Log ``span`` hours ending 40 days ago, as the Log Time dialog does: UTC ISO strings."""
-		end = datetime.now(UTC) - timedelta(days=40)
+		"""Log ``span`` hours ending 40 days ago, as the Log Time dialog does: system time."""
+		end = (now_datetime() - timedelta(days=40)).replace(microsecond=0)
 		return save(
 			{
 				"doctype": "Timesheet Detail",
 				"project": project,
 				"task": task,
-				"from_time": (end - timedelta(hours=span)).isoformat().replace("+00:00", "Z"),
-				"to_time": end.isoformat().replace("+00:00", "Z"),
+				"from_time": (end - timedelta(hours=span)).strftime("%Y-%m-%d %H:%M:%S"),
+				"to_time": end.strftime("%Y-%m-%d %H:%M:%S"),
 				"hours": span,
 				**fields,
 			}
@@ -451,7 +490,7 @@ class TestTimers(IntegrationTestCase):
 		self.assertEqual(frappe.db.get_value("Timesheet Detail", {"task": task}, "hours"), 1.25)
 
 	def test_manual_log_stores_system_time(self):
-		"""The dialog sends UTC; the row holds the same instant in the system time zone."""
+		"""A UTC time is stored as the same instant in the system time zone."""
 		project = make_project()
 		task = make_task(project)
 		with patch("frappe.utils.data.get_system_timezone", return_value="America/New_York"):
