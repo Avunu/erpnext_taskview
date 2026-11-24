@@ -49,7 +49,7 @@
 <script lang="ts">
 import { defineComponent, type PropType } from "vue";
 import { type ActiveTimer, sendTimerAction, getRunningTimer, saveTimerDescription } from "../timerStore";
-import { showStopTimerDialog, calcElapsedHrs } from "../timerDialog";
+import { showStopTimerDialog, calcElapsedSeconds } from "../timerDialog";
 import { Play, Pause, Square, Trash2 } from "lucide-vue-next";
 import "../task-controls.css";
 
@@ -201,28 +201,30 @@ export default defineComponent({
 			const currentDesc = this.description;
 
 			showStopTimerDialog({
-				elapsedHrs: calcElapsedHrs(
+				elapsedSeconds: calcElapsedSeconds(
 					this.timer.paused_time_in_seconds,
 					this.timer.paused,
 					this.timer.start_time,
 				),
+				startTime: this.timer.from_time,
 				currentDesc,
 				taskName: this.timer.task,
 				taskSubject: this.timer.task_subject || this.timer.task,
 				project: this.timer.project,
 				projectName: this.timer.project_name || this.timer.project,
 				customer: this.timer.customer,
-				onSubmit: async (values) => {
+				onSubmit: async (logged) => {
 					const result = await sendTimerAction({
 						name: timerName,
-						task: values.task,
-						to_time: new Date().toISOString(),
-						hours: values.hrs,
-						billing_hours: values.is_billable ? values.billing_hrs || values.hrs : 0,
-						description: values.description || currentDesc || "",
-						activity_type: values.activity_type || "",
-						is_billable: values.is_billable ? 1 : 0,
-						completed: values.completed ? 1 : 0,
+						task: logged.task,
+						from_time: logged.from_time,
+						to_time: logged.to_time,
+						hours: logged.hours,
+						billing_hours: logged.billing_hours,
+						description: logged.description || currentDesc || "",
+						activity_type: logged.activity_type,
+						is_billable: logged.is_billable,
+						completed: logged.completed,
 					});
 					return { alert: result.alert, notice: result.notice };
 				},

@@ -3,7 +3,7 @@ title: Timers and timesheets
 description: Start, pause and stop a timer on a task, confirm the time in the Log Timer dialog, log hours you did not time, and see where they land in Timesheets.
 nav_title: Timers
 order: 4
-updated: 2026-10-26
+updated: 2026-11-24
 ---
 
 Timers live on task rows in [Task View](README.md). Every timer is a row in the time logs of an ordinary ERPNext Timesheet, so submitting, billing and reporting work as they do in stock ERPNext.
@@ -20,7 +20,7 @@ Timers live on task rows in [Task View](README.md). Every timer is a row in the 
 1. Click the play button on a task row. The tree opens up to the task so you can see it.
 2. Work. The floating timer dock appears on every desk page, not only in Task View, and shows each open timer with a live `HH:MM:SS` clock.
 3. Click pause when you step away, and play to resume.
-4. Click stop (the square) when you finish. The **Log Timer** dialog opens with the elapsed hours filled in.
+4. Click stop (the square) when you finish. The **Log Timer** dialog opens with the start and the elapsed time filled in.
 5. Check the dialog and click **Submit**.
 
 The stop button only appears on a row while it has a timer; in its place, a row without a timer shows the **Log time** button (see [Log time without a timer](#log-time-without-a-timer)). Timers are kept on the server, so a running timer survives a page reload and is the same on every device you sign in from.
@@ -33,21 +33,22 @@ Your timers also stay in step across tabs and browsers while you work. Start, pa
 
 Stopping pauses the clock first, then asks you to confirm.
 
-| Field         | Notes                                                                                                            |
-| ------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Task          | Defaults to the timed task. You can move the time to another task in the same project.                           |
-| Activity Type | Optional.                                                                                                        |
-| Hrs           | Filled from the clock. What you leave here is what gets logged, so edit it if the clock ran while you were away. |
-| Description   | What you did.                                                                                                    |
-| Is Billable   | Marks the entry billable.                                                                                        |
-| Billable Time | Appears when Is Billable is ticked, and starts at the same value as Hrs. Left empty, it is saved as Hrs.         |
-| Completed     | Marks the log complete and sets the task to Completed.                                                           |
+| Field             | Notes                                                                                                                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Task              | Defaults to the timed task. You can move the time to another task in the same project.                                                                                                                                 |
+| Activity Type     | Optional.                                                                                                                                                                                                              |
+| Start             | When the timer was first started. Change it if you started work earlier or later, or on another day. Changing the duration does not move it.                                                                           |
+| Hours and Minutes | The duration, filled from the clock to the nearest minute; paused time is not counted. What you leave here is what gets logged, so edit it if the clock ran while you were away. 90 minutes becomes 1 hour 30 minutes. |
+| Description       | What you did.                                                                                                                                                                                                          |
+| Is Billable       | Marks the entry billable.                                                                                                                                                                                              |
+| Billable Time     | In hours, such as 1.5. Appears when Is Billable is ticked, and starts at the duration. Left empty, it is saved as the duration.                                                                                        |
+| Completed         | Marks the log complete and sets the task to Completed.                                                                                                                                                                 |
 
 **Cancel** closes the dialog and resumes the timer, even if you had paused it before you pressed stop.
 
 If you tick **Completed** on a task that still has subtasks that are not Completed, the time is logged, the task is not completed, and a notice tells you how many subtasks are in the way. A Cancelled subtask counts as not Completed.
 
-The row's To Time is set to its From Time plus the hours you confirmed, so the stored time range always agrees with the hours.
+The row's From Time is the Start you confirmed and its To Time is Start plus the duration, so the stored time range always agrees with the hours. If you empty both Hours and Minutes, the time is taken from the clock instead.
 
 ## Log time without a timer
 
@@ -59,10 +60,11 @@ For hours you did not time, such as a call or work done away from the desk, use 
 </picture>
 
 1. Click **Log time** on the task row. The **Log Time** dialog opens with the task, its project and its customer at the top.
-2. Enter **Hrs**. It is required and must be more than zero.
-3. Fill in the other fields as in [the Log Timer dialog](#the-log-timer-dialog), and click **Submit**.
+2. Enter the duration in **Hours** and **Minutes**. It must be more than zero.
+3. **Start** moves with the duration, so the entry ends now. For time earlier today or on another day, change Start: from then on it stays where you put it.
+4. Fill in the other fields as in [the Log Timer dialog](#the-log-timer-dialog), and click **Submit**.
 
-The entry ends at the moment you submit and starts the given hours earlier. It goes to the same draft Timesheet a timer on that project would use, created if there is none, and the budget meters count it straight away. **Completed** works as it does when you stop a timer: it completes the task unless the task has subtasks that are not Completed, or ERPNext refuses to complete it (for example because a task it depends on is still open). The time is logged either way, and a notice says why the task stayed open. **Cancel** closes the dialog.
+Unless you changed Start, the entry ends at the moment you submit. It goes to the same draft Timesheet a timer on that project would use, created if there is none, and the budget meters count it straight away. **Completed** works as it does when you stop a timer: it completes the task unless the task has subtasks that are not Completed, or ERPNext refuses to complete it (for example because a task it depends on is still open). The time is logged either way, and a notice says why the task stayed open. **Cancel** closes the dialog.
 
 Each entry is a new time log, so logging time never touches a timer you have open on another task.
 
@@ -89,7 +91,7 @@ Submitting moves a task forward only: Open becomes Working, and a task that is P
 
 ### Adding time on another day
 
-**Log time** always logs hours that end now. For time on another day, change the row's **From Time** in the draft Timesheet afterwards, or add a row to a Timesheet in ERPNext and fill in its **Project** and **Task**: budgets and the portal count a row only through those fields.
+Change **Start** in the **Log Time** or **Log Timer** dialog. You can also add a row to a Timesheet in ERPNext; fill in its **Project** and **Task**, because budgets and the portal count a row only through those fields.
 
 ## Reporting
 

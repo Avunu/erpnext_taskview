@@ -50,8 +50,8 @@ Full documentation: [docs.avunu.net/erpnext-taskview/docs/](https://docs.avunu.n
 ### Timers
 
 - Start, pause and stop a timer on any task that has a project and that you may edit. Only one runs at a time: starting one pauses the others.
-- Time is logged to a draft Timesheet for your Employee and the project, which is created when there is none. Stopping opens a **Log Timer** dialog for the hours, activity type, description and billable time.
-- **Log time** on a task without a timer: the clock-plus button on the row opens the same dialog with Hrs empty, for hours you did not time. The entry ends now and goes to the same draft Timesheet.
+- Time is logged to a draft Timesheet for your Employee and the project, which is created when there is none. Stopping opens a **Log Timer** dialog for the start, the duration in hours and minutes, activity type, description and billable time.
+- **Log time** on a task without a timer: the clock-plus button on the row opens the same dialog with the duration empty, for time you did not time. The entry ends now unless you change its start, and goes to the same draft Timesheet.
 - A timer dock on every desk page shows your open timers with a live clock. Timers are kept on the server, so they survive a reload and follow you between devices.
 - Timers and logged time follow ERPNext's permissions: you need read access to the project and write access to the task, the task must belong to that project, and the Timesheet must be a draft that is your own Employee's or one you may write. Ticking **Completed** saves the task through ERPNext, so its usual checks (such as tasks it depends on) apply.
 - Submitting a Timesheet only moves a task forward (Open to Working). A task in Pending Review or Completed stays where it is.
