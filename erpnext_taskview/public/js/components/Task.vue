@@ -160,7 +160,7 @@ import {
 import { timersByTask, getRunningTimer, type ActiveTimer } from "../timerStore";
 import { liveExtraByNode } from "../budgetLive";
 import { treeNodes } from "../treeState";
-import { showStopTimerDialog, calcElapsedHrs } from "../timerDialog";
+import { showStopTimerDialog, calcElapsedSeconds } from "../timerDialog";
 import AssignTo from "./AssignTo.vue";
 import BudgetMeter from "./BudgetMeter.vue";
 import ProjectPicker from "./ProjectPicker.vue";
@@ -530,25 +530,27 @@ export default defineComponent({
 			const currentDesc = timer.description || "";
 
 			showStopTimerDialog({
-				elapsedHrs: calcElapsedHrs(timer.paused_time_in_seconds, timer.paused, timer.start_time),
+				elapsedSeconds: calcElapsedSeconds(timer.paused_time_in_seconds, timer.paused, timer.start_time),
+				startTime: timer.from_time,
 				currentDesc,
 				taskName: timer.task,
 				taskSubject: timer.task_subject || timer.task,
 				project: timer.project,
 				projectName: timer.project_name || timer.project,
 				customer: timer.customer,
-				onSubmit: async (values) => {
+				onSubmit: async (logged) => {
 					const data = await saveDoc({
 						doctype: "Timesheet Detail",
 						name: timerName,
-						task: values.task,
-						to_time: new Date().toISOString(),
-						hours: values.hrs,
-						billing_hours: values.is_billable ? values.billing_hrs || values.hrs : 0,
-						description: values.description || currentDesc,
-						activity_type: values.activity_type || "",
-						is_billable: values.is_billable ? 1 : 0,
-						completed: values.completed ? 1 : 0,
+						task: logged.task,
+						from_time: logged.from_time,
+						to_time: logged.to_time,
+						hours: logged.hours,
+						billing_hours: logged.billing_hours,
+						description: logged.description || currentDesc,
+						activity_type: logged.activity_type,
+						is_billable: logged.is_billable,
+						completed: logged.completed,
 					});
 					this.$emit("catch-success", data);
 					return { alert: data.alert, notice: data.notice };
@@ -593,29 +595,26 @@ export default defineComponent({
 			const project = doc.project;
 			showStopTimerDialog({
 				title: "Log Time",
-				requireHours: true,
+				requireDuration: true,
 				currentDesc: "",
 				taskName: doc.name,
 				taskSubject: doc.subject || doc.name,
 				project,
 				projectName: doc.project_name || project,
 				customer: doc.customer ?? null,
-				onSubmit: async (values) => {
-					const now = new Date();
-					// requireHours: the dialog submits only once Hrs is above zero.
-					const fromTime = new Date(now.getTime() - (values.hrs ?? 0) * 3600 * 1000);
+				onSubmit: async (logged) => {
 					const data = await saveDoc({
 						doctype: "Timesheet Detail",
 						project,
-						task: values.task || doc.name,
-						from_time: fromTime.toISOString(),
-						to_time: now.toISOString(),
-						hours: values.hrs,
-						description: values.description || "",
-						activity_type: values.activity_type || "",
-						is_billable: values.is_billable ? 1 : 0,
-						billing_hours: values.is_billable ? values.billing_hrs || values.hrs : 0,
-						completed: values.completed ? 1 : 0,
+						task: logged.task || doc.name,
+						from_time: logged.from_time,
+						to_time: logged.to_time,
+						hours: logged.hours,
+						description: logged.description,
+						activity_type: logged.activity_type,
+						is_billable: logged.is_billable,
+						billing_hours: logged.billing_hours,
+						completed: logged.completed,
 					});
 					this.$emit("catch-success", data);
 					return { alert: data.alert, notice: data.notice };

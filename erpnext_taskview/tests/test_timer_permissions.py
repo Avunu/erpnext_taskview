@@ -37,7 +37,7 @@ def save(doc: dict[str, Any]) -> dict[str, Any]:
 
 
 def manual_log(project: str, task: str, hours: float = 1, **fields: Any) -> dict[str, Any]:
-	"""A Log Time entry ending 40 days ago, as the dialog sends it."""
+	"""A Log Time entry ending 40 days ago."""
 	end = datetime.now(UTC) - timedelta(days=40)
 	return save(
 		{
