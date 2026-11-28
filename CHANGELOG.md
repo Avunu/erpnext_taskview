@@ -1,5 +1,12 @@
 # Changelog
 
+## [16.3.0](https://github.com/Avunu/erpnext_taskview/compare/v16.2.0...v16.3.0) (2026-11-28)
+
+
+### Features
+
+* set the start and a duration in hours and minutes when logging time ([#152](https://github.com/Avunu/erpnext_taskview/issues/152)) ([d6dd8b7](https://github.com/Avunu/erpnext_taskview/commit/d6dd8b7188f79e4adb988264d3df726eb9704c7c))
+
 ## [16.2.0](https://github.com/Avunu/erpnext_taskview/compare/v16.1.0...v16.2.0) (2026-11-21)
 
 
